@@ -1,0 +1,67 @@
+---
+- name: Keyrings dir
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Proxmox release key
+  # download.proxmox.com's cdn serves a cert for the wrong host; enterprise host has a valid one (same key)
+  ansible.builtin.get_url:
+    url: "https://enterprise.proxmox.com/debian/proxmox-release-{{ ansible_distribution_release }}.gpg"
+    dest: /etc/apt/keyrings/proxmox-release.gpg
+    mode: '0644'
+
+- name: Deb822 support
+  ansible.builtin.apt:
+    name: python3-debian   # needed by deb822_repository
+    state: present
+
+- name: Pbs-client repo
+  ansible.builtin.deb822_repository:
+    name: pbs-client
+    types: [deb]
+    uris: http://download.proxmox.com/debian/pbs-client
+    suites: ["{{ ansible_distribution_release }}"]
+    components: [main]
+    architectures: [amd64]
+    signed_by: /etc/apt/keyrings/proxmox-release.gpg
+    state: present
+
+- name: Install client + sqlite3
+  ansible.builtin.apt:
+    name: [proxmox-backup-client, sqlite3]
+    state: present
+    update_cache: true
+
+- name: Credentials env
+  ansible.builtin.template:
+    src: pbs.env.j2
+    dest: /etc/pbs.env
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+
+- name: Backup script
+  ansible.builtin.template:
+    src: pbs-backup.sh.j2
+    dest: /usr/local/sbin/pbs-backup
+    mode: '0750'
+
+- name: Systemd units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+  loop:
+    - pbs-backup.service
+    - pbs-backup.timer
+  notify: Reload systemd
+
+- name: Enable timer
+  ansible.builtin.systemd:
+    name: pbs-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

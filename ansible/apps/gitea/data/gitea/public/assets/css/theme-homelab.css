@@ -1,0 +1,48 @@
+/* homelab palette on top of gitea-dark, see docs/00-dashboard/style.md */
+@import "./theme-gitea-dark.css";
+
+gitea-theme-meta-info {
+  --theme-display-name: "Homelab";
+  --theme-color-scheme: "dark";
+}
+
+:root {
+  --color-primary: #ee0000;
+  --color-primary-contrast: #ffffff;
+  --color-primary-hover: #ff4d4d;
+  --color-primary-active: #be0000;
+  --color-primary-dark-1: #d60000;
+  --color-primary-dark-2: #be0000;
+  --color-primary-dark-3: #a60000;
+  --color-primary-light-1: #ff1f1f;
+  --color-primary-light-2: #ff4d4d;
+  --color-primary-light-3: #ff7373;
+  --color-primary-alpha-10: #ee000019;
+  --color-primary-alpha-20: #ee000033;
+  --color-primary-alpha-30: #ee00004b;
+  --color-primary-alpha-40: #ee000066;
+  --color-primary-alpha-50: #ee000080;
+
+  --color-body: #181818;
+  --color-box-body: #1f1f1f;
+  --color-box-header: #141414;
+  --color-nav-bg: #141414;
+  --color-footer: #141414;
+  --color-menu: #1f1f1f;
+  --color-card: #1f1f1f;
+  --color-input-background: #141414;
+  --color-hover: #2a2d2e;
+  --color-active: #2a2d2e;
+  --color-secondary: #2b2b2b;
+  --color-secondary-dark-1: #3c3c3c;
+  --color-light-border: #2b2b2b;
+
+  --color-text: #cccccc;
+  --color-text-dark: #ffffff;
+  --color-text-light: #9d9d9d;
+  --color-text-light-1: #9d9d9d;
+  --color-text-light-2: #6e7681;
+
+  --border-radius: 4px;
+  --border-radius-medium: 4px;
+}

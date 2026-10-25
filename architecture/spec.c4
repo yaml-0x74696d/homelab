@@ -1,0 +1,38 @@
+specification {
+  color accent #16a34a
+  color teal #0d9488
+
+  element actor    { notation "Person"; style { shape person } }
+  element external { notation "External system"; style { color gray } }
+  element system   { notation "Software system"; style { color accent } }
+  element app      { notation "App (containers deployed together)"; style { color slate; opacity 25%; border dashed } }
+  element container { notation "Container"; style { shape component } }
+  element ui       { notation "Web UI"; style { shape browser } }
+  element db       { notation "Database"; style { shape storage } }
+  element cache    { notation "Cache / queue"; style { shape queue } }
+  element store    { notation "Storage"; style { shape cylinder; color amber } }
+  element device   { notation "Device"; style { shape mobile; color muted } }
+
+  relationship https { technology "HTTPS" }
+  relationship oidc  { technology "OIDC"; line dashed; color indigo }
+  relationship cifs  { technology "SMB 3.1.1"; line dashed; color amber }
+  relationship scrape { technology "Prometheus"; line dotted; color teal }
+  relationship mqtt  { technology "MQTT"; line dotted }
+  relationship dns   { technology "DNS"; line dotted; color sky }
+  relationship wg    { technology "WireGuard"; color secondary }
+
+  tag sso
+  tag lan-only
+  tag dmz
+  tag iot
+  tag parked
+  // host plumbing, deployment view only
+  tag ops
+
+  deploymentNode site  { notation "Site" }
+  deploymentNode zone  { notation "Network zone"; style { color gray } }
+  deploymentNode node  { notation "Proxmox node"; style { color slate } }
+  deploymentNode vm    { notation "VM" }
+  deploymentNode lxc   { notation "LXC container" }
+  deploymentNode host  { notation "Host service" }
+}

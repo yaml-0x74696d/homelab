@@ -1,0 +1,29 @@
+default_config:
+
+homeassistant:
+  external_url: "https://ha.{{ domain }}"
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+# behind traefik on proxy-net — required or HA 400s proxied requests
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - {{ docker_bridge_cidr }}   # docker bridges (traefik)
+    - 127.0.0.1
+    - ::1
+
+# long-term store on docker-2. mqtt broker is added via the ui integration.
+influxdb:
+  api_version: 2
+  ssl: false
+  host: {{ docker2_ip }}
+  port: {{ app_ports.influxdb }}
+  token: {{ influxdb_admin_token }}
+  organization: {{ influxdb_org }}
+  bucket: {{ influxdb_bucket }}
+  tags:
+    source: hass
+  tags_attributes:
+    - friendly_name

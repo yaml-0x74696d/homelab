@@ -1,0 +1,15 @@
+---
+# lan-only ufw (ssh + samba); false = leave the firewall alone
+samba_manage_ufw: true
+samba_lan: "{{ lan_cidr }}"
+
+# pinned so a container rebuild keeps the same on-disk ownership
+samba_admin_uid: 3000
+samba_svc_uid_base: 3101    # service uid = base + share index
+
+# true for one run (-e samba_rotate_passwords=true) pushes vault passwords to existing users
+samba_rotate_passwords: false
+
+samba_min_protocol: SMB3
+samba_max_log_size: 1000    # KB per log file
+samba_tm_size_default: 1T   # time machine cap when a share sets no tm_size

@@ -1,0 +1,1 @@
+# <host>.sha256 = hash of the accepted aide db, written by roles/aide + playbooks/aide-accept.yml

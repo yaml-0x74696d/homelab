@@ -1,0 +1,73 @@
+---
+- name: Check if netbird is already installed
+  ansible.builtin.stat:
+    path: /usr/bin/netbird
+  register: netbird_agent_bin
+
+# only on fresh hosts. a hand-enrolled peer already carries netbird's official
+# repo (key at /usr/share/keyrings); adding our own source would clash on Signed-By.
+- name: Set up the netbird apt repo
+  when: not netbird_agent_bin.stat.exists
+  block:
+    - name: Keyrings dir
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Netbird release key
+      ansible.builtin.get_url:
+        url: https://pkgs.netbird.io/debian/public.key
+        dest: /etc/apt/keyrings/netbird.asc
+        mode: '0644'
+
+    - name: Deb822 support
+      ansible.builtin.apt:
+        name: python3-debian   # needed by deb822_repository
+        state: present
+
+    - name: Netbird repo
+      ansible.builtin.deb822_repository:
+        name: netbird
+        types: [deb]
+        uris: https://pkgs.netbird.io/debian
+        suites: [stable]
+        components: [main]
+        signed_by: /etc/apt/keyrings/netbird.asc
+        state: present
+
+    - name: Install netbird
+      ansible.builtin.apt:
+        name: netbird
+        state: present
+        update_cache: true
+
+- name: Enable the netbird daemon
+  ansible.builtin.systemd:
+    name: netbird
+    enabled: true
+    state: started
+
+- name: Persist ip forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+    reload: true
+  when: netbird_agent_enable_forwarding
+
+- name: Check if already enrolled
+  ansible.builtin.stat:
+    path: /etc/netbird/config.json
+  register: netbird_agent_config
+
+- name: Enroll with the management server
+  # one-time; the daemon reconnects on its own after. routes/dns/acls live in the dashboard.
+  ansible.builtin.command: >-
+    netbird up --management-url {{ netbird_agent_mgmt_url }}
+    --setup-key {{ netbird_agent_setup_key }}
+  when:
+    - not netbird_agent_config.stat.exists
+    - netbird_agent_setup_key | length > 0
+  changed_when: true
+  no_log: true

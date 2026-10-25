@@ -1,0 +1,24 @@
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: gitea
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/data
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "${GITEA_SSH_PORT}:22"
+    networks:
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.gitea.rule=Host(`git.${DOMAIN}`)"
+      - "traefik.http.routers.gitea.entrypoints=websecure"
+      - "traefik.http.routers.gitea.tls.certresolver=cloudflare"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+
+networks:
+  proxy-net:
+    external: true

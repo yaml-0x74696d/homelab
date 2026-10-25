@@ -1,0 +1,22 @@
+---
+# path to the app's source dir on the control node
+docker_app_src: "{{ playbook_dir }}/../apps/{{ docker_app_name }}"
+docker_app_root: "{{ apps_root }}"
+
+# extra dirs to create under <root>/<app>, e.g. [{path: data, owner: '472'}]
+docker_app_dirs: []
+# every routed app joins proxy-net; ensure it per-host (compose declares it external)
+docker_app_networks: [proxy-net]
+# files to create empty if missing, e.g. [{path: acme.json, mode: '0600'}]
+docker_app_touch: []
+# ufw allow rules, e.g. [{port: 1883}]
+docker_app_ufw: []
+# cifs mounts from the samba pool, e.g. [{share: nextcloud, user: nextcloud, path: /srv/nextcloud, uid: 33, gid: 33}]
+docker_app_cifs: []
+docker_app_cifs_vers: "3.1.1"   # smb dialect for the pool mounts
+# containers to restart when config changes, e.g. [homepage]
+docker_app_restart: []
+# docker_compose_v2 options
+docker_app_compose_state: present
+docker_app_compose_pull: policy
+docker_app_compose_remove_orphans: false

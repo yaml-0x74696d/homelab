@@ -1,0 +1,43 @@
+# managed by ansible (roles/samba)
+[global]
+   workgroup = WORKGROUP
+   server string = storage
+   server role = standalone server
+   map to guest = never
+   logging = file
+   log file = /var/log/samba/log.%m
+   max log size = {{ samba_max_log_size }}
+   server min protocol = {{ samba_min_protocol }}
+   smb encrypt = desired
+   # apple interop, inert unless a share loads vfs_fruit (timemachine)
+   fruit:aapl = yes
+   fruit:model = TimeCapsule8,119
+
+{% for share in samba_shares %}
+[{{ share.name }}]
+   path = {{ storage_root }}/{{ share.name }}
+   valid users = @{{ share.name }}
+   write list = @{{ share.name }}
+   force group = {{ share.name }}
+   create mask = 0660
+   force create mode = 0660
+   directory mask = 2770
+   force directory mode = 2770
+   browseable = yes
+   read only = no
+   veto files = /.DS_Store/
+   delete veto files = yes
+{% if share.time_machine | default(false) %}
+   # macos time machine target; max size caps the sparsebundle so it can't eat the pool
+   vfs objects = catia fruit streams_xattr
+   fruit:time machine = yes
+   fruit:time machine max size = {{ share.tm_size | default(samba_tm_size_default) }}
+   fruit:metadata = stream
+   fruit:posix_rename = yes
+   fruit:veto_appledouble = no
+   fruit:nfs_aces = no
+   fruit:wipe_intentionally_left_blank_rfork = yes
+   fruit:delete_empty_adfiles = yes
+{% endif %}
+
+{% endfor %}

@@ -1,0 +1,12 @@
+---
+- name: Deploy grafana
+  hosts: docker-2
+  become: true
+  vars:
+    grafana_uid: 472                     # image user
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: grafana
+        docker_app_dirs:
+          - { path: data, owner: "{{ grafana_uid }}", group: "{{ grafana_uid }}" }

@@ -1,0 +1,7 @@
+---
+# aide on every ansible host: install, excludes, baseline (first run only), daily check.
+# re-running it also verifies each db against aide/<host>.sha256. netbird: nixos/aide-accept.sh
+- name: AIDE file integrity
+  hosts: docker_hosts:proxmox:lxc_containers
+  roles:
+    - aide

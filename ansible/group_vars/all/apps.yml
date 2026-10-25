@@ -1,0 +1,19 @@
+---
+# app dirs on the docker hosts (compose, rendered config, bind-mounted data); pbs backs it up
+apps_root: /opt/apps
+pbs_staging_dir: /var/backups/pbs      # db dumps land here, wiped each run. must stay under /var/backups
+
+# ntfy alert target (pbs, login-notify, aide). real values in vault; empty so the var always exists
+ntfy_url: ""
+ntfy_token: ""
+ntfy_timeout: 10   # seconds per push
+
+# authentik can't skip a release series or downgrade; deploy-authentik.yml enforces both.
+# step through with -e authentik_tag=<next>, then set this to where you landed.
+authentik_tag: "2026.8.3"
+authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12", "2025.2", "2025.4",
+                   "2025.6", "2025.8", "2025.10", "2025.12", "2026.2", "2026.5", "2026.8"]
+
+# influxdb long-term sensor store (docker-2); secrets in vault
+influxdb_org: homelab
+influxdb_bucket: sensors

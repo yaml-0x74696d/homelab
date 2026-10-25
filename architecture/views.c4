@@ -1,0 +1,183 @@
+views {
+  view index {
+    title "System landscape"
+    include household, admin, phone
+    group "Homelab" {
+      color slate
+      include edge, identity, remote, apps, media, automation, observability, storage
+    }
+    include cloudflare, letsencrypt, ntfy, fritzbox
+    autoLayout TopBottom
+  }
+
+  deployment view physical {
+    title "Deployment overview"
+    include home, home.*, home.pve1.*, home.pve2.*, home.pve3.*, home.pve2.dmz.*
+    include home.pve1 with { navigateTo pve1 }
+    include home.pve2 with { navigateTo pve2 }
+    include home.pve3 with { navigateTo pve3 }
+    style home.pve2.dmz { color red }
+    style home.pve1.iot { color amber }
+  }
+}
+
+views "Deployment" {
+  deployment view pve1 {
+    title "pve-1: what runs where"
+    include home.pve1, home.pve1.*, home.pve1.docker1.*, home.pve1.hostapd.*, home.pve1.iot.*
+    style home.pve1.iot { color amber }
+  }
+  deployment view pve2 {
+    title "pve-2: what runs where"
+    include home.pve2, home.pve2.*, home.pve2.docker2.*, home.pve2.dmz.*, home.pve2.dmz.netbird.*
+    style home.pve2.dmz { color red }
+  }
+  deployment view pve3 {
+    title "pve-3: what runs where"
+    include home.pve3, home.pve3.*, home.pve3.docker3.*, home.pve3.storage.*, home.pve3.pbs.*
+  }
+}
+
+views "Containers" {
+  view edge of edge {
+    title "Ingress & DNS: containers"
+    include *, edge.**
+    include -> edge.**
+    exclude * where tag is #ops
+  }
+  view identity of identity {
+    title "Identity: containers"
+    include *, identity.**
+    include -> identity.**
+    exclude * where tag is #ops
+  }
+  view remote of remote {
+    title "Remote access: containers"
+    include *, remote.**
+    include -> remote.**
+    exclude * where tag is #ops
+  }
+  view apps of apps {
+    title "Apps: containers"
+    include *, apps.**
+    include -> apps.**
+    exclude * where tag is #ops
+  }
+  view media of media {
+    title "Home cloud: containers"
+    include *, media.**
+    include -> media.**
+    exclude * where tag is #ops
+  }
+  view automation of automation {
+    title "Home automation: containers"
+    include *, automation.**
+    include -> automation.**
+    exclude * where tag is #ops
+  }
+  view observability of observability {
+    title "Observability: containers"
+    include *, observability.**
+    include -> observability.**
+    exclude * where tag is #ops
+  }
+  view storage of storage {
+    title "Storage & backup: containers"
+    include *, storage.**
+    include -> storage.**
+    exclude * where tag is #ops
+  }
+}
+
+views "Flows" {
+  dynamic view request {
+    title "Request to an app without SSO (forward-auth)"
+    variant sequence
+    household -> edge.pihole "prometheus.domain?"
+    household <- edge.pihole "LAN ip of traefik"
+    household -> edge.traefik "https"
+    edge.traefik -> identity.authentik.server "forward-auth: session valid?"
+    edge.traefik <- identity.authentik.server "yes (or redirect to login)"
+    edge.traefik -> observability.prometheus "proxied request"
+    household <- edge.traefik "response"
+  }
+
+  dynamic view login {
+    title "Login with OIDC"
+    variant sequence
+    household -> edge.traefik "opens photos"
+    edge.traefik -> media.immich.server "routes"
+    household <- media.immich.server "redirect to IdP"
+    household -> identity.authentik.server "signs in (password + mfa)"
+    household <- identity.authentik.server "auth code"
+    media.immich.server -> identity.authentik.server "exchanges code for tokens"
+    household <- media.immich.server "session"
+  }
+
+  dynamic view remote-access {
+    title "Remote access over NetBird"
+    variant sequence
+    phone -> remote.netbird.mgmt "logs in (OIDC via authentik)"
+    phone <- remote.netbird.mgmt "peers, routes, dns"
+    phone -> remote.netbird.signal "exchanges keys"
+    phone -> remote.router-peer "P2P WireGuard tunnel"
+    phone -> edge.traefik "opens the app over the tunnel"
+  }
+
+  dynamic view name-resolution {
+    title "Resolving app.domain"
+    variant sequence
+    alt {
+      when 'on the LAN' {
+        household -> edge.pihole "app.domain?"
+        household <- edge.pihole "LAN ip of traefik"
+        household -> edge.traefik "https"
+      }
+      else 'remote' {
+        phone -> edge.pihole "app.domain? (overlay ip)"
+        phone <- edge.pihole "LAN ip of traefik"
+        phone -> remote.router-peer "LAN ip goes through the tunnel"
+        phone -> edge.traefik "https"
+      }
+    }
+  }
+
+  dynamic view cert-renewal {
+    title "Certificate renewal (DNS-01)"
+    variant sequence
+    edge.traefik -> letsencrypt "orders cert for app.domain"
+    edge.traefik <- letsencrypt "challenge token"
+    edge.traefik -> cloudflare "writes _acme-challenge TXT"
+    letsencrypt -> cloudflare "looks up TXT"
+    edge.traefik -> letsencrypt "finalizes order"
+    edge.traefik <- letsencrypt "certificate"
+  }
+
+  dynamic view photo-upload {
+    title "Photo upload"
+    variant sequence
+    household -> edge.traefik "uploads photo (app)"
+    edge.traefik -> media.immich.server "routes"
+    media.immich.server -> storage.samba "writes original"
+    media.immich.server -> media.immich.pg "stores metadata"
+    household <- media.immich.server "done"
+  }
+
+  dynamic view backup {
+    title "Nightly backup"
+    variant sequence
+    storage.pbs-client -> media.immich.pg "pg_dump"
+    storage.pbs-client -> storage.pbs "uploads dumps + config"
+    storage.pbs -> ntfy "job result"
+  }
+
+  dynamic view delivery {
+    title "Deploying a change"
+    variant sequence
+    admin -> apps.gitea "pushes the repo"
+    admin -> ops.controller "runs a playbook"
+    ops.controller -> apps.gitea "pulls the repo"
+    ops.controller -> ops.proxmox "tofu apply: VMs + LXC"
+    ops.controller -> ops.hosts "ansible: renders + starts apps"
+  }
+}

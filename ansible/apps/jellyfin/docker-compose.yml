@@ -1,0 +1,23 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - JELLYFIN_PublishedServerUrl=https://media.${DOMAIN}
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - ${MEDIA_PATH}:/media:ro     # media library on the cifs pool, read-only
+    # reach auth.<domain> (traefik@docker-1) for oidc; container dns can't resolve it
+    extra_hosts:
+      - "auth.${DOMAIN}:${DOCKER1_IP}"
+    ports:
+      - "${PORT}:8096"
+    networks:
+      - proxy-net
+
+networks:
+  proxy-net:
+    external: true

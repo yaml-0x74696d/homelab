@@ -1,0 +1,23 @@
+services:
+  esphome:
+    image: ghcr.io/esphome/esphome:latest
+    container_name: esphome
+    restart: unless-stopped
+    volumes:
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.esphome.rule=Host(`esphome.${DOMAIN}`)"
+      - "traefik.http.routers.esphome.entrypoints=websecure"
+      - "traefik.http.routers.esphome.tls.certresolver=cloudflare"
+      # gate the dashboard behind authentik sso (middleware lives in the file provider)
+      - "traefik.http.routers.esphome.middlewares=authentik@file"
+      - "traefik.http.services.esphome.loadbalancer.server.port=6052"
+
+networks:
+  proxy-net:
+    external: true

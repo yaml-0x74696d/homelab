@@ -1,0 +1,48 @@
+---
+# /etc/pve is fuse (pmxcfs): ansible's copy module can't CREATE files here (only overwrite),
+# and there's no atomic rename. so pre-touch each target, then template (unsafe_writes) fills it.
+# pmxcfs also fixes the file modes (no chmod), hence the noqa on mode.
+
+- name: Pre-create the cluster-shared fw files
+  ansible.builtin.command: "touch /etc/pve/firewall/{{ item }}.fw"
+  args:
+    creates: "/etc/pve/firewall/{{ item }}.fw"
+  loop: "{{ ['cluster', pve_firewall_netbird_vmid] + pve_firewall_open_guests }}"
+  run_once: true
+
+- name: Pre-create the host fw file
+  ansible.builtin.command: "touch /etc/pve/nodes/{{ inventory_hostname }}/host.fw"
+  args:
+    creates: "/etc/pve/nodes/{{ inventory_hostname }}/host.fw"
+
+- name: Cluster firewall (options, ipsets, mgmt group)
+  ansible.builtin.template:  # noqa: risky-file-permissions
+    src: cluster.fw.j2
+    dest: /etc/pve/firewall/cluster.fw
+    unsafe_writes: true
+  run_once: true
+
+- name: Netbird dmz firewall
+  ansible.builtin.template:  # noqa: risky-file-permissions
+    src: netbird.fw.j2
+    dest: "/etc/pve/firewall/{{ pve_firewall_netbird_vmid }}.fw"
+    unsafe_writes: true
+  run_once: true
+
+- name: Keep the other armed guests unfiltered
+  ansible.builtin.template:  # noqa: risky-file-permissions
+    src: guest-open.fw.j2
+    dest: "/etc/pve/firewall/{{ item }}.fw"
+    unsafe_writes: true
+  loop: "{{ pve_firewall_open_guests }}"
+  run_once: true
+
+- name: Host firewall
+  ansible.builtin.template:  # noqa: risky-file-permissions
+    src: host.fw.j2
+    dest: "/etc/pve/nodes/{{ inventory_hostname }}/host.fw"
+    unsafe_writes: true
+
+- name: Verify the ruleset compiles
+  ansible.builtin.command: pve-firewall compile
+  changed_when: false

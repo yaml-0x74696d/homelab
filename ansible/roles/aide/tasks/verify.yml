@@ -1,0 +1,19 @@
+---
+# the local db is only trusted if it matches the hash recorded on the controller
+- name: Hash aide db on {{ inventory_hostname }}
+  ansible.builtin.stat:
+    path: /var/lib/aide/aide.db
+    checksum_algorithm: sha256
+  register: aide_db
+
+- name: Compare with recorded hash for {{ inventory_hostname }}
+  vars:
+    aide_recorded: "{{ lookup('ansible.builtin.file', aide_checksum_dir ~ '/' ~ inventory_hostname ~ '.sha256', errors='ignore') | trim }}"
+  ansible.builtin.assert:
+    that: aide_db.stat.checksum == aide_recorded
+    fail_msg: >-
+      aide db on {{ inventory_hostname }} ({{ aide_db.stat.checksum }}) doesn't match
+      {{ aide_checksum_dir }}/{{ inventory_hostname }}.sha256 ({{ aide_recorded | default('missing', true) }}).
+      don't accept anything until you know why.
+    quiet: true
+  when: aide_db.stat.exists

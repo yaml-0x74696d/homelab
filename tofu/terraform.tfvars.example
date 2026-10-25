@@ -1,0 +1,16 @@
+# copy to terraform.tfvars (git-ignored) and fill in.
+# ips, vmids, admin user and ssh key come from ansible/group_vars/all — no copies here.
+
+# 2fa-exempt token — normal auth. create on pve: pveum user token add root@pam terraform --privsep 0
+pve_api_token = "root@pam!terraform=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+vm_password   = "CHANGE_ME"   # must equal the ansible vault sudo_pass
+
+# only needed to (re)create the storage lxc (bind mounts) — the api denies that for tokens.
+# fill + temporarily disable 2fa for that run, then blank it again. blank for everything else.
+# pve_password = "CHANGE_ME"
+
+# optional overrides (defaults in variables.tf):
+# pve_endpoint     = "https://192.168.178.101:8006/"
+# vm_datastore     = "local-lvm"
+# debian_image_url = "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
+# lxc_template     = "local:vztmpl/debian-13-standard_13.0-1_amd64.tar.zst"

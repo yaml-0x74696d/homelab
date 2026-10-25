@@ -1,0 +1,44 @@
+---
+# swap debian's default motd for fastfetch, fleet-wide.
+# become/user come from inventory per group (docker=sudo, pve/storage=root).
+- name: Fastfetch login banner
+  hosts: all
+  tasks:
+    - name: Install fastfetch
+      ansible.builtin.apt:
+        name: fastfetch
+        state: present
+        update_cache: true
+
+    - name: Clear static motd
+      ansible.builtin.copy:
+        content: ""
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Find dynamic motd scripts
+      ansible.builtin.find:
+        paths: /etc/update-motd.d
+        file_type: file
+      register: motd_scripts
+
+    - name: Disable dynamic motd scripts
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        mode: "0644"
+      loop: "{{ motd_scripts.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Fastfetch on interactive login
+      ansible.builtin.copy:
+        dest: /etc/profile.d/fastfetch.sh
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          # interactive logins only — don't break scp/rsync/sftp
+          case $- in *i*) ;; *) return ;; esac
+          command -v fastfetch >/dev/null && fastfetch

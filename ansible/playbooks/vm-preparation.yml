@@ -1,0 +1,251 @@
+---
+- name: Provision & harden docker host vms
+  hosts: docker_hosts
+  become: true
+
+  tasks:
+    - name: Install hardened package set
+      ansible.builtin.apt:
+        name:
+          - qemu-guest-agent
+          - cockpit
+          - ufw
+          - auditd
+          - libpam-pwquality
+          - curl
+          - gnupg
+          - ca-certificates
+          - fail2ban
+          - apparmor
+          - apparmor-utils
+          - systemd-timesyncd
+          - unattended-upgrades
+          - needrestart
+          - prometheus-node-exporter
+        state: present
+        update_cache: true
+
+    - name: Configure unattended-upgrades
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        mode: '0644'
+        content: |
+          Unattended-Upgrade::Allowed-Origins {
+              "${distro_id}:${distro_codename}-security";
+              "${distro_id}ESMApps:${distro_codename}-apps-security";
+              "${distro_id}ESM:${distro_codename}-infra-security";
+          };
+          Unattended-Upgrade::Package-Blacklist { };
+          Unattended-Upgrade::AutoFixInterruptedDpkg "true";
+          Unattended-Upgrade::MinimalSteps "true";
+          Unattended-Upgrade::InstallOnShutdown "false";
+          Unattended-Upgrade::Remove-Unused-Dependencies "true";
+          Unattended-Upgrade::Automatic-Reboot "false";
+
+    - name: Configure sysctl
+      ansible.posix.sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: true
+      loop:
+        - { key: 'net.ipv4.tcp_syncookies', value: '1' }
+        - { key: 'net.ipv4.conf.all.accept_redirects', value: '0' }
+        - { key: 'net.ipv4.conf.all.rp_filter', value: '1' }
+        - { key: 'kernel.randomize_va_space', value: '2' }
+        - { key: 'fs.suid_dumpable', value: '0' }
+        - { key: 'net.ipv4.conf.all.log_martians', value: '1' }
+        - { key: 'net.ipv6.conf.all.disable_ipv6', value: '1' }
+        - { key: 'net.ipv6.conf.default.disable_ipv6', value: '1' }
+        - { key: 'kernel.kptr_restrict', value: '2' }
+
+    - name: Set login banner
+      ansible.builtin.copy:
+        dest: "{{ item }}"
+        content: "{{ login_banner_text }}"
+        mode: '0644'
+      loop:
+        - /etc/issue
+        - /etc/issue.net
+
+    - name: Harden sshd configuration
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries {{ ssh_max_auth_tries }}' }
+        - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval {{ ssh_client_alive_interval }}' }
+        - { regexp: '^#?ClientAliveCountMax', line: 'ClientAliveCountMax {{ ssh_client_alive_count_max }}' }
+      notify: Restart sshd
+
+    - name: Configure auditd rules
+      ansible.builtin.copy:
+        dest: /etc/audit/rules.d/hardened.rules
+        mode: '0640'
+        content: |
+          -w /etc/shadow -p wa -k shadow_changes
+          -w /etc/passwd -p wa -k passwd_changes
+          -w /etc/sudoers -p wa -k sudo_changes
+          -w /etc/ssh/sshd_config -p wa -k sshd_changes
+      notify: Restart auditd
+
+    - name: Set default ufw policies
+      community.general.ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: 'incoming', policy: 'deny' }
+        - { direction: 'outgoing', policy: 'allow' }
+
+    - name: Allow ufw ports & rate limiting
+      community.general.ufw:
+        rule: "{{ item.rule | default('allow') }}"
+        port: "{{ item.port | default(omit) }}"
+        proto: "{{ item.proto | default('any') }}"
+        src: "{{ item.src | default(lan_cidr) }}"
+        direction: in
+      loop:
+        - { rule: 'limit', port: "{{ ssh_port }}" }
+        - { port: '53' }
+        - { port: '80' }
+        - { port: '443' }
+        - { port: "{{ cockpit_port }}" }
+        - { port: "{{ node_exporter_port }}", proto: 'tcp' }
+        - { port: "{{ docker_metrics_port }}", proto: 'tcp' }
+        # let the docker bridge reach the host's own metrics (prometheus self-scrape)
+        - { port: "{{ node_exporter_port }}", proto: 'tcp', src: "{{ docker_bridge_cidr }}" }
+        - { port: "{{ docker_metrics_port }}", proto: 'tcp', src: "{{ docker_bridge_cidr }}" }
+
+    - name: Enable ufw
+      community.general.ufw:
+        state: enabled
+
+    # ctorigdstport = pre-dnat port; local containers (docker bridge) always pass
+    - name: Filter published container ports
+      ansible.builtin.blockinfile:
+        path: /etc/ufw/after.rules
+        marker: "# {mark} ANSIBLE DOCKER-USER"
+        insertafter: EOF
+        block: |
+          *filter
+          :DOCKER-USER - [0:0]
+          {% for r in docker_published_allow %}
+          {% for s in r.src + [docker_bridge_cidr] %}
+          -A DOCKER-USER -p tcp -m conntrack --ctstate NEW --ctorigdstport {{ r.port }} -s {{ s }} -j RETURN
+          {% endfor %}
+          -A DOCKER-USER -p tcp -m conntrack --ctstate NEW --ctorigdstport {{ r.port }} -j DROP
+          {% endfor %}
+          -A DOCKER-USER -j RETURN
+          COMMIT
+      notify: Reload ufw
+      tags: [docker-user]
+
+    - name: Setup docker repositories
+      block:
+        - name: Ensure apt keyrings dir
+          ansible.builtin.file:
+            path: /etc/apt/keyrings
+            state: directory
+            mode: '0755'
+        - name: Add docker apt gpg key
+          ansible.builtin.get_url:
+            url: https://download.docker.com/linux/debian/gpg
+            dest: /etc/apt/keyrings/docker.asc
+            mode: '0644'
+        - name: Deb822 support
+          ansible.builtin.apt:
+            name: python3-debian   # needed by deb822_repository
+            state: present
+        - name: Add docker apt repository
+          ansible.builtin.deb822_repository:
+            name: docker
+            types: [deb]
+            uris: https://download.docker.com/linux/debian
+            suites: ["{{ ansible_distribution_release }}"]
+            components: [stable]
+            architectures: [amd64]
+            signed_by: /etc/apt/keyrings/docker.asc
+            state: present
+
+    - name: Install docker
+      ansible.builtin.apt:
+        name: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]
+        state: present
+        update_cache: true
+
+    - name: Add user to docker group
+      ansible.builtin.user: { name: "{{ admin_user }}", groups: docker, append: true }
+
+    - name: Configure docker daemon
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        mode: '0644'
+        content: |
+          {
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "{{ docker_log_max_size }}",
+              "max-file": "{{ docker_log_max_files }}"
+            },
+            "live-restore": true,
+            "no-new-privileges": true,
+            "metrics-addr": "0.0.0.0:{{ docker_metrics_port }}",
+            "experimental": true
+          }
+      notify: Restart docker
+
+    - name: Ensure docker drop-in dir
+      ansible.builtin.file:
+        path: /etc/systemd/system/docker.service.d
+        state: directory
+        mode: '0755'
+      tags: [docker-sock]
+
+    # live-restore keeps containers up, but a bind-mounted docker.sock goes stale on daemon restart
+    - name: Restart socket users after dockerd starts
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/docker.service.d/10-sock-users.conf
+        mode: '0644'
+        content: |
+          [Service]
+          ExecStartPost=-/bin/sh -c 'docker ps -q --filter label=homelab.docker-sock=true | xargs -r docker restart'
+      notify: Reload systemd
+      tags: [docker-sock]
+
+    - name: Set timezone
+      community.general.timezone: { name: "{{ timezone }}" }
+
+    - name: Enable and start services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - cockpit.socket
+        - docker
+        - auditd
+        - fail2ban
+        - apparmor
+        - prometheus-node-exporter
+
+    # last, so the baseline already contains the hardening above
+    - name: AIDE file integrity
+      ansible.builtin.include_role:
+        name: aide
+
+  handlers:
+    - name: Restart sshd
+      ansible.builtin.systemd: { name: ssh, state: restarted }
+    - name: Restart docker
+      ansible.builtin.systemd: { name: docker, state: restarted }
+    - name: Restart auditd
+      ansible.builtin.systemd: { name: auditd, state: restarted }
+    - name: Reload ufw
+      community.general.ufw: { state: reloaded }
+    - name: Reload systemd
+      ansible.builtin.systemd: { daemon_reload: true }

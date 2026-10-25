@@ -1,0 +1,29 @@
+---
+# lan facts, one source each. secrets live in vault.yml.
+domain: example.org
+lan_cidr: 192.168.178.0/24
+gateway_ip: 192.168.178.1
+docker_bridge_cidr: 172.16.0.0/12
+timezone: Europe/Berlin
+admin_user: admin              # login user on every host + app admin accounts
+
+pve1_ip: 192.168.178.101
+pve2_ip: 192.168.178.102
+pve3_ip: 192.168.178.103
+docker1_ip: 192.168.178.201
+docker2_ip: 192.168.178.202
+docker3_ip: 192.168.178.203
+storage_ip: 192.168.178.150    # CT 300 on pve-3
+netbird_ip: 192.168.178.250    # dmz vm on pve-2
+netbird_mac: "BC:24:11:00:02:50"   # sample, set yours; tofu assigns it, nixos matches the nic by it
+lan_bridge: vmbr0             # proxmox bridges (tofu + hostapd)
+iot_bridge: vmbr1
+dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (docker-2)
+mqtt_broker_ip: "{{ docker1_ip }}"
+
+# proxmox guest ids (tofu creates them with the same ids)
+vmids: { docker1: 201, docker2: 202, docker3: 203, netbird: 250, storage: 300 }
+
+# devices that may ssh to the hosts and open the pve ui
+admin_hosts:
+  - { ip: 192.168.178.2, c: controller }

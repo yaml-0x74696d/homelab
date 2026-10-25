@@ -1,0 +1,18 @@
+services:
+  pdfcraft:
+    image: ghcr.io/pdfcrafttool/pdfcraft:latest
+    container_name: pdfcraft
+    restart: unless-stopped
+    networks:
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.pdfcraft.rule=Host(`pdf.${DOMAIN}`)"
+      - "traefik.http.routers.pdfcraft.entrypoints=websecure"
+      - "traefik.http.routers.pdfcraft.tls.certresolver=cloudflare"
+      - "traefik.http.services.pdfcraft.loadbalancer.server.port=80"
+
+networks:
+  proxy-net:
+    external: true

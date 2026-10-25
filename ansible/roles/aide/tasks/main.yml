@@ -1,0 +1,57 @@
+---
+- name: Install aide
+  ansible.builtin.apt:
+    name: aide
+    state: present
+
+- name: Exclude churn paths
+  ansible.builtin.template:
+    src: 99_homelab_excludes.j2
+    dest: /etc/aide/aide.conf.d/99_homelab_excludes
+    mode: '0644'
+
+- name: Check aide config
+  ansible.builtin.command: aide --config=/etc/aide/aide.conf --config-check
+  changed_when: false
+
+- name: Verify recorded db hash
+  ansible.builtin.include_tasks: verify.yml
+
+- name: Build baseline if none
+  ansible.builtin.command: aide --config=/etc/aide/aide.conf --init
+  args:
+    creates: /var/lib/aide/aide.db
+  async: "{{ aide_run_timeout }}"
+  poll: "{{ aide_run_poll }}"
+  notify: Aide baseline built
+
+- name: Activate and record a new baseline now
+  ansible.builtin.meta: flush_handlers
+
+- name: Check script
+  ansible.builtin.template:
+    src: aide-check.sh.j2
+    dest: /usr/local/sbin/aide-check
+    mode: '0700'     # holds the ntfy token
+
+- name: Check units
+  ansible.builtin.template:
+    src: "aide-check.{{ item }}.j2"
+    dest: "/etc/systemd/system/aide-check.{{ item }}"
+    mode: '0644'
+  loop: [service, timer]
+
+# ours replaces it: midday + ntfy instead of a nightly mail
+- name: Mask debian's daily check
+  ansible.builtin.systemd:
+    name: dailyaidecheck.timer
+    enabled: false
+    masked: true
+    state: stopped
+
+- name: Enable aide-check timer
+  ansible.builtin.systemd:
+    name: aide-check.timer
+    enabled: true
+    state: started
+    daemon_reload: true

@@ -1,0 +1,6 @@
+---
+netbird_agent_mgmt_url: "https://nb.{{ domain }}"
+# reusable setup key from the dashboard; empty = install only, enroll by hand
+netbird_agent_setup_key: "{{ vault_netbird_setup_key | default('') }}"
+# routing peer forwards lan traffic; netbird sets this too, we persist it
+netbird_agent_enable_forwarding: true

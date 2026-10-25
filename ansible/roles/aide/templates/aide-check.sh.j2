@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# managed by ansible (roles/aide). daily check; ntfy gets counts only, paths stay in the journal.
+set -uo pipefail
+
+URL="{{ ntfy_url | default('') }}"
+TOKEN="{{ ntfy_token | default('') }}"
+HOST="$(hostname -s)"
+
+notify() {
+  [ -n "$URL" ] || return 0
+  local hdr=(-H "Title: $1" -H "Priority: high" -H "Tags: rotating_light")
+  [ -n "$TOKEN" ] && hdr+=(-H "Authorization: Bearer $TOKEN")
+  curl -fsS -m {{ ntfy_timeout }} "${hdr[@]}" -d "$2" "$URL" >/dev/null 2>&1 || true
+}
+
+out=$(aide --config=/etc/aide/aide.conf --check 2>&1)
+rc=$?
+printf '%s\n' "$out"
+
+# exit bits 1/2/4 = added/removed/changed, 14+ = aide error
+[ "$rc" -eq 0 ] && exit 0
+if [ "$rc" -ge 14 ]; then
+  notify "AIDE failed on $HOST" "exit $rc, see journalctl -u aide-check"
+  exit "$rc"
+fi
+
+count() { awk -F: -v k="$1" '$1 ~ k { gsub(/[^0-9]/, "", $2); print $2; exit }' <<<"$out"; }
+notify "AIDE: changes on $HOST" \
+  "$HOST: $(count 'Changed entries') changed, $(count 'Added entries') added, $(count 'Removed entries') removed. review + accept from ctl-0: aide-accept.yml -l $HOST"
+exit 0

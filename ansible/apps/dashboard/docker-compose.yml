@@ -1,0 +1,27 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}
+      - PUID=${PUID}
+      - PGID=${PGID}
+    networks:
+      - proxy-net
+    volumes:
+      - ./homepage/config:/app/config
+      - ./homepage/config/images:/app/public/images
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "homelab.docker-sock=true"
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.homepage.rule=Host(`home.${DOMAIN}`)"
+      - "traefik.http.routers.homepage.entrypoints=websecure"
+      - "traefik.http.routers.homepage.tls.certresolver=cloudflare"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
+
+networks:
+  proxy-net:
+    external: true

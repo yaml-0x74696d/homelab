@@ -1,0 +1,26 @@
+---
+storage_pool_host: /mnt/storage/pool   # mergerfs pool on the pve-3 host
+storage_root: /srv/storage             # pool bind-mounted into the storage CT
+cifs_mount_root: /srv                   # where the docker hosts mount pool shares
+storage_disks:                         # ext4 disks unioned into the pool
+  - { path: /mnt/storage/disk1, uuid: "CHANGE_ME-disk1-uuid" }
+  - { path: /mnt/storage/disk2, uuid: "CHANGE_ME-disk2-uuid" }
+  - { path: /mnt/storage/disk3, uuid: "CHANGE_ME-disk3-uuid" }
+  - { path: /mnt/storage/disk4, uuid: "CHANGE_ME-disk4-uuid" }
+
+# per-share group gid = base + list index (shared by samba role + pool dirs)
+samba_gid_base: 3001
+
+pbs_datastore_path: /mnt/pbs           # pbs datastore on the pve-3 host
+
+# admin_user = full access; each service user is scoped to its share
+samba_shares:
+  - { name: backups, service_user: backup }
+  - { name: iso, service_user: pve }
+  - { name: media, service_user: media }
+  - { name: nextcloud, service_user: nextcloud }
+  - { name: documents, service_user: paperless }
+  - { name: homelab }
+  - { name: photos, service_user: immich }
+  # append-only below: index sets the gid, so don't reorder
+  - { name: timemachine, time_machine: true, tm_size: "1T" }   # admin only

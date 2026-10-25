@@ -1,0 +1,31 @@
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('/images/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+
+
+html, body {
+    font-family: "JetBrains Mono", "Symbols Nerd Font", monospace !important;
+    font-size: 14px !important;
+}
+
+
+/* homelab palette, see docs/00-dashboard/style.md */
+:root {
+    --accent: #ee0000;
+    --accent-dim: #be0000;
+    --fg: #cccccc;
+    --fg-strong: #ffffff;
+}
+
+/* text was red (theme-*), now grey; red stays for accents */
+[class*="text-theme-"] { color: var(--fg) !important; }
+
+.bg-theme-500, .bg-theme-600 { background-color: var(--accent) !important; }
+.border-theme-500, .ring-theme-500 { border-color: var(--accent) !important; }
+
+a:hover { color: var(--accent) !important; }
+::selection { background: var(--accent); color: var(--fg-strong); }
+::-webkit-scrollbar-thumb { background: var(--accent-dim); }

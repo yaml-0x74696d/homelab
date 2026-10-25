@@ -1,0 +1,22 @@
+---
+- name: Deploy immich
+  hosts: docker-3
+  become: true
+  vars:
+    immich_redis_tag: 6.2-alpine
+    immich_pg_tag: 14-vectorchord0.4.3-pgvectors0.2.0   # vector-enabled build, never plain postgres
+    immich_health_interval: 30s
+    immich_health_retries: 5
+    immich_health_start: 20s
+    immich_db_health_timeout: 5s
+    immich_redis_health_timeout: 3s
+    immich_photos_path: "{{ cifs_mount_root }}/photos"
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: immich
+        # immich-server runs as root -> cifs uid/gid 0 (defaults)
+        docker_app_cifs:
+          - share: photos
+            user: immich
+            path: "{{ immich_photos_path }}"

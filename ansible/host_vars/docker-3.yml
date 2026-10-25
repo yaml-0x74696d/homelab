@@ -1,0 +1,14 @@
+---
+# what pbs backs up on docker-3 (see roles/pbs). bulk data (photos/media/docs/files)
+# lives on the cifs pool (cifs_mount_root), outside apps_root — not covered here by design.
+pbs_jobs:
+  - { name: nextcloud, type: postgres, container: nextcloud-db, data_dir: nextcloud/database }
+  - { name: immich, type: postgres, container: immich_postgres, data_dir: immich/postgres }
+  - { name: paperless, type: postgres, container: paperless-db, data_dir: paperless/database }
+  # jellyfin has no dump tool; .backup the two main dbs, skip-if-absent handles version drift
+  - { name: jellyfin, type: sqlite, path: jellyfin/config/data/jellyfin.db }
+  - { name: jellyfin-library, type: sqlite, path: jellyfin/config/data/library.db }
+
+pbs_exclude:
+  - jellyfin/cache
+  - jellyfin/config/transcodes

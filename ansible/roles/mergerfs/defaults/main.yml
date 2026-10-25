@@ -1,0 +1,11 @@
+---
+# mergerfs union options. mfs = write to the disk with most free space.
+mergerfs_options: "defaults,allow_other,use_ino,cache.files=partial,dropcacheonclose=true,category.create=mfs,minfreespace=20G,fsname=mergerfs"
+
+# member disk mount options
+mergerfs_disk_opts: defaults,noatime
+# order the pool after the disks at boot
+mergerfs_require_disks: true
+
+# CT 300 maps root to host uid 100000
+mergerfs_ct_root_uid: 100000

@@ -1,0 +1,114 @@
+---
+- name: Check the storage pool is mounted
+  ansible.builtin.command: "mountpoint -q {{ storage_root }}"
+  register: samba_pool_mounted
+  changed_when: false
+  failed_when: false
+
+- name: Fail if the pool bind mount is missing
+  ansible.builtin.assert:
+    that: samba_pool_mounted.rc == 0
+    fail_msg: >-
+      {{ storage_root }} is not a mount point. Build the host pool first
+      (--limit pve-3) and apply the tofu CT mount change before deploying samba.
+    quiet: true
+
+- name: Install samba
+  ansible.builtin.apt:
+    name: [samba, samba-common-bin]
+    state: present
+    update_cache: true
+
+- name: Create per-share groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ samba_gid_base + idx }}"
+  loop: "{{ samba_shares }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.name }}"
+
+- name: Create the admin user (member of every share group)
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    uid: "{{ samba_admin_uid }}"
+    group: users
+    groups: "{{ samba_shares | map(attribute='name') | list }}"
+    append: false
+    shell: /usr/sbin/nologin
+    create_home: false
+
+- name: Create scoped service users
+  ansible.builtin.user:
+    name: "{{ item.service_user }}"
+    uid: "{{ samba_svc_uid_base + idx }}"
+    group: "{{ item.name }}"
+    shell: /usr/sbin/nologin
+    create_home: false
+  loop: "{{ samba_shares }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.service_user | default('-') }}"
+  when: item.service_user is defined
+
+- name: Render smb.conf
+  ansible.builtin.template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    mode: '0644'
+    validate: "testparm -s %s"
+  notify: Restart samba
+
+- name: List existing samba users
+  ansible.builtin.command: pdbedit -L
+  register: samba_smb_users
+  changed_when: false
+
+# stdin, not a shell pipe: no quoting issues, password never in ps
+- name: Set samba passwords
+  ansible.builtin.command: smbpasswd -s -a {{ item }}
+  args:
+    stdin: "{{ smb_passwords[item] }}\n{{ smb_passwords[item] }}"
+  loop: "{{ [admin_user] + (samba_shares | selectattr('service_user', 'defined') | map(attribute='service_user') | list) }}"
+  when: samba_rotate_passwords or item not in (samba_smb_users.stdout_lines | map('regex_replace', ':.*$', '') | list)
+  changed_when: true
+  no_log: true
+
+- name: Enable and start samba
+  ansible.builtin.systemd:
+    name: smbd
+    state: started
+    enabled: true
+
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+  when: samba_manage_ufw
+
+- name: Ufw default policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+  when: samba_manage_ufw
+
+- name: Ufw allow ssh + samba from lan
+  community.general.ufw:
+    rule: "{{ item.rule | default('allow') }}"
+    port: "{{ item.port }}"
+    proto: tcp
+    src: "{{ samba_lan }}"
+    direction: in
+  loop:
+    - { rule: limit, port: '22' }
+    - { port: '445' }
+    - { port: '139' }
+  when: samba_manage_ufw
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+  when: samba_manage_ufw

@@ -1,0 +1,26 @@
+---
+- name: Deploy paperless-ngx
+  hosts: docker-3
+  become: true
+  vars:
+    paperless_pg_tag: 16-alpine
+    paperless_gotenberg_tag: "8"
+    paperless_health_interval: 30s
+    paperless_health_retries: 5
+    paperless_health_start: 20s
+    paperless_db_health_timeout: 5s
+    paperless_redis_health_timeout: 3s
+    paperless_ocr_language: eng+deu
+    paperless_uid: 1000                  # the image drops to this uid/gid
+    paperless_documents_path: "{{ cifs_mount_root }}/documents"
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: paperless
+        # cifs must match the paperless uid or it can't write
+        docker_app_cifs:
+          - share: documents
+            user: paperless
+            path: "{{ paperless_documents_path }}"
+            uid: "{{ paperless_uid }}"
+            gid: "{{ paperless_uid }}"

@@ -1,0 +1,15 @@
+---
+- name: Deploy mosquitto
+  hosts: docker-1
+  become: true
+  vars:
+    mosquitto_uid: 1883                  # image user
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: mosquitto
+        docker_app_ufw:
+          - { port: "{{ mqtt_port }}" }
+        docker_app_dirs:
+          - { path: data, owner: "{{ mosquitto_uid }}", group: "{{ mosquitto_uid }}" }
+          - { path: log, owner: "{{ mosquitto_uid }}", group: "{{ mosquitto_uid }}" }

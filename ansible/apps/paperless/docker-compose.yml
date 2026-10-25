@@ -1,0 +1,102 @@
+services:
+  broker:
+    image: redis:alpine
+    container_name: paperless-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: ${HEALTH_INTERVAL}
+      timeout: ${REDIS_HEALTH_TIMEOUT}
+      retries: ${HEALTH_RETRIES}
+      start_period: ${HEALTH_START}
+    networks:
+      - paperless-internal
+
+  db:
+    image: postgres:${PG_TAG}
+    container_name: paperless-db
+    restart: unless-stopped
+    volumes:
+      - ./database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${PG_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: ${HEALTH_INTERVAL}
+      timeout: ${DB_HEALTH_TIMEOUT}
+      retries: ${HEALTH_RETRIES}
+      start_period: ${HEALTH_START}
+    networks:
+      - paperless-internal
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:${GOTENBERG_TAG}
+    container_name: paperless-gotenberg
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    networks:
+      - paperless-internal
+
+  tika:
+    image: docker.io/apache/tika:latest
+    container_name: paperless-tika
+    restart: unless-stopped
+    networks:
+      - paperless-internal
+
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+      gotenberg:
+        condition: service_started
+      tika:
+        condition: service_started
+    volumes:
+      - ./data:/usr/src/paperless/data
+      - ${DOCUMENTS_PATH}/media:/usr/src/paperless/media       # archive on the pool
+      - ${DOCUMENTS_PATH}/consume:/usr/src/paperless/consume   # drop files here via samba
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: ${PG_PASS}
+      PAPERLESS_SECRET_KEY: ${SECRET_KEY}
+      PAPERLESS_URL: https://paperless.${DOMAIN}
+      PAPERLESS_ADMIN_USER: ${ADMIN_USER}
+      PAPERLESS_ADMIN_PASSWORD: ${ADMIN_PASS}
+      PAPERLESS_TIME_ZONE: ${TZ}
+      PAPERLESS_OCR_LANGUAGE: ${OCR_LANGUAGE}
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      # oidc via authentik (django-allauth). local login stays as break-glass.
+      PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS: '{"openid_connect":{"APPS":[{"provider_id":"authentik","name":"Authentik",
+        "client_id":"${PAPERLESS_OIDC_ID}","secret":"${PAPERLESS_OIDC_SECRET}",
+        "settings":{"server_url":"https://auth.${DOMAIN}/application/o/paperless/.well-known/openid-configuration"}}]}}'
+    # reach auth.<domain> (traefik@docker-1) for oidc; container dns can't resolve it
+    extra_hosts:
+      - "auth.${DOMAIN}:${DOCKER1_IP}"
+    ports:
+      - "${PORT}:8000"
+    networks:
+      - paperless-internal
+      - proxy-net              # bridge so the published port binds
+
+networks:
+  proxy-net:
+    external: true
+  paperless-internal:
+    internal: true

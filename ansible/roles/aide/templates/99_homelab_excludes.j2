@@ -1,0 +1,6 @@
+# managed by ansible (roles/aide). churn excluded on top of debian's rules.
+{% for g in group_names if g in aide_excludes_by_group %}
+{% for p in aide_excludes_by_group[g] | flatten %}
+!{{ p }}(/|$)
+{% endfor %}
+{% endfor %}

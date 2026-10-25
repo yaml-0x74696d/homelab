@@ -1,0 +1,14 @@
+interface={{ hostapd_interface }}
+driver=nl80211
+bridge={{ hostapd_bridge }}
+ssid={{ wifi_ssid }}
+hw_mode=g
+channel={{ hostapd_channel }}
+country_code={{ hostapd_country }}
+wmm_enabled=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase={{ wifi_pass }}
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP

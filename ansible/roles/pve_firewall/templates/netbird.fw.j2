@@ -1,0 +1,32 @@
+# managed by ansible (roles/pve_firewall) — netbird dmz box
+[OPTIONS]
+
+enable: 1
+policy_in: DROP
+policy_out: ACCEPT
+
+[RULES]
+
+# inbound: only what netbird serves
+IN ACCEPT -p tcp -dport 443 -log nolog
+{% for port in pve_firewall_netbird_turn_ports %}
+IN ACCEPT -p udp -dport {{ port }} -log nolog
+IN ACCEPT -p tcp -dport {{ port }} -log nolog
+{% endfor %}
+IN ACCEPT -p udp -dport {{ pve_firewall_netbird_relay_range }} -log nolog
+IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p tcp -dport 22 -log nolog
+IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p icmp -log nolog
+
+# egress (tier 2): full to the routing peers (turn relay), dns + https to pihole/traefik,
+# dns to the gateway, drop the rest of the lan; internet stays open.
+{% for ip in pve_firewall_routing_peers %}
+OUT ACCEPT -dest {{ ip }} -log nolog
+{% endfor %}
+{% for ip in pve_firewall_netbird_dns_https %}
+OUT ACCEPT -dest {{ ip }} -p udp -dport 53 -log nolog
+OUT ACCEPT -dest {{ ip }} -p tcp -dport 53 -log nolog
+OUT ACCEPT -dest {{ ip }} -p tcp -dport 443 -log nolog
+{% endfor %}
+OUT ACCEPT -dest {{ pve_firewall_gateway_ip }} -p udp -dport 53 -log nolog
+OUT ACCEPT -dest {{ pve_firewall_gateway_ip }} -p tcp -dport 53 -log nolog
+OUT DROP -dest {{ pve_firewall_lan_cidr }} -log nolog

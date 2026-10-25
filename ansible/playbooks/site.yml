@@ -1,0 +1,61 @@
+---
+# full deploy. run a single deploy-<service>.yml to touch just one service.
+- name: Deploy docker-proxy
+  import_playbook: deploy-dockerproxy.yml
+- name: Deploy traefik
+  import_playbook: deploy-proxy.yml
+- name: Deploy pihole
+  import_playbook: deploy-dns.yml
+- name: Deploy homepage
+  import_playbook: deploy-dashboard.yml
+- name: Deploy cloudflare-ddns
+  import_playbook: deploy-utilities.yml
+- name: Deploy authentik
+  import_playbook: deploy-authentik.yml
+- name: Deploy vaultwarden
+  import_playbook: deploy-vaultwarden.yml
+- name: Deploy gitea
+  import_playbook: deploy-gitea.yml
+- name: Deploy pdfcraft
+  import_playbook: deploy-pdfcraft.yml
+- name: Deploy searxng
+  import_playbook: deploy-searxng.yml
+- name: Deploy mosquitto
+  import_playbook: deploy-mosquitto.yml
+- name: Deploy mqtt-exporter
+  import_playbook: deploy-mqtt-exporter.yml
+- name: Deploy esphome
+  import_playbook: deploy-esphome.yml
+- name: Deploy home assistant
+  import_playbook: deploy-homeassistant.yml
+- name: Deploy homelable
+  import_playbook: deploy-homelable.yml
+- name: Deploy prometheus
+  import_playbook: deploy-prometheus.yml
+- name: Deploy influxdb
+  import_playbook: deploy-influxdb.yml
+- name: Deploy grafana
+  import_playbook: deploy-grafana.yml
+- name: Deploy nginx
+  import_playbook: deploy-nginx.yml
+- name: Deploy uptime-kuma
+  import_playbook: deploy-uptime-kuma.yml
+- name: Deploy diun
+  import_playbook: deploy-diun.yml
+- name: Deploy hostapd
+  import_playbook: deploy-hostapd.yml
+# needs pve-3 powered on
+- name: Deploy storage (mergerfs + samba)
+  import_playbook: deploy-storage.yml
+# home cloud (docker-3) — cifs-mounts pool shares, so runs after storage
+- name: Deploy nextcloud
+  import_playbook: deploy-nextcloud.yml
+- name: Deploy immich
+  import_playbook: deploy-immich.yml
+- name: Deploy jellyfin
+  import_playbook: deploy-jellyfin.yml
+- name: Deploy paperless
+  import_playbook: deploy-paperless.yml
+# backup clients: needs the apps present + pve-3 (datastore) on
+- name: Deploy pbs backup client
+  import_playbook: deploy-pbs.yml

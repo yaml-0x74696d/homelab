@@ -1,0 +1,14 @@
+---
+- name: Deploy homelable
+  hosts: docker-2
+  become: true
+  vars:
+    homelable_user: admin
+    homelable_health_interval: 10s
+    homelable_health_timeout: 5s
+    homelable_health_retries: 6
+    homelable_health_start: 15s
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: homelable

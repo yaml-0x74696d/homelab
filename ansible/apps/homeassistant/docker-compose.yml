@@ -1,0 +1,23 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.homeassistant.rule=Host(`ha.${DOMAIN}`)"
+      - "traefik.http.routers.homeassistant.entrypoints=websecure"
+      - "traefik.http.routers.homeassistant.tls.certresolver=cloudflare"
+      - "traefik.http.services.homeassistant.loadbalancer.server.port=8123"
+
+networks:
+  proxy-net:
+    external: true

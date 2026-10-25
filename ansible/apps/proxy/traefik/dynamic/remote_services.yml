@@ -1,0 +1,186 @@
+http:
+  serversTransports:
+    insecure-transport:
+      insecureSkipVerify: true
+
+  routers:
+    pve1-router:
+      rule: "Host(`pve-1.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "pve1-service"
+
+    pve2-router:
+      rule: "Host(`pve-2.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "pve2-service"
+
+    pve3-router:
+      rule: "Host(`pve-3.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "pve3-service"
+
+    pbs-router:
+      rule: "Host(`pbs.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "pbs-service"
+
+    pihole-router:
+      rule: "Host(`dns.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "pihole-service"
+
+    homelable-router:
+      rule: "Host(`homelable.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "homelable-service"
+
+    prometheus-router:
+      rule: "Host(`prom.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      middlewares: ["authentik@file"]   # sso; grafana must reach prom internally, not via this url
+      service: "prometheus-service"
+
+    grafana-router:
+      rule: "Host(`grafana.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "grafana-service"
+
+    influxdb-router:
+      rule: "Host(`influx.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "influxdb-service"
+
+    nginx-router:
+      rule: "Host(`web.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "nginx-service"
+
+    uptime-kuma-router:
+      rule: "Host(`status.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "uptime-kuma-service"
+
+    nextcloud-router:
+      rule: "Host(`cloud.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      middlewares: ["nextcloud-dav"]
+      service: "nextcloud-service"
+
+    immich-router:
+      rule: "Host(`photo.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "immich-service"
+
+    jellyfin-router:
+      rule: "Host(`media.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "jellyfin-service"
+
+    paperless-router:
+      rule: "Host(`paperless.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "paperless-service"
+
+  middlewares:
+    # dav discovery: /.well-known/{card,cal}dav -> /remote.php/dav
+    nextcloud-dav:
+      redirectRegex:
+        regex: "https://(.*)/.well-known/(card|cal)dav"
+        replacement: "https://${1}/remote.php/dav"
+        permanent: true
+
+  services:
+    pve1-service:
+      loadBalancer:
+        serversTransport: "insecure-transport"
+        servers:
+          - url: "https://{{ env "PVE1_IP" }}:{{ env "PVE_UI_PORT" }}"
+
+    pve2-service:
+      loadBalancer:
+        serversTransport: "insecure-transport"
+        servers:
+          - url: "https://{{ env "PVE2_IP" }}:{{ env "PVE_UI_PORT" }}"
+
+    pve3-service:
+      loadBalancer:
+        serversTransport: "insecure-transport"
+        servers:
+          - url: "https://{{ env "PVE3_IP" }}:{{ env "PVE_UI_PORT" }}"
+
+    # pbs rides the pve-3 host, own port, own self-signed cert
+    pbs-service:
+      loadBalancer:
+        serversTransport: "insecure-transport"
+        servers:
+          - url: "https://{{ env "PVE3_IP" }}:{{ env "PBS_PORT" }}"
+
+    pihole-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "PIHOLE_PORT" }}"
+
+    homelable-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "HOMELABLE_PORT" }}"
+
+    prometheus-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "PROMETHEUS_PORT" }}"
+
+    grafana-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "GRAFANA_PORT" }}"
+
+    influxdb-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "INFLUXDB_PORT" }}"
+
+    nginx-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "NGINX_PORT" }}"
+
+    uptime-kuma-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "UPTIME_KUMA_PORT" }}"
+
+    nextcloud-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER3_IP" }}:{{ env "NEXTCLOUD_PORT" }}"
+
+    immich-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER3_IP" }}:{{ env "IMMICH_PORT" }}"
+
+    jellyfin-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER3_IP" }}:{{ env "JELLYFIN_PORT" }}"
+
+    paperless-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "DOCKER3_IP" }}:{{ env "PAPERLESS_PORT" }}"

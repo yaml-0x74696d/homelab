@@ -1,0 +1,66 @@
+---
+- name: Install mergerfs
+  ansible.builtin.apt:
+    name: [mergerfs, fuse3]
+    state: present
+    update_cache: true
+
+- name: Allow non-root access to fuse mounts
+  ansible.builtin.lineinfile:
+    path: /etc/fuse.conf
+    regexp: '^#?\s*user_allow_other'
+    line: user_allow_other
+
+- name: Mount storage disks
+  ansible.posix.mount:
+    path: "{{ item.path }}"
+    src: "UUID={{ item.uuid }}"
+    fstype: ext4
+    opts: "{{ mergerfs_disk_opts }}"
+    state: mounted
+  loop: "{{ storage_disks }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Verify every pool disk is mounted
+  ansible.builtin.command: "mountpoint -q {{ item.path }}"
+  loop: "{{ storage_disks }}"
+  loop_control:
+    label: "{{ item.path }}"
+  changed_when: false
+
+- name: Ensure pool mountpoint
+  ansible.builtin.file:
+    path: "{{ storage_pool_host }}"
+    state: directory
+    mode: '0755'
+
+- name: Mount mergerfs pool
+  ansible.posix.mount:
+    path: "{{ storage_pool_host }}"
+    src: "{{ storage_disks | map(attribute='path') | join(':') }}"
+    fstype: fuse.mergerfs
+    opts: "{{ ([mergerfs_options] + (mergerfs_require_disks | \
+      ternary(storage_disks | map(attribute='path') | \
+      map('regex_replace', '^', 'x-systemd.requires=') | list, []))) | join(',') }}"
+    state: mounted
+
+- name: Hand the pool root to the container's mapped root
+  ansible.builtin.file:
+    path: "{{ storage_pool_host }}"
+    owner: "{{ mergerfs_ct_root_uid }}"
+    group: "{{ mergerfs_ct_root_uid }}"
+    mode: '0755'
+
+- name: Create share directories on the pool
+  # real root here; the unprivileged container can't chgrp on the fuse mount
+  ansible.builtin.file:
+    path: "{{ storage_pool_host }}/{{ item.name }}"
+    state: directory
+    owner: "{{ mergerfs_ct_root_uid }}"
+    group: "{{ mergerfs_ct_root_uid + samba_gid_base + idx }}"
+    mode: '2770'
+  loop: "{{ samba_shares }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.name }}"

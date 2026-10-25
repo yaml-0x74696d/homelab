@@ -1,0 +1,10 @@
+---
+- name: Deploy uptime-kuma
+  hosts: docker-2
+  become: true
+  vars:
+    uptime_kuma_tag: "1"   # major pin
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: uptime-kuma

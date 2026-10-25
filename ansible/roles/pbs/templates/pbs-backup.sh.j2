@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# managed by ansible (roles/pbs). data-only backup: dump the dbs, then push
+# dumps + flat app config to pbs. live db files are excluded (dumps replace them).
+set -Eeuo pipefail
+umask 077                 # dumps hold vault/sso secrets — keep them root-only
+
+STAGING="{{ pbs_staging_dir }}"
+APPS="{{ apps_root }}"
+
+log()    { logger -t pbs-backup "$*"; echo "$*"; }
+notify() {
+{% if pbs_ntfy_url and pbs_ntfy_token %}
+  curl -fsS -m {{ ntfy_timeout }} -H "Authorization: Bearer {{ pbs_ntfy_token }}" -H "Title: pbs backup" -d "$1" "{{ pbs_ntfy_url }}" || true
+{% elif pbs_ntfy_url %}
+  curl -fsS -m {{ ntfy_timeout }} -H "Title: pbs backup" -d "$1" "{{ pbs_ntfy_url }}" || true
+{% else %}
+  :   # alerts off — pbs_ntfy_url unset
+{% endif %}
+}
+fail()   { log "FAILED: $*"; notify "$(hostname -s): backup failed — $*"; exit 1; }
+trap 'fail "unexpected error near line $LINENO"' ERR
+
+# never overlap runs
+exec 9>/run/pbs-backup.lock
+flock -n 9 || { log "another run in progress, skipping"; exit 0; }
+
+# refuse a mis-set staging path before anything destructive touches it
+case "$STAGING" in /var/backups/*) ;; *) fail "refusing unexpected STAGING=$STAGING" ;; esac
+trap 'rm -rf "$STAGING"' EXIT   # never leave plaintext dumps behind, even on failure
+rm -rf "$STAGING"; install -d -m 0700 "$STAGING"
+
+# ---- consistent point-in-time db dumps ----
+{% for j in pbs_jobs %}
+{% if j.type == 'postgres' %}
+log "dump postgres {{ j.name }}"
+docker exec {{ j.container }} sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' \
+  > "$STAGING/{{ j.name }}.sql" || fail "pg_dump {{ j.name }}"
+[ -s "$STAGING/{{ j.name }}.sql" ] || fail "pg_dump {{ j.name }} wrote an empty file"
+{% elif j.type == 'sqlite' %}
+if [ -f "$APPS/{{ j.path }}" ]; then
+  log "dump sqlite {{ j.name }}"
+  # online .backup — safe against a live writer, unlike cp
+  sqlite3 "$APPS/{{ j.path }}" ".backup '$STAGING/{{ j.name }}.db'" || fail "sqlite {{ j.name }}"
+  [ -s "$STAGING/{{ j.name }}.db" ] || fail "sqlite {{ j.name }} wrote an empty file"
+else
+  log "skip sqlite {{ j.name }} — $APPS/{{ j.path }} absent"
+fi
+{% elif j.type == 'influx' %}
+log "dump influx {{ j.name }}"
+docker exec {{ j.container }} sh -c 'export INFLUX_TOKEN="$DOCKER_INFLUXDB_INIT_ADMIN_TOKEN"; rm -rf /tmp/pbs-influx && influx backup /tmp/pbs-influx' \
+  || fail "influx backup {{ j.name }}"
+docker cp {{ j.container }}:/tmp/pbs-influx "$STAGING/{{ j.name }}" || fail "influx cp {{ j.name }}"
+[ -n "$(ls -A "$STAGING/{{ j.name }}" 2>/dev/null)" ] || fail "influx {{ j.name }} dump is empty"
+docker exec {{ j.container }} rm -rf /tmp/pbs-influx || true
+{% endif %}
+{% endfor %}
+
+# ---- push. exclude the live dbs we just dumped + anything disposable ----
+EXCLUDES=(
+{% for j in pbs_jobs %}
+{% if j.type == 'sqlite' %}
+  --exclude "/{{ j.path }}"
+  --exclude "/{{ j.path }}-wal"
+  --exclude "/{{ j.path }}-shm"
+{% elif j.data_dir is defined %}
+  --exclude "/{{ j.data_dir }}"
+{% endif %}
+{% endfor %}
+{% for e in pbs_exclude %}
+  --exclude "/{{ e }}"
+{% endfor %}
+)
+
+log "push snapshot"
+proxmox-backup-client backup \
+  dumps.pxar:"$STAGING" \
+  apps.pxar:"$APPS" \
+  "${EXCLUDES[@]}" \
+  --backup-id "{{ pbs_id }}" || fail "proxmox-backup-client"
+
+log "backup ok"   # staging wiped by the EXIT trap

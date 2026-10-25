@@ -1,0 +1,38 @@
+# secrets
+ansible/group_vars/all/vault.yml
+.vault_pass
+**/.vault_pass
+.env
+*.tfvars
+
+# private keys (public keys stay on the controller too, see admin_ssh_pubkey_file)
+id_ed25519*
+id_rsa*
+*.pem
+*.key
+
+# host-specific aide baselines (the private repo keeps these)
+ansible/aide/*.sha256
+
+# ansible: installed collections, ansible-lint cache, run artifacts
+ansible/collections/
+.ansible/
+**/*artifact*.json
+*.log
+
+# tofu
+tofu/.terraform/
+*.tfstate
+*.tfstate.*
+
+# nix build output (symlink to the store)
+nixos/result*
+
+# likec4 build output
+architecture/dist/
+
+# tooling / editor
+.claude/
+.mcp.json
+.idea/
+.vscode/

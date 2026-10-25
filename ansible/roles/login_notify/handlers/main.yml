@@ -1,0 +1,6 @@
+---
+- name: Restart login-notify
+  ansible.builtin.systemd:
+    name: login-notify.service
+    state: restarted
+    daemon_reload: true

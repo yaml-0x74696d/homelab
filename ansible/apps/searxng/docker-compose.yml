@@ -1,0 +1,48 @@
+services:
+  searxng-redis:
+    image: valkey/valkey:${VALKEY_TAG}
+    container_name: searxng-redis
+    command: valkey-server --save ${VALKEY_SAVE} --loglevel warning
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: ${HEALTH_INTERVAL}
+      timeout: ${HEALTH_TIMEOUT}
+      retries: ${HEALTH_RETRIES}
+      start_period: ${HEALTH_START}
+    volumes:
+      - searxng-valkey:/data
+    networks:
+      - searxng-internal
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    depends_on:
+      searxng-redis:
+        condition: service_healthy
+    environment:
+      - SEARXNG_BASE_URL=https://search.${DOMAIN}/
+      - SEARXNG_SECRET=${SEARXNG_SECRET}
+      - SEARXNG_VALKEY_URL=valkey://searxng-redis:6379/0
+      - SEARXNG_LIMITER=true
+    networks:
+      - searxng-internal
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy-net"
+      - "traefik.http.routers.searxng.rule=Host(`search.${DOMAIN}`)"
+      - "traefik.http.routers.searxng.entrypoints=websecure"
+      - "traefik.http.routers.searxng.tls.certresolver=cloudflare"
+      - "traefik.http.services.searxng.loadbalancer.server.port=8080"
+
+volumes:
+  searxng-valkey:
+
+networks:
+  searxng-internal:
+    internal: true
+  proxy-net:
+    external: true

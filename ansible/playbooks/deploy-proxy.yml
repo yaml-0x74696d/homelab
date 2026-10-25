@@ -1,0 +1,14 @@
+---
+- name: Deploy proxy
+  hosts: docker-1
+  become: true
+  vars:
+    traefik_log_level: DEBUG
+    traefik_acme_resolvers: "1.1.1.1:53,8.8.8.8:53"   # public, pihole answers the zone locally
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: proxy
+        docker_app_networks: [proxy-net]
+        docker_app_touch:
+          - { path: acme.json, mode: '0600' }

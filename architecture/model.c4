@@ -1,0 +1,272 @@
+model {
+  household = actor "Household" {
+    description "Uses the apps on the LAN or through the mesh VPN"
+  }
+  admin = actor "Admin" {
+    description "Runs ansible/tofu from the controller"
+  }
+  phone = device "Remote device" {
+    description "Laptop or phone with the netbird client"
+  }
+
+  cloudflare = external "Cloudflare" {
+    description "Public DNS, ACME DNS-01, DDNS"
+    style { icon tech:cloudflare }
+  }
+  letsencrypt = external "Let's Encrypt" {
+    description "TLS certificates"
+    style { icon tech:letsencrypt }
+  }
+  ntfy = external "ntfy.sh" {
+    description "Push alerts to the phone"
+  }
+  fritzbox = external "FritzBox" {
+    description "Router, DHCP, WAN port forwards, backup WireGuard"
+  }
+
+  edge = system "Ingress & DNS" {
+    technology "Traefik, Pi-hole"
+    description "TLS reverse proxy and local DNS for every *.domain app, LAN only"
+    traefik = container "Traefik" {
+      technology "reverse proxy"
+      description "One cert per route via ACME DNS-01"
+      style { icon tech:traefik-proxy }
+    }
+    pihole = container "Pi-hole" {
+      technology "DNS + ad blocking"
+      description "Local records for *.domain, upstream resolver"
+    }
+    ddns = container "cloudflare-ddns" { description "Keeps the public A records current" }
+  }
+
+  identity = system "Identity" {
+    technology "Authentik"
+    description "Single sign-on for the apps and the VPN"
+    authentik = app "Authentik" {
+      #sso
+      server = container "Authentik server" {
+        technology "IdP"
+        description "OIDC provider and traefik forward-auth"
+      }
+      worker = container "Authentik worker"
+      pg = db "Authentik Postgres" { style { icon tech:postgresql } }
+      server -> pg
+      worker -> pg
+    }
+  }
+
+  remote = system "Remote access" {
+    technology "NetBird (self-hosted), WireGuard"
+    description "Self-hosted WireGuard mesh, the way in from outside"
+    netbird = app "NetBird" {
+      #dmz
+      description "Control plane, NixOS VM in the DMZ"
+      mgmt = container "NetBird management" { technology "API + state" }
+      signal = container "NetBird signal" { technology "peer handshakes" }
+      turn = container "coturn" { technology "STUN/TURN" }
+      dash = ui "NetBird dashboard"
+    }
+    router-peer = container "Routing peer" {
+      technology "netbird agent"
+      description "Advertises the LAN route, on docker-2 only"
+    }
+  }
+
+  apps = system "Apps" {
+    technology "Vaultwarden, Gitea, SearXNG, Homepage, …"
+    description "Everyday self-hosted tools"
+    vaultwarden = container "Vaultwarden" { technology "password manager" }
+    gitea = container "Gitea" { technology "git, sqlite" }
+    searxng = app "SearXNG" {
+      web = container "SearXNG" { technology "metasearch" }
+      valkey = cache "SearXNG Valkey"
+      web -> valkey
+    }
+    homepage = ui "Homepage" { technology "dashboard" }
+    pdfcraft = ui "PDFCraft" { technology "pdf tools, wasm" }
+    homelable = ui "Homelable" { technology "network inventory" }
+  }
+
+  media = system "Home cloud" {
+    technology "Nextcloud, Immich, Jellyfin, Paperless-ngx"
+    description "Files, photos, media and documents on the storage pool"
+    nextcloud = app "Nextcloud" {
+      web = container "Nextcloud"
+      pg = db "Nextcloud Postgres" { style { icon tech:postgresql } }
+      redis = cache "Nextcloud Redis" { style { icon tech:redis } }
+      web -> pg
+      web -> redis
+    }
+    immich = app "Immich" {
+      server = container "Immich server"
+      pg = db "Immich Postgres" {
+        technology "vectorchord"
+        style { icon tech:postgresql }
+      }
+      redis = cache "Immich Redis" { style { icon tech:redis } }
+      server -> pg "metadata"
+      server -> redis
+    }
+    jellyfin = container "Jellyfin" { technology "media server" }
+    paperless = app "Paperless-ngx" {
+      web = container "Paperless-ngx"
+      pg = db "Paperless Postgres" { style { icon tech:postgresql } }
+      redis = cache "Paperless Redis" { style { icon tech:redis } }
+      tika = container "Tika" { technology "text extraction" }
+      gotenberg = container "Gotenberg" { technology "office → pdf" }
+      web -> pg
+      web -> redis
+      web -> tika
+      web -> gotenberg
+    }
+  }
+
+  automation = system "Home automation" {
+    technology "Home Assistant, Mosquitto, ESPHome"
+    description "Home Assistant and the sensor network"
+    homeassistant = container "Home Assistant"
+    mosquitto = container "Mosquitto" { #parked; technology "MQTT broker" }
+    esphome = ui "ESPHome" { #parked }
+    mqtt-exporter = container "mqtt-exporter" { #parked }
+    sensor = device "ESP32 sensor" {
+      #iot
+      description "Temperature/humidity on the isolated IoT wifi"
+    }
+    ap = container "IoT access point" {
+      #iot
+      technology "hostapd"
+      description "Isolated wifi for the sensors"
+    }
+  }
+
+  observability = system "Observability" {
+    technology "Prometheus, Grafana, InfluxDB, Uptime Kuma"
+    description "Metrics, dashboards and uptime checks"
+    prometheus = container "Prometheus" { style { icon tech:prometheus } }
+    grafana = ui "Grafana" { style { icon tech:grafana } }
+    influxdb = db "InfluxDB" {
+      technology "time series"
+      style { icon tech:influxdb }
+    }
+    uptime-kuma = ui "Uptime Kuma"
+    node-exporter = container "node-exporter" { #ops; description "Per host" }
+  }
+
+  storage = system "Storage & backup" {
+    technology "mergerfs, Samba, PBS"
+    description "Shared disk pool and the backup server"
+    samba = store "Samba pool" {
+      technology "mergerfs over 4 disks"
+      description "Shares: media, photos, documents, nextcloud"
+    }
+    pbs = store "Proxmox Backup Server" { technology "PBS datastore" }
+    pbs-client = container "Backup client" {
+      #ops
+      technology "proxmox-backup-client + timer"
+      description "Nightly db dumps + config, data-only"
+    }
+  }
+
+  ops = system "Operations" {
+    #ops
+    description "How the lab is built and run"
+    controller = container "Controller" {
+      #ops
+      technology "ansible + opentofu"
+      description "Admin workstation the deploys run from"
+      style { icon tech:ansible }
+    }
+    proxmox = container "Proxmox cluster" {
+      #ops
+      technology "Proxmox VE API"
+      description "pve-1/2/3, VMs + LXC created by tofu"
+    }
+    hosts = container "Container hosts" {
+      #ops
+      technology "Debian 13, docker"
+      description "docker-1/2/3, apps deployed by ansible"
+      style { icon tech:debian }
+    }
+    docker-proxy = container "docker-socket-proxy" { #ops; description "Read-only docker API, per host" }
+    diun = container "Diun" { #ops; description "Image update notifier, per host" }
+  }
+
+  // people
+  household -[https]-> edge.traefik "opens apps"
+  household -[dns]-> edge.pihole "resolves *.domain"
+  phone -[wg]-> remote.netbird.mgmt "joins the mesh"
+  phone -[wg]-> remote.router-peer "tunnels to the LAN"
+  phone -[dns]-> edge.pihole "resolves *.domain via overlay ip"
+  admin -[https]-> remote.netbird.dash "manages peers"
+
+  // delivery
+  admin -> apps.gitea "pushes the repo"
+  admin -> ops.controller "runs playbooks + tofu"
+  ops.controller -> apps.gitea "pulls the repo"
+  ops.controller -> ops.proxmox "tofu: VMs + LXC"
+  ops.controller -> ops.hosts "ansible: apps over ssh"
+
+  // ingress
+  edge.traefik -[https]-> identity.authentik.server "forward-auth"
+  edge.traefik -[https]-> apps.vaultwarden "routes"
+  edge.traefik -[https]-> apps.gitea "routes"
+  edge.traefik -[https]-> apps.searxng.web "routes"
+  edge.traefik -[https]-> apps.homepage "routes"
+  edge.traefik -[https]-> apps.pdfcraft "routes"
+  edge.traefik -[https]-> apps.homelable "routes"
+  edge.traefik -[https]-> media.nextcloud.web "routes"
+  edge.traefik -[https]-> media.immich.server "routes"
+  edge.traefik -[https]-> media.jellyfin "routes"
+  edge.traefik -[https]-> media.paperless.web "routes"
+  edge.traefik -[https]-> observability.grafana "routes"
+  edge.traefik -[https]-> observability.uptime-kuma "routes"
+  edge.traefik -[https]-> observability.prometheus "routes"
+  edge.traefik -[https]-> automation.homeassistant "routes"
+  edge.traefik -> cloudflare "ACME DNS-01 TXT records"
+  edge.traefik -> letsencrypt "orders certificates"
+  edge.ddns -> cloudflare "keeps A records current"
+
+  // remote access
+  remote.netbird.mgmt -[oidc]-> identity.authentik.server "login"
+  remote.netbird -> cloudflare "ACME DNS-01"
+  remote.router-peer -[wg]-> remote.netbird.signal "registers"
+  fritzbox -> remote.netbird "forwards 443 + STUN"
+
+  // sso
+  apps.vaultwarden -[oidc]-> identity.authentik.server "login"
+  apps.gitea -[oidc]-> identity.authentik.server "login"
+  observability.grafana -[oidc]-> identity.authentik.server "login"
+  media.nextcloud.web -[oidc]-> identity.authentik.server "login"
+  media.immich.server -[oidc]-> identity.authentik.server "login"
+  media.jellyfin -[oidc]-> identity.authentik.server "login"
+  media.paperless.web -[oidc]-> identity.authentik.server "login"
+
+  // storage
+  media.nextcloud.web -[cifs]-> storage.samba "user files"
+  media.immich.server -[cifs]-> storage.samba "photo library"
+  media.jellyfin -[cifs]-> storage.samba "media, read-only"
+  media.paperless.web -[cifs]-> storage.samba "documents"
+  storage.pbs-client -> storage.pbs "nightly backup"
+  storage.pbs-client -> media.immich.pg "pg_dump"
+  storage.pbs -> ntfy "job alerts"
+
+  // home automation
+  automation.sensor -[mqtt]-> automation.mosquitto "publishes readings"
+  automation.sensor -> automation.ap "wifi"
+  automation.homeassistant -[mqtt]-> automation.mosquitto "subscribes"
+  automation.homeassistant -> observability.influxdb "long-term history"
+  automation.mqtt-exporter -[mqtt]-> automation.mosquitto "subscribes"
+  automation.esphome -> automation.sensor "flashes firmware"
+
+  // observability
+  observability.prometheus -[scrape]-> observability.node-exporter "host metrics"
+  observability.prometheus -[scrape]-> automation.mqtt-exporter "sensor metrics"
+  observability.grafana -> observability.prometheus "queries"
+  observability.grafana -> observability.influxdb "queries"
+  observability.uptime-kuma -[https]-> edge.traefik "probes every route"
+
+  // operations
+  apps.homepage -> ops.docker-proxy "container status"
+  ops.diun -> ops.docker-proxy "watches images"
+  ops.diun -> ntfy "update alerts"
+}

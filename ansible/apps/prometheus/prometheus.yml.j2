@@ -1,0 +1,34 @@
+global:
+  scrape_interval: {{ prometheus_scrape_interval }}
+  evaluation_interval: {{ prometheus_scrape_interval }}
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'pve-hosts'
+    static_configs:
+      - targets:
+          - '{{ pve1_ip }}:{{ node_exporter_port }}'
+          - '{{ pve2_ip }}:{{ node_exporter_port }}'
+          - '{{ pve3_ip }}:{{ node_exporter_port }}'
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+          - '{{ docker1_ip }}:{{ node_exporter_port }}'
+          - '{{ docker2_ip }}:{{ node_exporter_port }}'
+          - '{{ docker3_ip }}:{{ node_exporter_port }}'
+
+  - job_name: 'docker-engines'
+    static_configs:
+      - targets:
+          - '{{ docker1_ip }}:{{ docker_metrics_port }}'
+          - '{{ docker2_ip }}:{{ docker_metrics_port }}'
+          - '{{ docker3_ip }}:{{ docker_metrics_port }}'
+
+  - job_name: 'esp32_sensors'
+    scrape_interval: {{ prometheus_scrape_interval }}
+    static_configs:
+      - targets: ['{{ docker1_ip }}:{{ app_ports.mqtt_exporter }}']

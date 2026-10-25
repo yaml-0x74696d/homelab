@@ -1,0 +1,4 @@
+---
+# reads the shared ntfy_url / ntfy_token / ntfy_timeout (empty url = daemon runs but stays quiet).
+# the ssh / pve-web match patterns live in the script template.
+login_notify_restart_sec: 10   # watcher restart delay

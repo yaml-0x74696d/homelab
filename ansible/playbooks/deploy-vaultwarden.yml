@@ -1,0 +1,10 @@
+---
+- name: Deploy vaultwarden
+  hosts: docker-1
+  become: true
+  vars:
+    vaultwarden_tag: "1.37.1"
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: vaultwarden

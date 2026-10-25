@@ -1,0 +1,77 @@
+---
+# commit runs the fast hooks; `--hook-stage manual` runs all of them (ci, just check)
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        exclude: ^docs/img/
+      - id: check-added-large-files
+        name: check for added large files (diagrams)
+        args: [--maxkb=1500]   # c4 pngs, biggest ~1.1 MB
+        files: ^docs/img/
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+        exclude: \.j2$   # templates; the role sets the mode
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+      # staged changes only on commit, so also scan every commit (not the dir: caches live there)
+      - id: gitleaks
+        name: gitleaks (all commits)
+        entry: gitleaks git --redact --verbose
+        pass_filenames: false
+        stages: [manual]
+
+  - repo: https://github.com/tofuutils/pre-commit-opentofu
+    rev: v2.4.2
+    hooks:
+      - id: tofu_fmt
+      - id: tofu_validate
+
+  - repo: local
+    hooks:
+      - id: ansible-lint
+        name: ansible-lint
+        language: python
+        additional_dependencies: [ansible-lint==26.10.1]
+        entry: bash -c 'cd ansible && ansible-lint'
+        files: ^ansible/
+        pass_filenames: false
+
+      - id: nix-flake-check
+        name: nix flake check
+        language: system
+        # facts.nix builds the group_vars json, so --no-build can't work
+        entry: bash -c 'cd nixos && nix flake check'
+        files: ^(nixos|ansible/group_vars)/
+        pass_filenames: false
+        stages: [manual]
+
+      - id: likec4-validate
+        name: likec4 validate
+        language: node
+        additional_dependencies: [likec4@1.60.0]
+        entry: likec4 validate architecture
+        files: ^architecture/
+        pass_filenames: false
+        stages: [manual]

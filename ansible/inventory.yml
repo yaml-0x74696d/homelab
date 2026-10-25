@@ -1,0 +1,40 @@
+all:
+  vars:
+    ansible_user: "{{ admin_user }}"
+  children:
+    lxc_containers:
+      vars:
+        ansible_user: root
+        ansible_become: false
+      hosts:
+        storage:
+          ansible_host: "{{ storage_ip }}"
+    docker_hosts:
+      vars:
+        ansible_become: true
+        ansible_become_password: "{{ sudo_pass }}"
+      hosts:
+        docker-1:
+          ansible_host: "{{ docker1_ip }}"
+        docker-2:
+          ansible_host: "{{ docker2_ip }}"
+        docker-3:
+          ansible_host: "{{ docker3_ip }}"
+    proxmox:
+      vars:
+        ansible_user: root
+        ansible_become: false
+      hosts:
+        pve-1:
+          ansible_host: "{{ pve1_ip }}"
+        pve-2:
+          ansible_host: "{{ pve2_ip }}"
+        pve-3:
+          ansible_host: "{{ pve3_ip }}"
+    netbird_agent:
+      # always-on lan box that routes the lan for netbird peers.
+      # docker-1 left after netbird's dns grabbed :53 from pihole there; pihole now
+      # runs on docker-2 with netbird dns management off for that group.
+      # members stay in their primary group (docker_hosts/proxmox) for connection vars.
+      hosts:
+        docker-2:   # routing peer

@@ -1,0 +1,31 @@
+---
+# schedule: aide_check_time / aide_check_delay in group_vars hosts.yml (shared with nixos)
+aide_check_nice: 19
+aide_check_io_class: idle
+
+# --init / --update hash the whole system: time limit + poll, in seconds
+aide_run_timeout: 3600
+aide_run_poll: 30
+aide_report_lines: 150   # diff lines shown by aide-accept.yml
+
+# accepted db hashes, one <host>.sha256 each, committed next to the code
+aide_checksum_dir: "{{ playbook_dir }}/../aide"
+
+# churn on top of debian's rules, picked by inventory group
+aide_excludes_by_group:
+  docker_hosts:
+    - /var/lib/docker
+    - /var/lib/containerd
+    - "{{ apps_root }}"
+    - "{{ cifs_mount_root }}"   # pool shares
+    - "{{ pbs_staging_dir }}"
+  proxmox:
+    - /etc/pve              # pmxcfs, rewritten constantly
+    - /var/lib/pve-cluster
+    - /var/lib/rrdcached
+    - /var/lib/vz
+    - "{{ storage_pool_host }}"                          # pve-3: mergerfs pool
+    - "{{ storage_disks | map(attribute='path') | list }}"   # pve-3: its disks
+    - "{{ pbs_datastore_path }}"
+  lxc_containers:
+    - "{{ storage_root }}"   # pool bind mount

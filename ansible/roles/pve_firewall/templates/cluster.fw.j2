@@ -1,0 +1,32 @@
+# managed by ansible (roles/pve_firewall) — do not hand-edit
+[OPTIONS]
+
+enable: {{ 1 if pve_firewall_cluster_enabled else 0 }}
+policy_in: DROP
+policy_out: ACCEPT
+
+[IPSET pve_ssh] # pve host ssh
+
+{% for h in pve_firewall_ssh_hosts %}
+{{ h.ip }} # {{ h.c }}
+{% endfor %}
+
+[IPSET pve_ui] # pve web ui
+
+{% for h in pve_firewall_ui_hosts %}
+{{ h.ip }} # {{ h.c }}
+{% endfor %}
+
+[IPSET pve_nodes] # cluster mesh
+
+{% for ip in pve_firewall_node_ips %}
+{{ ip }}
+{% endfor %}
+
+[group pve-mgmt] # pve host management
+
+IN ACCEPT -source +dc/pve_ssh -p tcp -dport 22 -log nolog
+IN ACCEPT -source +dc/pve_ui -p tcp -dport {{ pve_ui_port }} -log nolog
+IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p tcp -dport {{ pbs_port }} -log nolog
+IN ACCEPT -source +dc/pve_nodes -log nolog
+IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p icmp -log nolog

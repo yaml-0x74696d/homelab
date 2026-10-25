@@ -1,0 +1,13 @@
+mqtt:
+  server: tcp://{{ mqtt_broker_ip }}:{{ mqtt_port }}
+
+metrics:
+  - prom_name: esp32_temperature_celsius
+    type: gauge
+    help: "Temperature in Celsius from ESP32 DHT22"
+    mqtt_topic: "home/esp32/temperature"
+
+  - prom_name: esp32_humidity_percent
+    type: gauge
+    help: "Humidity percentage from ESP32 DHT22"
+    mqtt_topic: "home/esp32/humidity"

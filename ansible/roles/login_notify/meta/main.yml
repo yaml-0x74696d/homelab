@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: login_notify
+  author: tim
+  description: ntfy alert on ssh and proxmox web logins
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

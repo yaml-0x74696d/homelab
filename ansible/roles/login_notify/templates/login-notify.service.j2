@@ -1,0 +1,13 @@
+[Unit]
+Description=phone alert on ssh / pve-web login
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/sbin/login-notify
+Restart=always
+RestartSec={{ login_notify_restart_sec }}
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

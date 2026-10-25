@@ -1,0 +1,40 @@
+services:
+  backend:
+    image: ghcr.io/pouzor/homelable-backend:latest
+    container_name: homelable-backend
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - AUTH_USERNAME=${AUTH_USERNAME}
+      - AUTH_PASSWORD_HASH=${AUTH_PASSWORD_HASH}
+      - SCANNER_RANGES=${SCANNER_RANGES}
+      - SQLITE_PATH=/app/data/homelab.db
+    volumes:
+      - ./data:/app/data
+    networks:
+      - homelable-internal
+    cap_add:
+      - NET_RAW
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: ${HEALTH_INTERVAL}
+      timeout: ${HEALTH_TIMEOUT}
+      retries: ${HEALTH_RETRIES}
+      start_period: ${HEALTH_START}
+
+  frontend:
+    image: ghcr.io/pouzor/homelable-frontend:latest
+    container_name: homelable-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - homelable-internal
+    ports:
+      - "${PORT}:80"
+
+networks:
+  homelable-internal:
+    driver: bridge
+  proxy-net:
+    external: true

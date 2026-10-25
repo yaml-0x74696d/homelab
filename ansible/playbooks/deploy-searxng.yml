@@ -1,0 +1,15 @@
+---
+- name: Deploy searxng
+  hosts: docker-1
+  become: true
+  vars:
+    searxng_valkey_tag: 8-alpine
+    searxng_valkey_save: "30 1"   # snapshot after 30s if >=1 change
+    searxng_health_interval: 30s
+    searxng_health_timeout: 3s
+    searxng_health_retries: 5
+    searxng_health_start: 20s
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: searxng

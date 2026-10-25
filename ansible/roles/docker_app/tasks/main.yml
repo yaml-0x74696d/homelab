@@ -1,0 +1,144 @@
+---
+- name: Ensure app dir for {{ docker_app_name }}
+  ansible.builtin.file:
+    path: "{{ docker_app_root }}/{{ docker_app_name }}"
+    state: directory
+    mode: '0755'
+
+- name: Ensure extra dirs for {{ docker_app_name }}
+  ansible.builtin.file:
+    path: "{{ docker_app_root }}/{{ docker_app_name }}/{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default(omit) }}"
+    group: "{{ item.group | default(omit) }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop: "{{ docker_app_dirs }}"
+
+- name: Ensure docker networks for {{ docker_app_name }}
+  community.docker.docker_network:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ docker_app_networks }}"
+
+- name: Create files if missing for {{ docker_app_name }}
+  ansible.builtin.copy:
+    dest: "{{ docker_app_root }}/{{ docker_app_name }}/{{ item.path }}"
+    content: ""
+    force: false
+    mode: "{{ item.mode | default('0644') }}"
+  loop: "{{ docker_app_touch }}"
+
+- name: Allow ufw ports for {{ docker_app_name }}
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port | string }}"
+    proto: "{{ item.proto | default('tcp') }}"
+  loop: "{{ docker_app_ufw }}"
+
+- name: Find app subdirs for {{ docker_app_name }}
+  ansible.builtin.find:
+    paths: "{{ docker_app_src }}"
+    file_type: directory
+    recurse: true
+    hidden: true
+  delegate_to: localhost
+  become: false
+  register: docker_app_subdirs
+
+# copy/template don't create parent dirs
+- name: Mirror app subdirs for {{ docker_app_name }}
+  ansible.builtin.file:
+    path: "{{ docker_app_root }}/{{ docker_app_name }}/{{ item.path | relpath(docker_app_src) }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ docker_app_subdirs.files }}"
+  loop_control:
+    label: "{{ item.path | relpath(docker_app_src) }}"
+
+# templates are rendered below, so they don't land on the host as .j2
+- name: Find static files for {{ docker_app_name }}
+  ansible.builtin.find:
+    paths: "{{ docker_app_src }}"
+    excludes: "*.j2"
+    recurse: true
+    hidden: true
+  delegate_to: localhost
+  become: false
+  register: docker_app_static
+
+- name: Copy static files for {{ docker_app_name }}
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ docker_app_root }}/{{ docker_app_name }}/{{ item.path | relpath(docker_app_src) }}"
+    mode: u=rwX,g=rX,o=rX   # X keeps exec only where the source has it
+  loop: "{{ docker_app_static.files }}"
+  loop_control:
+    label: "{{ item.path | relpath(docker_app_src) }}"
+  notify: Restart app containers
+
+- name: Find templates for {{ docker_app_name }}
+  ansible.builtin.find:
+    paths: "{{ docker_app_src }}"
+    patterns: "*.j2"
+    recurse: true
+    hidden: true
+  delegate_to: localhost
+  become: false
+  register: docker_app_tpls
+
+- name: Render templates in place for {{ docker_app_name }}
+  ansible.builtin.template:
+    src: "{{ item.path }}"
+    dest: "{{ docker_app_root }}/{{ docker_app_name }}/{{ item.path | relpath(docker_app_src) | regex_replace('\\.j2$', '') }}"
+    mode: "{{ '0600' if item.path.endswith('.env.j2') else '0644' }}"
+  loop: "{{ docker_app_tpls.files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  notify: Restart app containers
+
+- name: Install cifs-utils for {{ docker_app_name }}
+  ansible.builtin.apt:
+    name: cifs-utils
+    state: present
+  when: docker_app_cifs | length > 0
+
+- name: Ensure cifs credentials dir for {{ docker_app_name }}
+  ansible.builtin.file:
+    path: /etc/cifs
+    state: directory
+    mode: '0700'
+  when: docker_app_cifs | length > 0
+
+- name: Write cifs credentials for {{ docker_app_name }}
+  ansible.builtin.copy:
+    dest: "/etc/cifs/{{ item.share }}.creds"
+    mode: '0600'
+    content: |
+      username={{ item.user }}
+      password={{ smb_passwords[item.user] }}
+  loop: "{{ docker_app_cifs }}"
+  loop_control:
+    label: "{{ item.share }}"
+  no_log: true
+
+- name: Mount pool shares over cifs for {{ docker_app_name }}
+  # dbs stay on local volumes; only bulk data lives here. uid/gid map to the container user.
+  ansible.posix.mount:
+    path: "{{ item.path }}"
+    src: "//{{ storage_ip }}/{{ item.share }}"
+    fstype: cifs
+    opts: "credentials=/etc/cifs/{{ item.share }}.creds,\
+      uid={{ item.uid | default(0) }},gid={{ item.gid | default(0) }},\
+      file_mode={{ item.file_mode | default('0660') }},dir_mode={{ item.dir_mode | default('0770') }},\
+      vers={{ docker_app_cifs_vers }},mfsymlinks,nofail,_netdev{{ item.extra_opts | default('') }}"
+    state: mounted
+  loop: "{{ docker_app_cifs }}"
+  loop_control:
+    label: "{{ item.share }}"
+
+- name: Compose up {{ docker_app_name }}
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_app_root }}/{{ docker_app_name }}"
+    state: "{{ docker_app_compose_state }}"
+    pull: "{{ docker_app_compose_pull }}"
+    remove_orphans: "{{ docker_app_compose_remove_orphans }}"

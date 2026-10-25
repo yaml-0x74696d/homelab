@@ -1,0 +1,25 @@
+---
+# when the backup runs (systemd OnCalendar). change this one line to reschedule.
+#   "*-*-* 20:00:00"  daily 20:00   |   "*-*-* 02,14:00:00"  twice a day   |   "Mon *-*-* 04:00:00"  mondays 04:00
+pbs_on_calendar: "*-*-* 20:00:00"
+# stagger the three hosts so they don't all hit the datastore at once
+pbs_randomized_delay: "20m"
+
+# pbs target. the token can only write backups (role DatastoreBackup on /datastore/homelab)
+pbs_datastore: homelab
+pbs_token_id: "backup@pbs!client"
+pbs_repository: "{{ pbs_token_id }}@{{ pve3_ip }}:{{ pbs_port }}:{{ pbs_datastore }}"
+pbs_id: "{{ inventory_hostname }}"        # backup group id, one per host
+
+# staging dir + app dir: pbs_staging_dir / apps_root in group_vars (aide excludes them too)
+
+# failure alerts → ntfy. uses the shared ntfy_url/ntfy_token from vault; empty = off.
+pbs_ntfy_url: "{{ ntfy_url | default('') }}"
+pbs_ntfy_token: "{{ ntfy_token | default('') }}"
+
+# a wedged push (e.g. pve-3 half-up) must not hold the lock forever
+pbs_timeout: 1h
+
+# per-host, set in host_vars/<host>.yml
+pbs_jobs: []          # dbs to dump: {name, type: postgres|sqlite|influx, container?, path?, data_dir?}
+pbs_exclude: []       # extra flat-archive excludes (caches, disposable state)

@@ -1,0 +1,31 @@
+---
+- name: Cap the journal
+  hosts: docker_hosts:proxmox
+  become: true
+
+  tasks:
+    - name: Ensure journald drop-in dir
+      ansible.builtin.file:
+        path: /etc/systemd/journald.conf.d
+        state: directory
+        mode: "0755"
+
+    - name: Journal size cap
+      ansible.builtin.copy:
+        dest: /etc/systemd/journald.conf.d/10-size.conf
+        content: |
+          [Journal]
+          SystemMaxUse={{ journald_max_use }}
+        mode: "0644"
+      notify: Restart journald
+
+  handlers:
+    - name: Restart journald
+      ansible.builtin.systemd:
+        name: systemd-journald
+        state: restarted
+      notify: Vacuum journal
+
+    - name: Vacuum journal
+      ansible.builtin.command: journalctl --vacuum-size={{ journald_max_use }}
+      changed_when: true

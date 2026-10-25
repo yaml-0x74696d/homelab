@@ -1,0 +1,22 @@
+---
+# all listen on one topic, so they run in this order
+- name: Activate baseline
+  ansible.builtin.command: mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+  changed_when: true
+  listen: Aide baseline built
+
+- name: Hash new baseline
+  ansible.builtin.stat:
+    path: /var/lib/aide/aide.db
+    checksum_algorithm: sha256
+  register: aide_new
+  listen: Aide baseline built
+
+- name: Write db hash on the controller for {{ inventory_hostname }}
+  ansible.builtin.copy:
+    content: "{{ aide_new.stat.checksum }}\n"
+    dest: "{{ aide_checksum_dir }}/{{ inventory_hostname }}.sha256"
+    mode: '0644'
+  delegate_to: localhost
+  become: false
+  listen: Aide baseline built

@@ -1,0 +1,72 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - DOMAIN=${DOMAIN}
+      - PVE1_IP=${PVE1_IP}
+      - PVE2_IP=${PVE2_IP}
+      - PVE3_IP=${PVE3_IP}
+      - DOCKER2_IP=${DOCKER2_IP}
+      - DOCKER3_IP=${DOCKER3_IP}
+      - PVE_UI_PORT=${PVE_UI_PORT}
+      - PBS_PORT=${PBS_PORT}
+      - GRAFANA_PORT=${GRAFANA_PORT}
+      - UPTIME_KUMA_PORT=${UPTIME_KUMA_PORT}
+      - NEXTCLOUD_PORT=${NEXTCLOUD_PORT}
+      - IMMICH_PORT=${IMMICH_PORT}
+      - JELLYFIN_PORT=${JELLYFIN_PORT}
+      - PAPERLESS_PORT=${PAPERLESS_PORT}
+      - HOMELABLE_PORT=${HOMELABLE_PORT}
+      - INFLUXDB_PORT=${INFLUXDB_PORT}
+      - NGINX_PORT=${NGINX_PORT}
+      - PIHOLE_PORT=${PIHOLE_PORT}
+      - PROMETHEUS_PORT=${PROMETHEUS_PORT}
+      - MQTT_EXPORTER_PORT=${MQTT_EXPORTER_PORT}
+    networks:
+      proxy-net:
+        # let other apps reach services by their public name without leaving the bridge
+        aliases:
+          - auth.${DOMAIN}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./acme.json:/acme.json
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+    command:
+      - "--log.level=${LOG_LEVEL}"
+      - "--accesslog=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=proxy-net"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+      # pihole is authoritative for the zone; check propagation against public resolvers instead
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=${ACME_RESOLVERS}"
+      - "--certificatesresolvers.cloudflare.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.cloudflare.acme.storage=/acme.json"
+    labels:
+      - "homelab.docker-sock=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`proxy.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=cloudflare"
+      # gate the dashboard behind authentik sso
+      - "traefik.http.routers.traefik.middlewares=authentik@file"
+      - "traefik.http.routers.traefik.service=api@internal"
+
+networks:
+  proxy-net:
+    external: true

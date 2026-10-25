@@ -1,0 +1,53 @@
+---
+# review what changed since the baseline and accept it, one host at a time:
+#   ansible-playbook playbooks/aide-accept.yml -l docker-2
+# then commit aide/<host>.sha256
+- name: Accept AIDE changes
+  hosts: docker_hosts:proxmox:lxc_containers
+  serial: 1
+  tasks:
+    - name: Verify recorded db hash
+      ansible.builtin.include_role:
+        name: aide
+        tasks_from: verify
+        public: true   # exposes the role's dials to the tasks below
+
+    - name: Diff against baseline on {{ inventory_hostname }}
+      ansible.builtin.command: aide --config=/etc/aide/aide.conf --update
+      register: aide_update
+      failed_when: aide_update.rc >= 14
+      changed_when: false
+      async: "{{ aide_run_timeout }}"
+      poll: "{{ aide_run_poll }}"
+
+    - name: Report for {{ inventory_hostname }}
+      ansible.builtin.debug:
+        msg: "{{ aide_update.stdout_lines[:aide_report_lines] }}"
+      when: aide_update.rc != 0
+
+    - name: Accept on {{ inventory_hostname }}?
+      ansible.builtin.pause:
+        prompt: "type yes to make this the new baseline for {{ inventory_hostname }}"
+      register: aide_answer
+      when: aide_update.rc != 0
+
+    - name: Swap in new baseline
+      when: aide_update.rc != 0 and aide_answer.user_input | default('') == 'yes'
+      block:
+        - name: Activate new db
+          ansible.builtin.command: mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+          changed_when: true
+
+        - name: Hash new db
+          ansible.builtin.stat:
+            path: /var/lib/aide/aide.db
+            checksum_algorithm: sha256
+          register: aide_new
+
+        - name: Write db hash on the controller for {{ inventory_hostname }}
+          ansible.builtin.copy:
+            content: "{{ aide_new.stat.checksum }}\n"
+            dest: "{{ aide_checksum_dir }}/{{ inventory_hostname }}.sha256"
+            mode: '0644'
+          delegate_to: localhost
+          become: false

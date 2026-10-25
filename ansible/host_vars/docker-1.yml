@@ -1,0 +1,11 @@
+---
+# what pbs backs up on docker-1 (see roles/pbs). pg reads user/db from the container env.
+pbs_jobs:
+  - { name: authentik, type: postgres, container: authentik-db, data_dir: authentik/database }
+  - { name: gitea, type: sqlite, path: gitea/data/gitea/gitea.db }
+  - { name: vaultwarden, type: sqlite, path: vaultwarden/data/db.sqlite3 }
+  # recorder db = history/stats; drop this line if you don't need it
+  - { name: homeassistant, type: sqlite, path: homeassistant/config/home-assistant_v2.db }
+
+pbs_exclude:
+  - mosquitto/data/mosquitto.db             # broker state, disposable (sensors re-publish)

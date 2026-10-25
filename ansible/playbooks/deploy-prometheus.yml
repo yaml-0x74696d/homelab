@@ -1,0 +1,10 @@
+---
+- name: Deploy prometheus
+  hosts: docker-2
+  become: true
+  vars:
+    prometheus_scrape_interval: 15s
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: prometheus

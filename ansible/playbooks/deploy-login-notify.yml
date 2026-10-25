@@ -1,0 +1,6 @@
+---
+# phone alert on ssh / pve-web login. needs ntfy_url in vault (else it runs quiet).
+- name: Login notifications
+  hosts: proxmox
+  roles:
+    - login_notify

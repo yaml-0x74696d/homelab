@@ -1,0 +1,100 @@
+---
+- name: Deploy authentik
+  hosts: docker-1
+  become: true
+  vars:
+    authentik_pg_tag: 16-alpine
+    authentik_db_health_interval: 30s
+    authentik_db_health_timeout: 5s
+    authentik_db_health_retries: 5
+    authentik_db_health_start: 20s
+    authentik_pool_node: pve-1           # thin pool docker-1's disk lives on
+    authentik_pool_lv: pve/data
+    authentik_pool_max_pct: 85           # refuse to pull above this
+    authentik_health_retries: 60         # x delay = how long migrations may take
+    authentik_health_delay: 10
+    authentik_ready_retries: 30
+    authentik_ready_delay: 10
+
+  pre_tasks:
+    - name: Read running authentik
+      community.docker.docker_container_info:
+        name: authentik-server
+      register: authentik_running
+      no_log: true   # result carries the container env (secret key, db pw)
+
+    - name: Refuse downgrades and skipped releases
+      vars:
+        _cur: "{{ authentik_running.container.Config.Image.split(':')[-1] }}"
+        _cur_series: "{{ _cur.split('.')[:2] | join('.') }}"
+        _new_series: "{{ authentik_tag.split('.')[:2] | join('.') }}"
+      ansible.builtin.assert:
+        that:
+          - authentik_tag is version(_cur, '>=')
+          - authentik_series.index(_new_series) - authentik_series.index(_cur_series) <= 1
+        fail_msg: "running {{ _cur }}, asked for {{ authentik_tag }} — go one series at a time: {{ authentik_series | join(' → ') }}"
+        quiet: true
+      when: authentik_running.exists
+
+    # a full thin pool freezes docker-1
+    - name: Read thin pool usage on {{ authentik_pool_node }}
+      ansible.builtin.command: lvs --noheadings -o data_percent {{ authentik_pool_lv }}
+      delegate_to: "{{ authentik_pool_node }}"
+      become: false
+      register: authentik_pool
+      changed_when: false
+
+    - name: Refuse to pull with the pool nearly full
+      ansible.builtin.assert:
+        that: authentik_pool.stdout | trim | float < authentik_pool_max_pct
+        fail_msg: "{{ authentik_pool_node }} thin pool at {{ authentik_pool.stdout | trim }}% — prune + fstrim docker-1 first"
+        quiet: true
+
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: authentik
+        docker_app_compose_remove_orphans: true   # drops redis (gone since 2025.10)
+        docker_app_restart: [authentik-server]   # single-file css mount keeps the old inode
+
+  post_tasks:
+    # migrations run on start; image healthcheck = ak healthcheck
+    - name: Wait for authentik to be healthy
+      community.docker.docker_container_info:
+        name: authentik-server
+      register: authentik_up
+      until: authentik_up.container.State.Health.Status | default('') == 'healthy'
+      retries: "{{ authentik_health_retries }}"
+      delay: "{{ authentik_health_delay }}"
+      no_log: true
+
+    - name: Check it's the requested version
+      ansible.builtin.assert:
+        that: authentik_up.container.Config.Image.endswith(':' ~ authentik_tag)
+        fail_msg: "running {{ authentik_up.container.Config.Image }}"
+        quiet: true
+
+    - name: Drop the previous authentik image
+      community.docker.docker_image:
+        name: "{{ authentik_running.container.Config.Image }}"
+        state: absent
+      when:
+        - authentik_running.exists
+        - authentik_running.container.Config.Image != authentik_up.container.Config.Image
+
+    # discard=on: hands the freed blocks back to the thin pool
+    - name: Trim the disk
+      ansible.builtin.command: fstrim /
+      changed_when: false
+
+    # healthy != ready
+    - name: Check login health through traefik
+      ansible.builtin.uri:
+        url: "https://auth.{{ domain }}/-/health/ready/"
+        status_code: [200, 204]
+      register: authentik_ready
+      until: authentik_ready.status in [200, 204]
+      retries: "{{ authentik_ready_retries }}"
+      delay: "{{ authentik_ready_delay }}"
+      delegate_to: localhost
+      become: false

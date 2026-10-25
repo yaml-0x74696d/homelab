@@ -1,0 +1,39 @@
+# homelab palette, see docs/00-dashboard/style.md
+homelab:
+  modes:
+    dark:
+      primary-color: "#ee0000"
+      accent-color: "#ee0000"
+      dark-primary-color: "#be0000"
+      light-primary-color: "#ff4d4d"
+
+      primary-background-color: "#141414"
+      secondary-background-color: "#181818"
+      card-background-color: "#1f1f1f"
+      ha-card-background: "#1f1f1f"
+      app-header-background-color: "#141414"
+      sidebar-background-color: "#141414"
+      code-editor-background-color: "#181818"
+
+      primary-text-color: "#cccccc"
+      secondary-text-color: "#9d9d9d"
+      disabled-text-color: "#6e7681"
+      text-primary-color: "#ffffff"
+      app-header-text-color: "#cccccc"
+      sidebar-text-color: "#cccccc"
+      sidebar-icon-color: "#9d9d9d"
+      sidebar-selected-text-color: "#ffffff"
+      sidebar-selected-icon-color: "#ee0000"
+      state-icon-color: "#9d9d9d"
+      divider-color: "#2b2b2b"
+
+      # flat: 1px line, small radius, no shadow
+      ha-card-border-radius: "4px"
+      ha-card-border-width: "1px"
+      ha-card-border-color: "#2b2b2b"
+      ha-card-box-shadow: "none"
+      ha-dialog-border-radius: "4px"
+
+      success-color: "#73c991"
+      warning-color: "#cca700"
+      error-color: "#f14c4c"

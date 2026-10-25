@@ -1,0 +1,5 @@
+---
+- name: Deploy netbird routing-peer agent
+  hosts: netbird_agent
+  roles:
+    - netbird_agent

@@ -1,0 +1,35 @@
+---
+- name: Deploy gitea
+  hosts: docker-1
+  become: true
+  vars:
+    gitea_uid: 1000                      # image user
+    gitea_ssh_port: 2222                 # git over ssh, published by the container
+    gitea_admin_retries: 10              # gitea needs a moment before the cli works
+    gitea_admin_delay: 5
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: gitea
+        docker_app_dirs:
+          - { path: data, owner: "{{ gitea_uid }}", group: "{{ gitea_uid }}" }
+        docker_app_ufw:
+          - { port: "{{ gitea_ssh_port }}" }
+  post_tasks:
+    - name: Create gitea admin
+      community.docker.docker_container_exec:
+        container: gitea
+        user: git
+        command: >-
+          gitea admin user create --username {{ gitea_admin_user }}
+          --email {{ gitea_admin_email }} --password {{ gitea_admin_pass }}
+          --admin --must-change-password=false
+      register: _admin
+      retries: "{{ gitea_admin_retries }}"
+      delay: "{{ gitea_admin_delay }}"
+      until: _admin.rc == 0 or 'already exists' in (_admin.stdout + _admin.stderr)
+      changed_when: "'successfully created' in _admin.stdout"
+      failed_when:
+        - _admin.rc != 0
+        - "'already exists' not in (_admin.stdout + _admin.stderr)"
+      no_log: true

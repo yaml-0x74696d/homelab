@@ -1,0 +1,32 @@
+---
+- name: Deploy nextcloud
+  hosts: docker-3
+  become: true
+  vars:
+    nextcloud_pg_tag: 16-alpine
+    nextcloud_php_memory_limit: 1G
+    nextcloud_php_upload_limit: 10G
+    nextcloud_health_interval: 30s
+    nextcloud_health_retries: 5
+    nextcloud_health_start: 20s
+    nextcloud_db_health_timeout: 5s
+    nextcloud_redis_health_timeout: 3s
+    nextcloud_uid: 33                    # www-data in the image
+    nextcloud_data_path: "{{ cifs_mount_root }}/nextcloud"
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: nextcloud
+        # data dir on the pool; www-data owns it, nobrl for smb locking
+        docker_app_cifs:
+          - share: nextcloud
+            user: nextcloud
+            path: "{{ nextcloud_data_path }}"
+            uid: "{{ nextcloud_uid }}"
+            gid: "{{ nextcloud_uid }}"
+            extra_opts: ",nobrl"
+          # other apps' shares, surfaced in nextcloud via external storage
+          # photos is read-only: immich owns that library and tracks it in its db.
+          - { share: media, user: media, path: "{{ cifs_mount_root }}/nc-media", uid: "{{ nextcloud_uid }}", gid: "{{ nextcloud_uid }}" }
+          - { share: documents, user: paperless, path: "{{ cifs_mount_root }}/nc-documents", uid: "{{ nextcloud_uid }}", gid: "{{ nextcloud_uid }}" }
+          - { share: photos, user: immich, path: "{{ cifs_mount_root }}/nc-photos", uid: "{{ nextcloud_uid }}", gid: "{{ nextcloud_uid }}", extra_opts: ",ro" }

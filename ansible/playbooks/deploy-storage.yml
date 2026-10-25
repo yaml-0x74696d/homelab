@@ -1,0 +1,13 @@
+---
+# storage nas: mergerfs pool on pve-3 + samba in CT 300. pve-3 must be on.
+# first run: --limit pve-3, then `tofu apply`, then --limit storage.
+
+- name: Storage pool (pve-3 host)
+  hosts: pve-3
+  roles:
+    - mergerfs
+
+- name: Storage shares (container)
+  hosts: storage
+  roles:
+    - samba

@@ -1,0 +1,25 @@
+# Decisions
+
+Format: status, context, decision, consequences.
+
+- [1. OpenTofu and cloud-init for VMs](0001-tofu-and-cloud-init-for-vms.md)
+- [2. One generic role for all apps](0002-generic-docker-app-role.md)
+- [3. NetBird instead of port forwards](0003-netbird-instead-of-port-forwards.md)
+- [4. mergerfs instead of ZFS](0004-mergerfs-instead-of-zfs.md)
+- [5. prevent_destroy on stateful VMs](0005-prevent-destroy-on-stateful-vms.md)
+- [6. `:latest` images, notify-only updates](0006-latest-images-notify-only.md)
+- [7. group_vars as the single source of truth](0007-group-vars-single-source-of-truth.md)
+- [8. NixOS for the DMZ box only](0008-nixos-for-the-dmz-box.md)
+- [9. AIDE with manual accept](0009-aide-with-manual-accept.md)
+- [10. Pi-hole on docker-2 behind a service IP](0010-pihole-on-a-service-ip.md)
+- [11. Proxmox as the hypervisor](0011-proxmox-as-hypervisor.md)
+- [12. No Kubernetes](0012-no-kubernetes.md)
+- [13. PBS file-level backups, VMs are cattle](0013-pbs-file-level-backups.md)
+- [14. Authentik as the identity provider](0014-authentik-as-idp.md)
+- [15. TLS only via DNS-01, no port 80 from the WAN](0015-tls-via-dns-01.md)
+- [16. ansible-vault for secrets](0016-ansible-vault-for-secrets.md)
+- [17. SMB from the storage LXC to the Docker VMs](0017-smb-shares-to-docker-vms.md)
+- [18. Filter published container ports in DOCKER-USER](0018-docker-user-port-filtering.md)
+- [19. ntfy.sh as the single alert channel](0019-ntfy-single-alert-channel.md)
+- [20. Same checks locally and in CI](0020-same-checks-locally-and-in-ci.md)
+- [21. Podman quadlets instead of Docker](0021-podman-quadlets.md) (proposed)

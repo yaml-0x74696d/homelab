@@ -1,0 +1,6 @@
+---
+profile: production
+
+exclude_paths:
+  - collections/
+  - apps/proxy/traefik/dynamic/remote_services.yml   # go template, not yaml

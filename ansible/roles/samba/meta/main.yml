@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: samba
+  author: tim
+  description: smb shares (incl. time machine) on the storage pool
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

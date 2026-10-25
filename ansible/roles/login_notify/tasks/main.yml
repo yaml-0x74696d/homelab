@@ -1,0 +1,21 @@
+---
+- name: Notify script
+  ansible.builtin.template:
+    src: login-notify.sh.j2
+    dest: /usr/local/sbin/login-notify
+    mode: '0750'
+  notify: Restart login-notify
+
+- name: Service unit
+  ansible.builtin.template:
+    src: login-notify.service.j2
+    dest: /etc/systemd/system/login-notify.service
+    mode: '0644'
+  notify: Restart login-notify
+
+- name: Enable login-notify
+  ansible.builtin.systemd:
+    name: login-notify.service
+    enabled: true
+    state: started
+    daemon_reload: true

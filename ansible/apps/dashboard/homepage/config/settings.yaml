@@ -1,0 +1,23 @@
+---
+title: Dashboard
+headerStyle: boxedWidgets
+statusStyle: "basic"
+disableIndexing: true
+theme: dark
+color: red
+hideErrors: true
+layout:
+  Quickaccess:
+    style: row
+    columns: 5
+  Servers:
+    style: row
+    columns: 4
+  VM:
+    initiallyCollapsed: true
+    style: row
+    columns: 5
+  Services:
+    style: row
+    columns: 5
+    initiallyCollapsed: true

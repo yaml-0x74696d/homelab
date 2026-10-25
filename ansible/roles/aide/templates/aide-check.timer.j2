@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily AIDE integrity check
+
+[Timer]
+OnCalendar={{ aide_check_time }}
+RandomizedDelaySec={{ aide_check_delay }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

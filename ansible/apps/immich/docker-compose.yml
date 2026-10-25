@@ -1,0 +1,63 @@
+services:
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    container_name: immich_server
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ${UPLOAD_LOCATION}:/data          # photo library on the cifs pool
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    # reach auth.<domain> (traefik@docker-1) for oidc; container dns can't resolve it
+    extra_hosts:
+      - "auth.${DOMAIN}:${DOCKER1_IP}"
+    ports:
+      - "${HOST_PORT}:2283"
+    networks:
+      - immich-internal
+      - proxy-net              # bridge so the published port binds
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: immich_redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: ${HEALTH_INTERVAL}
+      timeout: ${REDIS_HEALTH_TIMEOUT}
+      retries: ${HEALTH_RETRIES}
+      start_period: ${HEALTH_START}
+    networks:
+      - immich-internal
+
+  database:
+    # required vector-enabled image — do NOT swap for plain postgres
+    image: ghcr.io/immich-app/postgres:${PG_TAG}
+    container_name: immich_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: ${HEALTH_INTERVAL}
+      timeout: ${DB_HEALTH_TIMEOUT}
+      retries: ${HEALTH_RETRIES}
+      start_period: ${HEALTH_START}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data   # local: network shares unsupported for the db
+    networks:
+      - immich-internal
+
+networks:
+  proxy-net:
+    external: true
+  immich-internal:
+    internal: true

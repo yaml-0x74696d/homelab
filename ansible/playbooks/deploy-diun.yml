@@ -1,0 +1,16 @@
+---
+# image-update notifier, one per docker host (watches the local socket, pushes to ntfy)
+- name: Deploy diun
+  hosts: docker_hosts
+  become: true
+  vars:
+    diun_schedule: "0 6 * * *"            # cron, digest check
+    diun_jitter: 30s
+    diun_ntfy_priority: 3
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: diun
+        docker_app_networks: []            # socket + outbound only, no proxy-net
+        docker_app_dirs:
+          - { path: data }            # bbolt state so it doesn't re-notify each run

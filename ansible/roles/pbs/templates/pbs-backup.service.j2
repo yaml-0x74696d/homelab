@@ -1,0 +1,11 @@
+[Unit]
+Description=PBS data backup (db dumps + app config)
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/pbs.env
+ExecStart=/usr/local/sbin/pbs-backup
+TimeoutStartSec={{ pbs_timeout }}

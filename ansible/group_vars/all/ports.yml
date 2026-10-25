@@ -1,0 +1,42 @@
+---
+pve_ui_port: 8006
+pbs_port: 8007
+cockpit_port: 9090
+node_exporter_port: 9100
+docker_metrics_port: 9323
+docker_proxy_port: 2375
+mqtt_port: 1883
+netbird_relay_ports: { min: 49160, max: 49200 }   # coturn relay range, narrow so the router forward stays small
+
+# published on the docker hosts; compose, traefik, homepage and prometheus read these
+app_ports:
+  grafana: 3000
+  uptime_kuma: 3001
+  nextcloud: 8080
+  immich: 8081
+  jellyfin: 8082
+  paperless: 8083
+  homelable: 8085
+  influxdb: 8086
+  nginx: 8087
+  pihole: 8088
+  prometheus: 9091
+  mqtt_exporter: 9641
+
+# published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.
+# backends only answer traefik + ha (docker-1) and prometheus/kuma (docker-2)
+docker_backend_callers: ["{{ docker1_ip }}", "{{ docker2_ip }}"]
+docker_published_allow:
+  - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage, kuma
+  - { port: "{{ app_ports.prometheus }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.grafana }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.uptime_kuma }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.homelable }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.influxdb }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.nginx }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.jellyfin }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.paperless }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.pihole }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.mqtt_exporter }}", src: ["{{ docker2_ip }}"] }   # prometheus only

@@ -1,0 +1,6 @@
+---
+- name: Deploy proxmox firewall
+  hosts: proxmox
+  gather_facts: false
+  roles:
+    - pve_firewall

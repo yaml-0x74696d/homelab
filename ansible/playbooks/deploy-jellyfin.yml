@@ -1,0 +1,15 @@
+---
+- name: Deploy jellyfin
+  hosts: docker-3
+  become: true
+  vars:
+    jellyfin_media_path: "{{ cifs_mount_root }}/media"
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: jellyfin
+        # jellyfin runs as root -> cifs uid/gid 0 (defaults); bind is read-only
+        docker_app_cifs:
+          - share: media
+            user: media
+            path: "{{ jellyfin_media_path }}"

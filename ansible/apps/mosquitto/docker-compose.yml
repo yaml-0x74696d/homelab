@@ -1,0 +1,11 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "${PORT}:1883"
+    volumes:
+      - ./config:/mosquitto/config
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log

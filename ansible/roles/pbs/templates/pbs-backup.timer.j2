@@ -1,0 +1,10 @@
+[Unit]
+Description=nightly PBS data backup
+
+[Timer]
+OnCalendar={{ pbs_on_calendar }}
+RandomizedDelaySec={{ pbs_randomized_delay }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

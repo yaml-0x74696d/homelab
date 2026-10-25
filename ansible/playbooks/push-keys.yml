@@ -1,0 +1,11 @@
+---
+- name: Push ssh keys to cluster
+  hosts: all
+  become: false
+
+  tasks:
+    - name: Add public key to authorized_keys
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ lookup('file', admin_ssh_pubkey_file | expanduser) }}"

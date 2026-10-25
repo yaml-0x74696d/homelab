@@ -1,0 +1,66 @@
+---
+- name: Deploy dns
+  hosts: docker-2
+  become: true
+
+  pre_tasks:
+    - name: Dns service ip unit
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/dns-ip.service
+        content: |
+          [Unit]
+          Description=dns service ip {{ dns_ip }}
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=yes
+          ExecStart=/sbin/ip addr replace {{ dns_ip }}/32 dev {{ ansible_facts['default_ipv4']['interface'] }}
+          ExecStop=/sbin/ip addr del {{ dns_ip }}/32 dev {{ ansible_facts['default_ipv4']['interface'] }}
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      register: dns_ip_unit
+
+    - name: Dns service ip up
+      ansible.builtin.systemd:
+        name: dns-ip
+        enabled: true
+        state: "{{ 'restarted' if dns_ip_unit is changed else 'started' }}"
+        daemon_reload: "{{ dns_ip_unit is changed }}"
+
+    # pihole needs :53; free it from the systemd-resolved stub listener
+    - name: Ensure resolved drop-in dir
+      ansible.builtin.file:
+        path: /etc/systemd/resolved.conf.d
+        state: directory
+        mode: '0755'
+
+    - name: Disable resolved stub listener
+      ansible.builtin.copy:
+        dest: /etc/systemd/resolved.conf.d/10-no-stub.conf
+        content: |
+          [Resolve]
+          DNSStubListener=no
+        mode: '0644'
+      notify: Restart systemd-resolved
+
+    - name: Point resolv.conf at the real upstream list
+      ansible.builtin.file:
+        src: /run/systemd/resolve/resolv.conf
+        dest: /etc/resolv.conf
+        state: link
+        force: true
+
+  handlers:
+    - name: Restart systemd-resolved
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        state: restarted
+
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: dns

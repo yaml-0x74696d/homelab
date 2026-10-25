@@ -1,0 +1,77 @@
+deployment {
+  site home "Home" {
+    pve1 = node "pve-1" {
+      description "Gateway node, 4c / 7.5G"
+      docker1 = vm "docker-1" {
+        instanceOf edge.traefik
+        instanceOf identity.authentik
+        instanceOf apps.vaultwarden
+        instanceOf apps.gitea
+        instanceOf apps.searxng
+        instanceOf apps.homepage
+        instanceOf apps.pdfcraft
+        instanceOf automation.homeassistant
+        instanceOf automation.mosquitto
+        instanceOf automation.esphome
+        instanceOf automation.mqtt-exporter
+        instanceOf edge.ddns
+        instanceOf ops.docker-proxy
+        instanceOf ops.diun
+        instanceOf storage.pbs-client
+        instanceOf observability.node-exporter
+      }
+      hostapd = host "hostapd" {
+        #iot
+        instanceOf automation.ap
+      }
+      iot = zone "IoT wifi" {
+        #iot
+        instanceOf automation.sensor
+      }
+    }
+
+    pve2 = node "pve-2" {
+      description "Monitoring node, 4c / 7.5G"
+      docker2 = vm "docker-2" {
+        instanceOf edge.pihole
+        instanceOf observability.prometheus
+        instanceOf observability.grafana
+        instanceOf observability.influxdb
+        instanceOf observability.uptime-kuma
+        instanceOf apps.homelable
+        instanceOf ops.docker-proxy
+        instanceOf ops.diun
+        instanceOf storage.pbs-client
+        instanceOf remote.router-peer
+        instanceOf observability.node-exporter
+      }
+      dmz = zone "DMZ" {
+        #dmz
+        netbird = vm "netbird" {
+          description "NixOS, internet-facing"
+          instanceOf remote.netbird
+        }
+      }
+    }
+
+    pve3 = node "pve-3" {
+      description "Storage node, always on, 6c / 15.5G"
+      docker3 = vm "docker-3" {
+        instanceOf media.nextcloud
+        instanceOf media.immich
+        instanceOf media.jellyfin
+        instanceOf media.paperless
+        instanceOf ops.docker-proxy
+        instanceOf ops.diun
+        instanceOf storage.pbs-client
+        instanceOf observability.node-exporter
+      }
+      storage = lxc "storage" {
+        instanceOf storage.samba
+      }
+      pbs = host "PBS" {
+        instanceOf storage.pbs
+      }
+    }
+  }
+}

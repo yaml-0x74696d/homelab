@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# managed by ansible (roles/login-notify). phone alert on ssh / pve-web login.
+set -uo pipefail        # not -e: a transient curl/journal hiccup must not kill the watcher
+
+URL="{{ ntfy_url | default('') }}"
+TOKEN="{{ ntfy_token | default('') }}"
+HOST="$(hostname -s)"
+
+notify() {
+  [ -n "$URL" ] || return 0
+  local hdr=(-H "Title: login on $HOST" -H "Priority: high" -H "Tags: warning")
+  [ -n "$TOKEN" ] && hdr+=(-H "Authorization: Bearer $TOKEN")
+  curl -fsS -m {{ ntfy_timeout }} "${hdr[@]}" -d "$1" "$URL" >/dev/null 2>&1 || true
+}
+
+# follow only NEW journal entries; alert on successful ssh + pve web logins
+journalctl -f -n0 -o short-iso 2>/dev/null | while IFS= read -r line; do
+  case "$line" in
+    *"Accepted "*" for "*)             notify "ssh — $line" ;;
+    *"pvedaemon["*"successful auth"*)  notify "pve web ui — $line" ;;
+  esac
+done

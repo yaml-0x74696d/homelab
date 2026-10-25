@@ -1,0 +1,23 @@
+services:
+  diun:
+    image: crazymax/diun:latest
+    container_name: diun
+    restart: unless-stopped
+    labels:
+      - "homelab.docker-sock=true"   # restarted after dockerd restarts (vm-preparation)
+    command: serve
+    environment:
+      - TZ=${TZ}
+      - LOG_LEVEL=info
+      - DIUN_WATCH_SCHEDULE=${DIUN_SCHEDULE}
+      - DIUN_WATCH_JITTER=${DIUN_JITTER}
+      - DIUN_WATCH_FIRSTCHECKNOTIF=false   # don't ping for every image on first run
+      - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true   # watch all containers; opt out with label diun.enable=false
+      - DIUN_NOTIF_NTFY_ENDPOINT=${NTFY_ENDPOINT}
+      - DIUN_NOTIF_NTFY_TOPIC=${NTFY_TOPIC}
+      - DIUN_NOTIF_NTFY_TOKEN=${NTFY_TOKEN}
+      - DIUN_NOTIF_NTFY_PRIORITY=${DIUN_NTFY_PRIORITY}
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro

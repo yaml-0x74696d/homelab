@@ -1,0 +1,19 @@
+---
+- name: Deploy dashboard
+  hosts: docker-1
+  become: true
+  vars:
+    homepage_puid: 1000
+    homepage_pgid: 989                     # = docker group gid on docker-1 (socket access)
+    homepage_ping_target: 1.1.1.1          # internet check on the router tile
+    homepage_pve_token_id: "api@pam!homepage"
+    homepage_pbs_token_id: "homepage@pbs!homepage"
+    homepage_weather_label: Home
+    homepage_weather_latitude: 52.52       # sample location, set yours
+    homepage_weather_longitude: 13.40
+  roles:
+    - role: docker_app
+      vars:
+        docker_app_name: dashboard
+        docker_app_restart: [homepage]
+        docker_app_compose_remove_orphans: true

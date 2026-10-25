@@ -1,0 +1,11 @@
+[Unit]
+Description=AIDE integrity check
+# debian's lvm rule cache, same as its own daily check
+Requires=dailyaidecheck-buildcache.service
+After=dailyaidecheck-buildcache.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/aide-check
+Nice={{ aide_check_nice }}
+IOSchedulingClass={{ aide_check_io_class }}

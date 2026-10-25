@@ -1,0 +1,72 @@
+# shared by server + worker
+x-authentik-env: &authentik-env
+  AUTHENTIK_POSTGRESQL__HOST: postgresql
+  AUTHENTIK_POSTGRESQL__USER: authentik
+  AUTHENTIK_POSTGRESQL__NAME: authentik
+  AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+  AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+  # 2026.5 defaults to [::], ipv6 is off on the docker hosts
+  AUTHENTIK_LISTEN__HTTP: 0.0.0.0:9000
+  AUTHENTIK_LISTEN__HTTPS: 0.0.0.0:9443
+  AUTHENTIK_LISTEN__METRICS: 0.0.0.0:9300
+
+services:
+  postgresql:
+    image: postgres:${PG_TAG}
+    container_name: authentik-db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: ${DB_HEALTH_START}
+      interval: ${DB_HEALTH_INTERVAL}
+      retries: ${DB_HEALTH_RETRIES}
+      timeout: ${DB_HEALTH_TIMEOUT}
+    volumes:
+      - ./database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_USER: authentik
+      POSTGRES_DB: authentik
+    networks:
+      - authentik-internal
+
+  server:
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG}
+    platform: linux/amd64   # ghcr 2025.2.4 is arm64-only; fail the pull, don't crashloop
+    container_name: authentik-server
+    restart: unless-stopped
+    command: server
+    environment: *authentik-env
+    volumes:
+      - ./media:/data/media   # 2025.12 moved storage under /data
+      - ./custom-templates:/templates
+      - ./branding/custom.css:/web/dist/custom.css:ro
+    networks:
+      - authentik-internal
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authentik.rule=Host(`auth.${DOMAIN}`)"
+      - "traefik.http.routers.authentik.entrypoints=websecure"
+      - "traefik.http.routers.authentik.tls=true"
+      - "traefik.http.routers.authentik.tls.certresolver=cloudflare"
+      - "traefik.http.services.authentik.loadbalancer.server.port=9000"
+
+  worker:
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG}
+    platform: linux/amd64
+    container_name: authentik-worker
+    restart: unless-stopped
+    command: worker
+    environment: *authentik-env
+    volumes:
+      - ./media:/data/media
+      - ./custom-templates:/templates
+    networks:
+      - authentik-internal
+
+networks:
+  proxy-net:
+    external: true
+  authentik-internal:
+    internal: true

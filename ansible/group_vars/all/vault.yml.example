@@ -1,0 +1,71 @@
+---
+# template for the encrypted vault. copy the keys into vault.yml:
+#   ansible-vault edit ansible/group_vars/all/vault.yml
+# non-secret facts live in the other files here, not in the vault.
+# no `$` in values: compose interpolation eats them (bcrypt hashes: escape each $ as $$)
+
+acme_email: "you@example.org"
+sudo_pass: "CHANGE_ME"
+cf_token: "CHANGE_ME"
+
+# ntfy phone alerts (pbs, login-notify, aide). url includes the topic; token optional
+ntfy_url: "https://ntfy.sh/CHANGE_ME"
+ntfy_token: ""
+
+pihole_pass: "CHANGE_ME"
+
+authentik_pg: "CHANGE_ME"
+authentik_key: "CHANGE_ME"
+
+vw_admin: "CHANGE_ME"
+vw_sso_id: "CHANGE_ME"
+vw_sso_secret: "CHANGE_ME"
+
+gitea_admin_user: "CHANGE_ME"
+gitea_admin_email: "you@example.org"
+gitea_admin_pass: "CHANGE_ME"
+
+grafana_pass: "CHANGE_ME"
+grafana_oidc_id: "CHANGE_ME"
+grafana_oidc_secret: "CHANGE_ME"
+
+influxdb_admin_pass: "CHANGE_ME"
+influxdb_admin_token: "CHANGE_ME"
+
+homelable_key: "CHANGE_ME"
+homelable_hash: "CHANGE_ME"
+
+searxng_secret: "CHANGE_ME"
+
+nextcloud_admin_pass: "CHANGE_ME"
+nextcloud_db_pass: "CHANGE_ME"
+
+immich_db_pass: "CHANGE_ME"   # alphanumeric only, immich rejects specials
+
+paperless_admin_pass: "CHANGE_ME"
+paperless_db_pass: "CHANGE_ME"
+paperless_secret_key: "CHANGE_ME"
+paperless_oidc_id: "CHANGE_ME"
+paperless_oidc_secret: "CHANGE_ME"
+
+proxmox_secret: "CHANGE_ME"
+pbs_homepage_token: "CHANGE_ME"
+
+# pbs backup client (roles/pbs): token secret + datastore cert fingerprint
+pbs_token_secret: "CHANGE_ME"
+pbs_fingerprint: "CHANGE_ME"
+
+vault_netbird_setup_key: "CHANGE_ME"
+
+wifi_ssid: "your-ssid"
+wifi_pass: "CHANGE_ME"
+
+# samba users (samba_shares in storage.yml). admin = full access, rest scoped
+smb_passwords:
+  admin: "CHANGE_ME"
+  backup: "CHANGE_ME"
+  pve: "CHANGE_ME"
+  media: "CHANGE_ME"
+  nextcloud: "CHANGE_ME"
+  paperless: "CHANGE_ME"
+  immich: "CHANGE_ME"
