@@ -45,4 +45,7 @@ jobs:
       # ansible.cfg points at it; nothing here is encrypted
       - run: echo dummy > ansible/.vault_pass
 
+      # tofu validate reads admin_ssh_pubkey_file (hosts.yml); throwaway key
+      - run: mkdir -p ~/.ssh && ssh-keygen -q -t ed25519 -N '' -f ~/.ssh/id_ed25519
+
       - run: pre-commit run --all-files --hook-stage manual --show-diff-on-failure
