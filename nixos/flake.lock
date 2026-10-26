@@ -36,10 +36,23 @@
         "type": "github"
       }
     },
+    "private": {
+      "flake": false,
+      "locked": {
+        "path": "../ansible/group_vars/all/private",
+        "type": "path"
+      },
+      "original": {
+        "path": "../ansible/group_vars/all/private",
+        "type": "path"
+      },
+      "parent": []
+    },
     "root": {
       "inputs": {
         "disko": "disko",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "private": "private"
       }
     }
   },
