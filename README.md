@@ -75,7 +75,7 @@
 ```
 tofu/            VMs + LXC on Proxmox (bpg/proxmox, Debian cloud image, cloud-init)
 ansible/
-  group_vars/all/  Variables: network, ports, storage, hosts, apps (+ vault.yml.example)
+  group_vars/all/  Variables: network, ports, storage, hosts, apps (+ vault.yml.example, private/private.yml.example)
   inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent
   roles/           aide, docker_app, login_notify, mergerfs, netbird_agent, pbs, pve_firewall, samba
   apps/<name>/     Compose file + templates per app (26)
@@ -89,7 +89,7 @@ justfile         setup · lint · check · deploy · c4
 ## Single source of truth
 
 - Ansible group_vars get read by OpenTofu (yamldecode) and Nix (facts.nix), so an IP only has to change in one place ([ADR 0007](docs/adr/0007-group-vars-single-source-of-truth.md))
-- `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml` with `yamldecode`
+- `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
 - `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps` YAML into JSON with yq-go
 - `nixos/update.sh` + `aide-accept.sh` read the NetBird IP from the same file
 - Ports: one `app_ports` map → compose, Traefik routes, Homepage tiles, Prometheus targets, firewall
@@ -99,6 +99,7 @@ justfile         setup · lint · check · deploy · c4
 ## Deployment
 
 - Copy `vault.yml.example` → `vault.yml`, create `ansible/.vault_pass`
+- Copy `private/private.yml.example` → `private/private.yml` and fill in your domain, macs, disk uuids, keys (gitignored, nothing secret)
 - `just setup` · `just check` · `just deploy <app>` · `just c4`
 - Needs: just, pre-commit, OpenTofu, Nix, Node (the hooks install ansible-lint, yamllint, shellcheck, gitleaks)
 - OpenTofu: tfvars from the example, `tofu apply`

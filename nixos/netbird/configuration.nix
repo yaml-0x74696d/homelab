@@ -17,7 +17,7 @@ in
 
   # static ip, matched by the mac tofu assigns (name-agnostic)
   systemd.network.networks."10-lan" = {
-    matchConfig.MACAddress = lib.toLower facts.netbird_mac;
+    matchConfig.MACAddress = lib.toLower facts.macs.netbird.lan;
     address = [ "${facts.netbird_ip}/${lanPrefix}" ];
     networkConfig = {
       Gateway = facts.gateway_ip;

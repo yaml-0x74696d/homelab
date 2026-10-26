@@ -42,6 +42,9 @@ jobs:
 
       - run: pip install "pre-commit==${PRE_COMMIT_VERSION}"
 
+      # tofu + ansible read it; the example is enough for the checks
+      - run: cp ansible/group_vars/all/private/private.yml.example ansible/group_vars/all/private/private.yml
+
       # ansible.cfg points at it; nothing here is encrypted
       - run: echo dummy > ansible/.vault_pass
 

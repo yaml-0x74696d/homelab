@@ -11,7 +11,7 @@
 ## How it works
 
 1. Installs `mergerfs` and `fuse3`, and sets `user_allow_other` in `/etc/fuse.conf`
-2. Mounts each disk by UUID (`storage_disks` in group_vars `storage.yml`) with `defaults,noatime`
+2. Mounts each disk by UUID (`storage_disks` in group_vars `private/private.yml`) with `defaults,noatime`
 3. Checks every disk with `mountpoint -q` before the pool goes up, so the pool never joins empty folders
 4. Mounts the pool at `storage_pool_host` (`/mnt/storage/pool`), with the disk paths as branches
 5. The pool's fstab line gets an `x-systemd.requires=<disk>` for each disk, so at boot the pool waits for the disks
@@ -40,7 +40,7 @@
 - Configs and databases are backed up by PBS. Bulk media on the pool isn't, on purpose (it can be ripped or synced again)
 - The share folders are created here, as the real root user, because the unprivileged CT can't chgrp on the FUSE mount
 - Order on the first run: `--limit pve-3`, then `tofu apply` (CT 300), then `--limit storage`
-- The disk UUIDs are placeholders (`CHANGE_ME-…`) in this repo
+- The disk UUIDs live in `private/private.yml`, the example only has placeholders (`CHANGE_ME-…`)
 
 ## Related
 

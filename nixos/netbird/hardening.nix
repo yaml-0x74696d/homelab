@@ -2,15 +2,16 @@
 # sandboxing + firewall ports live in netbird.nix (merged into the firewall lists).
 { facts, ... }:
 let
-  # the controller's public key (deploys + admin login). placeholder, set yours
-  adminKeys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA_CHANGE_ME admin@controller" ];
+  # the controller's public key (deploys + admin login), from private.yml
+  adminKeys = facts.admin_ssh_pubkeys;
   sshLoginGraceTime = 30;   # seconds
 
   f2bMaxRetry = 3;
   f2bBantime = "1h";
 
-  # private repo needs a fetch token
-  upgradeFlake = "git+https://git.${facts.domain}/${facts.admin_user}/homelab?dir=nixos#netbird";
+  # nightly self-upgrade builds the public repo (set your fork) with the local copy of private.yml
+  upgradeFlake = "github:yaml-0x74696d/homelab?dir=nixos#netbird";
+  privateDir = "/etc/homelab-private";
   upgradeAt = "04:00";
   upgradeJitter = "45min";
   rebootWindow = { lower = "03:00"; upper = "05:00"; };
@@ -105,10 +106,12 @@ in
   };
 
   # --- self-patching: security-critical for a wan box. reboots off-hours ---
+  # private.yml as a real file (mode = copy, not a store symlink) for the upgrade's --override-input
+  environment.etc."homelab-private/private.yml" = { source = facts.private_file; mode = "0644"; };
   system.autoUpgrade = {
     enable = true;
     flake = upgradeFlake;
-    flags = [ "--update-input" "nixpkgs" "--no-write-lock-file" ];
+    flags = [ "--update-input" "nixpkgs" "--override-input" "private" "path:${privateDir}" "--no-write-lock-file" ];
     dates = upgradeAt;
     randomizedDelaySec = upgradeJitter;
     allowReboot = true;

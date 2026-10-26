@@ -2,15 +2,15 @@
 # tls: nginx + acme dns-01 (cloudflare). idp: authentik. stun/turn: coturn.
 #
 # secrets are NOT in git — the module reads them from files under ${secretsDir};
-# create them on the box before the first switch. clientId is not secret; fill it
-# from the authentik provider once created.
+# create them on the box before the first switch. clientId is not secret, it comes
+# from private.yml (netbird_oidc_client_id) once the authentik provider exists.
 { facts, ... }:
 let
   domain = "nb.${facts.domain}";
   authAppSlug = "netbird";
   authAuthority = "https://auth.${facts.domain}/application/o/${authAppSlug}/";
   # authentik makes the token audience == the client id (public client — not a secret).
-  clientId = "CHANGE_ME-authentik-client-id";
+  clientId = facts.netbird_oidc_client_id;
   scopes = "openid profile email offline_access api";
   secretsDir = "/var/lib/secrets/netbird";
 
