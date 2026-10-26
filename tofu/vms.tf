@@ -64,7 +64,7 @@ resource "proxmox_virtual_environment_vm" "docker" {
       servers = [local.net.gateway_ip]
     }
     user_account {
-      username = local.net.admin_user
+      username = local.priv.admin_user
       password = var.vm_password
       keys     = local.ssh_keys
     }
@@ -145,7 +145,7 @@ resource "proxmox_virtual_environment_vm" "netbird" {
       servers = [local.net.dns_ip, local.net.gateway_ip]
     }
     user_account {
-      username = local.net.admin_user
+      username = local.priv.admin_user
       password = var.vm_password
       keys     = local.ssh_keys
     }

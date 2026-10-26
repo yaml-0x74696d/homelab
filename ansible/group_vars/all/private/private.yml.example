@@ -3,6 +3,7 @@
 # ansible loads it with the rest of group_vars/all, tofu reads it in locals.tf, the nix flake
 # gets this dir as its `private` input. nothing secret here, secrets go in vault.yml.
 domain: example.org
+admin_user: admin              # login user on every host + app admin accounts
 
 # admin key on the nixos boxes (ansible hosts + tofu use admin_ssh_pubkey_file instead)
 admin_ssh_pubkeys:
