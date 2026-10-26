@@ -7,7 +7,9 @@ fact() { nix run nixpkgs#yq-go -- "$1" "$(dirname "$0")/../ansible/group_vars/al
 HOST=${1:-root@$(fact .netbird_ip)}
 cd "$(dirname "$0")"
 
-rebuild() { nix run nixpkgs#nixos-rebuild -- "$1" --flake .#netbird "${@:2}"; }
+PRIVATE="$PWD/../ansible/group_vars/all/private"
+[ -f "$PRIVATE/private.yml" ] || { echo "!! $PRIVATE/private.yml missing (cp the example, fill in)"; exit 1; }
+rebuild() { nix run nixpkgs#nixos-rebuild -- "$1" --flake .#netbird --override-input private "path:$PRIVATE" "${@:2}"; }
 
 echo ">> bump flake inputs"
 nix flake update
