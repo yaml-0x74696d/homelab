@@ -4,7 +4,6 @@ lan_cidr: 192.168.178.0/24
 gateway_ip: 192.168.178.1
 docker_bridge_cidr: 172.16.0.0/12
 timezone: Europe/Berlin
-admin_user: admin              # login user on every host + app admin accounts
 
 pve1_ip: 192.168.178.101
 pve2_ip: 192.168.178.102
