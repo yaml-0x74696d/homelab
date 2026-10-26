@@ -1,0 +1,29 @@
+---
+# per-lab values, kept out of git: cp private.yml.example private.yml and fill in.
+# ansible loads it with the rest of group_vars/all, tofu reads it in locals.tf, the nix flake
+# gets this dir as its `private` input. nothing secret here, secrets go in vault.yml.
+domain: example.org
+admin_user: admin              # login user on every host + app admin accounts
+
+# admin key on the nixos boxes (ansible hosts + tofu use admin_ssh_pubkey_file instead)
+admin_ssh_pubkeys:
+  - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA_CHANGE_ME admin@controller"
+
+# nic macs, they pin the dhcp leases. samples = proxmox prefix BC:24:11 + the vmid.
+# iot = second nic on the iot bridge
+macs:
+  docker-1: { lan: "BC:24:11:00:02:01", iot: "BC:24:11:00:12:01" }
+  docker-2: { lan: "BC:24:11:00:02:02" }
+  docker-3: { lan: "BC:24:11:00:02:03" }
+  netbird: { lan: "BC:24:11:00:02:50" }   # nixos matches the nic by it
+  storage: { lan: "BC:24:11:00:03:00" }
+
+# ext4 disks unioned into the pool (blkid on pve-3)
+storage_disks:
+  - { path: /mnt/storage/disk1, uuid: "CHANGE_ME-disk1-uuid" }
+  - { path: /mnt/storage/disk2, uuid: "CHANGE_ME-disk2-uuid" }
+  - { path: /mnt/storage/disk3, uuid: "CHANGE_ME-disk3-uuid" }
+  - { path: /mnt/storage/disk4, uuid: "CHANGE_ME-disk4-uuid" }
+
+# authentik public client netbird logs in with (audience == client id), not a secret
+netbird_oidc_client_id: "CHANGE_ME-authentik-client-id"

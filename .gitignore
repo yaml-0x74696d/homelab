@@ -1,5 +1,6 @@
-# secrets
+# secrets + per-lab values
 ansible/group_vars/all/vault.yml
+ansible/group_vars/all/private/private.yml
 .vault_pass
 **/.vault_pass
 .env

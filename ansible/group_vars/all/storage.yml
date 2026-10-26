@@ -2,11 +2,7 @@
 storage_pool_host: /mnt/storage/pool   # mergerfs pool on the pve-3 host
 storage_root: /srv/storage             # pool bind-mounted into the storage CT
 cifs_mount_root: /srv                   # where the docker hosts mount pool shares
-storage_disks:                         # ext4 disks unioned into the pool
-  - { path: /mnt/storage/disk1, uuid: "CHANGE_ME-disk1-uuid" }
-  - { path: /mnt/storage/disk2, uuid: "CHANGE_ME-disk2-uuid" }
-  - { path: /mnt/storage/disk3, uuid: "CHANGE_ME-disk3-uuid" }
-  - { path: /mnt/storage/disk4, uuid: "CHANGE_ME-disk4-uuid" }
+# storage_disks (the pool's disks) lives in private/private.yml
 
 # per-share group gid = base + list index (shared by samba role + pool dirs)
 samba_gid_base: 3001

@@ -9,12 +9,18 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # per-lab values. defaults to the example; real builds point it at the dir with private.yml:
+    # --override-input private path:<repo>/ansible/group_vars/all/private (update.sh does)
+    private = {
+      url = "path:../ansible/group_vars/all/private";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, disko, ... }:
+  outputs = { self, nixpkgs, disko, private, ... }:
     let
       system = "x86_64-linux";
-      facts = import ./facts.nix { pkgs = nixpkgs.legacyPackages.${system}; };
+      facts = import ./facts.nix { pkgs = nixpkgs.legacyPackages.${system}; inherit private; };
     in
     {
       nixosConfigurations.netbird = nixpkgs.lib.nixosSystem {

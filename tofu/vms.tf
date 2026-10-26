@@ -26,6 +26,9 @@ resource "proxmox_virtual_environment_vm" "docker" {
   # qemu-guest-agent comes from vm-preparation; flip to true and re-apply after
   agent { enabled = false }
 
+  # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
+  serial_device { device = "socket" }
+
   cpu {
     cores = each.value.cores
     type  = "host"
@@ -64,7 +67,7 @@ resource "proxmox_virtual_environment_vm" "docker" {
       servers = [local.net.gateway_ip]
     }
     user_account {
-      username = local.net.admin_user
+      username = local.priv.admin_user
       password = var.vm_password
       keys     = local.ssh_keys
     }
@@ -103,6 +106,9 @@ resource "proxmox_virtual_environment_vm" "netbird" {
 
   # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)
   agent { enabled = false }
+
+  # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
+  serial_device { device = "socket" }
 
   cpu {
     cores = local.vms.netbird.cores
@@ -145,7 +151,7 @@ resource "proxmox_virtual_environment_vm" "netbird" {
       servers = [local.net.dns_ip, local.net.gateway_ip]
     }
     user_account {
-      username = local.net.admin_user
+      username = local.priv.admin_user
       password = var.vm_password
       keys     = local.ssh_keys
     }
