@@ -4,8 +4,10 @@ global(workDirectory="/var/lib/rsyslog")
 # journal is the source; imuxsock only for extra sockets packages add (postfix chroot)
 module(load="imuxsock" SysSock.Use="off")
 
+# no state file yet = first start: begin at the end, not at the oldest journal entry
 module(load="imjournal"
        StateFile="imjournal.state"
+       IgnorePreviousMessages="on"
        Ratelimit.Interval="{{ rsyslog_journal_rate_interval }}"
        Ratelimit.Burst="{{ rsyslog_journal_rate_burst }}"
        PersistStateInterval="10")
