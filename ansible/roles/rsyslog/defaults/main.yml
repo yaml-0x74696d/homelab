@@ -1,0 +1,24 @@
+---
+# client = local files + relp to the log lxc; server = also receives (host_vars/log.yml)
+rsyslog_mode: client
+rsyslog_server: "{{ log_ip }}"
+rsyslog_relp_port: "{{ log_relp_port }}"
+
+# imjournal: messages per interval before it drops
+rsyslog_journal_rate_interval: 600   # seconds
+rsyslog_journal_rate_burst: 20000
+
+# client queue while the log lxc is unreachable (spills to disk)
+rsyslog_queue_max_disk: 1g
+rsyslog_resume_interval: 30          # seconds between reconnects
+
+rsyslog_local_rotate: 4              # weeks kept on each host
+
+# server
+rsyslog_remote_dir: /var/log/remote
+rsyslog_remote_retention: 90         # days
+rsyslog_server_queue_size: 50000     # messages
+# source ip -> dir name; the dir comes from the connection, not from what the sender claims
+rsyslog_server_hosts: >-
+  {{ dict(groups['all'] | map('extract', hostvars, 'ansible_host') | zip(groups['all']))
+     | combine({netbird_ip: 'netbird'}) }}

@@ -1,6 +1,6 @@
 # tofu
 
-- OpenTofu builds the Docker VMs, the NetBird VM and the storage LXC with the `bpg/proxmox` provider
+- OpenTofu builds the Docker VMs, the NetBird VM, the storage LXC and the log LXC with the `bpg/proxmox` provider
 - The guests are created from a Debian cloud image, cloud-init sets the IP, the admin user and the SSH key
 - IPs, VMIDs, the admin user, the SSH key path and the pool paths come from `../ansible/group_vars/all/` (read in `locals.tf`), so OpenTofu and Ansible can't drift apart
 - Guest sizes, nodes and MACs are in the `vms` / `lxcs` maps in `locals.tf`

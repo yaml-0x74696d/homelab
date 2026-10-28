@@ -9,6 +9,8 @@ all:
       hosts:
         storage:
           ansible_host: "{{ storage_ip }}"
+        log:
+          ansible_host: "{{ log_ip }}"
     docker_hosts:
       vars:
         ansible_become: true

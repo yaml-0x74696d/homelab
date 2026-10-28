@@ -18,7 +18,6 @@
           - fail2ban
           - apparmor
           - apparmor-utils
-          - systemd-timesyncd
           - unattended-upgrades
           - needrestart
           - prometheus-node-exporter

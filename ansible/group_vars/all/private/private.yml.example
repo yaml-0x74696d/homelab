@@ -17,6 +17,7 @@ macs:
   docker-3: { lan: "BC:24:11:00:02:03" }
   netbird: { lan: "BC:24:11:00:02:50" }   # nixos matches the nic by it
   storage: { lan: "BC:24:11:00:03:00" }
+  log: { lan: "BC:24:11:00:03:01" }
 
 # ext4 disks unioned into the pool (blkid on pve-3)
 storage_disks:

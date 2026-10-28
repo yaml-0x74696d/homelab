@@ -57,3 +57,55 @@ resource "proxmox_virtual_environment_container" "storage" {
     path   = local.storage.storage_root
   }
 }
+
+# central rsyslog (relp), on pve-3 because it's always on
+resource "proxmox_virtual_environment_container" "log" {
+  node_name     = local.lxcs.log.node
+  vm_id         = local.lxcs.log.vmid
+  unprivileged  = true
+  start_on_boot = true
+
+  cpu {
+    cores = local.lxcs.log.cores
+  }
+
+  memory {
+    dedicated = local.lxcs.log.memory
+    swap      = local.lxcs.log.swap
+  }
+
+  operating_system {
+    type             = "debian"
+    template_file_id = var.lxc_template
+  }
+
+  disk {
+    datastore_id = var.vm_datastore
+    size         = local.lxcs.log.disk
+  }
+
+  # firewall bit on: roles/pve_firewall filters inbound (log.fw)
+  network_interface {
+    name        = "eth0"
+    bridge      = local.net.lan_bridge
+    mac_address = local.lxcs.log.mac
+    firewall    = true
+  }
+
+  initialization {
+    hostname = "log"
+    ip_config {
+      ipv4 {
+        address = "${local.lxcs.log.ip}/${local.lan_prefix}"
+        gateway = local.net.gateway_ip
+      }
+    }
+    dns {
+      servers = [local.net.gateway_ip]
+    }
+    user_account {
+      keys     = local.ssh_keys
+      password = var.vm_password
+    }
+  }
+}

@@ -15,6 +15,7 @@
 |---|---|
 | `/etc/pve/firewall/cluster.fw` | Master switch, default policy, ipsets, the `pve-mgmt` group |
 | `/etc/pve/firewall/<netbird vmid>.fw` | The DMZ box's allow list and egress rules |
+| `/etc/pve/firewall/<log vmid>.fw` | The log LXC: RELP only from known hosts |
 | `/etc/pve/firewall/<vmid>.fw` | `enable: 0` for each guest that stays open |
 | `/etc/pve/nodes/<node>/host.fw` | Host lockdown, uses `GROUP pve-mgmt` |
 
@@ -36,6 +37,11 @@
 - Out: DNS + HTTPS to `pve_firewall_netbird_dns_https`, and DNS to the gateway
 - Out: the rest of the LAN is dropped, the internet is open
 
+## Log LXC
+
+- In: RELP (`log_relp_port`) from `pve_firewall_log_sources` only, SSH + ICMP from the LAN
+- Out: open
+
 ## Settings
 
 | Variable | Default | What |
@@ -51,6 +57,9 @@
 | `pve_firewall_netbird_vmid` | `vmids.netbird` | The DMZ box |
 | `pve_firewall_netbird_relay_range` | from `netbird_relay_ports` | TURN relay ports |
 | `pve_firewall_netbird_turn_ports` | `[3478, 5349]` | STUN/TURN and TURN over TLS |
+| `pve_firewall_log_vmid` | `vmids.log` | The log LXC |
+| `pve_firewall_log_sources` | docker-1/2/3, storage | Hosts that may send RELP to the log LXC |
+| `pve_firewall_log_port` | `log_relp_port` | The RELP port |
 
 ## Rollout
 

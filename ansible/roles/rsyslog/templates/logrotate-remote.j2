@@ -1,0 +1,15 @@
+# managed by ansible (roles/rsyslog): files rotate only when written, so maxage enforces the days
+{{ rsyslog_remote_dir }}/*/*.log
+{
+	daily
+	rotate {{ rsyslog_remote_retention }}
+	maxage {{ rsyslog_remote_retention }}
+	missingok
+	notifempty
+	compress
+	delaycompress
+	sharedscripts
+	postrotate
+		/usr/lib/rsyslog/rsyslog-rotate
+	endscript
+}

@@ -1,0 +1,29 @@
+---
+- name: Ensure journald drop-in dir
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    mode: "0755"
+
+# rsyslog reads the journal itself (imjournal), so no forwarding to the syslog socket
+- name: Journald config
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/10-journald.conf
+    content: |
+      # managed by ansible (roles/journald)
+      [Journal]
+      Storage={{ journald_storage }}
+      RuntimeMaxUse={{ journald_runtime_max_use }}
+      RateLimitIntervalSec={{ journald_rate_limit_interval }}
+      RateLimitBurst={{ journald_rate_limit_burst }}
+      Compress=yes
+      ForwardToSyslog=no
+    mode: "0644"
+  notify: Restart journald
+
+# disk cap from journald.yml (pve), not used with a volatile journal
+- name: No disk size cap
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d/10-size.conf
+    state: absent
+  notify: Restart journald
