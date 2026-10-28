@@ -28,3 +28,9 @@ storage_disks:
 
 # authentik public client netbird logs in with (audience == client id), not a secret
 netbird_oidc_client_id: "CHANGE_ME-authentik-client-id"
+
+# devices that may ssh to the pve nodes and open the pve ui
+admin_hosts:
+  - { ip: 192.168.178.2, c: controller }
+# extra devices for the pve ui only (no ssh)
+admin_ui_hosts: []

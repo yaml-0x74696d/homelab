@@ -21,7 +21,3 @@ mqtt_broker_ip: "{{ docker1_ip }}"
 
 # proxmox guest ids (tofu creates them with the same ids)
 vmids: { docker1: 201, docker2: 202, docker3: 203, netbird: 250, storage: 300, log: 301 }
-
-# devices that may ssh to the hosts and open the pve ui
-admin_hosts:
-  - { ip: 192.168.178.2, c: controller }
