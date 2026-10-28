@@ -72,8 +72,10 @@
   ansible.builtin.command: rsyslogd -N1
   changed_when: false
 
+# --check doesn't install the package, so the unit doesn't exist yet
 - name: Enable rsyslog
   ansible.builtin.systemd:
     name: rsyslog
     state: started
     enabled: true
+  ignore_errors: "{{ ansible_check_mode }}"
