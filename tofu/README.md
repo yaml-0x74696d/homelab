@@ -9,6 +9,7 @@
 
 - The provider logs in with an API token for `root@pam` that is exempt from 2FA
 - One exception: API tokens can't set bind mounts, so creating the storage LXC needs `pve_password`, with 2FA turned off for that run
+- LXC feature flags are root-only too: on an existing CT, set them on the node (`pct set <vmid> --features nesting=1`), then `tofu plan` shows no diff
 - Turn on the **import** content type on the `local` datastore, it's needed for the cloud image (Datacenter → Storage → local → Content → Import)
 - Run `ssh-add` with your root key, the provider also uses SSH (for the disk import)
 

@@ -12,7 +12,7 @@
 ## How it works
 
 1. Installs `rsyslog` and `rsyslog-relp`
-2. Renders `/etc/rsyslog.conf`: reads the journal with `imjournal` (state file, rate limit) and writes those files
+2. Renders `/etc/rsyslog.conf`: reads the journal with `imjournal` (state file, rate limit) and writes those files. `imuxsock` is loaded without the system socket, only for extra sockets packages add (postfix's chroot on the LXCs)
 3. Renders `/etc/logrotate.d/rsyslog` for those files
 4. Client: `/etc/rsyslog.d/90-forward.conf` sends everything with `omrelp`. A disk-assisted queue holds messages while the log LXC is down and survives a reboot
 5. Server: `10-server.conf` takes RELP on `log_relp_port` and writes `<rsyslog_remote_dir>/<host>/<program>.log`. The host name comes from the sender's IP through a lookup table built from the inventory (`hosts.json`), not from what the message claims. Unknown IPs go to `unknown/`
