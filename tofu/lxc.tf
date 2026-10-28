@@ -74,6 +74,11 @@ resource "proxmox_virtual_environment_container" "log" {
     swap      = local.lxcs.log.swap
   }
 
+  # systemd 257 (debian 13) needs it for its sandboxing
+  features {
+    nesting = true
+  }
+
   operating_system {
     type             = "debian"
     template_file_id = var.lxc_template
