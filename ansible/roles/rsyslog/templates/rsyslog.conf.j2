@@ -1,6 +1,9 @@
 # managed by ansible (roles/rsyslog)
 global(workDirectory="/var/lib/rsyslog")
 
+# journal is the source; imuxsock only for extra sockets packages add (postfix chroot)
+module(load="imuxsock" SysSock.Use="off")
+
 module(load="imjournal"
        StateFile="imjournal.state"
        Ratelimit.Interval="{{ rsyslog_journal_rate_interval }}"
