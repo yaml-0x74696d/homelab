@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 1 LXC, 26 compose apps, 8 Ansible roles, 39 playbooks, 21 C4 views
+- 3 Proxmox nodes, 4 VMs + 2 LXCs, 26 compose apps, 12 Ansible roles, 40 playbooks, 21 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -32,6 +32,7 @@
 | docker-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 32 GB | .203 |
 | netbird | VM 250 | pve-2 | 2 | 2 GB (1 GB) | 20 GB | .250 |
 | storage | CT 300 | pve-3 | 2 | 2 GB + 512 MB swap | 24 GB | .150 |
+| log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
 
 - Specs can be found in `tofu/locals.tf`; IDs + IPs are in `ansible/group_vars/all/network.yml`
 
@@ -73,7 +74,7 @@
 ## File layout
 
 ```
-tofu/            VMs + LXC on Proxmox (bpg/proxmox, Debian cloud image, cloud-init)
+tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-init)
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps (+ vault.yml.example, private/private.yml.example)
   inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent

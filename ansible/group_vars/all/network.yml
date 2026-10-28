@@ -12,6 +12,7 @@ docker1_ip: 192.168.178.201
 docker2_ip: 192.168.178.202
 docker3_ip: 192.168.178.203
 storage_ip: 192.168.178.150    # CT 300 on pve-3
+log_ip: 192.168.178.151        # CT 301 on pve-3, central rsyslog
 netbird_ip: 192.168.178.250    # dmz vm on pve-2
 lan_bridge: vmbr0             # proxmox bridges (tofu + hostapd)
 iot_bridge: vmbr1
@@ -19,7 +20,7 @@ dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (do
 mqtt_broker_ip: "{{ docker1_ip }}"
 
 # proxmox guest ids (tofu creates them with the same ids)
-vmids: { docker1: 201, docker2: 202, docker3: 203, netbird: 250, storage: 300 }
+vmids: { docker1: 201, docker2: 202, docker3: 203, netbird: 250, storage: 300, log: 301 }
 
 # devices that may ssh to the hosts and open the pve ui
 admin_hosts:

@@ -1,0 +1,14 @@
+# managed by ansible (roles/pve_firewall) — log lxc: relp only from known hosts
+[OPTIONS]
+
+enable: 1
+policy_in: DROP
+policy_out: ACCEPT
+
+[RULES]
+
+{% for ip in pve_firewall_log_sources %}
+IN ACCEPT -source {{ ip }} -p tcp -dport {{ pve_firewall_log_port }} -log nolog
+{% endfor %}
+IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p tcp -dport 22 -log nolog
+IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p icmp -log nolog

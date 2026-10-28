@@ -1,6 +1,7 @@
 ---
+# pve only; guests get a volatile journal from roles/journald (base.yml)
 - name: Cap the journal
-  hosts: docker_hosts:proxmox
+  hosts: proxmox
   become: true
 
   tasks:

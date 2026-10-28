@@ -1,0 +1,21 @@
+# managed by ansible (roles/rsyslog)
+global(workDirectory="/var/lib/rsyslog")
+
+module(load="imjournal"
+       StateFile="imjournal.state"
+       Ratelimit.Interval="{{ rsyslog_journal_rate_interval }}"
+       Ratelimit.Burst="{{ rsyslog_journal_rate_burst }}"
+       PersistStateInterval="10")
+
+module(load="builtin:omfile"
+       Template="RSYSLOG_TraditionalFileFormat"
+       fileOwner="root" fileGroup="adm" fileCreateMode="0640")
+
+include(file="/etc/rsyslog.d/*.conf" mode="optional")
+
+*.info;mail.none;auth,authpriv.none;cron.none   /var/log/messages
+auth,authpriv.*                                 /var/log/secure
+mail.*                                          -/var/log/maillog
+cron.*                                          /var/log/cron
+local7.*                                        /var/log/boot.log
+*.emerg                                         :omusrmsg:*

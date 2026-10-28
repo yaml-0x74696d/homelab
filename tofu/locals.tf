@@ -26,6 +26,7 @@ locals {
 
   lxcs = {
     "storage" = { vmid = local.net.vmids.storage, node = "pve-3", cores = 2, memory = 2048, swap = 512, disk = 24, ip = local.net.storage_ip, mac = local.macs.storage.lan }
+    "log"     = { vmid = local.net.vmids.log, node = "pve-3", cores = 1, memory = 512, swap = 256, disk = 32, ip = local.net.log_ip, mac = local.macs.log.lan }
   }
 
   vm_nodes = toset([for v in local.vms : v.node])

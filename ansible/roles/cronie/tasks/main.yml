@@ -1,0 +1,12 @@
+---
+- name: Install cronie
+  ansible.builtin.apt:
+    name: cronie
+    state: present
+    update_cache: true
+
+- name: Enable cronie
+  ansible.builtin.systemd:
+    name: cronie
+    state: started
+    enabled: true

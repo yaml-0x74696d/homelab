@@ -27,6 +27,11 @@ pve_firewall_netbird_vmid: "{{ vmids.netbird }}"
 pve_firewall_netbird_relay_range: "{{ netbird_relay_ports.min }}:{{ netbird_relay_ports.max }}"
 pve_firewall_netbird_turn_ports: [3478, 5349]          # stun/turn + turns, tcp+udp
 
+# the log lxc: relp in only from these (netbird joins with the nixos rsyslog)
+pve_firewall_log_vmid: "{{ vmids.log }}"
+pve_firewall_log_port: "{{ log_relp_port }}"
+pve_firewall_log_sources: ["{{ docker1_ip }}", "{{ docker2_ip }}", "{{ docker3_ip }}", "{{ storage_ip }}"]
+
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.
 # PRE-FLIGHT: add every other vmid that shows firewall=1 or it breaks.

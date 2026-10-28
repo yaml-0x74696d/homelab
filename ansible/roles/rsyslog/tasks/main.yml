@@ -1,0 +1,79 @@
+---
+- name: Install rsyslog with relp
+  ansible.builtin.apt:
+    name: [rsyslog, rsyslog-relp]
+    state: present
+    update_cache: true
+
+- name: Ensure rsyslog work dir
+  ansible.builtin.file:
+    path: /var/lib/rsyslog
+    state: directory
+    mode: "0700"
+
+- name: Main config (local files)
+  ansible.builtin.template:
+    src: rsyslog.conf.j2
+    dest: /etc/rsyslog.conf
+    mode: "0644"
+  notify: Restart rsyslog
+
+- name: Rotate local files
+  ansible.builtin.template:
+    src: logrotate-local.j2
+    dest: /etc/logrotate.d/rsyslog
+    mode: "0644"
+
+# the server doesn't forward to itself
+- name: Forward to the log lxc
+  ansible.builtin.template:
+    src: forward.conf.j2
+    dest: /etc/rsyslog.d/90-forward.conf
+    mode: "0644"
+  when: rsyslog_mode == 'client'
+  notify: Restart rsyslog
+
+- name: Log server
+  when: rsyslog_mode == 'server'
+  block:
+    - name: Remove forwarding on the server
+      ansible.builtin.file:
+        path: /etc/rsyslog.d/90-forward.conf
+        state: absent
+      notify: Restart rsyslog
+
+    - name: Ensure remote log dir
+      ansible.builtin.file:
+        path: "{{ rsyslog_remote_dir }}"
+        state: directory
+        mode: "0750"
+
+    - name: Host lookup table
+      ansible.builtin.template:
+        src: hosts.json.j2
+        dest: /etc/rsyslog.d/hosts.json
+        mode: "0644"
+      notify: Restart rsyslog
+
+    - name: Relp input
+      ansible.builtin.template:
+        src: server.conf.j2
+        dest: /etc/rsyslog.d/10-server.conf
+        mode: "0644"
+      notify: Restart rsyslog
+
+    - name: Rotate remote files
+      ansible.builtin.template:
+        src: logrotate-remote.j2
+        dest: /etc/logrotate.d/rsyslog-remote
+        mode: "0644"
+
+- name: Check the rsyslog config
+  ansible.builtin.command: rsyslogd -N1
+  changed_when: false
+
+- name: Enable rsyslog
+  ansible.builtin.systemd:
+    name: rsyslog
+    state: started
+    enabled: true
