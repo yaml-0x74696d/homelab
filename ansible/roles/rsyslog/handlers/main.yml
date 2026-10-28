@@ -3,3 +3,4 @@
   ansible.builtin.systemd:
     name: rsyslog
     state: restarted
+  ignore_errors: "{{ ansible_check_mode }}"   # unit missing under --check
