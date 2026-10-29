@@ -11,6 +11,14 @@ aide_report_lines: 150   # diff lines shown by aide-accept.yml
 # accepted db hashes, one <host>.sha256 each, committed next to the code
 aide_checksum_dir: "{{ playbook_dir }}/../aide"
 
+# local rsyslog files (roles/rsyslog): growing + rotated, fed into debian's 31_aide_rsyslog rule
+aide_rsyslog_logfiles: '(messages|secure|maillog|cron|boot\\.log)'
+
+# churn on every host: rsyslog position/queue, the log lxc's received logs
+aide_excludes_common:
+  - /var/lib/rsyslog
+  - "{{ rsyslog_remote_dir | default('/var/log/remote') }}"
+
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:
   docker_hosts:
