@@ -11,18 +11,19 @@ aide_report_lines: 150   # diff lines shown by aide-accept.yml
 # accepted db hashes, one <host>.sha256 each, committed next to the code
 aide_checksum_dir: "{{ playbook_dir }}/../aide"
 
-# local rsyslog files (roles/rsyslog): growing + rotated, fed into debian's 31_aide_rsyslog rule
-aide_rsyslog_logfiles: '(messages|secure|maillog|cron|boot\\.log)'
-
-# churn on every host: tmpfs rebuilt on boot/daemon-reload, ansible's temp dirs,
-# rsyslog position/queue, the log lxc's received logs
+# churn on every host. /var/log: every line is on the log lxc already, that copy is the tamper protection
 aide_excludes_common:
-  - /run
+  - /run                                # tmpfs, rebuilt on boot and daemon-reload
+  - /tmp/ansible_[^/]+                  # ansible module payloads
   - /root/.ansible
   - /root/.ansible_async
   - "/home/{{ admin_user }}/.ansible"
-  - /var/lib/rsyslog
-  - "{{ rsyslog_remote_dir | default('/var/log/remote') }}"
+  - /var/log
+  - /var/lib/rsyslog                    # read position, queue
+  - /var/cache/apt
+  - /var/lib/apt/lists
+  - /var/lib/PackageKit
+  - /var/lib/prometheus/node-exporter   # textfile collectors
 
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:

@@ -27,7 +27,8 @@ When it runs:
 - With low priority (`nice 19`) and the idle I/O class, so it doesn't slow the host down
 - Debian's own `dailyaidecheck.timer` is masked and replaced by `aide-check.timer`
 
-What it skips (`aide_excludes_by_group`, per inventory group):
+What it skips (`aide_excludes_common` on every host, `aide_excludes_by_group` per inventory group):
+- Every host: `/run`, `/var/log` (the central copy on the log LXC is the tamper protection, [0022](0022-central-logging-relp.md)), apt's caches and lists, node-exporter's textfiles, ansible's temp files
 - Docker hosts: Docker data, the app folders and the CIFS mounts
 - Proxmox hosts: `/etc/pve`, the pool and the PBS datastore
 - Storage LXC: the pool bind mount
