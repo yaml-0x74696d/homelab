@@ -47,8 +47,13 @@ aide_excludes_by_group:
     - /var/lib/pve-cluster
     - /var/lib/rrdcached
     - /var/lib/vz
+    - /var/lib/lxcfs                # fuse view of /proc + /sys for the lxcs
+    - /var/lib/proxmox-backup/rrdb  # pbs graphs
+    - /var/lib/pve-firewall         # compiled rules, source is /etc/pve/firewall
+    - /var/lib/pve-manager/pve-replication-state.json
     - "{{ storage_pool_host }}"                          # pve-3: mergerfs pool
     - "{{ storage_disks | map(attribute='path') | list }}"   # pve-3: its disks
     - "{{ pbs_datastore_path }}"
   lxc_containers:
     - "{{ storage_root }}"   # pool bind mount
+    - /dev/.lxc              # procfs from lxc, pids change every run
