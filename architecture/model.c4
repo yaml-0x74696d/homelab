@@ -20,6 +20,9 @@ model {
   ntfy = external "ntfy.sh" {
     description "Push alerts to the phone"
   }
+  nts = external "NTS time servers" {
+    description "PTB (stratum 1) and Cloudflare"
+  }
   fritzbox = external "FritzBox" {
     description "Router, DHCP, WAN port forwards, backup WireGuard"
   }
@@ -150,6 +153,11 @@ model {
     }
     uptime-kuma = ui "Uptime Kuma"
     node-exporter = container "node-exporter" { #ops; description "Per host" }
+    log-server = store "Log server" {
+      technology "rsyslog, RELP"
+      description "Every guest's logs, one dir per host, 90 days"
+    }
+    rsyslog = container "rsyslog" { #ops; description "Per guest, local files + forward" }
   }
 
   storage = system "Storage & backup" {
@@ -189,6 +197,7 @@ model {
     }
     docker-proxy = container "docker-socket-proxy" { #ops; description "Read-only docker API, per host" }
     diun = container "Diun" { #ops; description "Image update notifier, per host" }
+    chrony = container "chrony" { #ops; description "Time sync, per VM" }
   }
 
   // people
@@ -264,9 +273,11 @@ model {
   observability.grafana -> observability.prometheus "queries"
   observability.grafana -> observability.influxdb "queries"
   observability.uptime-kuma -[https]-> edge.traefik "probes every route"
+  observability.rsyslog -[relp]-> observability.log-server "forwards every log line"
 
   // operations
   apps.homepage -> ops.docker-proxy "container status"
   ops.diun -> ops.docker-proxy "watches images"
   ops.diun -> ntfy "update alerts"
+  ops.chrony -[nts]-> nts "authenticated time"
 }

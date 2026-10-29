@@ -20,6 +20,8 @@ specification {
   relationship mqtt  { technology "MQTT"; line dotted }
   relationship dns   { technology "DNS"; line dotted; color sky }
   relationship wg    { technology "WireGuard"; color secondary }
+  relationship relp  { technology "RELP"; line dotted; color slate }
+  relationship nts   { technology "NTS"; line dotted; color sky }
 
   tag sso
   tag lan-only
