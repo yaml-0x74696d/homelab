@@ -11,7 +11,7 @@
 
 ## How it works
 
-1. Installs `aide`, adds `/etc/aide/aide.conf.d/99_homelab_excludes` and runs `--config-check`
+1. Installs `aide`, adds `/etc/aide/aide.conf.d/99_homelab_excludes` and `30_homelab_rsyslog` and runs `--config-check`
 2. Checks the local database against the recorded hash (`tasks/verify.yml`) before anything else
 3. First run only: `aide --init` hashes the whole system (async)
 4. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 on the controller
@@ -59,12 +59,14 @@
 
 ## Excluded paths
 
+- All hosts: `/var/lib/rsyslog` (read position, queue) and `/var/log/remote` (the log LXC's received logs)
 - docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root`, the CIFS mount root, the PBS staging folder
 - proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, and on pve-3 the pool, its disks and the PBS datastore
 - lxc_containers: the pool bind mount
 
 ## Notes
 
+- `30_homelab_rsyslog` tells Debian's rsyslog rule our file names (`messages`, `secure`, `maillog`, `cron`, `boot.log`), so growing and rotated logs aren't reported (`aide_rsyslog_logfiles`)
 - Accept after every update (`aide-accept.yml`), or tomorrow's push repeats the same changes
 - The excludes need care (Docker, logs), or the alerts get noisy
 - Build the baseline after the host is hardened, not before

@@ -10,6 +10,12 @@
     dest: /etc/aide/aide.conf.d/99_homelab_excludes
     mode: '0644'
 
+- name: Log file names for debian's rsyslog rule
+  ansible.builtin.template:
+    src: 30_homelab_rsyslog.j2
+    dest: /etc/aide/aide.conf.d/30_homelab_rsyslog
+    mode: '0644'
+
 - name: Check aide config
   ansible.builtin.command: aide --config=/etc/aide/aide.conf --config-check
   changed_when: false
