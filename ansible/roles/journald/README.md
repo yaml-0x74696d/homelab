@@ -11,7 +11,7 @@
 ## How it works
 
 1. Writes `/etc/systemd/journald.conf.d/10-journald.conf`
-2. Makes sure there's no disk size cap (`10-size.conf`, used by `journald.yml` on the pve nodes)
+2. Makes sure there's no disk size cap (`10-size.conf`, used by `journald.yml` on the pve nodes) and, when volatile, no `/var/log/journal`
 3. Restarts journald when something changed
 
 ## Settings

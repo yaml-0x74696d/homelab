@@ -59,8 +59,8 @@
 
 ## Excluded paths
 
-- All hosts: `/var/lib/rsyslog` (read position, queue) and `/var/log/remote` (the log LXC's received logs)
-- docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root`, the CIFS mount root, the PBS staging folder
+- All hosts: `/run` (tmpfs, rebuilt on every boot and daemon-reload), ansible's temp dirs (`/root/.ansible*`, `~admin/.ansible`), `/var/lib/rsyslog` (read position, queue) and `/var/log/remote` (the log LXC's received logs)
+- docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root` and `/opt/stacks` (live apps until the podman migration), the CIFS mount root, the PBS staging folder
 - proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, and on pve-3 the pool, its disks and the PBS datastore
 - lxc_containers: the pool bind mount
 
