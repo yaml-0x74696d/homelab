@@ -18,12 +18,20 @@ aide_excludes_common:
   - /root/.ansible
   - /root/.ansible_async
   - "/home/{{ admin_user }}/.ansible"
+  - "/home/{{ admin_user }}/.cache"
+  - /root/.cache
+  - /var/lib/aide/aide.db.new           # written during --update, gone after the accept
   - /var/log
   - /var/lib/rsyslog                    # read position, queue
   - /var/cache/apt
   - /var/lib/apt/lists
   - /var/lib/PackageKit
   - /var/lib/prometheus/node-exporter   # textfile collectors
+
+# interactive logins: history files may change, owner/mode/type stay watched (debian's VarFile/VarDir,
+# its own example in 31_aide_root-dotfiles). .ssh and the rc files keep the full rule
+aide_login_homes: ["/home/{{ admin_user }}", /root]
+aide_history_files: '\\.(bash_history|lesshst|viminfo|python_history|wget-hsts)'
 
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:
