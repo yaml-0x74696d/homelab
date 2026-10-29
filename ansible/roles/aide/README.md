@@ -13,11 +13,10 @@
 
 1. Installs `aide`, adds `/etc/aide/aide.conf.d/99_homelab_excludes` and runs `--config-check`
 2. Checks the local database against the recorded hash (`tasks/verify.yml`) before anything else
-3. First run only: `aide --init` hashes the whole system (async)
-4. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 on the controller
-5. `meta: flush_handlers` runs right after, so the baseline is active before the timer exists
-6. Installs `/usr/local/sbin/aide-check` with `aide-check.service` and `.timer`
-7. Masks Debian's `dailyaidecheck.timer`. Ours runs at midday and pushes to ntfy instead of sending a mail at night
+3. Installs `/usr/local/sbin/aide-check` with `aide-check.service` and `.timer`
+4. Masks Debian's `dailyaidecheck.timer`. Ours runs at midday and pushes to ntfy instead of sending a mail at night
+5. First run only, last: `aide --init` hashes the whole system (async), so the baseline already contains the files above
+6. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 on the controller (`meta: flush_handlers`, right away)
 
 ## Daily check
 
