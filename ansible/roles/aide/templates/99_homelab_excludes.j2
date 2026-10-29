@@ -1,4 +1,8 @@
-# managed by ansible (roles/aide). churn excluded on top of debian's rules.
+# managed by ansible (roles/aide). login-home rules + churn excludes on top of debian's rules.
+{% for h in aide_login_homes %}
+{{ h }}$ d VarDir
+{{ h }}/{{ aide_history_files }}$ f VarFile
+{% endfor %}
 {% for p in aide_excludes_common %}
 !{{ p }}(/|$)
 {% endfor %}
