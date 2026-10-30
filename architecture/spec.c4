@@ -12,7 +12,6 @@ specification {
   element cache    { notation "Cache / queue"; style { shape queue } }
   element store    { notation "Storage"; style { shape cylinder; color amber } }
   element device   { notation "Device"; style { shape mobile; color muted } }
-  element file     { notation "Repo file"; style { shape document; color slate } }
 
   relationship https { technology "HTTPS" }
   relationship oidc  { technology "OIDC"; line dashed; color indigo }

@@ -200,15 +200,6 @@ model {
     chrony = container "chrony" { #ops; description "Time sync, per VM" }
   }
 
-  repo = system "Homelab repo" {
-    #ops
-    description "The git checkout the deploys run from"
-    playbook = file "deploy-<app>.yml" { #ops; description "Host + docker_app_* vars for one app" }
-    role = file "roles/docker_app" { #ops; description "The one role every compose app uses" }
-    app-src = file "apps/<app>/" { #ops; description "Compose file, *.j2 templates, plain files" }
-    facts = file "group_vars/all" { #ops; description "Shared facts + vault.yml secrets" }
-  }
-
   // people
   household -[https]-> edge.traefik "opens apps"
   household -[dns]-> edge.pihole "resolves *.domain"

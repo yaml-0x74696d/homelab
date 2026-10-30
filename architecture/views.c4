@@ -180,18 +180,4 @@ views "Flows" {
     ops.controller -> ops.proxmox "tofu apply: VMs + LXC"
     ops.controller -> ops.hosts "ansible: renders + starts apps"
   }
-
-  dynamic view deploy-app {
-    title "Deploying one app (docker_app)"
-    variant sequence
-    repo.playbook -> repo.role "hosts, docker_app_* vars"
-    repo.role -> ops.hosts "dirs, networks, touch files, ufw"
-    repo.app-src -> repo.role "plain files, *.j2"
-    repo.facts -> repo.role "facts + vault secrets"
-    repo.role -> ops.hosts "copy + render into /opt/apps/<app>/"
-    repo.role -> ops.hosts "cifs creds + mount"
-    repo.role -> ops.hosts "docker compose up"
-    repo.role -> ops.hosts "handler: restart docker_app_restart"
-    repo.playbook -> ops.hosts "post_tasks, e.g. gitea admin"
-  }
 }
