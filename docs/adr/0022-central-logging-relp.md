@@ -6,7 +6,7 @@ Status: Accepted
 
 - Every guest kept its logs in its own journal only. A dead or compromised host takes its history with it
 - Looking into a problem across hosts meant SSH into each one
-- The DMZ box is the one most likely to be attacked, and an attacker there can wipe local logs
+- The NetBird VM is the one most likely to be attacked, and an attacker there can wipe local logs
 - I want complete logs, good enough for an audit trail (who logged in when), not only for troubleshooting
 
 - Alternatives:
@@ -19,11 +19,12 @@ Status: Accepted
 
 ## Decision
 
-On every guest (`roles/journald`, `roles/rsyslog`, `playbooks/base.yml`):
+On every guest (`roles/journald`, `roles/rsyslog`, `playbooks/base.yml`) and the NetBird VM (`nixos/base/logging.nix`), with the shared values in `group_vars/all/base.yml`:
 - journald keeps the journal in RAM only (`Storage=volatile`, `RuntimeMaxUse` 100M) with rate limits
 - rsyslog reads it with `imjournal` and writes local files: `/var/log/messages`, `secure`, `cron`, `maillog`, `boot.log`, rotated weekly, 4 kept
 - The first start of rsyslog begins at the end of the journal (`IgnorePreviousMessages`), not at its oldest entry
 - Everything is forwarded with `omrelp` to the log LXC, through a disk-assisted queue (`resumeRetryCount=-1`, `saveOnShutdown`), so messages wait while the server is down and survive a reboot
+- The NetBird VM takes the journal over the syslog socket (the NixOS module's `imuxsock`) and writes `messages`, `secure`, `boot.log`
 
 The log LXC (CT 301, `.151`, pve-3):
 - pve-3 is always on, and the LXC is separate from the app VMs, so a dead VM's last logs survive
@@ -34,7 +35,7 @@ The log LXC (CT 301, `.151`, pve-3):
 
 Not included:
 - The PVE nodes keep their persistent, capped journal (`playbooks/journald.yml`)
-- The NixOS VMs join later
+- The NetBird VM may only reach the log LXC on `log_relp_port` (`netbird.fw`)
 
 - Enforced by: `rsyslogd -N1` before every restart, the source allowlist in `pve_firewall_log_sources`
 
@@ -48,5 +49,6 @@ Not included:
 
 - Accepted: logs cross the LAN in plain text
 - Accepted: the log LXC is a single copy, a disk loss there loses the central history (the hosts still keep 4 weeks locally)
+- Accepted: on the NetBird VM, messages sent while rsyslog is down (a `nixos-rebuild` restart) are lost, journald only buffers the socket
 
-- Related: [0007](0007-group-vars-single-source-of-truth.md) (ports, ips), [0019](0019-ntfy-single-alert-channel.md) (alerts stay on ntfy, logs are for looking back)
+- Related: [0007](0007-group-vars-single-source-of-truth.md) (ports, ips), [0008](0008-nixos-for-the-dmz-box.md) (NetBird VM), [0019](0019-ntfy-single-alert-channel.md) (alerts stay on ntfy, logs are for looking back)

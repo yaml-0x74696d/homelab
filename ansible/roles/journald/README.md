@@ -16,6 +16,8 @@
 
 ## Settings
 
+Set in `group_vars/all/base.yml`, shared with `nixos/base`.
+
 | Variable | Default | What |
 |---|---|---|
 | `journald_storage` | `volatile` | `persistent` keeps the journal on disk |

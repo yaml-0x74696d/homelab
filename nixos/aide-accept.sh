@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# review + accept aide changes on the netbird box and record the db hash. run from ctl-0.
+# review + accept aide changes on the netbird vm and record the db hash. run from ctl-0.
 # first run builds the baseline. commit ansible/aide/netbird.sha256 afterwards.
 set -euo pipefail
 

@@ -149,7 +149,7 @@ All certificates come from Let's Encrypt, proven through DNS instead of an open 
 
 - Let's Encrypt checks a DNS record at Cloudflare (DNS-01), so port 80 doesn't need to be reachable
 - Traefik gets one certificate per router for the LAN apps
-- The NetBird box gets its own certificate the same way (nginx + ACME)
+- The NetBird VM gets its own certificate the same way (nginx + ACME)
 - cloudflare-ddns keeps the public DNS record pointed at the current WAN IP
 
 ## Identity
@@ -242,6 +242,7 @@ Every guest keeps its logs locally and sends them to the log LXC.
 - rsyslog forwards everything over RELP to the log LXC (CT 301 on pve-3), which writes `/var/log/remote/<host>/<program>.log` and keeps 90 days
 - A disk queue on each guest holds the messages while the log LXC is down
 - The log LXC only takes RELP from the known hosts (PVE firewall), the directory name comes from the sender's ip ([ADR 0022](adr/0022-central-logging-relp.md))
+- The NetBird VM does the same from `nixos/base/`, but journald pushes to rsyslog over the syslog socket, and there's no `cron` or `maillog`
 - The PVE nodes keep their own persistent journal
 
 Time:
@@ -270,7 +271,7 @@ How a change gets from git to the machines.
 Deploying, from the controller:
 - `tofu apply` for the VMs and the LXCs
 - `ansible-playbook` for the hosts and the apps
-- `nixos/update.sh` for the NetBird box
+- `nixos/update.sh` for the NetBird VM
 
 Checking:
 - `just check` runs the same 18 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))

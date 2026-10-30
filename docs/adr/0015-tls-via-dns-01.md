@@ -25,21 +25,21 @@ Traefik (docker-1):
 - Before asking Let's Encrypt, Traefik checks that the record is visible on public resolvers (`traefik_acme_resolvers: 1.1.1.1:53,8.8.8.8:53` in `deploy-proxy.yml`). Pi-hole answers the zone locally, so asking it would break the check
 - Traefik's `:80` stays LAN-only and only redirects to `:443`
 
-NetBird box (`nixos/netbird/netbird.nix`):
+NetBird VM (`nixos/netbird/netbird.nix`):
 - `security.acme` with `dnsProvider = "cloudflare"`, used by nginx through `useACMEHost`
 - coturn reuses the same certificate for TURN over TLS (`turns:5349`)
 
 Public DNS:
 - cloudflare-ddns (`apps/utilities`) keeps the public records pointed at the current WAN IP, with the same token
 
-- Enforced by: the FRITZ!Box forwards no port 80, and nftables on the NetBird box only opens 443 + TURN
+- Enforced by: the FRITZ!Box forwards no port 80, and nftables on the NetBird VM only opens 443 + TURN
 
 ## Consequences
 
 - Easier: real certificates for LAN-only names, and nothing on the WAN is needed to renew them
 - Easier: certificates renew on their own, about 30 days before they expire. If `acme.json` gets lost, they're simply issued again
 
-- Harder: the Cloudflare API token can edit DNS for the whole zone, so it only lives in the vault and on the NetBird box
+- Harder: the Cloudflare API token can edit DNS for the whole zone, so it only lives in the vault and on the NetBird VM
 - Harder: renewals depend on Cloudflare's API and public DNS
 
 - Accepted: every certificate lands in the public certificate transparency logs, so the app hostnames are public (the apps themselves aren't)

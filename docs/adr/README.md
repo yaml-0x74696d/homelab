@@ -9,7 +9,7 @@ Format: status, context, decision, consequences.
 - [5. prevent_destroy on stateful VMs](0005-prevent-destroy-on-stateful-vms.md)
 - [6. `:latest` images, notify-only updates](0006-latest-images-notify-only.md)
 - [7. group_vars as the single source of truth](0007-group-vars-single-source-of-truth.md)
-- [8. NixOS for the DMZ box only](0008-nixos-for-the-dmz-box.md)
+- [8. NixOS for the NetBird VM only](0008-nixos-for-the-dmz-box.md)
 - [9. AIDE with manual accept](0009-aide-with-manual-accept.md)
 - [10. Pi-hole on docker-2 behind a service IP](0010-pihole-on-a-service-ip.md)
 - [11. Proxmox as the hypervisor](0011-proxmox-as-hypervisor.md)

@@ -90,7 +90,7 @@ resource "proxmox_virtual_environment_vm" "docker" {
   }
 }
 
-# netbird control plane — wan-facing dmz box. this only builds the VM shell on the debian
+# netbird control plane — wan-facing netbird vm. this only builds the VM shell on the debian
 # cloud image for bootstrap; nixos-anywhere then wipes it and installs the flake in ../nixos.
 resource "proxmox_virtual_environment_vm" "netbird" {
   name      = "netbird"

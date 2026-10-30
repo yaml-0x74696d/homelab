@@ -1,11 +1,2 @@
 ---
-# nts-capable servers only
-chrony_servers:
-  - ptbtime1.ptb.de
-  - ptbtime2.ptb.de
-  - ptbtime3.ptb.de
-  - time.cloudflare.com
-
-# step the clock instead of slewing for the first updates (vm resume, boot)
-chrony_makestep_threshold: 1   # seconds
-chrony_makestep_limit: 3       # updates
+# chrony_servers, chrony_makestep_*: group_vars/all/base.yml (shared with nixos/base)

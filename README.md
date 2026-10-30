@@ -38,7 +38,7 @@
 
 ## Stack
 
-- Proxmox (3 nodes) · OpenTofu (bpg/proxmox) · Ansible · Docker Compose · NixOS (DMZ box) · PBS · NetBird · Traefik · Pi-hole · Authentik
+- Proxmox (3 nodes) · OpenTofu (bpg/proxmox) · Ansible · Docker Compose · NixOS (NetBird VM) · PBS · NetBird · Traefik · Pi-hole · Authentik
 
 ## What runs
 
@@ -115,11 +115,11 @@ justfile         setup · lint · check · deploy · c4
 - Docker VMs (`vm-preparation.yml`): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
 - Published container ports bypass ufw → filtered in `DOCKER-USER` by source (only Traefik / Prometheus hosts reach backends)
 - Docker daemon: `no-new-privileges`, `live-restore`, capped JSON logs; Homepage reads Docker only through a read-only socket proxy
-- NetBird box (NixOS): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
+- NetBird VM (NixOS): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
 - Identity: Authentik OIDC for the apps (local admin kept as break-glass), forward-auth for apps without SSO
 - TLS everywhere via Let's Encrypt DNS-01 (Cloudflare), no port 80 forwarded from the WAN
-- AIDE on every host + the NetBird box: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
+- AIDE on every host + the NetBird VM: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
 - Backups: PBS, scoped token that can only write, DB dumps before each run
 - Secrets: Ansible Vault; gitleaks on every commit and over the full history in CI

@@ -7,7 +7,7 @@
 ## Runs on
 
 - docker_hosts, proxmox, lxc_containers (`playbooks/aide.yml`)
-- The NetBird box does the same as a Nix module: `nixos/netbird/aide.nix` + `nixos/aide-accept.sh`
+- The NetBird VM does the same as a Nix module: `nixos/netbird/aide.nix` + `nixos/aide-accept.sh`
 
 ## How it works
 
@@ -73,4 +73,4 @@
 ## Related
 
 - [ADR 0009: AIDE with manual accept](../../../docs/adr/0009-aide-with-manual-accept.md)
-- `nixos/netbird/aide.nix` (NetBird box)
+- `nixos/netbird/aide.nix` (NetBird VM)

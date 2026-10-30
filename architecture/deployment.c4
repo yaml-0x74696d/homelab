@@ -54,6 +54,8 @@ deployment {
         netbird = vm "netbird" {
           description "NixOS, internet-facing"
           instanceOf remote.netbird
+          instanceOf observability.rsyslog
+          instanceOf ops.chrony
         }
       }
     }

@@ -3,7 +3,7 @@ let
   lanPrefix = lib.last (lib.splitString "/" facts.lan_cidr);
 in
 {
-  imports = [ ./hardening.nix ./aide.nix ./netbird.nix ./fastfetch.nix ];
+  imports = [ ../base/time.nix ../base/logging.nix ./hardening.nix ./aide.nix ./netbird.nix ./fastfetch.nix ];
 
   boot.loader.grub = { enable = true; efiSupport = false; };   # disko provides the device (EF02 partition)
   boot.loader.timeout = 1;

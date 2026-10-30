@@ -1,8 +1,2 @@
 ---
-# journal in ram only, rsyslog files are the history
-journald_storage: volatile
-journald_runtime_max_use: 100M   # ram cap for the volatile journal
-
-# per service, before journald drops messages
-journald_rate_limit_interval: 30s
-journald_rate_limit_burst: 10000
+# journald_*: group_vars/all/base.yml (shared with nixos/base)

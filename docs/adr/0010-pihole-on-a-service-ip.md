@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - Every LAN client resolves through Pi-hole, the FRITZ!Box hands it out as the only IPv4 DNS server. So it has to run 24/7
-- Split horizon: `*.<domain>` points at Traefik on docker-1, `nb.<domain>` at the NetBird box
+- Split horizon: `*.<domain>` points at Traefik on docker-1, `nb.<domain>` at the NetBird VM
 - Pi-hole used to run on docker-1. NetBird's DNS and nftables on the same host pushed it off port 53 on every reboot, so NetBird was removed from docker-1 first
 - Clients pointed at a host IP, so moving DNS meant reconfiguring the FRITZ!Box and every client with a static config
 
@@ -39,7 +39,7 @@ The setup:
 
 - Accepted: one resolver, no HA yet. If docker-2 is down, DNS in the LAN is down, because `.53` is the only DNS server the FRITZ!Box hands out
 
-- Other config points at `dns_ip` too: the NetBird box's resolver in Nix and its OpenTofu bootstrap
+- Other config points at `dns_ip` too: the NetBird VM's resolver in Nix and its OpenTofu bootstrap
 - Later: AdGuard Home on a NixOS edge VM (see "Future plans" in the README)
 
 - Related: [0003](0003-netbird-instead-of-port-forwards.md)

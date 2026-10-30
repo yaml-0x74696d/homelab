@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- Three tools describe the same lab: Ansible (config + apps), OpenTofu (VMs/LXC) and NixOS (NetBird box)
+- Three tools describe the same lab: Ansible (config + apps), OpenTofu (VMs/LXC) and NixOS (NetBird VM)
 - IPs, VMIDs, ports, MACs and schedules were copied between them and drifted apart
 - After DNS moved to the `.53` service IP, an OpenTofu resolver setting still pointed at the old Pi-hole host `.201`. It silently fell through to the gateway
 - Before the change, the same values were copied all over the repo:
