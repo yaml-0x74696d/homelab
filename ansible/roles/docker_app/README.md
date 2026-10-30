@@ -11,35 +11,22 @@
 ## How it works
 
 ```mermaid
-flowchart TD
-  subgraph ctl["controller: ansible/"]
-    pb["playbooks/deploy-#lt;app#gt;.yml<br/>hosts + docker_app_* vars"]
-    def["roles/docker_app/defaults/main.yml"]
-    gv["group_vars/all/*.yml<br/>ips, ports, domains"]
-    vault["group_vars/all/vault.yml<br/>secrets"]
-    src["apps/#lt;app#gt;/<br/>docker-compose.yml, *.j2, plain files"]
-    tasks["roles/docker_app/tasks/main.yml"]
-  end
-  subgraph host["docker host"]
-    prep["dirs, networks, touch files, ufw"]
-    files["/opt/apps/#lt;app#gt;/<br/>copied files + rendered templates"]
-    cifs["/etc/cifs/#lt;share#gt;.creds<br/>+ fstab mount"]
-    up["docker compose up"]
-    restart["handlers/main.yml<br/>restart docker_app_restart"]
-    post["post_tasks in the playbook<br/>e.g. gitea admin"]
-  end
-  pb --> tasks
-  def --> tasks
-  tasks -->|"1"| prep
-  prep -->|"2"| files
-  files -->|"3"| cifs
-  cifs -->|"4"| up
-  up -->|"5"| post
-  src -->|"copy, render .j2"| files
-  gv -->|".env.j2"| files
-  vault -->|".env.j2"| files
-  vault -->|"smb_passwords"| cifs
-  files -.->|"changed"| restart
+sequenceDiagram
+  autonumber
+  participant pb as deploy-#lt;app#gt;.yml
+  participant role as roles/docker_app
+  participant src as apps/#lt;app#gt;/
+  participant vars as group_vars/all
+  participant host as docker host
+  pb->>role: hosts, docker_app_* vars
+  role->>host: dirs, networks, touch files, ufw
+  src->>role: plain files, *.j2
+  vars->>role: facts + vault.yml secrets
+  role->>host: copy + render into /opt/apps/#lt;app#gt;/
+  role->>host: cifs creds (smb_passwords) + mount
+  role->>host: docker compose up
+  Note over role,host: config changed: handler restarts docker_app_restart
+  pb->>host: post_tasks, e.g. gitea admin
 ```
 
 1. Creates `<apps_root>/<app>/` on the host (`/opt/apps/<app>`)
