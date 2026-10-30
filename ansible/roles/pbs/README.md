@@ -69,7 +69,8 @@
 | `pbs_id` | the hostname | Backup group, one per host |
 | `pbs_timeout` | `1h` | Max run time |
 | `pbs_token_secret`, `pbs_fingerprint` | vault | Token secret and server fingerprint |
-| `pbs_staging_dir`, `apps_root`, `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared with other roles |
+| `pbs_ntfy_url`, `pbs_ntfy_token` | `ntfy_url`, `ntfy_token` | Where failure alerts go, empty = off |
+| `pbs_staging_dir`, `apps_root`, `ntfy_timeout` | group_vars | Shared with other roles |
 
 ## Server side (by hand, not in this role)
 

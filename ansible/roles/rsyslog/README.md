@@ -31,6 +31,7 @@
 | `rsyslog_remote_dir` | `/var/log/remote` | Where the server writes |
 | `rsyslog_remote_retention` | 90 | Days kept on the server |
 | `rsyslog_server_queue_size` | 50000 | Server queue, in messages |
+| `rsyslog_server_hosts` | inventory IPs + `netbird_ip` | Sender IP → host directory on the server |
 
 ## Notes
 

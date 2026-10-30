@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- The VMs synced time with `systemd-timesyncd` from the Debian pool, over plain NTP
+- Debian's default `systemd-timesyncd` syncs from the Debian pool over plain NTP
 - Plain NTP isn't authenticated: anyone on the path can feed a wrong time
 - A wrong clock breaks TLS certificates, TOTP logins (Authentik, Vaultwarden) and the order of log lines across hosts
 
@@ -24,7 +24,7 @@ Status: Accepted
 - LXCs use the host's clock, the PVE nodes keep their own chrony
 - NTS needs outbound tcp/4460 for the key exchange, then udp/123
 
-- Enforced by: `chronyc -N authdata` shows `NTS` for every source
+- Enforced by: `nts` on every server line (`roles/chrony/templates/chrony.conf.j2`) and `enableNTS` (`nixos/base/time.nix`). `chronyc -N authdata` shows `NTS` for every source
 
 ## Consequences
 

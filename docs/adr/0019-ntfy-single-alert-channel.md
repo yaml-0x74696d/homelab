@@ -34,7 +34,7 @@ Who sends:
 | NetBird VM | AIDE results, through `/var/lib/secrets/aide/ntfy.env` |
 
 How sending works:
-- Every sender uses `curl -m ntfy_timeout … || true`, so a failed push never fails the job
+- Every script sender uses `curl -m ntfy_timeout … || true`, so a failed push never fails the job. Diun uses its own ntfy notifier
 - If `ntfy_url` is empty, the senders still run but stay quiet
 
 - Enforced by: one set of variables that every sender reads, no targets per role

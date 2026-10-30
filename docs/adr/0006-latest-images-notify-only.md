@@ -4,13 +4,13 @@ Status: Accepted
 
 ## Context
 
-- 26 apps with 37 images, run by one person, so there's no time to follow every upstream release
-- An earlier playbook (`update-images.yml`) pulled and recreated everything at once. It restarted too many containers together, filled the thin pool and took docker-1 down. Since then automatic updates are out
+- 25 apps with 37 images, run by one person, so there's no time to follow every upstream release
+- Pulling and recreating everything at once restarts too many containers together, fills the thin pool and can take a Docker VM down
 
 - Alternatives:
   - Pinned tags + Renovate (why not: a PR for every image update, too much for one person)
   - Watchtower auto-pull (why not: auto-pull without rollback, same risk as the bulk pull)
-  - The removed bulk-pull playbook (why not: it took docker-1 down, see above)
+  - A bulk-pull playbook (why not: restarts everything at once, see above)
 - Why: `:latest` means an update is just a pull, no tag edits. Auto-update without rollback was too risky after the docker-1 crash
 
 ## Decision
@@ -39,7 +39,7 @@ How an update happens:
 
 ## Consequences
 
-- Easier: no tag bumps for 19 apps, Diun says when something new is out
+- Easier: no tag bumps for 19 images in 17 apps, Diun says when something new is out
 - Easier: databases never jump a major version by accident, because they're pinned
 
 - Harder: Diun needs the Docker socket (mounted read-only)

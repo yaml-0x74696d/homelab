@@ -10,7 +10,7 @@ Status: Accepted
 - Databases must not live on a network share ([0005](0005-prevent-destroy-on-stateful-vms.md))
 
 - Alternatives:
-  - NFS (why not: "CIFS via the Samba CT reuses the running shares + scoped users", from the redeploy roadmap). It's still the fallback for the photos share if Immich misbehaves on CIFS
+  - NFS (why not: CIFS via the Samba CT reuses the running shares + scoped users). It's still the fallback for the photos share if Immich misbehaves on CIFS
   - Bind mounts (why not: only work for guests on pve-3 itself)
   - iSCSI (why not: a block device, only one consumer per LUN)
   - A storage VM with the disk controller passed through (why not: pve-3 has a single controller, shared by the host disk and the data disks)
@@ -40,7 +40,7 @@ The clients (`docker_app_cifs` in `roles/docker_app`):
 - Credentials in `/etc/cifs/<share>.creds` (mode `0600`)
 - An fstab `cifs` entry with `vers=3.1.1` and `mfsymlinks,nofail,_netdev`
 - `uid`/`gid` on the mount are set to the container's user
-- Mounted under `cifs_mount_root` (`/srv/<share>`), while the databases stay on the VM disk
+- Mounted under `cifs_mount_root` (`/srv/<share>`, Nextcloud's extra shares as `/srv/nc-<share>`), while the databases stay on the VM disk
 - Extra options per app:
   - Nextcloud uses `nobrl` (no SMB byte-range locks)
   - Nextcloud only sees the photos read-only (`ro`), because Immich owns that library

@@ -1,7 +1,7 @@
 # pve_firewall
 
 - Writes the cluster, host and guest firewall rules from the shared variables
-- Scope: the NetBird VM and the management access to the PVE hosts. The Docker VMs stay unfiltered
+- Scope: the NetBird VM, the log LXC and the management access to the PVE hosts. The Docker VMs and the storage LXC stay unfiltered
 - Done with Ansible, not OpenTofu, because bpg/proxmox can't manage the host-level firewall options
 
 ## Runs on
@@ -46,8 +46,10 @@
 
 | Variable | Default | What |
 |---|---|---|
-| `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird VM is filtered |
+| `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird VM and the log LXC are filtered |
 | `pve_firewall_host_enabled` | `false` | Host management lockdown, the layer that can lock you out |
+| `pve_firewall_lan_cidr` | `lan_cidr` | The LAN |
+| `pve_firewall_gateway_ip` | `gateway_ip` | The router, DNS fallback for the NetBird VM |
 | `pve_firewall_open_guests` | docker-1/2/3, storage | VMIDs that stay unfiltered |
 | `pve_firewall_routing_peers` | the `netbird_agent` group | Hosts the NetBird VM may reach fully |
 | `pve_firewall_netbird_dns_https` | docker-1, `dns_ip` | Hosts the NetBird VM may reach on DNS + HTTPS (Traefik, Pi-hole) |
@@ -66,9 +68,9 @@
 
 Every guest's network card has `firewall=1`, so turning on the master switch drops traffic to all of them at once. That's why it goes in stages:
 
-1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird goes into `pve_firewall_open_guests`
+1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird and the log LXC goes into `pve_firewall_open_guests`
 2. Stage 0: both switches off, files written, check the compiled ruleset
-3. Stage 1: master switch on, so only NetBird is filtered
+3. Stage 1: master switch on, so only NetBird and the log LXC are filtered
 4. Stage 2: host lockdown on one node, test SSH and `:8006` from an admin device, then the other nodes
 5. Stage 3: set both defaults to true, or a plain re-run turns them off again
 

@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- The NetBird control plane is the only box that takes inbound WAN traffic (443/tcp, 3478/udp and a small TURN relay range). The FRITZ!Box WireGuard is the only other way in
+- The NetBird control plane is the only VM that takes inbound WAN traffic (443/tcp, 3478/udp and a small TURN relay range). The FRITZ!Box WireGuard is the only other way in
 - It sits on pve-2 as an isolated DMZ VM
 - Its only data is the NetBird SQLite store, so it's cheap to rebuild
 - Everything else runs Debian + Ansible
@@ -12,7 +12,7 @@ Status: Accepted
 - Alternatives:
   - Debian + Ansible like the rest (why not: not fully declared, no easy rollback)
   - NetBird in Docker on a Docker host (why not: no real DMZ)
-- Why NixOS only here: small, stateless box, good place to learn NixOS
+- Why NixOS only here: small, stateless VM, good place to learn NixOS
 
 ## Decision
 
@@ -31,7 +31,7 @@ Install and updates:
   3. `switch --target-host`
   4. Check for failed units
   5. Warn if a new kernel needs a reboot
-- `system.autoUpgrade` also runs nightly at 04:00 (±45 min) from the git repo, reboots are only allowed between 03:00 and 05:00
+- `system.autoUpgrade` also runs nightly between 04:00 and 04:45 (random delay) from the git repo, reboots are only allowed between 03:00 and 05:00
 
 Hardening (`netbird/hardening.nix`):
 - Users only come from the config (immutable users), SSH is key-only, LAN-only and on port `ssh_port`, with modern ciphers/KEX/MACs only
@@ -57,7 +57,7 @@ Secrets:
 - Harder: the unstable channel has the newest NetBird module, but upgrades can break options. That's why update.sh builds before it switches
 - Harder: autoUpgrade builds `main` of the public GitHub repo with its local copy of `private.yml` (`/etc/homelab-private`), so a change on `testing` only sticks once it's merged, and a `private.yml` change needs an `update.sh` run
 
-- Accepted: extra systemd sandboxing on the management service was removed, because it killed netbird-mgmt during the OIDC call. The module's own sandbox stays
+- Accepted: the management service only has the module's own sandbox. Extra systemd sandboxing kills netbird-mgmt during the OIDC call
 - Accepted: the secrets live outside Nix for now, agenix/sops is still open
 
 - Facts are shared with the rest through group_vars ([0007](0007-group-vars-single-source-of-truth.md))

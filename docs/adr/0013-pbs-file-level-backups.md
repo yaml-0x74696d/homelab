@@ -8,7 +8,7 @@ Status: Accepted
 - The only state that can't be replaced: the app data volumes and the databases (plus the vault)
 - There's no room for full VM images:
   - The PBS datastore is a 100 GB thin LV on pve-3's SSD
-  - The thin pool has 337 GB, and 196 GB are already given out: 96 GB of VM disks + the 100 GB datastore
+  - The thin pool has 337 GB, and 188 GB are already given out: 88 GB of guest disks + the 100 GB datastore
 
 - Alternatives:
   - PVE vzdump VM images (why not: don't fit in the datastore)

@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- Every web app had its own login, plus the NetBird VPN
+- Without SSO every web app has its own login, plus the NetBird VPN
 - Some apps speak OIDC: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, NetBird
 - Some have no login at all: Traefik dashboard, Prometheus, ESPHome
 - I'm the only admin, and I want MFA everywhere without setting it up per app
@@ -20,7 +20,7 @@ Status: Accepted
 The setup:
 - Authentik on docker-1 (`apps/authentik`, `deploy-authentik.yml`): server, worker and Postgres (`authentik_pg_tag`)
 - MFA is enforced in Authentik
-- Every app keeps a local admin as a break-glass account
+- Every app keeps a local admin as a break-glass account, except Vaultwarden (`SSO_ONLY=true`)
 - The version is pinned in `group_vars/all/apps.yml` (`authentik_tag` + `authentik_series`)
 
 Two ways apps use it:
@@ -46,6 +46,7 @@ Connecting apps:
 - Harder: upgrades go one release series at a time (`-e authentik_tag=<next>`). Database migrations can take a while, the deploy waits up to `authentik_health_retries` × `authentik_health_delay`
 - Harder: OIDC is set up by hand for every app (provider + application in Authentik, client in the app)
 
-- Accepted: Authentik is a single point of failure for logins. That's why every app keeps a local break-glass admin, and monitoring isn't fully behind it
+- Accepted: Authentik is a single point of failure for logins. That's why every app except Vaultwarden keeps a local break-glass admin, and monitoring isn't fully behind it
+- Accepted: with Authentik down, Vaultwarden takes no new logins. Clients that are already logged in keep their offline copy
 
 - Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird OIDC), [0015](0015-tls-via-dns-01.md) (TLS), [0002](0002-generic-docker-app-role.md) (app role)

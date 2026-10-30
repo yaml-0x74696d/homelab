@@ -16,6 +16,7 @@ Status: Accepted
 
 - The Docker VMs and the NetBird VM have `lifecycle { prevent_destroy = true }` (`tofu/vms.tf`)
 - The storage LXC has no guard, because its data is on the host pool, not on the CT disk
+- The log LXC has no guard either, its logs are on its own CT disk
 - Disk and hardware settings (discard, ssd, ballooning) are chosen so they can change in place, without a rebuild
 - Enforced by: `prevent_destroy` itself, OpenTofu refuses any plan that would destroy a guarded VM
 

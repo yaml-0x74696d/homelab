@@ -25,7 +25,7 @@ Status: Accepted
 
 - Easier: PBS plugs straight in for backups (with a scoped token that can only write)
 - Easier: the bpg/proxmox OpenTofu provider builds every guest from code ([0001](0001-tofu-and-cloud-init-for-vms.md))
-- Easier: the hosts are plain Debian, so the Ansible roles (firewall, AIDE, login-notify) work without special cases
+- Easier: the hosts are plain Debian, so most Ansible roles (AIDE, login-notify, journald) run on them too. The firewall is the PVE firewall (`pve_firewall`), and AIDE needs a Proxmox exclude list
 
 - Accepted: tied to Proxmox's API and tooling. Moving away means rewriting `tofu/` and the PVE roles
 

@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 2 LXCs, 26 compose apps, 12 Ansible roles, 40 playbooks, 21 C4 views
+- 3 Proxmox nodes, 4 VMs + 2 LXCs, 25 compose apps + hostapd, 12 Ansible roles, 40 playbooks, 21 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -76,12 +76,12 @@
 ```
 tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-init)
 ansible/
-  group_vars/all/  Variables: network, ports, storage, hosts, apps (+ vault.yml.example, private/private.yml.example)
+  group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent
-  roles/           aide, docker_app, login_notify, mergerfs, netbird_agent, pbs, pve_firewall, samba
-  apps/<name>/     Compose file + templates per app (26)
+  roles/           aide, chrony, cronie, docker_app, journald, login_notify, mergerfs, netbird_agent, pbs, pve_firewall, rsyslog, samba
+  apps/<name>/     Compose file + templates per app (25), hostapd config
   playbooks/       deploy-<app>.yml, site.yml, vm-preparation, update-all, aide, push-keys, ...
-nixos/           Flake for the NetBird DMZ VM (+ update.sh, aide-accept.sh)
+nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
 architecture/    LikeC4 model: landscape, containers, deployment, 8 flows
 docs/            Architecture, ADRs, exported diagrams
 justfile         setup · lint · check · deploy · c4
@@ -91,7 +91,7 @@ justfile         setup · lint · check · deploy · c4
 
 - Ansible group_vars get read by OpenTofu (yamldecode) and Nix (facts.nix), so an IP only has to change in one place ([ADR 0007](docs/adr/0007-group-vars-single-source-of-truth.md))
 - `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
-- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps` YAML into JSON with yq-go
+- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps`, `base`, `private/private.yml` YAML into JSON with yq-go
 - `nixos/update.sh` + `aide-accept.sh` read the NetBird IP from the same file
 - Ports: one `app_ports` map → compose, Traefik routes, Homepage tiles, Prometheus targets, firewall
 - Secrets: one `vault.yml` (Ansible Vault), every app gets them via its `.env.j2` → `${VAR}` in compose
@@ -102,7 +102,7 @@ justfile         setup · lint · check · deploy · c4
 - Copy `vault.yml.example` → `vault.yml`, create `ansible/.vault_pass`
 - Copy `private/private.yml.example` → `private/private.yml` and fill in your domain, macs, disk uuids, keys (gitignored, nothing secret)
 - `just setup` · `just check` · `just deploy <app>` · `just c4`
-- Needs: just, pre-commit, OpenTofu, Nix, Node (the hooks install ansible-lint, yamllint, shellcheck, gitleaks)
+- Needs: just, pre-commit, Ansible, OpenTofu, Nix, Node (the hooks install ansible-lint, yamllint, shellcheck, gitleaks)
 - OpenTofu: tfvars from the example, `tofu apply`
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
 - Plain `ansible-playbook` is the main path; `ansible-navigator.yml` = optional EE run
@@ -111,13 +111,13 @@ justfile         setup · lint · check · deploy · c4
 ## Security
 
 - WAN: only the NetBird VM is forwarded (443/tcp, 3478/udp, narrow TURN relay range); apps are LAN / VPN only
-- PVE firewall (`roles/pve_firewall`): cluster policy drop, NetBird DMZ guest fenced (inbound = what NetBird serves, egress to the LAN limited to routing peer + DNS/HTTPS); host lockdown layer written, off by default (lockout risk)
+- PVE firewall (`roles/pve_firewall`): cluster policy drop, NetBird VM fenced (inbound = what NetBird serves, egress to the LAN limited to routing peer + DNS/HTTPS + RELP to the log LXC); host lockdown layer written, off by default (lockout risk)
 - Docker VMs (`vm-preparation.yml`): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
 - Published container ports bypass ufw → filtered in `DOCKER-USER` by source (only Traefik / Prometheus hosts reach backends)
 - Docker daemon: `no-new-privileges`, `live-restore`, capped JSON logs; Homepage reads Docker only through a read-only socket proxy
 - NetBird VM (NixOS): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
-- Identity: Authentik OIDC for the apps (local admin kept as break-glass), forward-auth for apps without SSO
+- Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden), forward-auth for apps without SSO
 - TLS everywhere via Let's Encrypt DNS-01 (Cloudflare), no port 80 forwarded from the WAN
 - AIDE on every host + the NetBird VM: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
@@ -126,15 +126,16 @@ justfile         setup · lint · check · deploy · c4
 
 ## Decisions
 
-- [docs/adr/](docs/adr/README.md): 21 records
+- [docs/adr/](docs/adr/README.md): 23 records
 - 0001 OpenTofu + cloud-init · 0002 generic app role · 0003 NetBird · 0004 mergerfs · 0005 prevent_destroy
 - 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 Pi-hole service IP
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets (proposed)
+- 0022 central logging over RELP · 0023 chrony with NTS
 
 ## Future plans
 
-- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, `RequiresMountsFor=`), restore rehearsal runbook, CI quadlet dry-run
+- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, `AssertPathIsMountPoint=` + `Restart=`), restore rehearsal runbook, CI quadlet dry-run
 - Phase 2: edge = NixOS VM on pve-1 (1 GB) running Traefik + AdGuard Home natively (replaces the Traefik + Pi-hole containers)
 - Phase 3–4: docker-2 / docker-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
 - Phase 5: Home Assistant moves to HAOS (VM on pve-3)

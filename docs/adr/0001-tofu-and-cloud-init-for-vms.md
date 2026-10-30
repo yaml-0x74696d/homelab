@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - The VMs were clicked together by hand, so a rebuild was never the same twice
-- Guests: the three Docker VMs, the NetBird VM and the storage LXC, spread over 3 Proxmox nodes
+- Guests: the three Docker VMs, the NetBird VM, the storage LXC and the log LXC, spread over 3 Proxmox nodes
 - Turning on 2FA for `root@pam` broke password login for any automation
 
 - Alternatives:
@@ -34,8 +34,9 @@ Guest details:
 - The storage LXC comes from the `debian-13-standard` template: unprivileged, nesting on, the pool bind-mounted
 - Disks use `virtio-scsi-single` with iothread
 - `discard = "on"` and `ssd = true` let the guest's trim free blocks in the thin pool
-- Ballooning: each guest has a floor (`floating`) below its full RAM (`dedicated`)
-- The floors are set at or above measured usage, because the guests have no swap
+- Ballooning: each VM has a floor (`floating`) below its full RAM (`dedicated`)
+- The floors are set at or above measured usage, because the VMs have no disk swap (the NetBird VM only has zram)
+- The LXCs have no ballooning, they get a small `swap` instead
 - MACs are fixed and follow the VMID (`BC:24:11:…`), which pins the DHCP leases
 - NixOS finds the NetBird VM's network card by that MAC
 
@@ -56,7 +57,7 @@ Guest details:
 - Harder: recreating the storage CT needs `pve_password` and 2FA turned off for that one run
 
 - Accepted: the image is downloaded once per node, because `local` is not shared storage
-- Accepted: settings changed by hand get reverted unless they are declared (learned this with discard/ssd after the thin pool filled up)
+- Accepted: settings changed by hand get reverted unless they are declared (e.g. discard/ssd, without them the thin pool fills up)
 - Accepted: a `--privsep 0` token has full control of the cluster. It only lives in the git-ignored `terraform.tfvars` and can be revoked
 
 - Stateful VMs are protected with `prevent_destroy` ([0005](0005-prevent-destroy-on-stateful-vms.md))

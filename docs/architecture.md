@@ -53,7 +53,7 @@ Ansible also sets up a couple of services on the hosts themselves:
 | mergerfs | pve-3 |
 | hostapd | pve-1 |
 
-- `update-all.yml` updates one node at a time (`serial: 1`) and reports pending reboots
+- `update-all.yml` updates every host, nodes and guests, one at a time (`serial: 1`) and reports pending reboots
 
 ## Compute
 
@@ -78,11 +78,11 @@ How a VM is built:
 Memory:
 - Guests start with their full RAM
 - The host can take memory back through ballooning, but never below a floor that covers real usage
-- Guests have no swap
+- The VMs have no disk swap (the NetBird VM has zram), the LXCs get a small swap
 
 How an app is deployed:
 - Each app is a folder `ansible/apps/<name>/` plus a playbook `deploy-<name>.yml`
-- All apps use the same `docker_app` role ([ADR 0002](adr/0002-generic-docker-app-role.md))
+- All compose apps use the same `docker_app` role ([ADR 0002](adr/0002-generic-docker-app-role.md)), hostapd on pve-1 is plain tasks
 - App data lives under `/opt/apps/<name>` on the VM
 
 ## Storage
@@ -104,7 +104,7 @@ The sharing:
 - The storage LXC (CT 300, unprivileged) gets the pool as a bind mount at `/srv/storage`
 - Samba (SMB3) in the LXC shares it out
 - Shares: backups, iso, media, nextcloud, documents, photos, homelab and timemachine (capped at 1 TB)
-- Every share has its own service user, the group IDs count up from a base number
+- Every share except homelab and timemachine (admin only) has its own service user, the group IDs count up from a base number
 - docker-3 mounts the shares it needs over CIFS under `/srv/<share>`, with the app's UID/GID
 - Databases never go on CIFS, they stay on the VM disk
 
@@ -161,9 +161,9 @@ Authentik is the single login for the apps.
 - Authentik runs on docker-1 (server, worker and Postgres)
 - Its version is pinned and updated one release at a time (`authentik_tag` / `authentik_series`, checked in `deploy-authentik.yml`)
 - Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, NetBird
-- Each of those apps keeps a local admin as a break-glass account
+- Each of those apps keeps a local admin as a break-glass account, except Vaultwarden (SSO only)
 - Apps without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, Prometheus, ESPHome, the Vaultwarden admin page
-- Containers can't resolve internal names, so the apps reach `auth.<domain>` through an `extra_hosts` entry pointing at docker-1
+- Containers can't resolve internal names: apps on docker-1 reach `auth.<domain>` through a network alias on Traefik, apps on docker-2/3 through an `extra_hosts` entry pointing at docker-1
 
 ## Remote access
 
@@ -182,7 +182,7 @@ The control plane:
 
 The routing:
 - docker-2 is the routing peer (`netbird_agent` role) and forwards traffic into the LAN
-- docker-1 used to be the routing peer, until NetBird's DNS took port 53 away from Pi-hole there ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
+- NetBird's DNS management is off for docker-2's group, so Pi-hole keeps port 53 ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
 - Peers talk to each other directly over WireGuard, the TURN relay is only a fallback
 
 The fallback:
@@ -205,7 +205,7 @@ How a backup runs:
 - A random delay keeps the hosts from starting at the same time
 - First the databases are dumped (Postgres, SQLite `.backup`, Influx)
 - Then `/opt/apps` goes up as one archive
-- The result is pushed to ntfy
+- A failed run is pushed to ntfy
 - The client's token can only write backups, not delete them
 
 What's in and out:
@@ -250,7 +250,7 @@ Time:
 - The LXCs use the host's clock
 
 Cron:
-- cronie runs the host cron jobs on every guest
+- cronie runs the host cron jobs on the Docker VMs and the LXCs
 
 ## Home automation
 
@@ -277,5 +277,5 @@ Checking:
 - `just check` runs the same 18 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
 - They cover yamllint, ansible-lint (production profile), shellcheck, tofu fmt/validate, nix flake check, LikeC4 validate and gitleaks
 - Plus small checks for whitespace, private keys and file sizes
-- CI has two workflows: `ci.yml` runs the checks on every push and PR, `pages.yml` publishes the LikeC4 site from main
+- CI has two workflows: `ci.yml` runs the checks on pushes to main and testing and on every PR, `pages.yml` publishes the LikeC4 site when `architecture/` changes on main
 - All GitHub Actions are pinned to a commit SHA

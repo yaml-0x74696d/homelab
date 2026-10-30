@@ -7,14 +7,13 @@ Status: Accepted
 - One repo with four languages to keep valid: Ansible YAML, OpenTofu, Nix and LikeC4, plus shell scripts and secrets
 - Checks that only run in CI get skipped locally, and checks that only run locally get forgotten
 - The public repo must never contain a secret
-- The first real run on the cleaned repo found 9 issues (8 from ansible-lint, 1 from shellcheck)
-- gitleaks in `dir` mode scanned an ignored ansible-lint cache full of third-party test keys. Since then it scans the commits instead
+- gitleaks in `dir` mode scans ignored files too, e.g. an ansible-lint cache full of third-party test keys
 
 - Alternatives:
   - CI-only workflows per tool (why not: checks get skipped locally, failures only show after the push)
   - A Makefile (why not: just is simpler, no tab/phony quirks)
   - lefthook (why not: smaller ecosystem than pre-commit, fewer ready-made hooks)
-  - No checks (why not: the first run found 9 issues)
+  - No checks (why not: the lint tools find real issues)
 - The pattern comes from khuedoan/homelab (CI just runs pre-commit) and onedr0p/home-ops (justfile, one CI workflow, actions pinned by SHA)
 - Why: one config, the same result locally and in CI
 
@@ -35,7 +34,7 @@ How to run them (`justfile`):
 CI (`.github/workflows/`):
 - `ci.yml` has one job: `pre-commit run --all-files --hook-stage manual`
 - It checks out with `fetch-depth: 0`, so gitleaks sees the whole history
-- `pages.yml` builds the LikeC4 site on every push to main (its own trigger, so its own file)
+- `pages.yml` builds the LikeC4 site on pushes to main that touch `architecture/**` (its own trigger, so its own file)
 - Actions are pinned by commit SHA, with the tag as a comment
 - Tool versions are pinned in the hook revs
 
@@ -43,7 +42,7 @@ Configs:
 - `.yamllint`, with rules that fit ansible-lint
 - `ansible/.ansible-lint` (`profile: production`), which skips the collections and the Traefik file that uses Go templates
 
-- Enforced by: the git pre-commit hook on every commit, and CI on every push and PR
+- Enforced by: the git pre-commit hook on every commit, and CI on every push to main/testing and every PR
 
 ## Consequences
 

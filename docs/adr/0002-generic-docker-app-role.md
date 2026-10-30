@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- 26 compose apps across 3 Docker VMs
+- 25 compose apps across 3 Docker VMs
 - Copy-pasted playbooks drift apart over time
 - Every app needs the same steps: folders, networks, firewall, config files, secrets, pool mounts, compose up
 
@@ -19,7 +19,7 @@ How an app is set up:
 - There is one role, `roles/docker_app`
 - Each app is a folder `apps/<name>/` (compose file + config) plus a thin playbook `playbooks/deploy-<name>.yml`
 - The smallest playbook only sets the host and `docker_app_name` (`deploy-pdfcraft.yml`, 8 lines)
-- `site.yml` imports every deploy playbook in order
+- `site.yml` imports every deploy playbook in order, except `deploy-pve-firewall.yml` (lockout risk), `deploy-netbird-agent.yml` and `deploy-login-notify.yml`, which run on their own
 - Running one playbook only touches that one app
 
 What the role does for each app, in order:
@@ -45,10 +45,10 @@ Rules:
 ## Consequences
 
 - Easier: a new app is a folder plus a short playbook, the role doesn't change
-- Easier: a fix in the role fixes all 26 apps at once
+- Easier: a fix in the role fixes all 25 apps at once
 - Easier: the settings of each app are visible at the top of its playbook
 
-- Harder: vault values must be alphanumeric, because compose interpolation eats `$`
+- Harder: vault values must not contain a bare `$`, because compose interpolation eats it (escape as `$$`)
 - Harder: the CIFS UID/GID must match the container's user, or writes fail (Nextcloud 33, Paperless 1000)
 
 - Accepted: files are found and copied one by one instead of copying the whole folder. That's slower for apps with many icons, but `.j2` sources never end up on the host

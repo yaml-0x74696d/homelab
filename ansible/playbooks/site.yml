@@ -3,7 +3,7 @@
 - name: Base tools (time, cron, logs)
   import_playbook: base.yml
 - name: Deploy docker-proxy
-  import_playbook: deploy-dockerproxy.yml
+  import_playbook: deploy-docker-proxy.yml
 - name: Deploy traefik
   import_playbook: deploy-proxy.yml
 - name: Deploy pihole

@@ -6,7 +6,7 @@ Status: Accepted
 
 - Every app is LAN / VPN only, but should still get a trusted certificate under `<domain>`
 - HTTP-01 needs the name to be reachable from the internet on port 80
-- The only WAN-facing box is NetBird, with 443 + TURN ([0003](0003-netbird-instead-of-port-forwards.md))
+- The only WAN-facing guest is the NetBird VM, with 443 + TURN ([0003](0003-netbird-instead-of-port-forwards.md))
 
 - Alternatives:
   - HTTP-01 with a port 80 forward (why not: port 80 open to the WAN)
@@ -39,9 +39,10 @@ Public DNS:
 - Easier: real certificates for LAN-only names, and nothing on the WAN is needed to renew them
 - Easier: certificates renew on their own, about 30 days before they expire. If `acme.json` gets lost, they're simply issued again
 
-- Harder: the Cloudflare API token can edit DNS for the whole zone, so it only lives in the vault and on the NetBird VM
+- Harder: the Cloudflare API token can edit DNS for the whole zone, it lives in the vault, on docker-1 (`.env` of `proxy` and `utilities`, mode `0600`) and on the NetBird VM
 - Harder: renewals depend on Cloudflare's API and public DNS
 
+- Accepted: whoever gets root on docker-1 or the NetBird VM can edit the whole zone
 - Accepted: every certificate lands in the public certificate transparency logs, so the app hostnames are public (the apps themselves aren't)
 
 - Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0010](0010-pihole-on-a-service-ip.md) (split-horizon DNS), [0014](0014-authentik-as-idp.md) (SSO)

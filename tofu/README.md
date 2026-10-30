@@ -24,7 +24,7 @@ cp terraform.tfvars.example terraform.tfvars   # then edit
 ## 3. LXC template (once, on pve-3)
 
 ```bash
-pveam update && pveam download local debian-13-standard
+pveam update && pveam download local debian-13-standard_13.0-1_amd64.tar.zst
 ```
 
 - If the file name differs from the default, change `lxc_template`
@@ -45,7 +45,8 @@ tofu apply
 
 ## 5. After the first apply
 
-- Once `vm-preparation.yml` has installed qemu-guest-agent, set `agent { enabled = true }` in `vms.tf` and run `tofu apply` again
+- Docker VMs: once `vm-preparation.yml` has installed qemu-guest-agent, set `agent { enabled = true }` in `vms.tf` and run `tofu apply` again
+- NetBird VM: the same flip in its own resource, after nixos-anywhere (NixOS turns the agent on)
 
 ## Related
 

@@ -4,9 +4,9 @@ Status: Proposed
 
 ## Context
 
-- 26 apps run as Docker Compose stacks through the `docker_app` role ([0002](0002-generic-docker-app-role.md)), all as root under the Docker daemon
+- 25 apps run as Docker Compose stacks through the `docker_app` role ([0002](0002-generic-docker-app-role.md)), all as root under the Docker daemon
 - Updates are manual: `:latest` images plus Diun notifications ([0006](0006-latest-images-notify-only.md))
-- No compose file needs privileged mode, extra capabilities, devices or host networking (checked for the plan)
+- No compose file needs privileged mode, devices or host networking. The only extra capability is `NET_RAW` for homelable
 - Goal: the lab should run for months without hands-on updates
 
 - Alternatives:

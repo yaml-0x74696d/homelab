@@ -32,10 +32,10 @@ The log LXC (CT 301, `.151`, pve-3):
 - The host name comes from the sender's ip through a lookup table built from the inventory, not from what the message claims
 - Keeps 90 days, daily rotation, compressed
 - The PVE firewall (`log.fw`) lets RELP in only from the known hosts
+- The NetBird VM may only reach the log LXC on `log_relp_port` (`netbird.fw`)
 
 Not included:
 - The PVE nodes keep their persistent, capped journal (`playbooks/journald.yml`)
-- The NetBird VM may only reach the log LXC on `log_relp_port` (`netbird.fw`)
 
 - Enforced by: `rsyslogd -N1` before every restart, the source allowlist in `pve_firewall_log_sources`
 
