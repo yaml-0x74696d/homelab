@@ -10,6 +10,38 @@
 
 ## How it works
 
+```mermaid
+flowchart TD
+  subgraph ctl["controller: ansible/"]
+    pb["playbooks/deploy-#lt;app#gt;.yml<br/>hosts + docker_app_* vars"]
+    def["roles/docker_app/defaults/main.yml"]
+    gv["group_vars/all/*.yml<br/>ips, ports, domains"]
+    vault["group_vars/all/vault.yml<br/>secrets"]
+    src["apps/#lt;app#gt;/<br/>docker-compose.yml, *.j2, plain files"]
+    tasks["roles/docker_app/tasks/main.yml"]
+  end
+  subgraph host["docker host"]
+    prep["dirs, networks, touch files, ufw"]
+    files["/opt/apps/#lt;app#gt;/<br/>copied files + rendered templates"]
+    cifs["/etc/cifs/#lt;share#gt;.creds<br/>+ fstab mount"]
+    up["docker compose up"]
+    restart["handlers/main.yml<br/>restart docker_app_restart"]
+    post["post_tasks in the playbook<br/>e.g. gitea admin"]
+  end
+  pb --> tasks
+  def --> tasks
+  tasks -->|"1"| prep
+  prep -->|"2"| files
+  files -->|"3"| cifs
+  cifs -->|"4"| up
+  up -->|"5"| post
+  src -->|"copy, render .j2"| files
+  gv -->|".env.j2"| files
+  vault -->|".env.j2"| files
+  vault -->|"smb_passwords"| cifs
+  files -.->|"changed"| restart
+```
+
 1. Creates `<apps_root>/<app>/` on the host (`/opt/apps/<app>`)
 2. Creates extra folders with owner and mode (`docker_app_dirs`), e.g. data folders a container writes to as a fixed UID
 3. Makes sure the Docker networks exist on the host (`proxy-net` by default, the compose file declares it `external`)
