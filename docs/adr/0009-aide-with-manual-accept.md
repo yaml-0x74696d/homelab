@@ -42,6 +42,7 @@ What it skips (`aide_excludes_common` on every host, `aide_excludes_by_group` pe
 Alerts and accepting:
 - The ntfy alert only has counts, the changed paths stay in the host's journal (`journalctl -u aide-check`)
 - Changes are accepted by hand: `aide-accept.yml` (Debian) or `nixos/aide-accept.sh` (NetBird) shows the diff, asks, then activates the new database
+- One exception: `update.yml` accepts on its own after an upgrade, but only if `aide --check` was clean right before it. Otherwise the host is left for `aide-accept.yml` ([0024](0024-ansible-run-os-updates.md))
 - The SHA256 of every accepted database is stored on the controller (`ansible/aide/<host>.sha256`, a symlink into the Tresorit-synced private folder)
 
 - Enforced by: every run and every accept first compares the host's database with the stored hash. A mismatch stops the playbook
@@ -50,11 +51,12 @@ Alerts and accepting:
 
 - Easier: an attacker with root can't quietly swap the database. A mismatch stops the playbook, and then it's an incident: compare with PBS, check auditd, don't accept
 
-- Harder: every apt upgrade or deploy that touches watched files means one accept run per host
+- Harder: every deploy that touches watched files means one accept run per host. Upgrades through `update.yml` accept on their own
 - Harder: the excludes need tuning, or the alerts get noisy. The first check right after the baseline should be clean
 
 - Accepted: `--init` hashes the whole system and takes minutes per host, so it runs async with `aide_run_timeout`
 - Accepted: the baseline hashes are specific to each host, so they're gitignored here and synced offsite with the vault
+- Accepted: changes made on a host while `update.yml` upgrades it go into the baseline unreviewed
 - Accepted: `/dev` on the pve nodes is unwatched (VM disks, ISOs, USB and corosync IPC churn there daily), so a payload in `/dev/shm` or a planted device node goes unseen
 
-- Related: `roles/aide`, [0008](0008-nixos-for-the-dmz-box.md)
+- Related: `roles/aide`, [0008](0008-nixos-for-the-dmz-box.md), [0024](0024-ansible-run-os-updates.md) (auto-accept after upgrades)

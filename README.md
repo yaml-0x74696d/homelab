@@ -78,9 +78,9 @@ tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-i
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent
-  roles/           aide, chrony, cronie, docker_app, journald, login_notify, mergerfs, netbird_agent, pbs, pve_firewall, rsyslog, samba
+  roles/           aide, chrony, cronie, docker_app, journald, login_notify, mergerfs, netbird_agent, pbs, pve_firewall, rsyslog, samba, update
   apps/<name>/     Compose file + templates per app (25), hostapd config
-  playbooks/       deploy-<app>.yml, site.yml, vm-preparation, update-all, aide, push-keys, ...
+  playbooks/       deploy-<app>.yml, site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
 architecture/    LikeC4 model: landscape, containers, deployment, 8 flows
 docs/            Architecture, ADRs, exported diagrams

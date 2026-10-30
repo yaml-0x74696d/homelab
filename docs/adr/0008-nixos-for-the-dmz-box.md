@@ -62,4 +62,4 @@ Secrets:
 
 - Facts are shared with the rest through group_vars ([0007](0007-group-vars-single-source-of-truth.md))
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0009](0009-aide-with-manual-accept.md) (AIDE), [0022](0022-central-logging-relp.md) (logging), [0023](0023-chrony-with-nts.md) (time)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0009](0009-aide-with-manual-accept.md) (AIDE), [0022](0022-central-logging-relp.md) (logging), [0023](0023-chrony-with-nts.md) (time), [0024](0024-ansible-run-os-updates.md) (apt hosts)

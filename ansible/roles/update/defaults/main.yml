@@ -1,0 +1,26 @@
+---
+update_cache_valid_time: 3600   # seconds
+
+# leftovers from force-confold: the package's new version of a config we changed
+update_conffile_dirs: [/etc]
+update_conffile_patterns: ["*.dpkg-dist", "*.dpkg-new", "*.ucf-dist"]
+
+# lxcs share the node's kernel, so needrestart's kernel check means nothing there
+update_check_kernel: true
+
+# pve play sets it, needs pvecm. checked before the upgrade and after needrestart
+update_check_quorum: false
+update_quorum_retries: 6   # after the restarts, corosync needs a moment to rejoin
+update_quorum_delay: 10    # seconds
+
+# the summary covers these, in play order
+update_summary_hosts: "{{ groups['lxc_containers'] + groups['docker_hosts'] + groups['proxmox'] }}"
+
+# a daily aide check already running: wait up to retries x delay seconds
+update_aide_wait_retries: 60
+update_aide_wait_delay: 30
+
+update_ntfy_title: homelab updates
+update_ntfy_headers: >-
+  {{ {'Title': update_ntfy_title}
+     | combine({'Authorization': 'Bearer ' ~ ntfy_token} if ntfy_token | default('') | length > 0 else {}) }}

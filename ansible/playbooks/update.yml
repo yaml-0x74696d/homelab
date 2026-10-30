@@ -1,0 +1,33 @@
+---
+# os updates on every apt host, one at a time: lxcs, vms, then the pve nodes.
+# never reboots, the summary says where one is due. the nixos vm updates on its own.
+# a failed host stops the run and pushes an alert
+- name: Update lxcs
+  hosts: lxc_containers
+  serial: 1
+  vars:
+    update_check_kernel: false
+  roles: [update]
+
+- name: Update vms
+  hosts: docker_hosts
+  serial: 1
+  roles: [update]
+
+- name: Update pve nodes
+  hosts: proxmox
+  serial: 1   # never two nodes at once
+  vars:
+    update_check_quorum: true
+  roles: [update]
+
+# on the apt hosts, not localhost, so -l <host> keeps it. set_fact/debug don't connect
+- name: Report
+  hosts: lxc_containers:docker_hosts:proxmox
+  gather_facts: false
+  run_once: true
+  tasks:
+    - name: Summary
+      ansible.builtin.include_role:
+        name: update
+        tasks_from: summary
