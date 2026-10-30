@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - I wanted to know when files on a server change outside of a deploy
-- Every server is in scope: docker-1/2/3, pve-1/2/3, the storage LXC and the NetBird box
+- Every server is in scope: docker-1/2/3, pve-1/2/3, the storage and log LXCs and the NetBird box
 - Alerts go to ntfy.sh, a public service, so they must not leak paths
 
 - Alternatives:
@@ -30,9 +30,12 @@ When it runs:
 What it skips (`aide_excludes_common` on every host, `aide_excludes_by_group` per inventory group):
 - Every host: `/run`, `/var/log` (the central copy on the log LXC is the tamper protection, [0022](0022-central-logging-relp.md)), apt's caches and lists, node-exporter's textfiles, ansible's temp files
 - Docker hosts: Docker data, the app folders and the CIFS mounts
-- Proxmox hosts: `/etc/pve`, the pool and the PBS datastore
-- Storage LXC: the pool bind mount
+- Proxmox hosts: `/etc/pve`, the pool, the PBS datastore, state that pve rebuilds itself (`/var/lib/lxc`, lxcfs, corosync, PBS job state, compiled firewall rules, `/etc/issue`) and all of `/dev`
+- LXCs: `/dev/.lxc` (procfs), the storage LXC also the pool bind mount
+- Login homes (`aide_login_homes`): history files only keep owner, mode and type watched
 - NetBird box: only watches what an upgrade never touches (`/etc` content, SSH keys, `/var/lib/secrets`). autoUpgrade rewrites the system links every day, and Nix checks its store paths anyway
+
+- Rule for new excludes: watch config and binaries, skip state a service rewrites on its own. The config behind each skipped path (`/etc/corosync`, `/etc/proxmox-backup`) stays watched
 
 Alerts and accepting:
 - The ntfy alert only has counts, the changed paths stay in the host's journal (`journalctl -u aide-check`)
@@ -50,5 +53,6 @@ Alerts and accepting:
 
 - Accepted: `--init` hashes the whole system and takes minutes per host, so it runs async with `aide_run_timeout`
 - Accepted: the baseline hashes are specific to each host, so they're kept in the private repo and gitignored here
+- Accepted: `/dev` on the pve nodes is unwatched (VM disks, ISOs, USB and corosync IPC churn there daily), so a payload in `/dev/shm` or a planted device node goes unseen
 
 - Related: `roles/aide`, [0008](0008-nixos-for-the-dmz-box.md)
