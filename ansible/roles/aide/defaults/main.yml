@@ -38,6 +38,10 @@ aide_var_files:
   - '/var/lib/systemd/timers/stamp-[^/]+\\.timer'
   - '/var/lib/apt/periodic/[^/]+'
   - '/var/lib/NetworkManager/[^/]+\\.lease'
+  - '/var/lib/NetworkManager/seen-bssids'
+
+# rewritten at boot with the same content (cloud-init's /etc/hosts): owner, mode + checksum, no times
+aide_content_files: [/etc/hosts]
 
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:
@@ -48,6 +52,9 @@ aide_excludes_by_group:
     - /opt/stacks               # live docker apps until the podman migration
     - "{{ cifs_mount_root }}"   # pool shares
     - "{{ pbs_staging_dir }}"
+    - /var/lib/cloud            # cloud-init state, rewritten every boot
+    - /var/tmp/cloud-init
+    - /dev/disk/by-uuid         # cloud-init iso gets a dated uuid
   proxmox:
     - /etc/pve              # pmxcfs, rewritten constantly
     - /var/lib/pve-cluster

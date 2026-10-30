@@ -3,6 +3,10 @@
 {{ h }}$ d VarDir
 {{ h }}/{{ aide_history_files }}$ f VarFile
 {% endfor %}
+ContentFile = OwnerMode+n+Checksums
+{% for p in aide_content_files %}
+{{ p }}$ f ContentFile
+{% endfor %}
 {% for p in aide_var_files %}
 {{ p }}$ f VarFile
 {% endfor %}
