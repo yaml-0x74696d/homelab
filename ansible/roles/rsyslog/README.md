@@ -25,9 +25,9 @@
 | `rsyslog_mode` | `client` | `server` on the log LXC |
 | `rsyslog_server`, `rsyslog_relp_port` | `log_ip`, `log_relp_port` | Where clients send to |
 | `rsyslog_journal_rate_interval` / `_burst` | 600 / 20000 | imjournal rate limit |
-| `rsyslog_queue_max_disk` | `1g` | Disk cap for the client queue |
-| `rsyslog_resume_interval` | 30 | Seconds between reconnects |
-| `rsyslog_local_rotate` | 4 | Weeks of local files on each host |
+| `rsyslog_queue_max_disk` | `1g` | Disk cap for the client queue (`group_vars/all/base.yml`) |
+| `rsyslog_resume_interval` | 30 | Seconds between reconnects (`group_vars/all/base.yml`) |
+| `rsyslog_local_rotate` | 4 | Weeks of local files on each host (`group_vars/all/base.yml`) |
 | `rsyslog_remote_dir` | `/var/log/remote` | Where the server writes |
 | `rsyslog_remote_retention` | 90 | Days kept on the server |
 | `rsyslog_server_queue_size` | 50000 | Server queue, in messages |

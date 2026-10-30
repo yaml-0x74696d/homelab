@@ -8,11 +8,7 @@ rsyslog_relp_port: "{{ log_relp_port }}"
 rsyslog_journal_rate_interval: 600   # seconds
 rsyslog_journal_rate_burst: 20000
 
-# client queue while the log lxc is unreachable (spills to disk)
-rsyslog_queue_max_disk: 1g
-rsyslog_resume_interval: 30          # seconds between reconnects
-
-rsyslog_local_rotate: 4              # weeks kept on each host
+# queue, reconnect, local rotation: group_vars/all/base.yml (shared with nixos/base)
 
 # server
 rsyslog_remote_dir: /var/log/remote

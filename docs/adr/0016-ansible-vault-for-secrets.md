@@ -27,7 +27,7 @@ The vault:
 How apps get their secrets:
 - vault → `apps/<name>/.env.j2` → rendered `.env` (mode `0600`) → `${VAR}` in compose
 
-The NetBird box (NixOS):
+The NetBird VM (NixOS):
 - Secrets are put on the box by hand under `/var/lib/secrets/` (`secretsDir`)
 - The modules read them from those files, so they never end up in the Nix store or in git
 
@@ -40,7 +40,7 @@ The NetBird box (NixOS):
 
 - Harder: vault values must not contain `$`, compose interpolation eats it (bcrypt hashes need `$$`)
 - Harder: the vault and `.vault_pass` have to be backed up off the controller by hand
-- Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NetBird box
+- Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NetBird VM
 
 - Accepted: one password unlocks every secret
 - Accepted: agenix/sops for the NixOS box is still open

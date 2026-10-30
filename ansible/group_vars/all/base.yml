@@ -1,0 +1,27 @@
+---
+# time + logging on every guest: roles chrony/journald/rsyslog and nixos/base read these
+
+# nts-capable servers only
+chrony_servers:
+  - ptbtime1.ptb.de
+  - ptbtime2.ptb.de
+  - ptbtime3.ptb.de
+  - time.cloudflare.com
+
+# step the clock instead of slewing for the first updates (vm resume, boot)
+chrony_makestep_threshold: 1   # seconds
+chrony_makestep_limit: 3       # updates
+
+# journal in ram only, rsyslog files are the history
+journald_storage: volatile
+journald_runtime_max_use: 100M   # ram cap for the volatile journal
+
+# per service, before journald drops messages
+journald_rate_limit_interval: 30s
+journald_rate_limit_burst: 10000
+
+# client queue while the log lxc is unreachable (spills to disk)
+rsyslog_queue_max_disk: 1g
+rsyslog_resume_interval: 30          # seconds between reconnects
+
+rsyslog_local_rotate: 4              # weeks kept on each host

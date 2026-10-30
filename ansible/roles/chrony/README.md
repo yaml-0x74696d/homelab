@@ -16,6 +16,8 @@
 
 ## Settings
 
+Set in `group_vars/all/base.yml`, shared with `nixos/base`.
+
 | Variable | Default | What |
 |---|---|---|
 | `chrony_servers` | PTB ×3 + Cloudflare | NTS servers (the Debian pool has no NTS) |

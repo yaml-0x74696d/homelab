@@ -1,5 +1,5 @@
 # shared facts: ansible/group_vars/all/*.yml as one attrset, converted to json at build time.
-# same source ansible and tofu read, so the netbird box can't drift from the rest.
+# same source ansible and tofu read, so the netbird vm can't drift from the rest.
 # private = the flake input holding private.yml (per-lab values).
 { pkgs, private }:
 let
@@ -14,5 +14,5 @@ let
     if builtins.pathExists "${private}/private.yml"
     then "${private}/private.yml" else "${private}/private.yml.example";
 in
-read "network" // read "ports" // read "hosts" // read "apps"
+read "network" // read "ports" // read "hosts" // read "apps" // read "base"
 // toJson "private" privateFile // { private_file = privateFile; }

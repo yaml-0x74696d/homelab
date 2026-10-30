@@ -31,7 +31,7 @@ Who sends:
 | `roles/aide` | Changes on `<host>`, counts only, or "aide failed" |
 | `roles/login_notify` | SSH and PVE web logins on the Proxmox hosts |
 | `apps/diun` | New image digests (endpoint and topic are split from `ntfy_url` in `.env.j2`) |
-| NetBird box | AIDE results, through `/var/lib/secrets/aide/ntfy.env` |
+| NetBird VM | AIDE results, through `/var/lib/secrets/aide/ntfy.env` |
 
 How sending works:
 - Every sender uses `curl -m ntfy_timeout … || true`, so a failed push never fails the job
