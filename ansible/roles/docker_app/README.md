@@ -10,30 +10,7 @@
 
 ## How it works
 
-```mermaid
-%%{init: {"theme": "base", "themeVariables": {
-  "fontFamily": "IBM Plex Sans, sans-serif",
-  "actorBkg": "#3b82f6", "actorBorder": "#2563eb", "actorTextColor": "#eff6ff", "actorLineColor": "#cbd5e1",
-  "signalColor": "#64748b", "signalTextColor": "#475569", "sequenceNumberColor": "#f8fafc",
-  "noteBkgColor": "#64748b", "noteBorderColor": "#475569", "noteTextColor": "#f8fafc"
-}}}%%
-sequenceDiagram
-  autonumber
-  participant pb as deploy-#lt;app#gt;.yml
-  participant role as roles/docker_app
-  participant src as apps/#lt;app#gt;/
-  participant vars as group_vars/all
-  participant host as docker host
-  pb->>role: hosts, docker_app_* vars
-  role->>host: dirs, networks, touch files, ufw
-  src->>role: plain files, *.j2
-  vars->>role: facts + vault.yml secrets
-  role->>host: copy + render into /opt/apps/#lt;app#gt;/
-  role->>host: cifs creds (smb_passwords) + mount
-  role->>host: docker compose up
-  Note over role,host: config changed: handler restarts docker_app_restart
-  pb->>host: post_tasks, e.g. gitea admin
-```
+![Deploying one app](../../../docs/img/deploy-app.png)
 
 1. Creates `<apps_root>/<app>/` on the host (`/opt/apps/<app>`)
 2. Creates extra folders with owner and mode (`docker_app_dirs`), e.g. data folders a container writes to as a fixed UID

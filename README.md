@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 2 LXCs, 25 compose apps + hostapd, 12 Ansible roles, 40 playbooks, 21 C4 views
+- 3 Proxmox nodes, 4 VMs + 2 LXCs, 25 compose apps + hostapd, 12 Ansible roles, 40 playbooks, 22 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
