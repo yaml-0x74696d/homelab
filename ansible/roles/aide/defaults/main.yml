@@ -39,6 +39,7 @@ aide_var_files:
   - '/var/lib/apt/periodic/[^/]+'
   - '/var/lib/NetworkManager/[^/]+\\.lease'
   - '/var/lib/NetworkManager/seen-bssids'
+  - '/var/lib/misc/dnsmasq\\.leases'
 
 # rewritten at boot with the same content (cloud-init's /etc/hosts): owner, mode + checksum, no times
 aide_content_files: [/etc/hosts]

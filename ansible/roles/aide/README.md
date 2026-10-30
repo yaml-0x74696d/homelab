@@ -54,7 +54,7 @@
 | `aide_login_homes` | admin home, `/root` | Homes with history files on the `VarFile` rule (see Notes) |
 | `aide_history_files` | bash, less, vim, python, wget history | Regex of the history file names in those homes |
 | `aide_content_files` | `/etc/hosts` | Rewritten at boot with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
-| `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids` | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
+| `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids`, dnsmasq leases | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
 | `aide_run_timeout` / `aide_run_poll` | 3600 s / 30 s | Limits for `--init` and `--update` |
 | `aide_check_nice` / `aide_check_io_class` | 19 / idle | Priority of the check |
 | `aide_report_lines` | 150 | Diff lines shown on accept |
