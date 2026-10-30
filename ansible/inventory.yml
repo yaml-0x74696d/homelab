@@ -1,6 +1,7 @@
 all:
   vars:
     ansible_user: "{{ admin_user }}"
+    ansible_python_interpreter: /usr/bin/python3
   children:
     lxc_containers:
       vars:
