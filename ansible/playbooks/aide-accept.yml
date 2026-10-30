@@ -1,7 +1,7 @@
 ---
 # review what changed since the baseline and accept it, one host at a time:
 #   ansible-playbook playbooks/aide-accept.yml -l docker-2
-# then commit aide/<host>.sha256
+# the new hash lands in aide/<host>.sha256
 - name: Accept AIDE changes
   hosts: docker_hosts:proxmox:lxc_containers
   serial: 1

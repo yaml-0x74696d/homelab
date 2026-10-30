@@ -8,7 +8,7 @@ aide_run_timeout: 3600
 aide_run_poll: 30
 aide_report_lines: 150   # diff lines shown by aide-accept.yml
 
-# accepted db hashes, one <host>.sha256 each, committed next to the code
+# accepted db hashes, one <host>.sha256 each. ansible/aide is a symlink into the offsite-synced private folder
 aide_checksum_dir: "{{ playbook_dir }}/../aide"
 
 # churn on every host. /var/log: every line is on the log lxc already, that copy is the tamper protection

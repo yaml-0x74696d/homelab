@@ -7,7 +7,7 @@
 ## Runs on
 
 - All guests (`docker_hosts`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
-- The NixOS boxes (netbird, edge) follow in their own branch
+- The NetBird VM gets the same from `nixos/base/logging.nix`, edge follows
 
 ## How it works
 

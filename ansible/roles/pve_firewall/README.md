@@ -84,4 +84,4 @@ Every guest's network card has `firewall=1`, so turning on the master switch dro
 ## Related
 
 - [ADR 0003: NetBird instead of port forwards](../../../docs/adr/0003-netbird-instead-of-port-forwards.md)
-- `netbird_agent` role (defines the routing peers), `nixos/netbird/` (the box itself)
+- `netbird_agent` role (defines the routing peers), `nixos/netbird/` (the VM itself)

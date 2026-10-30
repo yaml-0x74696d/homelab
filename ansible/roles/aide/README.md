@@ -54,7 +54,7 @@
 | `aide_run_timeout` / `aide_run_poll` | 3600 s / 30 s | Limits for `--init` and `--update` |
 | `aide_check_nice` / `aide_check_io_class` | 19 / idle | Priority of the check |
 | `aide_report_lines` | 150 | Diff lines shown on accept |
-| `aide_checksum_dir` | `ansible/aide` | Where the hashes are stored on the controller |
+| `aide_checksum_dir` | `ansible/aide` | Where the hashes are stored on the controller. A gitignored symlink into the offsite-synced private folder, real dir so ansible's `copy` doesn't replace a file symlink |
 | `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the check still runs, but nothing is pushed |
 
 ## Excluded paths
