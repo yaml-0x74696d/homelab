@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 2 LXCs, 25 compose apps + hostapd, 12 Ansible roles, 40 playbooks, 22 C4 views
+- 3 Proxmox nodes, 4 VMs + 2 LXCs, 25 compose apps + hostapd, 12 Ansible roles, 40 playbooks, 21 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -84,7 +84,7 @@ ansible/
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
 architecture/    LikeC4 model: landscape, containers, deployment, 8 flows
 docs/            Architecture, ADRs, exported diagrams
-justfile         setup · lint · check · deploy · c4
+justfile         setup · lint · check · deploy · c4 · diagrams
 ```
 
 ## Single source of truth
@@ -102,7 +102,7 @@ justfile         setup · lint · check · deploy · c4
 - Copy `vault.yml.example` → `vault.yml`, create `ansible/.vault_pass`
 - Copy `private/private.yml.example` → `private/private.yml` and fill in your domain, macs, disk uuids, keys (gitignored, nothing secret)
 - `just setup` · `just check` · `just deploy <app>` · `just c4`
-- Needs: just, pre-commit, Ansible, OpenTofu, Nix, Node (the hooks install ansible-lint, yamllint, shellcheck, gitleaks)
+- Needs: just, pre-commit, Ansible, OpenTofu, Nix, Node, d2 (only for `just diagrams`) (the hooks install ansible-lint, yamllint, shellcheck, gitleaks)
 - OpenTofu: tfvars from the example, `tofu apply`
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
 - Plain `ansible-playbook` is the main path; `ansible-navigator.yml` = optional EE run

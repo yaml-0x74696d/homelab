@@ -10,7 +10,7 @@
 
 ## How it works
 
-![Deploying one app](../../../docs/img/deploy-app.png)
+![Deploying one app](../../../docs/img/deploy-app.svg)
 
 1. Creates `<apps_root>/<app>/` on the host (`/opt/apps/<app>`)
 2. Creates extra folders with owner and mode (`docker_app_dirs`), e.g. data folders a container writes to as a fixed UID

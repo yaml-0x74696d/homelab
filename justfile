@@ -28,3 +28,7 @@ deploy app:
 # export every view as png for the docs
 c4:
     {{ likec4 }} export png architecture --outdir {{ img_dir }} --flat --seq
+
+# render the d2 diagrams as svg for the docs
+diagrams:
+    for f in docs/diagrams/*.d2; do d2 "$f" {{ img_dir }}/$(basename "$f" .d2).svg; done

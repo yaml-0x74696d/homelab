@@ -1,0 +1,33 @@
+# docker_app deploy flow. `just diagrams` renders it to docs/img/deploy-app.svg
+# colours: likec4's default primary (actors) and slate (arrows, notes)
+shape: sequence_diagram
+
+*.style: {
+  fill: "#3b82f6"
+  stroke: "#2563eb"
+  font-color: "#eff6ff"
+}
+(* -> *)[*].style: {
+  stroke: "#64748b"
+  font-color: "#475569"
+}
+
+pb: "deploy-<app>.yml"
+role: "roles/docker_app"
+src: "apps/<app>/"
+facts: "group_vars/all"
+host: "docker host"
+
+pb -> role: "1. hosts, docker_app_* vars"
+role -> host: "2. dirs, networks, touch files, ufw"
+src -> role: "3. plain files, *.j2"
+facts -> role: "4. facts + vault.yml secrets"
+role -> host: "5. copy + render into /opt/apps/<app>/"
+role -> host: "6. cifs creds (smb_passwords) + mount"
+role -> host: "7. docker compose up"
+host.changed: "config changed: handler restarts docker_app_restart" {
+  style.fill: "#64748b"
+  style.stroke: "#475569"
+  style.font-color: "#f8fafc"
+}
+pb -> host: "8. post_tasks, e.g. gitea admin"
