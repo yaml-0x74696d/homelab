@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # review + accept aide changes on the netbird vm and record the db hash. run from ctl-0.
-# first run builds the baseline. commit ansible/aide/netbird.sha256 afterwards.
+# first run builds the baseline. ansible/aide/netbird.sha256 is gitignored, back it up with the vault.
 set -euo pipefail
 
 # netbird ip from the shared facts (ansible/group_vars), no copy here
@@ -36,4 +36,4 @@ else
 fi
 
 remote sha256sum "$DB" | cut -d' ' -f1 > "$SUM"
-echo ">> recorded $SUM, commit it"
+echo ">> recorded $SUM (gitignored, back it up with the vault)"
