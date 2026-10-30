@@ -29,4 +29,4 @@ Status: Accepted
 
 - Accepted: tied to Proxmox's API and tooling. Moving away means rewriting `tofu/` and the PVE roles
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu), [0012](0012-no-kubernetes.md) (no Kubernetes)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu), [0012](0012-no-kubernetes.md) (no Kubernetes), [0025](0025-debian-guests-until-x86-64-v3.md) (guest OS)

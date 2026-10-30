@@ -57,4 +57,4 @@ How I hear about it:
 
 - Later: the podman hosts update their images with `podman auto-update` ([0021](0021-podman-quadlets.md)). This run only covers the OS
 
-- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS updates), [0009](0009-aide-with-manual-accept.md) (AIDE), [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (image updates)
+- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS updates), [0009](0009-aide-with-manual-accept.md) (AIDE), [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (image updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian guests)

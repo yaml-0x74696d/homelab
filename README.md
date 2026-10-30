@@ -126,12 +126,12 @@ justfile         setup · lint · check · deploy · c4 · diagrams
 
 ## Decisions
 
-- [docs/adr/](docs/adr/README.md): 23 records
+- [docs/adr/](docs/adr/README.md): 25 records
 - 0001 OpenTofu + cloud-init · 0002 generic app role · 0003 NetBird · 0004 mergerfs · 0005 prevent_destroy
 - 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 Pi-hole service IP
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets (proposed)
-- 0022 central logging over RELP · 0023 chrony with NTS
+- 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3
 
 ## Future plans
 
@@ -141,7 +141,7 @@ justfile         setup · lint · check · deploy · c4 · diagrams
 - Phase 5: Home Assistant moves to HAOS (VM on pve-3)
 - Phase 6: docker-1 → Podman (Authentik, SearXNG)
 - Podman auto-update with rollback replaces `:latest` + Diun (ADR 0006)
-- Later: guest OS Debian → Rocky Linux / RHEL once the hardware allows it (EL10 needs x86-64-v3 / AVX2, which the current CPUs lack; guests run `cpu type = host`); Proxmox hosts stay Debian
+- Later: guest OS Debian → EL10 once the hardware has x86-64-v3 / AVX2 ([ADR 0025](docs/adr/0025-debian-guests-until-x86-64-v3.md)); Proxmox hosts stay Debian
 - From then on: real commits on this repo
 
 ## License
