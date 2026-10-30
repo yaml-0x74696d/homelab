@@ -35,6 +35,8 @@
 - Yes: the new database is swapped in, and its SHA256 is written to `ansible/aide/<host>.sha256` on the controller
 - Anything else: the old baseline stays the reference
 - If it's not your change, don't accept. Find out what happened first
+- `playbooks/update.yml` accepts on its own, but only if the check right before the upgrade was clean (`roles/update`)
+- Both use `tasks/accept.yml` for the swap
 
 ## Security
 

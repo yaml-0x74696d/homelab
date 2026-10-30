@@ -25,3 +25,4 @@ Format: status, context, decision, consequences.
 - [21. Podman quadlets instead of Docker](0021-podman-quadlets.md) (proposed)
 - [22. Central logging with rsyslog over RELP](0022-central-logging-relp.md)
 - [23. chrony with NTS for time sync](0023-chrony-with-nts.md)
+- [24. OS updates through one Ansible run](0024-ansible-run-os-updates.md)

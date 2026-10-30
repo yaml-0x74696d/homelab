@@ -1,0 +1,161 @@
+---
+- name: Update {{ inventory_hostname }}
+  block:
+    - name: Check quorum on {{ inventory_hostname }}
+      ansible.builtin.command: pvecm status
+      register: update_quorum
+      changed_when: false
+      check_mode: false
+      failed_when: update_quorum.rc != 0 or update_quorum.stdout is not search('Quorate:\s+Yes')
+      when: update_check_quorum
+
+    # the daily check would fight our scans for the aide lock
+    - name: Pause aide-check timer on {{ inventory_hostname }}
+      ansible.builtin.systemd:
+        name: aide-check.timer
+        state: stopped
+
+    - name: Wait for a running aide check on {{ inventory_hostname }}
+      ansible.builtin.systemd_service:
+        name: aide-check.service
+      register: update_aide_busy
+      failed_when: update_aide_busy.status.ActiveState in ['active', 'activating']   # still busy after all retries
+      until: update_aide_busy.status.ActiveState not in ['active', 'activating']
+      retries: "{{ update_aide_wait_retries }}"
+      delay: "{{ update_aide_wait_delay }}"
+
+    - name: Verify recorded aide hash
+      ansible.builtin.include_role:
+        name: aide
+        tasks_from: verify
+        public: true   # aide_db + the role's dials
+
+    # dirty before the upgrade = a change nobody explained, so no auto-accept after it
+    - name: Check aide before the upgrade on {{ inventory_hostname }}
+      ansible.builtin.command: aide --config=/etc/aide/aide.conf --check
+      register: update_aide_pre
+      changed_when: false
+      failed_when: update_aide_pre.rc >= 14
+      check_mode: false
+      async: "{{ aide_run_timeout }}"
+      poll: "{{ aide_run_poll }}"
+      when: aide_db.stat.exists
+
+    - name: Install needrestart on {{ inventory_hostname }}
+      ansible.builtin.apt:
+        name: needrestart
+        update_cache: true
+        cache_valid_time: "{{ update_cache_valid_time }}"
+      register: update_nr_pkg
+
+    - name: Dist-upgrade {{ inventory_hostname }}
+      ansible.builtin.apt:
+        upgrade: dist   # pve needs it, plain upgrade holds back kernel/qemu/zfs
+        autoremove: true
+        dpkg_options: force-confdef,force-confold
+      environment:
+        NEEDRESTART_SUSPEND: "1"   # skip the apt hook, restarts run below
+      register: update_apt
+
+    - name: Restart services on old libraries on {{ inventory_hostname }}
+      ansible.builtin.command: "needrestart -r a -b {{ '' if update_check_kernel else '-l' }}"
+      register: update_nr_restart
+      changed_when: update_nr_restart.stdout is search('NEEDRESTART-SVC:')
+
+    # needrestart may have bounced corosync/pve-cluster, don't hand a broken cluster to the next node
+    - name: Check quorum after restarts on {{ inventory_hostname }}
+      ansible.builtin.command: pvecm status
+      register: update_quorum_post
+      changed_when: false
+      check_mode: false
+      until: update_quorum_post.rc == 0 and update_quorum_post.stdout is search('Quorate:\s+Yes')
+      retries: "{{ update_quorum_retries }}"
+      delay: "{{ update_quorum_delay }}"
+      when: update_check_quorum
+
+    - name: List what still needs a restart on {{ inventory_hostname }}
+      ansible.builtin.command: "needrestart -r l -b {{ '' if update_check_kernel else '-l' }}"
+      register: update_nr
+      changed_when: false
+      check_mode: false
+
+    - name: Look for reboot-required on {{ inventory_hostname }}
+      ansible.builtin.stat:
+        path: /run/reboot-required
+      register: update_reboot_file
+
+    - name: Find new package configs on {{ inventory_hostname }}
+      ansible.builtin.find:
+        paths: "{{ update_conffile_dirs }}"
+        patterns: "{{ update_conffile_patterns }}"
+        recurse: true
+      register: update_conffiles
+
+    - name: Re-baseline aide on {{ inventory_hostname }}
+      when:
+        - not ansible_check_mode
+        - aide_db.stat.exists
+        - update_aide_pre.rc | default(1) == 0
+        - update_apt is changed or update_nr_pkg is changed
+      block:
+        - name: Build new aide db on {{ inventory_hostname }}
+          ansible.builtin.command: aide --config=/etc/aide/aide.conf --update
+          register: update_aide_post
+          changed_when: update_aide_post.rc != 0
+          failed_when: update_aide_post.rc >= 14
+          async: "{{ aide_run_timeout }}"
+          poll: "{{ aide_run_poll }}"
+
+        - name: Accept the upgrade's changes
+          ansible.builtin.include_role:
+            name: aide
+            tasks_from: accept
+          when: update_aide_post.rc != 0   # rc != 0 = aide found the upgrade's changes
+
+    - name: Record result for {{ inventory_hostname }}
+      vars:
+        ksta: "{{ update_nr.stdout | default('') | regex_findall('NEEDRESTART-KSTA: (\\d)') | first | default(0) }}"
+        ucsta: "{{ update_nr.stdout | default('') | regex_findall('NEEDRESTART-UCSTA: (\\d)') | first | default(0) }}"
+      ansible.builtin.set_fact:
+        update_result:
+          packages: >-
+            {{ (update_apt.stdout | default('') | regex_findall('(\d+) upgraded') | first | default(0) | int)
+             + (update_apt.stdout | default('') | regex_findall('(\d+) newly installed') | first | default(0) | int) }}
+          restarted: "{{ update_nr_restart.stdout | default('') | regex_findall('NEEDRESTART-SVC: (\\S+)') }}"
+          stale: "{{ update_nr.stdout | default('') | regex_findall('NEEDRESTART-SVC: (\\S+)') }}"
+          reboot: "{{ ksta | int > 1 or ucsta | int > 1 or update_reboot_file.stat.exists }}"
+          conffiles: "{{ update_conffiles.files | map(attribute='path') | list }}"
+          aide: >-
+            {{ 'no baseline' if not aide_db.stat.exists
+               else 'review, was dirty before' if update_aide_pre.rc | default(0) != 0
+               else 'accepted' if update_aide_post is changed
+               else 'unchanged' }}
+
+  rescue:
+    - name: Alert on failed update of {{ inventory_hostname }}
+      ansible.builtin.uri:
+        url: "{{ ntfy_url }}"
+        method: POST
+        body: "{{ inventory_hostname }}: '{{ ansible_failed_task.name }}' failed, run stopped"
+        headers: "{{ update_ntfy_headers | combine({'Priority': 'high', 'Tags': 'rotating_light'}) }}"
+        timeout: "{{ ntfy_timeout }}"
+      delegate_to: localhost
+      become: false
+      failed_when: false
+      no_log: true   # bearer token in the headers
+      when: ntfy_url | default('') | length > 0
+
+    - name: Summary of the hosts done so far
+      ansible.builtin.include_role:
+        name: update
+        tasks_from: summary
+
+    - name: Stop the run
+      ansible.builtin.fail:
+        msg: "{{ inventory_hostname }}: '{{ ansible_failed_task.name }}' failed, nothing after it was updated"
+
+  always:
+    - name: Resume aide-check timer on {{ inventory_hostname }}
+      ansible.builtin.systemd:
+        name: aide-check.timer
+        state: started

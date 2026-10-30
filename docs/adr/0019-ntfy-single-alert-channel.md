@@ -50,4 +50,4 @@ How sending works:
 - Accepted: it depends on ntfy.sh being up, and a lost push isn't retried
 - Accepted: anyone who finds out the topic name can read and post to it
 
-- Related: [0009](0009-aide-with-manual-accept.md) (AIDE, counts only), [0013](0013-pbs-file-level-backups.md) (PBS alerts), [0006](0006-latest-images-notify-only.md) (Diun)
+- Related: [0009](0009-aide-with-manual-accept.md) (AIDE, counts only), [0013](0013-pbs-file-level-backups.md) (PBS alerts), [0006](0006-latest-images-notify-only.md) (Diun), [0024](0024-ansible-run-os-updates.md) (update summary)

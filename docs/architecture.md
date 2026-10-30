@@ -53,7 +53,7 @@ Ansible also sets up a couple of services on the hosts themselves:
 | mergerfs | pve-3 |
 | hostapd | pve-1 |
 
-- `update-all.yml` updates every host, nodes and guests, one at a time (`serial: 1`) and reports pending reboots
+- `update.yml` updates every apt host one at a time (LXCs, VMs, then the nodes), restarts stale services, re-baselines AIDE and reports pending reboots ([0024](adr/0024-ansible-run-os-updates.md))
 
 ## Compute
 

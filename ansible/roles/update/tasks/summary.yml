@@ -1,0 +1,43 @@
+---
+# runs once on the controller after all hosts. ntfy gets counts only, paths stay in the terminal
+- name: Collect results
+  ansible.builtin.set_fact:
+    update_done: "{{ update_summary_hosts | map('extract', hostvars) | selectattr('update_result', 'defined') | list }}"
+
+- name: Details per host
+  ansible.builtin.debug:
+    msg:
+      restarted: "{{ item.update_result.restarted }}"
+      still_stale: "{{ item.update_result.stale }}"
+      new_conffiles: "{{ item.update_result.conffiles }}"
+  loop: "{{ update_done }}"
+  loop_control:
+    label: "{{ item.inventory_hostname }}"
+  when: item.update_result.stale or item.update_result.conffiles or item.update_result.restarted
+
+- name: Summary
+  vars:
+    update_lines: |-
+      {% for h in update_done %}
+      {% set r = h.update_result %}
+      {{ h.inventory_hostname }}: {{ r.packages }} pkgs, {{ r.restarted | length }} restarted
+      {{- ', REBOOT due' if r.reboot }}
+      {{- ', %d stale' % (r.stale | length) if r.stale }}
+      {{- ', %d new conffiles' % (r.conffiles | length) if r.conffiles }}, aide {{ r.aide }}
+      {% endfor %}
+  block:
+    - name: Print summary
+      ansible.builtin.debug:
+        msg: "{{ update_lines.splitlines() }}"
+
+    - name: Push summary
+      ansible.builtin.uri:
+        url: "{{ ntfy_url }}"
+        method: POST
+        body: "{{ update_lines }}"
+        headers: "{{ update_ntfy_headers }}"
+        timeout: "{{ ntfy_timeout }}"
+      delegate_to: localhost   # also runs from the rescue on a failed host
+      become: false
+      no_log: true   # bearer token in the headers
+      when: ntfy_url | default('') | length > 0 and update_done | length > 0
