@@ -22,11 +22,13 @@
   notify: Restart journald
 
 # old on-disk journal: unused when volatile, and its presence points aide's journal rule at the wrong dir
+# restart too: a journald still on the old config recreates the dir at its next rotation
 - name: No on-disk journal
   ansible.builtin.file:
     path: /var/log/journal
     state: absent
   when: journald_storage == 'volatile'
+  notify: Restart journald
 
 # disk cap from journald.yml (pve), not used with a volatile journal
 - name: No disk size cap
