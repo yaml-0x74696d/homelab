@@ -12,10 +12,10 @@
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {
-  "fontFamily": "JetBrains Mono, Cascadia Code, monospace",
-  "actorBkg": "#1f1f1f", "actorBorder": "#ee0000", "actorTextColor": "#ffffff", "actorLineColor": "#3c3c3c",
-  "signalColor": "#ee0000", "signalTextColor": "#cccccc", "sequenceNumberColor": "#ffffff",
-  "noteBkgColor": "#2a2d2e", "noteBorderColor": "#3c3c3c", "noteTextColor": "#cccccc"
+  "fontFamily": "IBM Plex Sans, sans-serif",
+  "actorBkg": "#3b82f6", "actorBorder": "#2563eb", "actorTextColor": "#eff6ff", "actorLineColor": "#cbd5e1",
+  "signalColor": "#64748b", "signalTextColor": "#475569", "sequenceNumberColor": "#f8fafc",
+  "noteBkgColor": "#64748b", "noteBorderColor": "#475569", "noteTextColor": "#f8fafc"
 }}}%%
 sequenceDiagram
   autonumber
@@ -24,17 +24,15 @@ sequenceDiagram
   participant src as apps/#lt;app#gt;/
   participant vars as group_vars/all
   participant host as docker host
-  rect rgb(20, 20, 20)
-    pb->>role: hosts, docker_app_* vars
-    role->>host: dirs, networks, touch files, ufw
-    src->>role: plain files, *.j2
-    vars->>role: facts + vault.yml secrets
-    role->>host: copy + render into /opt/apps/#lt;app#gt;/
-    role->>host: cifs creds (smb_passwords) + mount
-    role->>host: docker compose up
-    Note over role,host: config changed: handler restarts docker_app_restart
-    pb->>host: post_tasks, e.g. gitea admin
-  end
+  pb->>role: hosts, docker_app_* vars
+  role->>host: dirs, networks, touch files, ufw
+  src->>role: plain files, *.j2
+  vars->>role: facts + vault.yml secrets
+  role->>host: copy + render into /opt/apps/#lt;app#gt;/
+  role->>host: cifs creds (smb_passwords) + mount
+  role->>host: docker compose up
+  Note over role,host: config changed: handler restarts docker_app_restart
+  pb->>host: post_tasks, e.g. gitea admin
 ```
 
 1. Creates `<apps_root>/<app>/` on the host (`/opt/apps/<app>`)
