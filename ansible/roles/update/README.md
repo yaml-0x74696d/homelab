@@ -47,6 +47,7 @@
 ## Notes
 
 - Two full AIDE scans per host: a full run takes about 2 hours, most of it on the pve nodes (up to 25 min per scan)
+- Ctrl-C skips the step that restarts the `aide-check` timer: `systemctl start aide-check.timer` on that host
 - A failed host stops the run and pushes an alert plus the summary of the hosts done so far. The hosts after it aren't touched
 - ntfy only gets counts. Service names and paths stay in the terminal (ntfy.sh is a public relay)
 - `needrestart -r a` on the docker hosts restarts `docker.service`, and with it every container. The docker-ce upgrade does that anyway

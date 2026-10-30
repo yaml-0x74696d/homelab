@@ -25,10 +25,11 @@
       {{- ', %d stale' % (r.stale | length) if r.stale }}
       {{- ', %d new conffiles' % (r.conffiles | length) if r.conffiles }}, aide {{ r.aide }}
       {% endfor %}
+  when: update_done | length > 0   # nobody finished: the failure alert says it all
   block:
     - name: Print summary
       ansible.builtin.debug:
-        msg: "{{ update_lines.splitlines() }}"
+        msg: "{{ update_lines | default('', true) | split('\n') }}"
 
     - name: Push summary
       ansible.builtin.uri:
@@ -40,4 +41,4 @@
       delegate_to: localhost   # also runs from the rescue on a failed host
       become: false
       no_log: true   # bearer token in the headers
-      when: ntfy_url | default('') | length > 0 and update_done | length > 0
+      when: ntfy_url | default('') | length > 0

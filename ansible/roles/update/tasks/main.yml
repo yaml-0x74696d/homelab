@@ -78,6 +78,7 @@
       register: update_nr
       changed_when: false
       check_mode: false
+      when: not ansible_check_mode or update_nr_pkg is not changed   # a dry run doesn't really install it
 
     - name: Look for reboot-required on {{ inventory_hostname }}
       ansible.builtin.stat:
