@@ -4,11 +4,17 @@
     name: aide
     state: present
 
+# 98: before debian's 99_aide_root catch-all, first matching rule wins
 - name: Exclude churn paths
   ansible.builtin.template:
-    src: 99_homelab_excludes.j2
-    dest: /etc/aide/aide.conf.d/99_homelab_excludes
+    src: 98_homelab_excludes.j2
+    dest: /etc/aide/aide.conf.d/98_homelab_excludes
     mode: '0644'
+
+- name: Old excludes file
+  ansible.builtin.file:
+    path: /etc/aide/aide.conf.d/99_homelab_excludes
+    state: absent
 
 - name: Check aide config
   ansible.builtin.command: aide --config=/etc/aide/aide.conf --config-check

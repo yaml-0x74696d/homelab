@@ -11,7 +11,7 @@
 
 ## How it works
 
-1. Installs `aide`, adds `/etc/aide/aide.conf.d/99_homelab_excludes` and runs `--config-check`
+1. Installs `aide`, adds `/etc/aide/aide.conf.d/98_homelab_excludes` (before Debian's `99_aide_root` catch-all, the first matching rule wins) and runs `--config-check`
 2. Checks the local database against the recorded hash (`tasks/verify.yml`) before anything else
 3. Installs `/usr/local/sbin/aide-check` with `aide-check.service` and `.timer`
 4. Masks Debian's `dailyaidecheck.timer`. Ours runs at midday and pushes to ntfy instead of sending a mail at night

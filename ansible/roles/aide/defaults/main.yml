@@ -53,7 +53,7 @@ aide_excludes_by_group:
     - /var/lib/corosync             # ringid, config is /etc/corosync
     - /var/lib/proxmox-backup       # pbs state + graphs, config is /etc/proxmox-backup
     - /var/lib/pve-firewall         # compiled rules, source is /etc/pve/firewall
-    - /var/lib/pve-manager/pve-replication-state.json
+    - /var/lib/pve-manager           # replication state + lock, appliance index
     - /var/lib/smartmontools
     - /etc/issue                    # pvebanner rewrites it at boot
     - /dev                          # vm disks, isos, usb, corosync shm
