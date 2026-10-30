@@ -119,6 +119,7 @@
         ucsta: "{{ update_nr.stdout | default('') | regex_findall('NEEDRESTART-UCSTA: (\\d)') | first | default(0) }}"
       ansible.builtin.set_fact:
         update_result:
+          host: "{{ inventory_hostname }}"
           packages: >-
             {{ (update_apt.stdout | default('') | regex_findall('(\d+) upgraded') | first | default(0) | int)
              + (update_apt.stdout | default('') | regex_findall('(\d+) newly installed') | first | default(0) | int) }}

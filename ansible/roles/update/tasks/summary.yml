@@ -2,25 +2,27 @@
 # runs once on the controller after all hosts. ntfy gets counts only, paths stay in the terminal
 - name: Collect results
   ansible.builtin.set_fact:
-    update_done: "{{ update_summary_hosts | map('extract', hostvars) | selectattr('update_result', 'defined') | list }}"
+    # results only, not the whole hostvars (facts)
+    update_done: >-
+      {{ update_summary_hosts | map('extract', hostvars) | selectattr('update_result', 'defined')
+         | map(attribute='update_result') | list }}
 
 - name: Details per host
   ansible.builtin.debug:
     msg:
-      restarted: "{{ item.update_result.restarted }}"
-      still_stale: "{{ item.update_result.stale }}"
-      new_conffiles: "{{ item.update_result.conffiles }}"
+      restarted: "{{ item.restarted }}"
+      still_stale: "{{ item.stale }}"
+      new_conffiles: "{{ item.conffiles }}"
   loop: "{{ update_done }}"
   loop_control:
-    label: "{{ item.inventory_hostname }}"
-  when: item.update_result.stale or item.update_result.conffiles or item.update_result.restarted
+    label: "{{ item.host }}"
+  when: (item.stale + item.conffiles + item.restarted) | length > 0
 
 - name: Summary
   vars:
     update_lines: |-
-      {% for h in update_done %}
-      {% set r = h.update_result %}
-      {{ h.inventory_hostname }}: {{ r.packages }} pkgs, {{ r.restarted | length }} restarted
+      {% for r in update_done %}
+      {{ r.host }}: {{ r.packages }} pkgs, {{ r.restarted | length }} restarted
       {{- ', REBOOT due' if r.reboot }}
       {{- ', %d stale' % (r.stale | length) if r.stale }}
       {{- ', %d new conffiles' % (r.conffiles | length) if r.conffiles }}, aide {{ r.aide }}
