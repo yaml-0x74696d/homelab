@@ -31,7 +31,7 @@
   block:
     - name: Print summary
       ansible.builtin.debug:
-        msg: "{{ update_lines | default('', true) | split('\n') }}"
+        msg: "{{ update_lines | default('', true) | trim | split('\n') }}"
 
     - name: Push summary
       ansible.builtin.uri:
