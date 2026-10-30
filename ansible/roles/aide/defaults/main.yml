@@ -33,6 +33,12 @@ aide_excludes_common:
 aide_login_homes: ["/home/{{ admin_user }}", /root]
 aide_history_files: '\\.(bash_history|lesshst|viminfo|python_history|wget-hsts)'
 
+# rewritten by design (timer runs, apt's daily stamps, dhcp renewals): VarFile like debian's own rules
+aide_var_files:
+  - '/var/lib/systemd/timers/stamp-[^/]+\\.timer'
+  - '/var/lib/apt/periodic/[^/]+'
+  - '/var/lib/NetworkManager/[^/]+\\.lease'
+
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:
   docker_hosts:

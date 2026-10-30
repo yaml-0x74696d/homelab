@@ -50,6 +50,7 @@
 |---|---|---|
 | `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to 30 min | When the check runs (group_vars `hosts.yml`, shared with NixOS) |
 | `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
+| `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
 | `aide_run_timeout` / `aide_run_poll` | 3600 s / 30 s | Limits for `--init` and `--update` |
 | `aide_check_nice` / `aide_check_io_class` | 19 / idle | Priority of the check |
 | `aide_report_lines` | 150 | Diff lines shown on accept |

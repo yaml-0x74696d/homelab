@@ -33,6 +33,7 @@ What it skips (`aide_excludes_common` on every host, `aide_excludes_by_group` pe
 - Proxmox hosts: `/etc/pve`, the pool, the PBS datastore, state that pve rebuilds itself (`/var/lib/lxc`, lxcfs, corosync, PBS job state, compiled firewall rules, `/etc/issue`) and all of `/dev`
 - LXCs: `/dev/.lxc` (procfs), the storage LXC also the pool bind mount
 - Login homes (`aide_login_homes`): history files only keep owner, mode and type watched
+- Files rewritten by design (`aide_var_files`: systemd timer stamps, apt's daily stamps, DHCP leases): the same, owner, mode and type only
 - NetBird VM: only watches what an upgrade never touches (`/etc` content, SSH keys, `/var/lib/secrets`). autoUpgrade rewrites the system links every day, and Nix checks its store paths anyway
 
 - Rule for new excludes: watch config and binaries, skip state a service rewrites on its own. The config behind each skipped path (`/etc/corosync`, `/etc/proxmox-backup`) stays watched
