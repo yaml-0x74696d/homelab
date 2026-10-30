@@ -1,0 +1,20 @@
+# managed by ansible (roles/aide). login-home + var-file rules, churn excludes on top of debian's rules.
+{% for h in aide_login_homes %}
+{{ h }}$ d VarDir
+{{ h }}/{{ aide_history_files }}$ f VarFile
+{% endfor %}
+ContentFile = OwnerMode+n+Checksums
+{% for p in aide_content_files %}
+{{ p }}$ f ContentFile
+{% endfor %}
+{% for p in aide_var_files %}
+{{ p }}$ f VarFile
+{% endfor %}
+{% for p in aide_excludes_common %}
+!{{ p }}(/|$)
+{% endfor %}
+{% for g in group_names if g in aide_excludes_by_group %}
+{% for p in aide_excludes_by_group[g] | flatten %}
+!{{ p }}(/|$)
+{% endfor %}
+{% endfor %}

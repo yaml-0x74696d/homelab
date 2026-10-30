@@ -1,0 +1,18 @@
+# managed by ansible (roles/rsyslog)
+/var/log/messages
+/var/log/secure
+/var/log/maillog
+/var/log/cron
+/var/log/boot.log
+{
+	weekly
+	rotate {{ rsyslog_local_rotate }}
+	missingok
+	notifempty
+	compress
+	delaycompress
+	sharedscripts
+	postrotate
+		/usr/lib/rsyslog/rsyslog-rotate
+	endscript
+}

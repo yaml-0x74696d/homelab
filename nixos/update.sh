@@ -9,6 +9,8 @@ cd "$(dirname "$0")"
 
 PRIVATE="$PWD/../ansible/group_vars/all/private"
 [ -f "$PRIVATE/private.yml" ] || { echo "!! $PRIVATE/private.yml missing (cp the example, fill in)"; exit 1; }
+# private.yml may be a symlink into the synced private folder; nix copies links, not their targets
+PRIVATE=$(dirname "$(realpath "$PRIVATE/private.yml")")
 rebuild() { nix run nixpkgs#nixos-rebuild -- "$1" --flake .#netbird --override-input private "path:$PRIVATE" "${@:2}"; }
 
 echo ">> bump flake inputs"

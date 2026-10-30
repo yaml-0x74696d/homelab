@@ -1,6 +1,6 @@
 # tofu
 
-- OpenTofu builds the Docker VMs, the NetBird VM and the storage LXC with the `bpg/proxmox` provider
+- OpenTofu builds the Docker VMs, the NetBird VM, the storage LXC and the log LXC with the `bpg/proxmox` provider
 - The guests are created from a Debian cloud image, cloud-init sets the IP, the admin user and the SSH key
 - IPs, VMIDs, the admin user, the SSH key path and the pool paths come from `../ansible/group_vars/all/` (read in `locals.tf`), so OpenTofu and Ansible can't drift apart
 - Guest sizes, nodes and MACs are in the `vms` / `lxcs` maps in `locals.tf`
@@ -9,6 +9,7 @@
 
 - The provider logs in with an API token for `root@pam` that is exempt from 2FA
 - One exception: API tokens can't set bind mounts, so creating the storage LXC needs `pve_password`, with 2FA turned off for that run
+- LXC feature flags are root-only too: on an existing CT, set them on the node (`pct set <vmid> --features nesting=1`), then `tofu plan` shows no diff
 - Turn on the **import** content type on the `local` datastore, it's needed for the cloud image (Datacenter → Storage → local → Content → Import)
 - Run `ssh-add` with your root key, the provider also uses SSH (for the disk import)
 

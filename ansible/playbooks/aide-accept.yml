@@ -1,7 +1,7 @@
 ---
 # review what changed since the baseline and accept it, one host at a time:
 #   ansible-playbook playbooks/aide-accept.yml -l docker-2
-# then commit aide/<host>.sha256
+# the new hash lands in aide/<host>.sha256
 - name: Accept AIDE changes
   hosts: docker_hosts:proxmox:lxc_containers
   serial: 1
@@ -11,6 +11,15 @@
         name: aide
         tasks_from: verify
         public: true   # exposes the role's dials to the tasks below
+
+    - name: No baseline on {{ inventory_hostname }}
+      ansible.builtin.debug:
+        msg: "no /var/lib/aide/aide.db, run playbooks/aide.yml first. skipping"
+      when: not aide_db.stat.exists
+
+    - name: Skip {{ inventory_hostname }}
+      ansible.builtin.meta: end_host
+      when: not aide_db.stat.exists
 
     - name: Diff against baseline on {{ inventory_hostname }}
       ansible.builtin.command: aide --config=/etc/aide/aide.conf --update

@@ -37,7 +37,7 @@ Three Proxmox nodes, each with one Docker VM.
 ![](img/pve2.png)
 
 **pve-3**: custom build, 16 GB RAM, 1 SSD + 4 HDDs
-- Runs docker-3 and the storage LXC
+- Runs docker-3, the storage LXC and the log LXC
 - Has the mergerfs pool
 - PBS is installed directly on the host
 
@@ -149,7 +149,7 @@ All certificates come from Let's Encrypt, proven through DNS instead of an open 
 
 - Let's Encrypt checks a DNS record at Cloudflare (DNS-01), so port 80 doesn't need to be reachable
 - Traefik gets one certificate per router for the LAN apps
-- The NetBird box gets its own certificate the same way (nginx + ACME)
+- The NetBird VM gets its own certificate the same way (nginx + ACME)
 - cloudflare-ddns keeps the public DNS record pointed at the current WAN IP
 
 ## Identity
@@ -234,6 +234,24 @@ Alerts:
 - ntfy (an ntfy.sh topic) is the only alert channel ([ADR 0019](adr/0019-ntfy-single-alert-channel.md))
 - PBS, AIDE, login-notify and Diun all send there
 
+## Logging and time
+
+Every guest keeps its logs locally and sends them to the log LXC.
+
+- journald keeps the journal in RAM only, rsyslog reads it and writes `/var/log/messages`, `secure`, `cron`, `maillog` and `boot.log` (4 weeks)
+- rsyslog forwards everything over RELP to the log LXC (CT 301 on pve-3), which writes `/var/log/remote/<host>/<program>.log` and keeps 90 days
+- A disk queue on each guest holds the messages while the log LXC is down
+- The log LXC only takes RELP from the known hosts (PVE firewall), the directory name comes from the sender's ip ([ADR 0022](adr/0022-central-logging-relp.md))
+- The NetBird VM does the same from `nixos/base/`, but journald pushes to rsyslog over the syslog socket, and there's no `cron` or `maillog`
+- The PVE nodes keep their own persistent journal
+
+Time:
+- chrony on every VM, only from NTS servers (PTB and Cloudflare), so the time is authenticated ([ADR 0023](adr/0023-chrony-with-nts.md))
+- The LXCs use the host's clock
+
+Cron:
+- cronie runs the host cron jobs on every guest
+
 ## Home automation
 
 The sensors talk MQTT, their data ends up in Prometheus and InfluxDB.
@@ -251,9 +269,9 @@ How a change gets from git to the machines.
 ![](img/delivery.png)
 
 Deploying, from the controller:
-- `tofu apply` for the VMs and the LXC
+- `tofu apply` for the VMs and the LXCs
 - `ansible-playbook` for the hosts and the apps
-- `nixos/update.sh` for the NetBird box
+- `nixos/update.sh` for the NetBird VM
 
 Checking:
 - `just check` runs the same 18 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))

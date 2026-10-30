@@ -1,4 +1,4 @@
-# host hardening for the wan-facing netbird box. service-specific systemd
+# host hardening for the wan-facing netbird vm. service-specific systemd
 # sandboxing + firewall ports live in netbird.nix (merged into the firewall lists).
 { facts, ... }:
 let
@@ -17,8 +17,6 @@ let
   rebootWindow = { lower = "03:00"; upper = "05:00"; };
   gcDates = "weekly";
   gcKeep = "30d";
-
-  journalMax = "200M";
 in
 {
   # --- accounts: declarative only, no passwords ---
@@ -126,7 +124,6 @@ in
   # --- trim the surface ---
   documentation.enable = false;
   programs.command-not-found.enable = false;
-  services.journald.settings.Journal.SystemMaxUse = journalMax;
   services.qemuGuest.enable = true;   # clean shutdown + proxmox visibility
   time.timeZone = facts.timezone;
   i18n.defaultLocale = "en_US.UTF-8";

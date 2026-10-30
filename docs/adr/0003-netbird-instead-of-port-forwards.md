@@ -45,7 +45,7 @@ The fallback:
 - FRITZ!Box WireGuard (51820/udp) stays as a backup
 - It lives on the router alone, so it still works when the whole cluster is down
 
-- Enforced by: the PVE firewall drops everything else to the DMZ guest (`roles/pve_firewall`), nftables denies by default on the box itself, and the FRITZ!Box forwards only to `.250`
+- Enforced by: the PVE firewall drops everything else to the DMZ guest (`roles/pve_firewall`), nftables denies by default on the VM itself, and the FRITZ!Box forwards only to `.250`
 
 ## Consequences
 
@@ -58,6 +58,6 @@ The fallback:
 
 - Accepted: coturn has no `external-ip` because the WAN IP keeps changing, so the TURN relay is unreliable by design. Direct P2P + STUN cover normal use
 - Accepted: user and group sync from the IdP is turned off (Authentik's machine auth answered 405). Users still log in through OIDC
-- Accepted: the server secrets were put on the box by hand and are not in git. agenix/sops is planned
+- Accepted: the server secrets were put on the VM by hand and are not in git. agenix/sops is planned
 
 - Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0010](0010-pihole-on-a-service-ip.md) (Pi-hole on docker-2)

@@ -3,7 +3,7 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, testing]   # small fixes go straight to testing
   pull_request:
   workflow_dispatch:
 

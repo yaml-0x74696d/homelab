@@ -1,0 +1,2 @@
+---
+# chrony_servers, chrony_makestep_*: group_vars/all/base.yml (shared with nixos/base)

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "nomatch": "unknown",
+  "type": "string",
+  "table": [
+{% for ip, name in rsyslog_server_hosts | dictsort %}
+    { "index": "{{ ip }}", "value": "{{ name }}" }{{ "," if not loop.last }}
+{% endfor %}
+  ]
+}

@@ -19,6 +19,8 @@ deployment {
         instanceOf ops.diun
         instanceOf storage.pbs-client
         instanceOf observability.node-exporter
+        instanceOf observability.rsyslog
+        instanceOf ops.chrony
       }
       hostapd = host "hostapd" {
         #iot
@@ -44,12 +46,16 @@ deployment {
         instanceOf storage.pbs-client
         instanceOf remote.router-peer
         instanceOf observability.node-exporter
+        instanceOf observability.rsyslog
+        instanceOf ops.chrony
       }
       dmz = zone "DMZ" {
         #dmz
         netbird = vm "netbird" {
           description "NixOS, internet-facing"
           instanceOf remote.netbird
+          instanceOf observability.rsyslog
+          instanceOf ops.chrony
         }
       }
     }
@@ -65,9 +71,15 @@ deployment {
         instanceOf ops.diun
         instanceOf storage.pbs-client
         instanceOf observability.node-exporter
+        instanceOf observability.rsyslog
+        instanceOf ops.chrony
       }
       storage = lxc "storage" {
         instanceOf storage.samba
+        instanceOf observability.rsyslog
+      }
+      log = lxc "log" {
+        instanceOf observability.log-server
       }
       pbs = host "PBS" {
         instanceOf storage.pbs

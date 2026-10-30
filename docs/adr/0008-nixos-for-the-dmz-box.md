@@ -1,4 +1,4 @@
-# 8. NixOS for the DMZ box only
+# 8. NixOS for the NetBird VM only
 
 Status: Accepted
 
@@ -45,7 +45,7 @@ Hardening (`netbird/hardening.nix`):
 - AIDE watches the few paths an upgrade never touches ([0009](0009-aide-with-manual-accept.md))
 
 Secrets:
-- Put on the box by hand under `/var/lib/secrets/` (datastore key, TURN secret, Cloudflare token), never in git
+- Put on the VM by hand under `/var/lib/secrets/` (datastore key, TURN secret, Cloudflare token), never in git
 
 - Enforced by: the whole OS is the flake, `update.sh` builds before it switches, and `just check` runs `nix flake check`
 
@@ -55,11 +55,11 @@ Secrets:
 
 - Harder: a second deploy path next to Ansible, with Nix tooling on the controller and its own update script
 - Harder: the unstable channel has the newest NetBird module, but upgrades can break options. That's why update.sh builds before it switches
-- Harder: autoUpgrade pulls from the private git repo, so the box needs a token to fetch it
+- Harder: autoUpgrade builds `main` of the public GitHub repo with its local copy of `private.yml` (`/etc/homelab-private`), so a change on `testing` only sticks once it's merged, and a `private.yml` change needs an `update.sh` run
 
 - Accepted: extra systemd sandboxing on the management service was removed, because it killed netbird-mgmt during the OIDC call. The module's own sandbox stays
 - Accepted: the secrets live outside Nix for now, agenix/sops is still open
 
 - Facts are shared with the rest through group_vars ([0007](0007-group-vars-single-source-of-truth.md))
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0009](0009-aide-with-manual-accept.md) (AIDE)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0009](0009-aide-with-manual-accept.md) (AIDE), [0022](0022-central-logging-relp.md) (logging), [0023](0023-chrony-with-nts.md) (time)

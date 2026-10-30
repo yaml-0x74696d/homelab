@@ -1,0 +1,15 @@
+# managed by ansible (roles/rsyslog): relp in, one dir per sending host
+module(load="imrelp")
+
+lookup_table(name="hosts" file="/etc/rsyslog.d/hosts.json")
+
+template(name="remote_file" type="string"
+         string="{{ rsyslog_remote_dir }}/%$.host%/%programname:::secpath-replace%.log")
+
+ruleset(name="remote" queue.type="LinkedList" queue.size="{{ rsyslog_server_queue_size }}") {
+  set $.host = lookup("hosts", $fromhost-ip);
+  action(type="omfile" dynaFile="remote_file" dirCreateMode="0750" fileCreateMode="0640")
+  stop
+}
+
+input(type="imrelp" port="{{ rsyslog_relp_port }}" ruleset="remote")

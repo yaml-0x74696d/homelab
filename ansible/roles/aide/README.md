@@ -7,17 +7,16 @@
 ## Runs on
 
 - docker_hosts, proxmox, lxc_containers (`playbooks/aide.yml`)
-- The NetBird box does the same as a Nix module: `nixos/netbird/aide.nix` + `nixos/aide-accept.sh`
+- The NetBird VM does the same as a Nix module: `nixos/netbird/aide.nix` + `nixos/aide-accept.sh`
 
 ## How it works
 
-1. Installs `aide`, adds `/etc/aide/aide.conf.d/99_homelab_excludes` and runs `--config-check`
+1. Installs `aide`, adds `/etc/aide/aide.conf.d/98_homelab_excludes` (before Debian's `99_aide_root` catch-all, the first matching rule wins) and runs `--config-check`
 2. Checks the local database against the recorded hash (`tasks/verify.yml`) before anything else
-3. First run only: `aide --init` hashes the whole system (async)
-4. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 on the controller
-5. `meta: flush_handlers` runs right after, so the baseline is active before the timer exists
-6. Installs `/usr/local/sbin/aide-check` with `aide-check.service` and `.timer`
-7. Masks Debian's `dailyaidecheck.timer`. Ours runs at midday and pushes to ntfy instead of sending a mail at night
+3. Installs `/usr/local/sbin/aide-check` with `aide-check.service` and `.timer`
+4. Masks Debian's `dailyaidecheck.timer`. Ours runs at midday and pushes to ntfy instead of sending a mail at night
+5. First run only, last: `aide --init` hashes the whole system (async), so the baseline already contains the files above
+6. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 on the controller (`meta: flush_handlers`, right away)
 
 ## Daily check
 
@@ -51,20 +50,24 @@
 |---|---|---|
 | `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to 30 min | When the check runs (group_vars `hosts.yml`, shared with NixOS) |
 | `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
+| `aide_content_files` | `/etc/hosts` | Rewritten at boot with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
+| `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids` | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
 | `aide_run_timeout` / `aide_run_poll` | 3600 s / 30 s | Limits for `--init` and `--update` |
 | `aide_check_nice` / `aide_check_io_class` | 19 / idle | Priority of the check |
 | `aide_report_lines` | 150 | Diff lines shown on accept |
-| `aide_checksum_dir` | `ansible/aide` | Where the hashes are stored on the controller |
+| `aide_checksum_dir` | `ansible/aide` | Where the hashes are stored on the controller. A gitignored symlink into the offsite-synced private folder, real dir so ansible's `copy` doesn't replace a file symlink |
 | `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the check still runs, but nothing is pushed |
 
 ## Excluded paths
 
-- docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root`, the CIFS mount root, the PBS staging folder
-- proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, and on pve-3 the pool, its disks and the PBS datastore
-- lxc_containers: the pool bind mount
+- All hosts: `/run` (tmpfs), ansible's temp dirs and payloads, `.cache` in the admin's and root's home, `aide.db.new`, `/var/log` (every line is on the log LXC already, see [ADR 0022](../../../docs/adr/0022-central-logging-relp.md)), `/var/lib/rsyslog`, apt's caches and lists, PackageKit's db, node-exporter's textfiles
+- docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root` and `/opt/stacks` (live apps until the podman migration), the CIFS mount root, the PBS staging folder
+- proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, state pve rebuilds itself (`/var/lib/lxc`, `/var/cache/lxc`, lxcfs, corosync, `/var/lib/proxmox-backup`, `/var/lib/pve-firewall`, replication state, smartmontools, `/etc/issue`), all of `/dev`, and on pve-3 the pool, its disks and the PBS datastore
+- lxc_containers: `/dev/.lxc` (procfs), the pool bind mount
 
 ## Notes
 
+- Login homes (`aide_login_homes`): shell/tool history files only keep owner, mode and type watched (`VarFile`), the home dir its owner and mode (`VarDir`). `.ssh` and the rc files keep the full rule
 - Accept after every update (`aide-accept.yml`), or tomorrow's push repeats the same changes
 - The excludes need care (Docker, logs), or the alerts get noisy
 - Build the baseline after the host is hardened, not before
@@ -72,4 +75,4 @@
 ## Related
 
 - [ADR 0009: AIDE with manual accept](../../../docs/adr/0009-aide-with-manual-accept.md)
-- `nixos/netbird/aide.nix` (NetBird box)
+- `nixos/netbird/aide.nix` (NetBird VM)

@@ -1,0 +1,13 @@
+# managed by ansible (roles/rsyslog): everything to the log lxc, acked per message (relp)
+module(load="omrelp")
+
+action(type="omrelp"
+       target="{{ rsyslog_server }}"
+       port="{{ rsyslog_relp_port }}"
+       template="RSYSLOG_ForwardFormat"
+       queue.type="LinkedList"
+       queue.filename="forward"
+       queue.maxDiskSpace="{{ rsyslog_queue_max_disk }}"
+       queue.saveOnShutdown="on"
+       action.resumeRetryCount="-1"
+       action.resumeInterval="{{ rsyslog_resume_interval }}")

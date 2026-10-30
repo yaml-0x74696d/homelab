@@ -12,8 +12,8 @@ id_rsa*
 *.pem
 *.key
 
-# host-specific aide baselines (the private repo keeps these)
-ansible/aide/*.sha256
+# aide db hashes: on the controller a symlink into the offsite-synced private folder
+ansible/aide
 
 # ansible: installed collections, ansible-lint cache, run artifacts
 ansible/collections/

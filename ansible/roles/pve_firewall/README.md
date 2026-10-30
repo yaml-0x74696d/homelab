@@ -1,7 +1,7 @@
 # pve_firewall
 
 - Writes the cluster, host and guest firewall rules from the shared variables
-- Scope: the NetBird DMZ box and the management access to the PVE hosts. The Docker VMs stay unfiltered
+- Scope: the NetBird VM and the management access to the PVE hosts. The Docker VMs stay unfiltered
 - Done with Ansible, not OpenTofu, because bpg/proxmox can't manage the host-level firewall options
 
 ## Runs on
@@ -14,7 +14,8 @@
 | File | What |
 |---|---|
 | `/etc/pve/firewall/cluster.fw` | Master switch, default policy, ipsets, the `pve-mgmt` group |
-| `/etc/pve/firewall/<netbird vmid>.fw` | The DMZ box's allow list and egress rules |
+| `/etc/pve/firewall/<netbird vmid>.fw` | The NetBird VM's allow list and egress rules |
+| `/etc/pve/firewall/<log vmid>.fw` | The log LXC: RELP only from known hosts |
 | `/etc/pve/firewall/<vmid>.fw` | `enable: 0` for each guest that stays open |
 | `/etc/pve/nodes/<node>/host.fw` | Host lockdown, uses `GROUP pve-mgmt` |
 
@@ -29,28 +30,37 @@
   - `pve_nodes`: the nodes themselves (corosync, migration)
 - The `pve-mgmt` group allows SSH from `pve_ssh`, the web UI from `pve_ui`, the PBS port and ICMP from the LAN, and everything between the nodes
 
-## NetBird DMZ box
+## NetBird VM
 
 - In: 443, STUN/TURN on 3478 + 5349 (TCP+UDP), the narrowed TURN relay range (UDP), and SSH + ICMP from the LAN only
 - Out: everything to the routing peers, because the TURN relay uses arbitrary ports
-- Out: DNS + HTTPS to `pve_firewall_netbird_dns_https`, and DNS to the gateway
+- Out: DNS + HTTPS to `pve_firewall_netbird_dns_https`, DNS to the gateway, RELP to the log LXC
 - Out: the rest of the LAN is dropped, the internet is open
+
+## Log LXC
+
+- In: RELP (`log_relp_port`) from `pve_firewall_log_sources` only, SSH + ICMP from the LAN
+- Out: open
 
 ## Settings
 
 | Variable | Default | What |
 |---|---|---|
-| `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird box is filtered |
+| `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird VM is filtered |
 | `pve_firewall_host_enabled` | `false` | Host management lockdown, the layer that can lock you out |
 | `pve_firewall_open_guests` | docker-1/2/3, storage | VMIDs that stay unfiltered |
-| `pve_firewall_routing_peers` | the `netbird_agent` group | Hosts the DMZ box may reach fully |
-| `pve_firewall_netbird_dns_https` | docker-1, `dns_ip` | Hosts the DMZ box may reach on DNS + HTTPS (Traefik, Pi-hole) |
+| `pve_firewall_routing_peers` | the `netbird_agent` group | Hosts the NetBird VM may reach fully |
+| `pve_firewall_netbird_dns_https` | docker-1, `dns_ip` | Hosts the NetBird VM may reach on DNS + HTTPS (Traefik, Pi-hole) |
 | `pve_firewall_ssh_hosts` | `admin_hosts` | Who may SSH into the nodes |
-| `pve_firewall_ui_hosts` | `admin_hosts` + docker-1 + docker-2 | Who may open the web UI (8006) |
+| `pve_firewall_ui_hosts` | `admin_hosts` + `admin_ui_hosts` + docker-1 + docker-2 | Who may open the web UI (8006) |
 | `pve_firewall_node_ips` | pve-1/2/3 | The cluster nodes |
-| `pve_firewall_netbird_vmid` | `vmids.netbird` | The DMZ box |
+| `pve_firewall_netbird_vmid` | `vmids.netbird` | The NetBird VM |
 | `pve_firewall_netbird_relay_range` | from `netbird_relay_ports` | TURN relay ports |
 | `pve_firewall_netbird_turn_ports` | `[3478, 5349]` | STUN/TURN and TURN over TLS |
+| `pve_firewall_log_vmid` | `vmids.log` | The log LXC |
+| `pve_firewall_log_ip` | `log_ip` | The log LXC, target of the NetBird VM's RELP rule |
+| `pve_firewall_log_sources` | docker-1/2/3, storage, netbird | Hosts that may send RELP to the log LXC |
+| `pve_firewall_log_port` | `log_relp_port` | The RELP port |
 
 ## Rollout
 
@@ -74,4 +84,4 @@ Every guest's network card has `firewall=1`, so turning on the master switch dro
 ## Related
 
 - [ADR 0003: NetBird instead of port forwards](../../../docs/adr/0003-netbird-instead-of-port-forwards.md)
-- `netbird_agent` role (defines the routing peers), `nixos/netbird/` (the box itself)
+- `netbird_agent` role (defines the routing peers), `nixos/netbird/` (the VM itself)
