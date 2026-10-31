@@ -24,6 +24,7 @@ HOMEPAGE = "ansible/apps/dashboard/homepage/config/services.yaml.j2"
 
 errors, warnings = [], []
 ROUTE_RE = re.compile(r"Host\(`([a-z0-9-]+)\.[^`]*`\)(?:\s*&&\s*PathPrefix\(`([^`]+)`\))?")
+TILES_RE = re.compile(r"\{\{\s*tiles\('([A-Za-z]+)'\)\s*\}\}")
 HREF_RE = re.compile(r"href:\s*https://([a-z0-9-]+)\.\{\{\s*domain\s*\}\}(/[^\s\"']*)?")
 
 
@@ -166,14 +167,20 @@ def main():
             if name in apps and (apps[name].get("runtime", "podman") == "podman") != bool(j.get("podman")):
                 errors.append(f"{hv.name}: pbs job {j['name']} needs podman: {apps[name].get('runtime', 'podman') == 'podman'}")
 
-    # --- homepage: a tile per routed app, no tile for an unknown route
-    hrefs = {(h, p) for h, p in HREF_RE.findall((repo / HOMEPAGE).read_text())}
-    hrefs = {(h, p or None) for h, p in hrefs}
-    tiled_hosts = {h for h, _ in hrefs}
-    for name, a in apps.items():
-        rs = a.get("routes", [])
-        if rs and not any(r["host"] in tiled_hosts for r in rs):
-            warnings.append(f"{name}: no homepage tile links to {rs[0]['host']}")
+    # --- homepage: app tiles are generated from homepage: blocks, the rest is hand-written
+    tpl = (repo / HOMEPAGE).read_text()
+    groups = set(TILES_RE.findall(tpl))
+    for name, entry in list(apps.items()) + [(r["host"], r) for r in infra]:
+        hp = entry.get("homepage")
+        if hp is None:
+            continue
+        if hp.get("group") not in groups:
+            errors.append(f"{name}: homepage group {hp.get('group')} isn't rendered (known: {', '.join(sorted(groups))})")
+        if not hp.get("icon"):
+            errors.append(f"{name}: homepage block without icon")
+        if name in apps and not entry.get("routes"):
+            errors.append(f"{name}: homepage tile needs a route to link to")
+    hrefs = {(h, p or None) for h, p in HREF_RE.findall(tpl)}
     for h, p in sorted(hrefs, key=str):
         if h not in {k[0] for k in routes_map} and h not in infra_hosts:
             warnings.append(f"homepage links {h}{p or ''}, which isn't a route in apps.yml or infra_routes")

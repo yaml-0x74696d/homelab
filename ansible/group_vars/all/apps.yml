@@ -19,6 +19,7 @@ apps:
         tag: stable
         healthcheck: false   # scratch image, nothing to run a check with
         add_caps: [NET_RAW]  # runs as root in the container, so pings use raw sockets
+    homepage: {group: Status, icon: gatus, widget: gatus}
     routes:
       - host: status
         middlewares: [authentik]
@@ -40,6 +41,7 @@ apps:
       - name: grafana
         image: docker.io/grafana/grafana-oss
         tag: latest
+    homepage: {group: Admin, icon: grafana}
     routes:
       - host: grafana
 
@@ -47,6 +49,7 @@ apps:
     host: docker-2
     runtime: compose
     port: 8086
+    homepage: {group: Admin, icon: influxdb, label: InfluxDB}
     routes:
       - host: influx
 
@@ -60,6 +63,7 @@ apps:
       - name: nginx
         image: docker.io/library/nginx
         tag: alpine
+    homepage: {group: Tools, icon: nginx, label: Web}
     routes:
       - host: web
 
@@ -67,6 +71,7 @@ apps:
     host: docker-2
     runtime: compose
     port: 9091
+    homepage: {group: Admin, icon: prometheus}
     routes:
       - host: prom
         middlewares: [authentik]   # grafana reaches prom internally, not via this url
@@ -75,6 +80,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8080
+    homepage: {group: Daily, icon: nextcloud}
     routes:
       - host: cloud
         middlewares: [nextcloud-dav]
@@ -83,6 +89,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8081
+    homepage: {group: Daily, icon: /images/immich.png}
     routes:
       - host: photo
 
@@ -90,6 +97,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8082
+    homepage: {group: Daily, icon: jellyfin}
     routes:
       - host: media
 
@@ -97,6 +105,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8083
+    homepage: {group: Daily, icon: paperless-ngx}
     routes:
       - host: paperless
 
@@ -104,12 +113,14 @@ apps:
   authentik:
     host: docker-1
     runtime: compose
+    homepage: {group: Admin, icon: authentik}
     routes:
       - host: auth
 
   vaultwarden:
     host: docker-1
     runtime: compose
+    homepage: {group: Daily, icon: /images/vaultwarden.png}
     routes:
       - host: vault
       - host: vault
@@ -119,12 +130,14 @@ apps:
   gitea:
     host: docker-1
     runtime: compose
+    homepage: {group: Tools, icon: gitea}
     routes:
       - host: git
 
   searxng:
     host: docker-1
     runtime: compose
+    homepage: {group: Tools, icon: searxng, label: SearXNG}
     routes:
       - host: search
 
@@ -137,18 +150,21 @@ apps:
   pdfcraft:
     host: docker-1
     runtime: compose
+    homepage: {group: Tools, icon: /images/pdfcraft.png, label: PDFcraft}
     routes:
       - host: pdf
 
   homeassistant:
     host: docker-1
     runtime: compose
+    homepage: {group: Home, icon: /images/homeassistant.png, label: Home Assistant}
     routes:
       - host: ha
 
   esphome:
     host: docker-1
     runtime: compose
+    homepage: {group: Home, icon: esphome, label: ESPHome}
     routes:
       - host: esphome
         middlewares: [authentik]
@@ -160,4 +176,6 @@ infra_routes:
   - host: pve-3
   - host: pbs
   - host: dns     # pi-hole ui, goes with pi-hole in phase 2
+    homepage: {group: Admin, icon: /images/pihole.png, label: Pi-hole, path: /admin/login}
   - host: proxy   # traefik's own dashboard
+    homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}

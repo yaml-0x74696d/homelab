@@ -92,7 +92,7 @@ justfile         setup · lint · check · deploy · deploy-app · c4 · diagram
 - `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
 - `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps`, `base`, `private/private.yml` YAML into JSON with yq-go
 - `nixos/update.sh` + `aide-accept.sh` read the NetBird IP from the same file
-- Ports: one `app_ports` map → compose, Traefik routes, Homepage tiles, Prometheus targets, firewall
+- Ports: one `app_ports` map → compose, Traefik routes, Prometheus targets, firewall
 - Secrets: one `vault.yml` (Ansible Vault), every app gets them via its `.env.j2` → `${VAR}` in compose
 - No magic numbers: every timeout, schedule, size and port is a named variable (role defaults, playbook `vars:`, Nix `let`)
 

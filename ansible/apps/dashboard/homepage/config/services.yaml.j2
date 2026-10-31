@@ -1,137 +1,27 @@
----
-- Quickaccess:
-    - Nextcloud:
-        icon: nextcloud
-        href: https://cloud.{{ domain }}
-        server: docker-3
-        container: nextcloud
-    - Immich:
-        icon: /images/immich.png
-        href: https://photo.{{ domain }}
-        server: docker-3
-        container: immich_server
-    - Jellyfin:
-        icon: jellyfin
-        href: https://media.{{ domain }}
-        server: docker-3
-        container: jellyfin
-    - Vaultwarden:
-        icon: /images/vaultwarden.png
-        href: https://vault.{{ domain }}
-        server: docker-1
-        container: vaultwarden
-    - FritzBoX:
-        icon: fritzbox
-        href: https://{{ gateway_ip }}
-        ping: {{ homepage_ping_target }}
-
-- Services:
-        # edge & access
-        - Traefik:
-            icon: /images/traefik.png
-            href: https://proxy.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: traefik
-        - Authentik:
-            icon: authentik
-            href: https://auth.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: authentik-server
-        - Pi-hole:
-            icon: /images/pihole.png
-            href: https://dns.{{ domain }}/admin/login
-            showStats: true
-            server: docker-2
-            container: pihole
-        - Cloudflare DDNS:
-            icon: cloudflare
-            showStats: true
-            server: docker-1
-            container: cloudflare-ddns
-        - Nginx Web:
-            icon: nginx
-            href: https://web.{{ domain }}
-            siteMonitor: http://{{ hostvars[apps['nginx'].host].ansible_host }}:{{ apps['nginx'].port }}
-        # monitoring & dashboards
-        - Prometheus:
-            icon: prometheus
-            href: https://prom.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: prometheus
-        - Grafana:
-            icon: grafana
-            href: https://grafana.{{ domain }}
-            siteMonitor: http://{{ hostvars[apps['grafana'].host].ansible_host }}:{{ apps['grafana'].port }}
-        - InfluxDB:
-            icon: influxdb
-            href: https://influx.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: influxdb
-        - Gatus:
-            icon: gatus
-            href: https://status.{{ domain }}
-            siteMonitor: http://{{ hostvars[apps['gatus'].host].ansible_host }}:{{ apps['gatus'].port }}
+{# app tiles come from apps.yml (homepage: block) and infra_routes. badge = siteMonitor:
+   the app's port when the map has one, else its route. stats only for servers + vms #}
+{% macro tiles(group) %}
+{% for name, a in apps.items() if a.homepage is defined and a.homepage.group == group and a.state | default('present') == 'present' %}
+{% set url = ('http://' ~ hostvars[a.host].ansible_host ~ ':' ~ a.port) if a.port is defined else ('https://' ~ a.routes[0].host ~ '.' ~ domain) %}
+        - {{ a.homepage.label | default(name | capitalize) }}:
+            icon: {{ a.homepage.icon }}
+            href: https://{{ a.routes[0].host }}.{{ domain }}{{ a.homepage.path | default('') }}
+            siteMonitor: {{ url }}
+{% if a.homepage.widget is defined %}
             widget:
-                type: gatus
-                url: http://{{ hostvars[apps['gatus'].host].ansible_host }}:{{ apps['gatus'].port }}
-        - Homepage:
-            icon: homepage
-            href: https://home.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: homepage
-        # home & iot
-        - Home Assistant:
-            icon: /images/homeassistant.png
-            href: https://ha.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: homeassistant
-        - ESPHome:
-            icon: esphome
-            href: https://esphome.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: esphome
-        - MQTT Broker:
-            icon: mdi-access-point-network
-            showStats: true
-            server: docker-1
-            container: mosquitto
-        - MQTT Exporter:
-            icon: mdi-transmission-tower
-            showStats: true
-            server: docker-1
-            container: mqtt-exporter
-        # apps & utilities
-        - Gitea:
-            icon: gitea
-            href: https://git.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: gitea
-        - Paperless:
-            icon: paperless-ngx
-            href: https://paperless.{{ domain }}
-            showStats: true
-            server: docker-3
-            container: paperless
-        - SearXNG:
-            icon: searxng
-            href: https://search.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: searxng
-        - PDFcraft:
-            icon: /images/pdfcraft.png
-            href: https://pdf.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: pdfcraft
+                type: {{ a.homepage.widget }}
+                url: {{ url }}
+{% endif %}
+{% endfor %}
+{% for r in infra_routes if r.homepage is defined and r.homepage.group == group %}
+        - {{ r.homepage.label }}:
+            icon: {{ r.homepage.icon }}
+            href: https://{{ r.host }}.{{ domain }}{{ r.homepage.path | default('') }}
+            siteMonitor: https://{{ r.host }}.{{ domain }}{{ r.homepage.path | default('') }}
+{% endfor %}
+{% endmacro %}
+- Status:
+{{ tiles('Status') }}
 
 - Servers:
         - PVE-1:
@@ -238,3 +128,17 @@
                         - field: data.mem
                           label: MEM
                           format: bytes
+
+- Daily:
+{{ tiles('Daily') }}
+- Home:
+{{ tiles('Home') }}
+        - FritzBox:
+            icon: fritzbox
+            href: https://{{ gateway_ip }}
+            ping: {{ homepage_ping_target }}
+
+- Tools:
+{{ tiles('Tools') }}
+- Admin:
+{{ tiles('Admin') }}

@@ -227,7 +227,7 @@ Prometheus for metrics, ntfy for alerts.
 - InfluxDB keeps the sensor data long-term
 - Grafana shows dashboards on top of both
 - Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
-- Homepage is the start page, with live tiles from Docker (through the socket proxy) and the Proxmox API
+- Homepage is the start page: Gatus' summary on top, Proxmox stats for nodes, VMs and LXCs, and a tile per app generated from the apps map (`homepage:` block) with an up badge
 
 Alerts:
 - Diun checks every running image once a day and reports new versions, it never pulls them ([ADR 0006](adr/0006-latest-images-notify-only.md))

@@ -7,17 +7,25 @@ theme: dark
 color: red
 hideErrors: true
 layout:
-  Quickaccess:
+  Status:
     style: row
-    columns: 5
+    columns: 1
   Servers:
     style: row
     columns: 4
   VM:
-    initiallyCollapsed: true
     style: row
     columns: 6
-  Services:
+  Daily:
     style: row
     columns: 5
+  Home:
+    style: row
+    columns: 3
+  Tools:
+    style: row
+    columns: 4
+  Admin:
+    style: row
+    columns: 6
     initiallyCollapsed: true
