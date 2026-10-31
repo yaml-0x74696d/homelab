@@ -27,6 +27,11 @@ endpoints:
     group: {{ app.host }}
     url: "https://{{ r.host }}.{{ domain }}{{ r.path | default('') }}"
     interval: {{ gatus_interval }}
+{% if behind_auth %}
+{# gatus follows redirects by default and would end on the login page's 200 #}
+    client:
+      ignore-redirect: true
+{% endif %}
     conditions:
       - "{{ '[STATUS] == 302' if behind_auth else '[STATUS] < 400' }}"
       - "[CERTIFICATE_EXPIRATION] > {{ gatus_cert_min_validity }}"
