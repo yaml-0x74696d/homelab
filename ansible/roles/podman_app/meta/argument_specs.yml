@@ -108,7 +108,7 @@ argument_specs:
             type: dict
             description: Read by homepage's template, not by this role. no block = no tile
             options:
-              group: {type: str, required: true, description: "Status, Daily, Home, Tools or Admin"}
+              group: {type: str, required: true, description: "Status, Homecloud, Home, Tools or Admin"}
               icon: {type: str, required: true, description: "Homepage icon name or /images/<file>"}
               label: {type: str, description: "Tile name, default the app's name capitalized"}
               path: {type: str, description: Appended to the route in the tile's link}

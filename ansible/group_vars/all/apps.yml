@@ -81,7 +81,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8080
-    homepage: {group: Daily, icon: nextcloud}
+    homepage: {group: Homecloud, icon: nextcloud}
     routes:
       - host: cloud
         middlewares: [nextcloud-dav]
@@ -90,7 +90,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8081
-    homepage: {group: Daily, icon: /images/immich.png}
+    homepage: {group: Homecloud, icon: /images/immich.png}
     routes:
       - host: photo
 
@@ -98,7 +98,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8082
-    homepage: {group: Daily, icon: jellyfin}
+    homepage: {group: Homecloud, icon: jellyfin}
     routes:
       - host: media
 
@@ -106,7 +106,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8083
-    homepage: {group: Daily, icon: paperless-ngx}
+    homepage: {group: Homecloud, icon: paperless-ngx}
     routes:
       - host: paperless
 
@@ -123,7 +123,7 @@ apps:
     host: docker-1
     runtime: compose
     port: 8084
-    homepage: {group: Daily, icon: /images/vaultwarden.png}
+    homepage: {group: Homecloud, icon: /images/vaultwarden.png}
     routes:
       - host: vault
       - host: vault

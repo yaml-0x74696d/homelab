@@ -69,7 +69,7 @@
                 password: "{{ pbs_homepage_token | default('') }}"
                 fields: ["datastore_usage", "failed_tasks_24h"]
 
-- VM:
+- VMs:
             - docker-1:
                 icon: /images/debian.png
                 proxmoxNode: pve-1
@@ -98,40 +98,25 @@
                 showStats: true
                 href: https://nb.{{ domain }}
                 fields: ["cpu", "mem"]
+
+- LXCs:
             - storage:
                 icon: /images/lxc.png
-                # showStats hits qemu/<vmid> for this lxc and 500s; query the lxc path directly
-                widget:
-                    type: customapi
-                    url: https://{{ pve3_ip }}:{{ pve_ui_port }}/api2/json/nodes/pve-3/lxc/{{ vmids.storage }}/status/current
-                    method: GET
-                    headers:
-                        Authorization: "PVEAPIToken={{ homepage_pve_token_id }}={{ proxmox_secret }}"
-                    mappings:
-                        - field: data.cpu
-                          label: CPU
-                          format: percent
-                        - field: data.mem
-                          label: MEM
-                          format: bytes
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.storage }}
+                proxmoxType: lxc
+                showStats: true
+                fields: ["cpu", "mem"]
             - log:
                 icon: /images/lxc.png
-                widget:
-                    type: customapi
-                    url: https://{{ pve3_ip }}:{{ pve_ui_port }}/api2/json/nodes/pve-3/lxc/{{ vmids.log }}/status/current
-                    method: GET
-                    headers:
-                        Authorization: "PVEAPIToken={{ homepage_pve_token_id }}={{ proxmox_secret }}"
-                    mappings:
-                        - field: data.cpu
-                          label: CPU
-                          format: percent
-                        - field: data.mem
-                          label: MEM
-                          format: bytes
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.log }}
+                proxmoxType: lxc
+                showStats: true
+                fields: ["cpu", "mem"]
 
-- Daily:
-{{ tiles('Daily') }}
+- Homecloud:
+{{ tiles('Homecloud') }}
 - Home:
 {{ tiles('Home') }}
         - FritzBox:

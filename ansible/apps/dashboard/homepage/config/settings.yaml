@@ -19,10 +19,13 @@ layout:
   Servers:
     style: row
     columns: 4
-  VM:
+  VMs:
     style: row
-    columns: 6
-  Daily:
+    columns: 5
+  LXCs:
+    style: row
+    columns: 3
+  Homecloud:
     style: row
     columns: 5
   Home:
@@ -31,7 +34,8 @@ layout:
   Tools:
     style: row
     columns: 4
+    initiallyCollapsed: true
   Admin:
     style: row
-    columns: 6
+    columns: 5
     initiallyCollapsed: true
