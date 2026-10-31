@@ -1,13 +1,15 @@
-{# app tiles come from apps.yml (homepage: block) and infra_routes. badge = siteMonitor:
-   the app's port when the map has one, else its route. stats only for servers + vms #}
+{# app tiles come from apps.yml (homepage: block) and infra_routes. badge = siteMonitor on the app's
+   port, so only for apps with a port in the map (docker-1's come with edge). stats only for servers + vms #}
 {% macro tiles(group) %}
 {% for name, a in apps.items() if a.homepage is defined and a.homepage.group == group and a.state | default('present') == 'present' %}
-{% set url = ('http://' ~ hostvars[a.host].ansible_host ~ ':' ~ a.port) if a.port is defined else ('https://' ~ a.routes[0].host ~ '.' ~ domain) %}
+{% set url = 'http://' ~ hostvars[a.host].ansible_host ~ ':' ~ a.port if a.port is defined else none %}
         - {{ a.homepage.label | default(name | capitalize) }}:
             icon: {{ a.homepage.icon }}
             href: https://{{ a.routes[0].host }}.{{ domain }}{{ a.homepage.path | default('') }}
+{% if url %}
             siteMonitor: {{ url }}
-{% if a.homepage.widget is defined %}
+{% endif %}
+{% if a.homepage.widget is defined and url %}
             widget:
                 type: {{ a.homepage.widget }}
                 url: {{ url }}
@@ -17,7 +19,6 @@
         - {{ r.homepage.label }}:
             icon: {{ r.homepage.icon }}
             href: https://{{ r.host }}.{{ domain }}{{ r.homepage.path | default('') }}
-            siteMonitor: https://{{ r.host }}.{{ domain }}{{ r.homepage.path | default('') }}
 {% endfor %}
 {% endmacro %}
 - Status:
