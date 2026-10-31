@@ -171,14 +171,6 @@ apps:
     routes:
       - host: ha
 
-  esphome:
-    host: docker-1
-    runtime: compose
-    homepage: {group: Home, icon: esphome, label: ESPHome}
-    routes:
-      - host: esphome
-        middlewares: [authentik]
-
 # traefik routes that aren't apps. phase 2 adds what edge needs (scheme, tls)
 infra_routes:
   - host: pve-1

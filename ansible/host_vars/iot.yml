@@ -1,0 +1,3 @@
+---
+# both firewall layers (iot.fw + ufw in deploy-iot.yml); lxc_base adds the ufw node-exporter rule
+lxc_base_ufw: true

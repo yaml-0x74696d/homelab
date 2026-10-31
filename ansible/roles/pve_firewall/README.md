@@ -1,7 +1,7 @@
 # pve_firewall
 
 - Writes the cluster, host and guest firewall rules from the shared variables
-- Scope: the NetBird VM, the log LXC and the management access to the PVE hosts. The Docker VMs and the storage LXC stay unfiltered
+- Scope: the NetBird VM, the log LXC, the IoT gateway LXC and the management access to the PVE hosts. The Docker VMs and the storage LXC stay unfiltered
 - Done with Ansible, not OpenTofu, because bpg/proxmox can't manage the host-level firewall options
 
 ## Runs on
@@ -16,6 +16,7 @@
 | `/etc/pve/firewall/cluster.fw` | Master switch, default policy, ipsets, the `pve-mgmt` group |
 | `/etc/pve/firewall/<netbird vmid>.fw` | The NetBird VM's allow list and egress rules |
 | `/etc/pve/firewall/<log vmid>.fw` | The log LXC: RELP only from known hosts |
+| `/etc/pve/firewall/<iot vmid>.fw` | The IoT gateway LXC: inbound as its ufw, egress limited |
 | `/etc/pve/firewall/<vmid>.fw` | `enable: 0` for each guest that stays open |
 | `/etc/pve/nodes/<node>/host.fw` | Host lockdown, uses `GROUP pve-mgmt` |
 
@@ -39,14 +40,23 @@
 
 ## Log LXC
 
-- In: RELP (`log_relp_port`) from `pve_firewall_log_sources` only, SSH + ICMP from the LAN
+- In: RELP (`log_relp_port`) from `pve_firewall_log_sources` only, node-exporter from Prometheus' host, SSH + ICMP from the LAN
 - Out: open
+
+## IoT gateway LXC
+
+- Inbound the same as the ufw inside (`playbooks/deploy-iot.yml`), so a root shell in the CT can't open anything. Both read `mqtt_lan_clients` and `prometheus_ip`. ufw's default `before.rules` additionally answer ping (and take mDNS/UPnP multicast) from anywhere
+- `ipfilter: 1`: each NIC only sends from its own configured IP
+- In from the IoT net: only `mqtt_port`, only on `pve_firewall_iot_nic` (`net1`)
+- In from the LAN: `mqtt_port` from Home Assistant's host, `mqtt_exporter_port` and node-exporter from Prometheus' host, SSH + ICMP
+- Out (`policy_out: DROP`): DNS to the router (the CT's resolver), RELP to the log LXC, HTTP/HTTPS to the internet (apt, ntfy). The rest of the LAN and the IoT net are dropped. No NTP, the CT uses the host's clock
+- ufw inside only filters inbound, its outbound stays allow; the egress limit is this file
 
 ## Settings
 
 | Variable | Default | What |
 |---|---|---|
-| `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird VM and the log LXC are filtered |
+| `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird VM and the log + IoT LXCs are filtered |
 | `pve_firewall_host_enabled` | `false` | Host management lockdown, the layer that can lock you out |
 | `pve_firewall_lan_cidr` | `lan_cidr` | The LAN |
 | `pve_firewall_gateway_ip` | `gateway_ip` | The router, DNS fallback for the NetBird VM |
@@ -61,16 +71,21 @@
 | `pve_firewall_netbird_turn_ports` | `[3478, 5349]` | STUN/TURN and TURN over TLS |
 | `pve_firewall_log_vmid` | `vmids.log` | The log LXC |
 | `pve_firewall_log_ip` | `log_ip` | The log LXC, target of the NetBird VM's RELP rule |
-| `pve_firewall_log_sources` | docker-1/2/3, storage, netbird | Hosts that may send RELP to the log LXC |
+| `pve_firewall_log_sources` | docker-1/2/3, storage, iot, netbird | Hosts that may send RELP to the log LXC |
 | `pve_firewall_log_port` | `log_relp_port` | The RELP port |
+| `pve_firewall_prometheus_ip` | `prometheus_ip` (`app_settings.yml`) | May scrape the log and IoT LXCs |
+| `pve_firewall_iot_vmid` | `vmids.iot` | The IoT gateway LXC |
+| `pve_firewall_iot_cidr` | `iot_cidr` | The IoT net, may reach the broker only |
+| `pve_firewall_iot_nic` | `net1` | The CT's IoT leg, the only NIC the IoT rule accepts on |
+| `pve_firewall_iot_mqtt_clients` | `mqtt_lan_clients` (`app_settings.yml`) | May reach the broker from the LAN |
 
 ## Rollout
 
 Every guest's network card has `firewall=1`, so turning on the master switch drops traffic to all of them at once. That's why it goes in stages:
 
-1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird and the log LXC goes into `pve_firewall_open_guests`
+1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird, the log LXC and the IoT LXC goes into `pve_firewall_open_guests`
 2. Stage 0: both switches off, files written, check the compiled ruleset
-3. Stage 1: master switch on, so only NetBird and the log LXC are filtered
+3. Stage 1: master switch on, so only NetBird and the log + IoT LXCs are filtered
 4. Stage 2: host lockdown on one node, test SSH and `:8006` from an admin device, then the other nodes
 5. Stage 3: set both defaults to true, or a plain re-run turns them off again
 

@@ -6,6 +6,7 @@ node_exporter_port: 9100
 docker_metrics_port: 9323
 docker_proxy_port: 2375
 mqtt_port: 1883
+mqtt_exporter_port: 9641   # on the iot lxc, prometheus scrapes it
 log_relp_port: 20514   # rsyslog relp to the log lxc
 netbird_relay_ports: { min: 49160, max: 49200 }   # coturn relay range, narrow so the router forward stays small
 
@@ -28,7 +29,6 @@ app_ports:
   pdfcraft: "{{ apps['pdfcraft'].port }}"
   homeassistant: "{{ apps['homeassistant'].port }}"
   prometheus: "{{ apps['prometheus'].port }}"
-  mqtt_exporter: 9641
 
 # published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.
 # backends only answer traefik + ha (docker-1) and prometheus/gatus (docker-2)
@@ -48,4 +48,3 @@ docker_published_allow:
   - { port: "{{ app_ports.jellyfin }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.paperless }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.pihole }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.mqtt_exporter }}", src: ["{{ docker2_ip }}"] }   # prometheus only

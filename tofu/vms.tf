@@ -78,16 +78,6 @@ resource "proxmox_virtual_environment_vm" "docker" {
     mac_address = each.value.mac0
     firewall    = true
   }
-
-  # second leg on the isolated iot bridge (docker-1 only)
-  dynamic "network_device" {
-    for_each = each.value.mac1 != null ? [1] : []
-    content {
-      bridge      = local.net.iot_bridge
-      mac_address = each.value.mac1
-      firewall    = true
-    }
-  }
 }
 
 # netbird control plane — wan-facing netbird vm. this only builds the VM shell on the debian

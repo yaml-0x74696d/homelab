@@ -26,7 +26,6 @@ services:
       - NGINX_PORT=${NGINX_PORT}
       - PIHOLE_PORT=${PIHOLE_PORT}
       - PROMETHEUS_PORT=${PROMETHEUS_PORT}
-      - MQTT_EXPORTER_PORT=${MQTT_EXPORTER_PORT}
     networks:
       proxy-net:
         # let other apps reach services by their public name without leaving the bridge

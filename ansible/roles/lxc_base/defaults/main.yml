@@ -1,0 +1,19 @@
+---
+# the vm_base parts that make sense in an unprivileged lxc (no kernel, no guest agent, no auditd)
+lxc_base_packages:
+  - fail2ban
+  - python3-systemd           # fail2ban's journal backend
+  - unattended-upgrades
+  - needrestart
+  - prometheus-node-exporter
+
+lxc_base_services:
+  - fail2ban
+  - prometheus-node-exporter
+
+# lan address only, never the iot leg
+lxc_base_node_exporter_listen: "{{ ansible_host }}:{{ node_exporter_port }}"
+
+# true where the lxc filters with ufw (host_vars: storage, iot): node-exporter rule from prometheus_ip.
+# the pve firewall lets prometheus in on its own for log + iot (roles/pve_firewall)
+lxc_base_ufw: false

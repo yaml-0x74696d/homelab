@@ -1,9 +1,9 @@
 ---
 - name: Deploy hostapd access point
-  hosts: pve-1
+  hosts: iot_ap   # inventory.yml
   become: true
   vars:
-    hostapd_interface: wlp0s12f0           # usb/pci wifi card on pve-1
+    hostapd_interface: wlp0s12f0           # onboard wifi card, check the name on another node
     hostapd_bridge: "{{ iot_bridge }}"
     hostapd_channel: 6
     hostapd_country: DE

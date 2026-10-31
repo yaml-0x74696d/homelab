@@ -17,6 +17,14 @@ authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12",
 
 prometheus_scrape_interval: 15s   # apps/prometheus
 
+mqtt_user: iot                    # shared by sensors, ha and the exporter; password: mqtt_password (vault)
+
+# lan callers of the iot gateway, one list for both firewall layers (ufw in deploy-iot.yml, iot.fw)
+# and the node-exporter rules (lxc_base, log.fw)
+prometheus_ip: "{{ hostvars[apps['prometheus'].host].ansible_host }}"
+mqtt_lan_clients:
+  - { ip: "{{ hostvars[apps['homeassistant'].host].ansible_host }}", c: home assistant }   # ha_ip once haos has its own vm
+
 # gatus (apps/gatus): every check is generated from apps.yml + the inventory
 gatus_interval: 60s
 gatus_failure_threshold: 3        # failed checks in a row before ntfy

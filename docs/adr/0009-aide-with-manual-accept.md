@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - I wanted to know when files on a server change outside of a deploy
-- Every server is in scope: docker-1/2/3, pve-1/2/3, the storage and log LXCs and the NetBird VM
+- Every server is in scope: docker-1/2/3, pve-1/2/3, the storage, log and IoT LXCs and the NetBird VM
 - Alerts go to ntfy.sh, a public service, so they must not leak paths
 
 - Alternatives:
@@ -31,7 +31,7 @@ What it skips (`aide_excludes_common` on every host, `aide_excludes_by_group` pe
 - Every host: `/run`, `/var/log` (the central copy on the log LXC is the tamper protection, [0022](0022-central-logging-relp.md)), apt's caches and lists, node-exporter's textfiles, ansible's temp files
 - Docker hosts: Docker data, the app folders, the CIFS mounts and cloud-init's per-boot state
 - Proxmox hosts: `/etc/pve`, the pool, the PBS datastore, state that pve rebuilds itself (`/var/lib/lxc`, lxcfs, corosync, PBS job state, compiled firewall rules, `/etc/issue`) and all of `/dev`
-- LXCs: `/dev/.lxc` (procfs), the storage LXC also the pool bind mount
+- LXCs: `/dev/.lxc` (procfs), the storage LXC also the pool bind mount, the IoT LXC also `/var/lib/mosquitto` (broker state)
 - Login homes (`aide_login_homes`): history files only keep owner, mode and type watched
 - Files rewritten by design (`aide_var_files`: systemd timer stamps, apt's daily stamps, DHCP leases): the same, owner, mode and type only
 - `/etc/hosts` (`aide_content_files`): cloud-init rewrites it at boot, so content, owner and mode are watched, the times are not

@@ -114,3 +114,73 @@ resource "proxmox_virtual_environment_container" "log" {
     }
   }
 }
+
+# iot gateway: mqtt broker, the only guest on the iot bridge. lan leg for the consumers (ha, prometheus)
+resource "proxmox_virtual_environment_container" "iot" {
+  node_name     = local.lxcs.iot.node
+  vm_id         = local.lxcs.iot.vmid
+  unprivileged  = true
+  start_on_boot = true
+
+  cpu {
+    cores = local.lxcs.iot.cores
+  }
+
+  memory {
+    dedicated = local.lxcs.iot.memory
+    swap      = local.lxcs.iot.swap
+  }
+
+  # systemd 257 (debian 13) needs it for its sandboxing
+  features {
+    nesting = true
+  }
+
+  operating_system {
+    type             = "debian"
+    template_file_id = var.lxc_template
+  }
+
+  disk {
+    datastore_id = var.vm_datastore
+    size         = local.lxcs.iot.disk
+  }
+
+  # firewall bit on: roles/pve_firewall filters inbound (iot.fw), ufw inside does the same
+  network_interface {
+    name        = "eth0"
+    bridge      = local.net.lan_bridge
+    mac_address = local.lxcs.iot.mac
+    firewall    = true
+  }
+
+  network_interface {
+    name        = "eth1"
+    bridge      = local.net.iot_bridge
+    mac_address = local.lxcs.iot.iot_mac
+    firewall    = true
+  }
+
+  # ip_config blocks go to the nics in order. no gateway on the iot leg: nothing routes out of it
+  initialization {
+    hostname = "iot"
+    ip_config {
+      ipv4 {
+        address = "${local.lxcs.iot.ip}/${local.lan_prefix}"
+        gateway = local.net.gateway_ip
+      }
+    }
+    ip_config {
+      ipv4 {
+        address = "${local.lxcs.iot.iot_ip}/${local.iot_prefix}"
+      }
+    }
+    dns {
+      servers = [local.net.gateway_ip]
+    }
+    user_account {
+      keys     = local.ssh_keys
+      password = var.vm_password
+    }
+  }
+}

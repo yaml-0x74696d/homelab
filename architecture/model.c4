@@ -124,11 +124,10 @@ model {
   }
 
   automation = system "Home automation" {
-    technology "Home Assistant, Mosquitto, ESPHome"
+    technology "Home Assistant, Mosquitto"
     description "Home Assistant and the sensor network"
     homeassistant = container "Home Assistant"
     mosquitto = container "Mosquitto" { #parked; technology "MQTT broker" }
-    esphome = ui "ESPHome" { #parked }
     mqtt-exporter = container "mqtt-exporter" { #parked }
     sensor = device "ESP32 sensor" {
       #iot
@@ -258,7 +257,6 @@ model {
   automation.sensor -> automation.ap "wifi"
   automation.homeassistant -[mqtt]-> automation.mosquitto "subscribes"
   automation.mqtt-exporter -[mqtt]-> automation.mosquitto "subscribes"
-  automation.esphome -> automation.sensor "flashes firmware"
 
   // observability
   observability.prometheus -[scrape]-> observability.node-exporter "host metrics"

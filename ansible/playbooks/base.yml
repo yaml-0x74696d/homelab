@@ -1,5 +1,5 @@
 ---
-# base: cron, journal, logs on every guest, time on the vms. pve nodes not included.
+# base: cron, journal, logs on every guest, time on the vms, hardening on the lxcs. pve nodes not included.
 # order: tofu apply (log lxc) → deploy-pve-firewall.yml → this.
 
 - name: Base tools on the guests
@@ -13,3 +13,9 @@
   hosts: docker_hosts
   roles:
     - chrony
+
+# the vms get theirs from vm-preparation.yml (roles/vm_base)
+- name: Hardening on the lxcs
+  hosts: lxc_containers
+  roles:
+    - lxc_base

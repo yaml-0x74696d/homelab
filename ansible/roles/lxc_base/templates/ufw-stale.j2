@@ -1,0 +1,9 @@
+{# lines of `ufw status` with this comment whose port/proto/src isn't in lxc_base_ufw_rules (as in podman_app), compared as text #}
+{% set wanted = [] %}
+{% for r in lxc_base_ufw_rules %}{% set _ = wanted.append(r.port ~ '/' ~ r.proto ~ ' ' ~ r.src) %}{% endfor %}
+{% for line in lxc_base_ufw_rules_status.stdout_lines | default([]) if line is search('# ' ~ lxc_base_ufw_rules_comment ~ '$') and '(v6)' not in line %}
+{% set m = line | regex_search('^(\\d+)/(\\w+)\\s+ALLOW\\s+(\\S+)', '\\1', '\\2', '\\3') %}
+{% if m and (m[0] ~ '/' ~ m[1] ~ ' ' ~ m[2]) not in wanted %}
+- {port: {{ m[0] }}, proto: {{ m[1] }}, src: "{{ m[2] }}"}
+{% endif %}
+{% endfor %}

@@ -6,7 +6,7 @@ Status: Accepted
 
 - Without SSO every web app has its own login, plus the NetBird VPN
 - Some apps speak OIDC: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, NetBird
-- Some have no login at all: Traefik dashboard, Prometheus, ESPHome
+- Some have no login at all: Traefik dashboard, Prometheus
 - I'm the only admin, and I want MFA everywhere without setting it up per app
 
 - Alternatives:
@@ -30,7 +30,7 @@ Two ways apps use it:
   - NetBird logs in this way too (public PKCE client, [0003](0003-netbird-instead-of-port-forwards.md))
 - Forward-auth, for UIs that are only used in the browser
   - Traefik middleware `authentik@file` (`apps/proxy/traefik/dynamic/middlewares.yml`) sends the request to the embedded outpost on `proxy-net` first
-  - Used by the Traefik dashboard, Prometheus, ESPHome and the Vaultwarden admin page
+  - Used by the Traefik dashboard, Prometheus and the Vaultwarden admin page
 
 Connecting apps:
 - Containers can't resolve internal names, so apps on docker-2/3 reach `auth.<domain>` through an `extra_hosts` entry pointing at docker-1

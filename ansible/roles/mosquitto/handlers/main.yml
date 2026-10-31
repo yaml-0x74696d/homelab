@@ -1,0 +1,6 @@
+---
+- name: Restart mosquitto
+  ansible.builtin.systemd:
+    name: mosquitto
+    state: restarted
+  ignore_errors: "{{ ansible_check_mode }}"

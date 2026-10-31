@@ -1,0 +1,7 @@
+---
+# one shared user, no tls, plain listener (accepted risk, see docs/architecture.md)
+mosquitto_port: "{{ mqtt_port }}"
+mosquitto_user: "{{ mqtt_user }}"
+mosquitto_password: "{{ mqtt_password }}"   # vault
+
+mosquitto_passwd_file: /etc/mosquitto/passwd

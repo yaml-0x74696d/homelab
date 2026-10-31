@@ -33,7 +33,16 @@ pve_firewall_netbird_turn_ports: [3478, 5349]          # stun/turn + turns, tcp+
 pve_firewall_log_vmid: "{{ vmids.log }}"
 pve_firewall_log_ip: "{{ log_ip }}"
 pve_firewall_log_port: "{{ log_relp_port }}"
-pve_firewall_log_sources: ["{{ docker1_ip }}", "{{ docker2_ip }}", "{{ docker3_ip }}", "{{ storage_ip }}", "{{ netbird_ip }}"]
+pve_firewall_log_sources: ["{{ docker1_ip }}", "{{ docker2_ip }}", "{{ docker3_ip }}", "{{ storage_ip }}", "{{ iot_lan_ip }}", "{{ netbird_ip }}"]
+
+# who scrapes node-exporter (log + iot lxc) and the mqtt exporter (iot lxc)
+pve_firewall_prometheus_ip: "{{ prometheus_ip }}"
+
+# the iot gateway lxc: inbound = its ufw (playbooks/deploy-iot.yml), both from app_settings.yml
+pve_firewall_iot_vmid: "{{ vmids.iot }}"
+pve_firewall_iot_cidr: "{{ iot_cidr }}"
+pve_firewall_iot_nic: net1                      # the ct's leg on the iot bridge (tofu/lxc.tf, eth1)
+pve_firewall_iot_mqtt_clients: "{{ mqtt_lan_clients }}"
 
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.

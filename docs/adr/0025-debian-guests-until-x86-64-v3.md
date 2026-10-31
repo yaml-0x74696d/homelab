@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- The guests are docker-1/2/3 (the pod hosts after the Podman migration) and the storage and log LXCs
+- The guests are docker-1/2/3 (the pod hosts after the Podman migration) and the storage, log and IoT LXCs
 - EL10 (RHEL 10, Rocky 10) needs x86-64-v3 (AVX2). The CPUs here are x86-64-v2, and the guests run `cpu type = host`
 - I want the EL world (SELinux, dnf) on the guests eventually
 

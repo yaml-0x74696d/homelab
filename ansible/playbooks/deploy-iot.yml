@@ -1,0 +1,66 @@
+---
+# iot gateway lxc (CT 302): mqtt broker + exporter for the iot net and the lan consumers.
+# first: deploy-pve-firewall.yml, tofu apply (the ct), base.yml -l iot, aide.yml -l iot
+
+- name: Iot gateway
+  hosts: iot
+  vars:
+    # inbound, the same as iot.fw (roles/pve_firewall). callers: app_settings.yml
+    iot_ufw_rules: >-
+      {{ [{'port': mqtt_port, 'proto': 'tcp', 'src': iot_cidr}]
+         + mqtt_lan_clients | map(attribute='ip') | map('community.general.dict_kv', 'src')
+           | map('combine', {'port': mqtt_port, 'proto': 'tcp'}) | list
+         + [{'port': mqtt_exporter_port, 'proto': 'tcp', 'src': prometheus_ip}] }}
+
+  pre_tasks:
+    - name: Ct node runs the iot bridge
+      ansible.builtin.assert:
+        that: iot_node in groups['iot_ap']
+        fail_msg: "iot_node (network.yml) and the iot_ap group (inventory.yml) must name the same node"
+      run_once: true
+
+  tasks:
+    - name: Install ufw
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+        update_cache: true
+
+    - name: Ufw default policies
+      community.general.ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: incoming, policy: deny }
+        - { direction: outgoing, policy: allow }   # egress is limited in iot.fw
+      ignore_errors: "{{ ansible_check_mode }}"    # --check doesn't install ufw
+
+    - name: Ufw limit ssh from the lan
+      community.general.ufw:
+        rule: limit
+        port: "{{ ssh_port }}"
+        proto: tcp
+        src: "{{ lan_cidr }}"
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    # node-exporter's rule comes from roles/lxc_base
+    - name: Ufw mqtt + exporter
+      ansible.builtin.include_role:
+        name: lxc_base
+        tasks_from: ufw_rules
+      vars:
+        lxc_base_ufw_rules_comment: iot gateway
+        lxc_base_ufw_rules: "{{ iot_ufw_rules }}"
+
+    - name: Enable ufw
+      community.general.ufw:
+        state: enabled
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: Broker
+      ansible.builtin.include_role:
+        name: mosquitto
+
+    - name: Exporter
+      ansible.builtin.include_role:
+        name: mqtt_exporter

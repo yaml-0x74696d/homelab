@@ -52,6 +52,10 @@ pbs_fingerprint: "CHANGE_ME"
 
 vault_netbird_setup_key: "CHANGE_ME"
 
+# the one mqtt user every sensor and consumer logs in with (mqtt_user in app_settings.yml).
+# one line; roles/mqtt_exporter escapes backslash, quote, backtick, dollar for systemd. it's also in the firmware
+mqtt_password: "CHANGE_ME"
+
 wifi_ssid: "your-ssid"
 wifi_pass: "CHANGE_ME"
 
