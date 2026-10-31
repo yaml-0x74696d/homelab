@@ -11,9 +11,6 @@ deployment {
         instanceOf apps.homepage
         instanceOf apps.pdfcraft
         instanceOf automation.homeassistant
-        instanceOf automation.mosquitto
-        instanceOf automation.esphome
-        instanceOf automation.mqtt-exporter
         instanceOf edge.ddns
         instanceOf ops.docker-proxy
         instanceOf ops.diun
@@ -21,6 +18,15 @@ deployment {
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
         instanceOf ops.chrony
+      }
+      gateway = lxc "iot" {
+        #iot
+        description "IoT gateway, legs on the LAN and the IoT wifi"
+        instanceOf automation.mosquitto
+        instanceOf automation.mqtt-exporter
+        instanceOf automation.ota
+        instanceOf observability.node-exporter
+        instanceOf observability.rsyslog
       }
       hostapd = host "hostapd" {
         #iot
@@ -74,10 +80,12 @@ deployment {
       }
       storage = lxc "storage" {
         instanceOf storage.samba
+        instanceOf observability.node-exporter
         instanceOf observability.rsyslog
       }
       log = lxc "log" {
         instanceOf observability.log-server
+        instanceOf observability.node-exporter
       }
       pbs = host "PBS" {
         instanceOf storage.pbs

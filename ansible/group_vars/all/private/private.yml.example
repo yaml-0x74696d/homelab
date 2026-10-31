@@ -12,12 +12,13 @@ admin_ssh_pubkeys:
 # nic macs, they pin the dhcp leases. samples = proxmox prefix BC:24:11 + the vmid.
 # iot = second nic on the iot bridge
 macs:
-  docker-1: { lan: "BC:24:11:00:02:01", iot: "BC:24:11:00:12:01" }
+  docker-1: { lan: "BC:24:11:00:02:01" }
   docker-2: { lan: "BC:24:11:00:02:02" }
   docker-3: { lan: "BC:24:11:00:02:03" }
   netbird: { lan: "BC:24:11:00:02:50" }   # nixos matches the nic by it
   storage: { lan: "BC:24:11:00:03:00" }
   log: { lan: "BC:24:11:00:03:01" }
+  iot: { lan: "BC:24:11:00:03:02", iot: "BC:24:11:00:13:02" }
 
 # ext4 disks unioned into the pool (blkid on pve-3)
 storage_disks:

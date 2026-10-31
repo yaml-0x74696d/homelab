@@ -39,7 +39,7 @@
 
 | Host | Databases | Left out |
 |---|---|---|
-| docker-1 | Authentik (Postgres), Gitea, Vaultwarden, Home Assistant recorder (SQLite) | Mosquitto state |
+| docker-1 | Authentik (Postgres), Gitea, Vaultwarden, Home Assistant recorder (SQLite) | – |
 | docker-2 | Grafana, Gatus (SQLite) | Pi-hole query log, Prometheus TSDB (bulky, old metrics aren't worth keeping) |
 | docker-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin + library (SQLite) | Jellyfin cache and transcodes |
 

@@ -91,3 +91,4 @@ aide_excludes_by_group:
   lxc_containers:
     - "{{ storage_root }}"   # pool bind mount
     - /dev/.lxc              # procfs from lxc, pids change every run
+    - /var/lib/mosquitto     # iot lxc: broker state, saved every half hour

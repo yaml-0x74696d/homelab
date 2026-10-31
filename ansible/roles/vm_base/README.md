@@ -5,7 +5,8 @@
 
 ## Runs on
 
-- `docker_hosts`, in `playbooks/vm-preparation.yml`. Not the LXCs, the PVE nodes or the NetBird VM
+- `docker_hosts`, in `playbooks/vm-preparation.yml`. Not the PVE nodes or the NetBird VM
+- The LXCs get `roles/lxc_base`, which reuses `tasks/unattended_upgrades.yml`
 
 ## How it works
 

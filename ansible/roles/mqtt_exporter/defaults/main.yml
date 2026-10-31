@@ -1,0 +1,17 @@
+---
+# debian's prometheus-mqtt-exporter (mqtt2prometheus), next to the broker
+mqtt_exporter_broker: "tcp://127.0.0.1:{{ mqtt_port }}"
+mqtt_exporter_listen: "{{ iot_lan_ip }}"   # lan only, never the iot leg
+mqtt_exporter_user: "{{ mqtt_user }}"
+mqtt_exporter_password: "{{ mqtt_password }}"     # vault
+
+# firmware topics: home/<device>/<metric>, one plain number per topic
+mqtt_exporter_topic_path: "home/+/+"
+mqtt_exporter_device_regex: "home/(?P<deviceid>[^/]+)/.*"
+mqtt_exporter_metric_regex: "home/[^/]+/(?P<metricname>[^/]+)"
+mqtt_exporter_cache_timeout: 5m   # a sensor silent this long drops out of /metrics
+
+# mqtt_name = last topic part. the device lands in the `sensor` label
+mqtt_exporter_metrics:
+  - { prom_name: iot_temperature_celsius, mqtt_name: temperature, help: "Temperature in Celsius (DHT22)" }
+  - { prom_name: iot_humidity_percent, mqtt_name: humidity, help: "Relative humidity in percent (DHT22)" }

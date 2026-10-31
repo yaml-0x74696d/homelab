@@ -1,6 +1,6 @@
 # tofu
 
-- OpenTofu builds the Docker VMs, the NetBird VM, the storage LXC and the log LXC with the `bpg/proxmox` provider
+- OpenTofu builds the Docker VMs, the NetBird VM, the storage, log and IoT gateway LXCs with the `bpg/proxmox` provider
 - The guests are created from a Debian cloud image, cloud-init sets the IP, the admin user and the SSH key
 - IPs, VMIDs, the admin user, the SSH key path and the pool paths come from `../ansible/group_vars/all/` (read in `locals.tf`), so OpenTofu and Ansible can't drift apart
 - Guest sizes, nodes and MACs are in the `vms` / `lxcs` maps in `locals.tf`
@@ -21,10 +21,10 @@ cp terraform.tfvars.example terraform.tfvars   # then edit
 
 - Set `pve_api_token` and `vm_password` (the same as `sudo_pass` in the vault)
 
-## 3. LXC template (once, on pve-3)
+## 3. LXC template (once per node with an LXC: pve-3 and `iot_node`)
 
 ```bash
-pveam update && pveam download local debian-13-standard_13.0-1_amd64.tar.zst
+pveam update && pveam download local debian-13-standard_13.6-1_amd64.tar.zst
 ```
 
 - If the file name differs from the default, change `lxc_template`

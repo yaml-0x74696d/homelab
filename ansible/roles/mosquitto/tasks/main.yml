@@ -1,0 +1,50 @@
+---
+- name: Install mosquitto
+  ansible.builtin.apt:
+    name: [mosquitto, mosquitto-clients]
+    state: present
+    update_cache: true
+
+# mosquitto_passwd salts every hash, so it only runs when the clear copy changes or no hash exists yet
+- name: Mqtt credentials (clear, root only)
+  ansible.builtin.copy:
+    dest: "{{ mosquitto_passwd_file }}.clear"
+    content: "{{ mosquitto_user }}:{{ mosquitto_password }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  register: mosquitto_clear
+  ignore_errors: "{{ ansible_check_mode }}"   # no /etc/mosquitto before the package
+
+- name: Hashed password file there?
+  ansible.builtin.stat:
+    path: "{{ mosquitto_passwd_file }}"
+  register: mosquitto_passwd_stat
+
+# hash a copy, then swap it in. owner mosquitto: 2.0 warns on anything else
+- name: Hash mqtt password
+  ansible.builtin.shell: |
+    set -e
+    cp {{ mosquitto_passwd_file }}.clear {{ mosquitto_passwd_file }}.new
+    mosquitto_passwd -U {{ mosquitto_passwd_file }}.new
+    install -m 0600 -o mosquitto -g mosquitto {{ mosquitto_passwd_file }}.new {{ mosquitto_passwd_file }}
+    rm {{ mosquitto_passwd_file }}.new
+  when: mosquitto_clear.changed or not mosquitto_passwd_stat.stat.exists
+  changed_when: true
+  notify: Restart mosquitto
+
+- name: Broker config
+  ansible.builtin.template:
+    src: homelab.conf.j2
+    dest: /etc/mosquitto/conf.d/homelab.conf
+    mode: "0644"
+  notify: Restart mosquitto
+  ignore_errors: "{{ ansible_check_mode }}"   # --check doesn't install the package, no conf.d
+
+- name: Enable mosquitto
+  ansible.builtin.systemd:
+    name: mosquitto
+    state: started
+    enabled: true
+  ignore_errors: "{{ ansible_check_mode }}"

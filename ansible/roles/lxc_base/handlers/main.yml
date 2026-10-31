@@ -1,0 +1,10 @@
+---
+- name: Restart sshd
+  ansible.builtin.systemd: { name: ssh, state: restarted }
+  ignore_errors: "{{ ansible_check_mode }}"
+- name: Restart fail2ban
+  ansible.builtin.systemd: { name: fail2ban, state: restarted }
+  ignore_errors: "{{ ansible_check_mode }}"
+- name: Restart node-exporter
+  ansible.builtin.systemd: { name: prometheus-node-exporter, state: restarted }
+  ignore_errors: "{{ ansible_check_mode }}"
