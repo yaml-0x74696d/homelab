@@ -23,7 +23,7 @@
    - `container.d/10-homelab.conf`: house rules (`Notify=healthy`, `HealthOnFailure=kill`, restart with backoff, start timeout, `WantedBy=default.target`)
    - `<container>.container.d/50-map.conf`: what the map says (image + tag, `AutoUpdate=registry` unless `auto_update: false`, `User=`, `StopTimeout=`, `NoNewPrivileges=`, caps, `ReadOnly=`)
    - `<container>.container`: rendered from `apps/<name>/<container>.container.j2` (volumes, ports, env, health)
-7. Firewall: one rule per port and `allow_from` source. ufw on hosts that still run Docker, firewalld on `podman_hosts`
+7. ufw: one rule per port and `allow_from` source
 8. Pulls the images as the user (so a pull never eats the start timeout), reloads + restarts on unit changes, starts the units
 9. Enables the user's `podman-auto-update.timer` (schedule + ntfy wrapper from `roles/podman_base`), prunes old images
 
@@ -60,7 +60,7 @@ apps:
 | `podman_app_stop_timeout` | `10` | `StopTimeout=` when a container has no `stop_timeout` |
 | `podman_app_restart_sec` / `_steps` / `_max_delay` | `30s` / `5` / `10min` | Retry forever with backoff |
 | `podman_apps_root` | `/srv/apps` (group_vars) | Data dirs, backed up by `roles/pbs` |
-| `podman_svc_prefix`, `podman_svc_group`, `podman_firewalld_zone` | `svc-`, `svc-apps`, `drop` (group_vars) | Shared with `roles/podman_base` and the aide excludes |
+| `podman_svc_prefix`, `podman_svc_group` | `svc-`, `svc-apps` (group_vars) | Shared with `roles/podman_base` and the aide excludes |
 
 ## Notes
 
@@ -69,4 +69,3 @@ apps:
 - No comments at the end of a line in the templates: systemd reads them as part of the value
 - Quadlets can't be enabled. `WantedBy=default.target` starts them with the user manager, which linger starts at boot
 - The tasks that need the svc user skip in `--check` until the user exists
-- The firewalld task carries the tag `firewalld`, like `roles/podman_base`

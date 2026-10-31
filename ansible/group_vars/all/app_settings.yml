@@ -23,7 +23,6 @@ influxdb_bucket: sensors
 podman_apps_root: /srv/apps
 podman_svc_prefix: svc-        # one user per app: svc-<app>
 podman_svc_group: svc-apps     # every svc user, may read the ntfy env file
-podman_firewalld_zone: drop    # default zone on podman hosts, app rules go in it
 
 # what an allow_from name in apps.yml resolves to. an app name resolves to its host's ip
 app_sources:

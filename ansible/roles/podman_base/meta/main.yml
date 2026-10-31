@@ -1,7 +1,7 @@
 galaxy_info:
   role_name: podman_base
   author: tim
-  description: rootless podman host base, auto-update with ntfy, firewalld
+  description: rootless podman host base, auto-update with ntfy
   license: MIT
   min_ansible_version: "2.15"
   platforms:

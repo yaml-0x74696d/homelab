@@ -179,20 +179,6 @@
     from_ip: "{{ item.src }}"
     comment: "podman {{ podman_app_name }}"
   loop: "{{ podman_app_rules }}"
-  when: "'podman_hosts' not in group_names"
-
-- name: Allow ports in firewalld for {{ podman_app_name }}
-  ansible.posix.firewalld:
-    zone: "{{ podman_firewalld_zone }}"
-    rich_rule: >-
-      rule family="ipv4" source address="{{ item.src }}"
-      port port="{{ item.port }}" protocol="{{ item.proto }}" accept
-    permanent: true
-    immediate: true
-    state: enabled
-  loop: "{{ podman_app_rules }}"
-  when: "'podman_hosts' in group_names"
-  tags: [firewalld]
 
 # so the image pull doesn't eat TimeoutStartSec
 - name: Pull images for {{ podman_app_name }}

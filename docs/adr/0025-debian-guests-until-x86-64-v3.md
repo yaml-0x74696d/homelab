@@ -32,4 +32,4 @@ Status: Accepted
 - Accepted: Podman runs under AppArmor, not SELinux
 - Accepted: no EL on the guests for now
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (images), [0008](0008-nixos-for-the-dmz-box.md) (NetBird VM), [0011](0011-proxmox-as-hypervisor.md) (PVE on Debian), [0021](0021-podman-quadlets.md) (pod hosts), [0024](0024-ansible-run-os-updates.md) (apt updates)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (images), [0008](0008-nixos-for-the-dmz-box.md) (NetBird VM), [0011](0011-proxmox-as-hypervisor.md) (PVE on Debian), [0021](0021-podman-quadlets.md) (pod hosts), [0024](0024-ansible-run-os-updates.md) (apt updates), [0026](0026-ufw-as-guest-firewall.md) (no firewalld)
