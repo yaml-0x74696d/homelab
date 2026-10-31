@@ -53,9 +53,7 @@
         - Nginx Web:
             icon: nginx
             href: https://web.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: nginx
+            siteMonitor: http://{{ hostvars[apps['nginx'].host].ansible_host }}:{{ apps['nginx'].port }}
         # monitoring & dashboards
         - Prometheus:
             icon: prometheus
@@ -75,12 +73,13 @@
             showStats: true
             server: docker-2
             container: influxdb
-        - Uptime Kuma:
-            icon: uptime-kuma
+        - Gatus:
+            icon: gatus
             href: https://status.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: uptime-kuma
+            siteMonitor: http://{{ hostvars[apps['gatus'].host].ansible_host }}:{{ apps['gatus'].port }}
+            widget:
+                type: gatus
+                url: http://{{ hostvars[apps['gatus'].host].ansible_host }}:{{ apps['gatus'].port }}
         - Homepage:
             icon: homepage
             href: https://home.{{ domain }}
@@ -135,12 +134,6 @@
             showStats: true
             server: docker-1
             container: pdfcraft
-        - Homelable:
-            icon: /images/homelable.png
-            href: https://homelable.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: homelable-frontend
 
 - Servers:
         - PVE-1:
@@ -222,6 +215,21 @@
                 widget:
                     type: customapi
                     url: https://{{ pve3_ip }}:{{ pve_ui_port }}/api2/json/nodes/pve-3/lxc/{{ vmids.storage }}/status/current
+                    method: GET
+                    headers:
+                        Authorization: "PVEAPIToken={{ homepage_pve_token_id }}={{ proxmox_secret }}"
+                    mappings:
+                        - field: data.cpu
+                          label: CPU
+                          format: percent
+                        - field: data.mem
+                          label: MEM
+                          format: bytes
+            - log:
+                icon: /images/lxc.png
+                widget:
+                    type: customapi
+                    url: https://{{ pve3_ip }}:{{ pve_ui_port }}/api2/json/nodes/pve-3/lxc/{{ vmids.log }}/status/current
                     method: GET
                     headers:
                         Authorization: "PVEAPIToken={{ homepage_pve_token_id }}={{ proxmox_secret }}"

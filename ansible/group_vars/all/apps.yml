@@ -1,19 +1,150 @@
 ---
-# app dirs on the docker hosts (compose, rendered config, bind-mounted data); pbs backs it up
-apps_root: /opt/apps
-pbs_staging_dir: /var/backups/pbs      # db dumps land here, wiped each run. must stay under /var/backups
+# every app, pure data (edge and ci read it with yq, so no jinja). schema + defaults:
+# roles/podman_app/meta/argument_specs.yml. `runtime: compose` = still on docker:
+# edge routes it, deploy-app.yml refuses it. the line goes at the app's cutover.
+apps:
+  gatus:
+    host: docker-2
+    uid: 2010
+    port: 3001
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: gatus-config
+        template: config.yaml.j2
+    dirs:
+      - path: data
+    containers:
+      - name: gatus
+        image: ghcr.io/twin/gatus
+        tag: stable
+        healthcheck: false   # scratch image, nothing to run a check with
+        add_caps: [NET_RAW]  # runs as root in the container, so pings use raw sockets
+    routes:
+      - host: status
+        middlewares: [authentik]
 
-# ntfy alert target (pbs, login-notify, aide). real values in vault; empty so the var always exists
-ntfy_url: ""
-ntfy_token: ""
-ntfy_timeout: 10   # seconds per push
+  grafana:
+    host: docker-2
+    runtime: compose
+    port: 3000
+    routes:
+      - host: grafana
 
-# authentik can't skip a release series or downgrade; deploy-authentik.yml enforces both.
-# step through with -e authentik_tag=<next>, then set this to where you landed.
-authentik_tag: "2026.8.3"
-authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12", "2025.2", "2025.4",
-                   "2025.6", "2025.8", "2025.10", "2025.12", "2026.2", "2026.5", "2026.8"]
+  influxdb:
+    host: docker-2
+    runtime: compose
+    port: 8086
+    routes:
+      - host: influx
 
-# influxdb long-term sensor store (docker-2); secrets in vault
-influxdb_org: homelab
-influxdb_bucket: sensors
+  nginx:
+    host: docker-2
+    uid: 2020
+    port: 8087
+    allow_from: [edge, netbird, homepage]
+    secrets: []
+    containers:
+      - name: nginx
+        image: docker.io/library/nginx
+        tag: alpine
+    routes:
+      - host: web
+
+  prometheus:
+    host: docker-2
+    runtime: compose
+    port: 9091
+    routes:
+      - host: prom
+        middlewares: [authentik]   # grafana reaches prom internally, not via this url
+
+  nextcloud:
+    host: docker-3
+    runtime: compose
+    port: 8080
+    routes:
+      - host: cloud
+        middlewares: [nextcloud-dav]
+
+  immich:
+    host: docker-3
+    runtime: compose
+    port: 8081
+    routes:
+      - host: photo
+
+  jellyfin:
+    host: docker-3
+    runtime: compose
+    port: 8082
+    routes:
+      - host: media
+
+  paperless:
+    host: docker-3
+    runtime: compose
+    port: 8083
+    routes:
+      - host: paperless
+
+  # docker-1: no published port yet (traefik reaches them on proxy-net), ports come in phase 2
+  authentik:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: auth
+
+  vaultwarden:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: vault
+      - host: vault
+        path: /admin
+        middlewares: [authentik]
+
+  gitea:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: git
+
+  searxng:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: search
+
+  homepage:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: home
+
+  pdfcraft:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: pdf
+
+  homeassistant:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: ha
+
+  esphome:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: esphome
+        middlewares: [authentik]
+
+# traefik routes that aren't apps. phase 2 adds what edge needs (scheme, tls)
+infra_routes:
+  - host: pve-1
+  - host: pve-2
+  - host: pve-3
+  - host: pbs
+  - host: dns     # pi-hole ui, goes with pi-hole in phase 2
+  - host: proxy   # traefik's own dashboard

@@ -1,0 +1,24 @@
+---
+# set by playbooks/deploy-app.yml: the app's key in apps.yml and its entry
+podman_app_name: ""
+podman_app_entry: {}
+
+podman_app_user: "{{ podman_svc_prefix }}{{ podman_app_name }}"
+podman_app_home: "/home/{{ podman_app_user }}"
+podman_app_dir: "{{ podman_apps_root }}/{{ podman_app_name }}"
+podman_app_src: "{{ playbook_dir }}/../apps/{{ podman_app_name }}"
+podman_app_quadlet_dir: "{{ podman_app_home }}/.config/containers/systemd"
+# apps/<name>/config/ as filetree items (path relative, src, state), empty when the app has none
+podman_app_config: "{{ query('community.general.filetree', podman_app_src ~ '/config') if (podman_app_src ~ '/config') is directory else [] }}"
+
+# subuid range = uid * count, so ranges never overlap while uids stay unique
+podman_app_subid_count: 65536
+
+# defaults for fields an apps.yml entry may leave out
+podman_app_start_timeout: 5min    # covers health start; images are pulled before the start
+podman_app_stop_timeout: 10       # seconds, podman's own default
+
+# retry forever with backoff (mount gate, crash loops), silent
+podman_app_restart_sec: 30s
+podman_app_restart_steps: 5
+podman_app_restart_max_delay: 10min

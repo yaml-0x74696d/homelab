@@ -6,6 +6,7 @@ umask 077                 # dumps hold vault/sso secrets — keep them root-only
 
 STAGING="{{ pbs_staging_dir }}"
 APPS="{{ apps_root }}"
+PODMAN_APPS="{{ podman_apps_root }}"   # podman apps, once the first one moved
 
 log()    { logger -t pbs-backup "$*"; echo "$*"; }
 notify() {
@@ -37,13 +38,14 @@ docker exec {{ j.container }} sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_D
   > "$STAGING/{{ j.name }}.sql" || fail "pg_dump {{ j.name }}"
 [ -s "$STAGING/{{ j.name }}.sql" ] || fail "pg_dump {{ j.name }} wrote an empty file"
 {% elif j.type == 'sqlite' %}
-if [ -f "$APPS/{{ j.path }}" ]; then
+{% set base = '$PODMAN_APPS' if j.podman | default(false) else '$APPS' %}
+if [ -f "{{ base }}/{{ j.path }}" ]; then
   log "dump sqlite {{ j.name }}"
   # online .backup — safe against a live writer, unlike cp
-  sqlite3 "$APPS/{{ j.path }}" ".backup '$STAGING/{{ j.name }}.db'" || fail "sqlite {{ j.name }}"
+  sqlite3 "{{ base }}/{{ j.path }}" ".backup '$STAGING/{{ j.name }}.db'" || fail "sqlite {{ j.name }}"
   [ -s "$STAGING/{{ j.name }}.db" ] || fail "sqlite {{ j.name }} wrote an empty file"
 else
-  log "skip sqlite {{ j.name }} — $APPS/{{ j.path }} absent"
+  log "skip sqlite {{ j.name }} — {{ base }}/{{ j.path }} absent"
 fi
 {% elif j.type == 'influx' %}
 log "dump influx {{ j.name }}"
@@ -71,10 +73,12 @@ EXCLUDES=(
 {% endfor %}
 )
 
+ARCHIVES=(dumps.pxar:"$STAGING" apps.pxar:"$APPS")
+if [ -d "$PODMAN_APPS" ]; then ARCHIVES+=(podman-apps.pxar:"$PODMAN_APPS"); fi
+
 log "push snapshot"
 proxmox-backup-client backup \
-  dumps.pxar:"$STAGING" \
-  apps.pxar:"$APPS" \
+  "${ARCHIVES[@]}" \
   "${EXCLUDES[@]}" \
   --backup-id "{{ pbs_id }}" || fail "proxmox-backup-client"
 

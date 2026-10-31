@@ -3,8 +3,7 @@
 # prometheus tsdb is skipped on purpose — bulky, recomputable, config already in git.
 pbs_jobs:
   - { name: grafana, type: sqlite, path: grafana/data/grafana.db }
-  - { name: uptime-kuma, type: sqlite, path: uptime-kuma/data/kuma.db }
-  - { name: homelable, type: sqlite, path: homelable/data/homelab.db }
+  - { name: gatus, type: sqlite, path: "gatus/data/{{ gatus_db_file }}", podman: true }
   - { name: influxdb, type: influx, container: influxdb, data_dir: influxdb/data }
 
 pbs_exclude:

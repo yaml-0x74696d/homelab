@@ -16,7 +16,7 @@ layout:
   VM:
     initiallyCollapsed: true
     style: row
-    columns: 5
+    columns: 6
   Services:
     style: row
     columns: 5

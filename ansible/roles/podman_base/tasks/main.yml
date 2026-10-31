@@ -1,5 +1,5 @@
 ---
-- name: Install podman + firewalld
+- name: Install podman
   ansible.builtin.apt:
     name: "{{ podman_base_packages }}"
     state: present
@@ -14,7 +14,7 @@
 
 - name: Create the svc users' group
   ansible.builtin.group:
-    name: "{{ podman_base_group }}"
+    name: "{{ podman_svc_group }}"
     system: true
 
 - name: Write the ntfy env file
@@ -22,7 +22,7 @@
     src: podman-ntfy.env.j2
     dest: "{{ podman_base_ntfy_env }}"
     owner: root
-    group: "{{ podman_base_group }}"
+    group: "{{ podman_svc_group }}"
     mode: '0640'
   no_log: true
 
@@ -60,50 +60,3 @@
       EnvironmentFile={{ podman_base_ntfy_env }}
       ExecStart=
       ExecStart={{ podman_base_wrapper }}
-
-- name: Firewalld
-  tags: [firewalld]
-  block:
-    # --check doesn't install the package, so the unit doesn't exist yet
-    - name: Enable firewalld
-      ansible.builtin.systemd:
-        name: firewalld
-        state: started
-        enabled: true
-      ignore_errors: "{{ ansible_check_mode }}"
-
-    - name: Read the default zone
-      ansible.builtin.command: firewall-cmd --get-default-zone
-      register: podman_base_zone
-      changed_when: false
-      check_mode: false
-      failed_when: false
-
-    - name: Default zone drop
-      ansible.builtin.command: firewall-cmd --set-default-zone=drop
-      when: podman_base_zone.stdout != 'drop'
-      changed_when: true
-
-    - name: Allow ssh from the lan, rate-limited
-      ansible.posix.firewalld:
-        zone: drop
-        rich_rule: >-
-          rule family="ipv4" source address="{{ lan_cidr }}"
-          port port="{{ ssh_port }}" protocol="tcp"
-          limit value="{{ podman_base_ssh_limit }}" accept
-        permanent: true
-        immediate: true
-        state: enabled
-      ignore_errors: "{{ ansible_check_mode }}"
-
-    - name: Allow host ports from the lan
-      ansible.posix.firewalld:
-        zone: drop
-        rich_rule: >-
-          rule family="ipv4" source address="{{ lan_cidr }}"
-          port port="{{ item }}" protocol="tcp" accept
-        permanent: true
-        immediate: true
-        state: enabled
-      ignore_errors: "{{ ansible_check_mode }}"
-      loop: "{{ podman_base_lan_ports }}"

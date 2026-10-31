@@ -1,0 +1,115 @@
+---
+# the apps.yml schema, checked at every deploy
+argument_specs:
+  main:
+    short_description: Deploy one rootless podman app from its apps.yml entry
+    options:
+      podman_app_name:
+        type: str
+        required: true
+        description: The app's key in apps.yml, also the name of apps/<name>/ and svc-<name>
+      podman_app_entry:
+        type: dict
+        required: true
+        description: The app's entry in apps.yml
+        options:
+          host:
+            type: str
+            required: true
+            description: Inventory host the app runs on
+          runtime:
+            type: str
+            choices: [podman, compose]
+            default: podman
+            description: compose = still on docker, routed by edge but never deployed by this role
+          state:
+            type: str
+            choices: [present, absent, purged]
+            default: present
+            description: absent removes the app but keeps its data dir, purged deletes that too
+          uid:
+            type: int
+            required: true
+            description: Fixed uid of svc-<name>, stable across rebuilds. subuid range = uid * podman_app_subid_count
+          container_uid:
+            type: int
+            default: 0
+            description: uid the app's main process runs as inside the container. not 0 = UserNS=keep-id onto svc-<name>
+          port:
+            type: int
+            description: Main published port. routes default to it, allow_from opens it
+          extra_ports:
+            type: list
+            elements: dict
+            default: []
+            description: More published ports, each with its own sources
+            options:
+              port: {type: int, required: true}
+              proto: {type: str, choices: [tcp, udp], default: tcp}
+              allow_from: {type: list, elements: str, required: true}
+          metrics_port:
+            type: int
+            description: The app's own metrics endpoint, prometheus scrapes it
+          allow_from:
+            type: list
+            elements: str
+            required: true
+            description: Who may reach port. names from app_sources (lan, edge, netbird) or another app's name
+          secrets:
+            type: list
+            elements: dict
+            required: true
+            description: Podman secrets to create. how a container uses one is in its unit template (Secret=)
+            options:
+              name: {type: str, required: true, description: Podman secret name}
+              vault: {type: str, description: Vault variable holding the value}
+              template: {type: str, description: "File secret: template in apps/<name>/ rendered into the secret"}
+          containers:
+            type: list
+            elements: dict
+            required: true
+            description: Every container, also for single-container apps. apps/<name>/<container>.container.j2 holds the rest
+            options:
+              name: {type: str, required: true, description: Container + unit name}
+              image: {type: str, required: true, description: Fully qualified image without tag}
+              tag: {type: str, required: true}
+              user: {type: str, description: "User= in the container. required in pods (keep-id)"}
+              auto_update: {type: bool, default: true, description: "false for dbs: changes only on a tag bump + deploy"}
+              stop_timeout: {type: int, description: Seconds before the stop turns into a kill}
+              healthcheck: {type: bool, default: true, description: "false: image can't run a HealthCmd (scratch), started once running"}
+              no_new_privileges: {type: bool, default: true}
+              read_only: {type: bool, default: false}
+              drop_caps: {type: list, elements: str, default: []}
+              add_caps: {type: list, elements: str, default: []}
+          dirs:
+            type: list
+            elements: dict
+            default: []
+            description: Dirs under the app's data dir, owned by svc-<name>
+            options:
+              path: {type: str, required: true}
+              mode: {type: str, default: "0750"}
+          cifs:
+            type: list
+            elements: dict
+            default: []
+            description: Pool shares, mounted with uid=svc-<name> and x-systemd.automount
+            options:
+              share: {type: str, required: true}
+              user: {type: str, required: true, description: "Samba user, its password is smb_passwords[user]"}
+              path: {type: str, required: true}
+              file_mode: {type: str, default: "0660"}
+              dir_mode: {type: str, default: "0770"}
+          start_timeout:
+            type: str
+            description: TimeoutStartSec, default podman_app_start_timeout
+          routes:
+            type: list
+            elements: dict
+            default: []
+            description: Read by edge's flake, not by this role
+            options:
+              host: {type: str, required: true, description: "Subdomain: <host>.<domain>"}
+              path: {type: str, description: PathPrefix}
+              middlewares: {type: list, elements: str, default: [], description: Names defined in the edge flake}
+              port: {type: int, description: "Backend port, default the app's port"}

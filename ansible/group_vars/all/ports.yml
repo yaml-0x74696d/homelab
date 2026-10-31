@@ -9,32 +9,29 @@ mqtt_port: 1883
 log_relp_port: 20514   # rsyslog relp to the log lxc
 netbird_relay_ports: { min: 49160, max: 49200 }   # coturn relay range, narrow so the router forward stays small
 
-# published on the docker hosts; compose, traefik, homepage and prometheus read these
+# published on the docker hosts; compose, traefik, homepage and prometheus read these.
+# apps in apps.yml take their port from there, the rest stay literal
 app_ports:
-  grafana: 3000
-  uptime_kuma: 3001
-  nextcloud: 8080
-  immich: 8081
-  jellyfin: 8082
-  paperless: 8083
-  homelable: 8085
-  influxdb: 8086
-  nginx: 8087
+  grafana: "{{ apps['grafana'].port }}"
+  gatus: "{{ apps['gatus'].port }}"
+  nextcloud: "{{ apps['nextcloud'].port }}"
+  immich: "{{ apps['immich'].port }}"
+  jellyfin: "{{ apps['jellyfin'].port }}"
+  paperless: "{{ apps['paperless'].port }}"
+  influxdb: "{{ apps['influxdb'].port }}"
+  nginx: "{{ apps['nginx'].port }}"
   pihole: 8088
-  prometheus: 9091
+  prometheus: "{{ apps['prometheus'].port }}"
   mqtt_exporter: 9641
 
 # published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.
-# backends only answer traefik + ha (docker-1) and prometheus/kuma (docker-2)
+# backends only answer traefik + ha (docker-1) and prometheus/gatus (docker-2)
 docker_backend_callers: ["{{ docker1_ip }}", "{{ docker2_ip }}"]
 docker_published_allow:
-  - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage, kuma
+  - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage
   - { port: "{{ app_ports.prometheus }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.grafana }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.uptime_kuma }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.homelable }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.influxdb }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.nginx }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.jellyfin }}", src: "{{ docker_backend_callers }}" }

@@ -1,0 +1,41 @@
+---
+# app dirs on the docker hosts (compose, rendered config, bind-mounted data); pbs backs it up.
+# the live dir from before the public repo, kept until docker leaves with each rebuild
+apps_root: /opt/stacks
+pbs_staging_dir: /var/backups/pbs      # db dumps land here, wiped each run. must stay under /var/backups
+
+# ntfy alert target (pbs, login-notify, aide). real values in vault; empty so the var always exists
+ntfy_url: ""
+ntfy_token: ""
+ntfy_timeout: 10   # seconds per push
+
+# authentik can't skip a release series or downgrade; deploy-authentik.yml enforces both.
+# step through with -e authentik_tag=<next>, then set this to where you landed.
+authentik_tag: "2026.8.3"
+authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12", "2025.2", "2025.4",
+                   "2025.6", "2025.8", "2025.10", "2025.12", "2026.2", "2026.5", "2026.8"]
+
+# gatus (apps/gatus): every check is generated from apps.yml + the inventory
+gatus_interval: 60s
+gatus_failure_threshold: 3        # failed checks in a row before ntfy
+gatus_cert_min_validity: 168h     # warn a week before a route's cert runs out
+gatus_dns_resolver: 1.1.1.1       # outside view for the domain's A record (ddns)
+gatus_ping_groups: [docker_hosts, lxc_containers]
+gatus_auth_middlewares: [authentik]   # routes behind these get a backend check too
+gatus_data: /data                 # data dir inside the container
+gatus_db_file: data.db
+
+# influxdb long-term sensor store (docker-2); secrets in vault
+influxdb_org: homelab
+influxdb_bucket: sensors
+
+# podman apps (roles/podman_base, podman_app): data under <root>/<app>, owned by <prefix><app>; pbs backs it up
+podman_apps_root: /srv/apps
+podman_svc_prefix: svc-        # one user per app: svc-<app>
+podman_svc_group: svc-apps     # every svc user, may read the ntfy env file
+
+# what an allow_from name in apps.yml resolves to. an app name resolves to its host's ip
+app_sources:
+  lan: "{{ lan_cidr }}"
+  edge: "{{ docker1_ip }}"      # traefik runs on docker-1 until the edge vm exists
+  netbird: "{{ docker2_ip }}"   # routing peer, remote traffic arrives masqueraded from it

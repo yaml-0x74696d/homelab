@@ -1,9 +1,0 @@
-services:
-  uptime-kuma:
-    image: louislam/uptime-kuma:${UPTIME_KUMA_TAG}
-    container_name: uptime-kuma
-    restart: unless-stopped
-    volumes:
-      - ./data:/app/data
-    ports:
-      - "${PORT}:3001"

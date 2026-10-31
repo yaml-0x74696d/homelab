@@ -26,7 +26,7 @@
 - Incoming is dropped by default (`policy_in: DROP`), outgoing is allowed (`policy_out: ACCEPT`)
 - ipsets:
   - `pve_ssh`: the admin hosts
-  - `pve_ui`: the admins, the Homepage widget and Uptime Kuma
+  - `pve_ui`: the admins, the Homepage widget and Gatus
   - `pve_nodes`: the nodes themselves (corosync, migration)
 - The `pve-mgmt` group allows SSH from `pve_ssh`, the web UI from `pve_ui`, the PBS port and ICMP from the LAN, and everything between the nodes
 

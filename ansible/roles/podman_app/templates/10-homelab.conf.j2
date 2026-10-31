@@ -1,0 +1,14 @@
+# managed by ansible (roles/podman_app). house rules for every container of {{ podman_app_name }}
+[Container]
+Notify=healthy
+HealthOnFailure=kill
+
+[Service]
+Restart=on-failure
+RestartSec={{ podman_app_restart_sec }}
+RestartSteps={{ podman_app_restart_steps }}
+RestartMaxDelaySec={{ podman_app_restart_max_delay }}
+TimeoutStartSec={{ podman_app_entry.start_timeout | default(podman_app_start_timeout) }}
+
+[Install]
+WantedBy=default.target

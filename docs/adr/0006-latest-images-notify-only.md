@@ -19,8 +19,8 @@ Which images move and which are pinned:
 - Most app images are on `:latest` (19 of 37) or a moving channel (`stable`, `release`, `alpine`, `apache`)
 - Stateful or picky images are pinned through `<app>_*_tag` variables in the deploy playbooks:
   - Databases: Postgres `16-alpine` (Authentik, Nextcloud, Paperless), Immich's Postgres build with vector support, Redis `6.2-alpine`, Valkey `8-alpine`
-  - Pinned to a major version: InfluxDB `2`, uptime-kuma `1`, Gotenberg `8`
-  - Pinned to an exact version: Vaultwarden `1.37.1`, and Authentik through `authentik_tag` in `group_vars/all/apps.yml` (stepped through release by release)
+  - Pinned to a major version: InfluxDB `2`, Gotenberg `8`
+  - Pinned to an exact version: Vaultwarden `1.37.1`, and Authentik through `authentik_tag` in `group_vars/all/app_settings.yml` (stepped through release by release)
 
 How I find out about updates (Diun, on every Docker host, `apps/diun`, `deploy-diun.yml`):
 - Diun watches the local Docker socket and checks the image digests once a day (`diun_schedule: "0 6 * * *"`, `diun_jitter: 30s`)

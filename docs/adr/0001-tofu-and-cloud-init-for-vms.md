@@ -63,4 +63,4 @@ Guest details:
 - Stateful VMs are protected with `prevent_destroy` ([0005](0005-prevent-destroy-on-stateful-vms.md))
 - The NetBird VM is only a Debian shell here, nixos-anywhere replaces the OS afterwards ([0008](0008-nixos-for-the-dmz-box.md))
 
-- Related: [0005](0005-prevent-destroy-on-stateful-vms.md) (prevent_destroy), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0008](0008-nixos-for-the-dmz-box.md) (NixOS on the NetBird VM), [0011](0011-proxmox-as-hypervisor.md) (Proxmox), [0025](0025-debian-guests-until-x86-64-v3.md) (guest OS)
+- Related: [0005](0005-prevent-destroy-on-stateful-vms.md) (prevent_destroy), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0008](0008-nixos-for-the-dmz-box.md) (NixOS on the NetBird VM), [0011](0011-proxmox-as-hypervisor.md) (Proxmox), [0025](0025-debian-guests-until-x86-64-v3.md) (guest OS), [0026](0026-ufw-as-guest-firewall.md) (cloud-init vs firewalld)

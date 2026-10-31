@@ -28,16 +28,17 @@ When and how it runs:
 - A timer starts it every evening at 20:00 (`pbs_on_calendar`)
 - A random delay of up to 20 minutes keeps the hosts apart (`pbs_randomized_delay`)
 - Each run: dump the databases, push, then wipe the staging folder
-- It pushes two archives:
+- It pushes these archives:
   - `dumps.pxar`: the database dumps (Postgres `pg_dump --clean --if-exists`, SQLite online `.backup`, `influx backup`)
   - `apps.pxar`: everything in `apps_root`, except the live database files, caches and query logs
+  - `podman-apps.pxar`: the same for `podman_apps_root`, once a host runs a Podman app
 
 What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/docker-{1,2,3}.yml`):
 
 | Host | Databases |
 |---|---|
 | docker-1 | Authentik (Postgres), Gitea, Vaultwarden, Home Assistant recorder (SQLite) |
-| docker-2 | Grafana, Uptime Kuma, Homelable (SQLite), InfluxDB |
+| docker-2 | Grafana, Gatus (SQLite), InfluxDB |
 | docker-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin + library (SQLite) |
 
 - Enforced by: the timer runs on its own, and a failed run or an empty dump sends an ntfy alert (`ERR` trap)

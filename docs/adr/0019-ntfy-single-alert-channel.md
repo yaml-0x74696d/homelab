@@ -12,14 +12,14 @@ Status: Accepted
   - Self-hosted ntfy exposed to the WAN (why not: one more service open to the internet)
   - Mail (why not: needs a mail server or account, no instant push)
   - A chat bot (why not: depends on a chat platform and its API)
-  - Uptime Kuma notifications only (why not: only knows up/down, not backups or AIDE)
+  - Gatus' notifications only (why not: only knows up/down, not backups or AIDE)
 - Why: instant push on the phone, nothing inbound, a simple curl from any script
 
 ## Decision
 
 The channel:
 - One ntfy.sh topic, outbound only: lab → ntfy.sh → phone app
-- Shared variables in `group_vars/all/apps.yml`: `ntfy_url` (includes the topic), `ntfy_token` (optional), `ntfy_timeout` (10 s)
+- Shared variables in `group_vars/all/app_settings.yml`: `ntfy_url` (includes the topic), `ntfy_token` (optional), `ntfy_timeout` (10 s)
 - The real values are in the vault
 - On the free tier, the topic name is the secret, so it's long and random
 
@@ -50,4 +50,4 @@ How sending works:
 - Accepted: it depends on ntfy.sh being up, and a lost push isn't retried
 - Accepted: anyone who finds out the topic name can read and post to it
 
-- Related: [0009](0009-aide-with-manual-accept.md) (AIDE, counts only), [0013](0013-pbs-file-level-backups.md) (PBS alerts), [0006](0006-latest-images-notify-only.md) (Diun), [0024](0024-ansible-run-os-updates.md) (update summary)
+- Related: [0009](0009-aide-with-manual-accept.md) (AIDE, counts only), [0013](0013-pbs-file-level-backups.md) (PBS alerts), [0006](0006-latest-images-notify-only.md) (Diun), [0024](0024-ansible-run-os-updates.md) (update summary), [0027](0027-gatus-generated-from-apps-map.md) (gatus)

@@ -1,0 +1,97 @@
+# managed by ansible (apps/gatus). every check comes from apps.yml and the inventory
+storage:
+  type: sqlite
+  path: {{ gatus_data }}/{{ gatus_db_file }}
+
+# dark unless the browser asks for light (gatus lets the os preference win)
+ui:
+  dark-mode: true
+
+alerting:
+  ntfy:
+    url: "{{ ntfy_url | regex_replace('/[^/]+$', '') }}"
+    topic: "{{ ntfy_url | split('/') | last }}"
+{% if ntfy_token %}
+    token: "{{ ntfy_token }}"
+{% endif %}
+    default-alert:
+      failure-threshold: {{ gatus_failure_threshold }}
+      send-on-resolved: true
+
+endpoints:
+{# the user's view: route through traefik, tls included #}
+{% for name, app in apps | dictsort if app.state | default('present') == 'present' %}
+{% for r in app.routes | default([]) %}
+{% set behind_auth = r.middlewares | default([]) | intersect(gatus_auth_middlewares) | length > 0 %}
+  - name: "{{ name }}{{ ' ' ~ r.path if r.path is defined else '' }}"
+    group: {{ app.host }}
+    url: "https://{{ r.host }}.{{ domain }}{{ r.path | default('') }}"
+    interval: {{ gatus_interval }}
+{% if behind_auth %}
+{# gatus follows redirects by default and would end on the login page's 200 #}
+    client:
+      ignore-redirect: true
+{% endif %}
+    conditions:
+      - "{{ '[STATUS] == 302' if behind_auth else '[STATUS] < 400' }}"
+      - "[CERTIFICATE_EXPIRATION] > {{ gatus_cert_min_validity }}"
+    alerts:
+      - type: ntfy
+{# behind sso the route only proves the login, so check the app on its port too. gatus' own vm: host.containers.internal #}
+{% if behind_auth and (r.port | default(app.port | default(none))) is not none %}
+  - name: "{{ name }}{{ ' ' ~ r.path if r.path is defined else '' }} backend"
+    group: {{ app.host }}
+    url: "http://{{ 'host.containers.internal' if app.host == apps[podman_app_name].host else hostvars[app.host].ansible_host }}:{{ r.port | default(app.port) }}{{ r.path | default('') }}"
+    interval: {{ gatus_interval }}
+    conditions: ["[STATUS] < 400"]
+    alerts:
+      - type: ntfy
+{% endif %}
+{% endfor %}
+{% endfor %}
+{# traefik itself, so 'traefik down' isn't just every route at once #}
+  - name: traefik
+    group: edge
+    url: "tcp://{{ app_sources.edge }}:443"
+    interval: {{ gatus_interval }}
+    conditions: ["[CONNECTED] == true"]
+    alerts:
+      - type: ntfy
+{% for g in gatus_ping_groups %}
+{% for h in groups[g] %}
+  - name: {{ h }}
+    group: {{ g }}
+    url: "icmp://{{ hostvars[h].ansible_host }}"
+    interval: {{ gatus_interval }}
+    conditions: ["[CONNECTED] == true"]
+    alerts:
+      - type: ntfy
+{% endfor %}
+{% endfor %}
+{% for h in groups['proxmox'] %}
+  - name: {{ h }}
+    group: proxmox
+    url: "tcp://{{ hostvars[h].ansible_host }}:{{ pve_ui_port }}"
+    interval: {{ gatus_interval }}
+    conditions: ["[CONNECTED] == true"]
+    alerts:
+      - type: ntfy
+{% endfor %}
+  - name: pbs
+    group: proxmox
+    url: "tcp://{{ pve3_ip }}:{{ pbs_port }}"
+    interval: {{ gatus_interval }}
+    conditions: ["[CONNECTED] == true"]
+    alerts:
+      - type: ntfy
+{# cloudflare-ddns has no port: check the record it keeps alive, from outside #}
+  - name: cloudflare-ddns
+    group: external
+    url: "{{ gatus_dns_resolver }}"
+    dns:
+      query-name: "{{ domain }}"
+      query-type: A
+    interval: {{ gatus_interval }}
+    conditions: ["[DNS_RCODE] == NOERROR"]
+    alerts:
+      - type: ntfy

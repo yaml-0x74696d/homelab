@@ -36,6 +36,7 @@ aide_history_files: '\\.(bash_history|lesshst|viminfo|python_history|wget-hsts)'
 # rewritten by design (timer runs, apt's daily stamps, dhcp renewals): VarFile like debian's own rules
 aide_var_files:
   - '/var/lib/systemd/timers/stamp-[^/]+\\.timer'
+  - '/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/systemd/timers/stamp-[^/]+\\.timer'
   - '/var/lib/apt/periodic/[^/]+'
   - '/var/lib/NetworkManager/[^/]+\\.lease'
   - '/var/lib/NetworkManager/seen-bssids'
@@ -58,8 +59,11 @@ aide_excludes_by_group:
   docker_hosts:
     - /var/lib/docker
     - /var/lib/containerd
+    - /var/lib/containers       # root podman storage
+    - /dev/shm                  # podman lock files, tmpfs
     - "{{ apps_root }}"
-    - /opt/stacks               # live docker apps until the podman migration
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"   # rootless podman images + containers, per app user
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"   # module payloads when ansible runs as the svc user
     - "{{ cifs_mount_root }}"   # pool shares
     - "{{ pbs_staging_dir }}"
     - /var/lib/cloud            # cloud-init state, rewritten every boot

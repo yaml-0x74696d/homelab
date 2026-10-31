@@ -28,7 +28,7 @@ Status: Accepted
 ## Decision
 
 The source:
-- `ansible/group_vars/all/` holds the facts, split by topic: `network.yml`, `ports.yml`, `storage.yml`, `hosts.yml`, `apps.yml`, `base.yml`
+- `ansible/group_vars/all/` holds the facts, split by topic: `network.yml`, `ports.yml`, `storage.yml`, `hosts.yml`, `app_settings.yml`, `apps.yml` (the apps map), `base.yml`
 - `private/private.yml` holds the non-secret facts that stay out of the public repo (MACs), gitignored
 - `vault.yml` holds the secrets and is only read by Ansible
 - Shared schedules and timeouts live there too (`aide_check_time`, `ntfy_timeout`, SSH settings), so the Ansible hosts and the NetBird VM behave the same

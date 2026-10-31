@@ -34,12 +34,6 @@ http:
       tls: { certResolver: "cloudflare" }
       service: "pihole-service"
 
-    homelable-router:
-      rule: "Host(`homelable.{{ env "DOMAIN" }}`)"
-      entryPoints: ["websecure"]
-      tls: { certResolver: "cloudflare" }
-      service: "homelable-service"
-
     prometheus-router:
       rule: "Host(`prom.{{ env "DOMAIN" }}`)"
       entryPoints: ["websecure"]
@@ -65,11 +59,12 @@ http:
       tls: { certResolver: "cloudflare" }
       service: "nginx-service"
 
-    uptime-kuma-router:
+    gatus-router:
       rule: "Host(`status.{{ env "DOMAIN" }}`)"
       entryPoints: ["websecure"]
       tls: { certResolver: "cloudflare" }
-      service: "uptime-kuma-service"
+      middlewares: ["authentik@file"]   # topology + internal ips, sso only
+      service: "gatus-service"
 
     nextcloud-router:
       rule: "Host(`cloud.{{ env "DOMAIN" }}`)"
@@ -135,11 +130,6 @@ http:
         servers:
           - url: "http://{{ env "DOCKER2_IP" }}:{{ env "PIHOLE_PORT" }}"
 
-    homelable-service:
-      loadBalancer:
-        servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "HOMELABLE_PORT" }}"
-
     prometheus-service:
       loadBalancer:
         servers:
@@ -160,10 +150,10 @@ http:
         servers:
           - url: "http://{{ env "DOCKER2_IP" }}:{{ env "NGINX_PORT" }}"
 
-    uptime-kuma-service:
+    gatus-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "UPTIME_KUMA_PORT" }}"
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "GATUS_PORT" }}"
 
     nextcloud-service:
       loadBalancer:

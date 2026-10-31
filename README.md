@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 2 LXCs, 25 compose apps + hostapd, 15 Ansible roles, 40 playbooks, 21 C4 views
+- 3 Proxmox nodes, 4 VMs + 2 LXCs, 22 compose apps + 2 Podman apps + hostapd, 16 Ansible roles, 38 playbooks, 21 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -61,13 +61,12 @@
 | Monitoring | Prometheus | docker-2 | Metrics |
 | Monitoring | Grafana | docker-2 | Dashboards |
 | Monitoring | InfluxDB | docker-2 | Time series database |
-| Monitoring | Uptime Kuma | docker-2 | Uptime checks |
+| Monitoring | Gatus | docker-2 | Uptime checks, generated from the apps map |
 | Monitoring | Diun | All Docker hosts | Image update notices |
 | Tools | Homepage (`dashboard`) | docker-1 | Landing page |
 | Tools | Gitea | docker-1 | git server |
 | Tools | SearXNG | docker-1 | Search engine |
 | Tools | pdfcraft | docker-1 | PDF tools |
-| Tools | Homelable | docker-2 | Network inventory |
 | Tools | nginx | docker-2 | Website |
 | Tools | docker-socket-proxy (`docker-proxy`) | All Docker hosts | Read-only Docker API for Homepage |
 
@@ -78,13 +77,13 @@ tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-i
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent
-  roles/           aide, chrony, cronie, docker_app, journald, login_notify, mergerfs, netbird_agent, pbs, podman_base, pve_firewall, rsyslog, samba, update, vm_base
+  roles/           aide, chrony, cronie, docker_app, journald, login_notify, mergerfs, netbird_agent, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
   apps/<name>/     Compose file + templates per app (25), hostapd config
-  playbooks/       deploy-<app>.yml, site.yml, vm-preparation, update, aide, push-keys, ...
+  playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
 architecture/    LikeC4 model: landscape, containers, deployment, 8 flows
 docs/            Architecture, ADRs, exported diagrams
-justfile         setup · lint · check · deploy · c4 · diagrams
+justfile         setup · lint · check · deploy · deploy-app · c4 · diagrams
 ```
 
 ## Single source of truth
@@ -126,12 +125,12 @@ justfile         setup · lint · check · deploy · c4 · diagrams
 
 ## Decisions
 
-- [docs/adr/](docs/adr/README.md): 25 records
+- [docs/adr/](docs/adr/README.md): 27 records
 - 0001 OpenTofu + cloud-init · 0002 generic app role · 0003 NetBird · 0004 mergerfs · 0005 prevent_destroy
 - 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 Pi-hole service IP
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets (proposed)
-- 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3
+- 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
 
 ## Future plans
 

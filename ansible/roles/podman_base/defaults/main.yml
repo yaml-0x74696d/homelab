@@ -10,18 +10,9 @@ podman_base_packages:
   - systemd-container
   - acl
   - jq
-  - firewalld
 
-# every svc-<app> user joins it (podman_app), it may read the ntfy env file
-podman_base_group: svc-apps
 podman_base_ntfy_env: /etc/podman-ntfy.env
 podman_base_wrapper: /usr/local/bin/podman-auto-update-ntfy
 
 # one time for every svc user's podman-auto-update.timer, upstream adds RandomizedDelaySec=900
 podman_base_auto_update_time: "Sun *-*-* 13:00:00"   # midday, someone is around to fix it
-
-# firewalld default zone drop, these from lan_cidr only. apps add theirs (podman_app, allow_from)
-podman_base_ssh_limit: 6/m
-podman_base_lan_ports:
-  - "{{ cockpit_port }}"
-  - "{{ node_exporter_port }}"

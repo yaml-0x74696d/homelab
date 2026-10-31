@@ -1,0 +1,7 @@
+{# lines of `ufw status` with this app's comment whose port/proto/src isn't in podman_app_rules #}
+{% for line in podman_app_ufw_status.stdout_lines if line is search('# podman ' ~ podman_app_name ~ '$') and '(v6)' not in line %}
+{% set m = line | regex_search('^(\\d+)/(\\w+)\\s+ALLOW\\s+(\\S+)', '\\1', '\\2', '\\3') %}
+{% if m and {'port': m[0] | int, 'proto': m[1], 'src': m[2]} not in podman_app_rules %}
+- {port: {{ m[0] }}, proto: {{ m[1] }}, src: "{{ m[2] }}"}
+{% endif %}
+{% endfor %}

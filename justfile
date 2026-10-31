@@ -21,9 +21,13 @@ lint:
 check:
     pre-commit run --all-files --hook-stage manual
 
-# deploy one app, e.g. just deploy immich
+# deploy one compose app, e.g. just deploy immich
 deploy app:
     cd ansible && ansible-playbook playbooks/deploy-{{ app }}.yml
+
+# deploy one podman app from apps.yml, e.g. just deploy-app gatus
+deploy-app app:
+    cd ansible && ansible-playbook playbooks/deploy-app.yml -e app={{ app }}
 
 # export every view as png for the docs
 c4:

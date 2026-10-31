@@ -39,8 +39,7 @@ deployment {
         instanceOf observability.prometheus
         instanceOf observability.grafana
         instanceOf observability.influxdb
-        instanceOf observability.uptime-kuma
-        instanceOf apps.homelable
+        instanceOf observability.gatus
         instanceOf ops.docker-proxy
         instanceOf ops.diun
         instanceOf storage.pbs-client

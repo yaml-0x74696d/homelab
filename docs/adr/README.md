@@ -27,3 +27,5 @@ Format: status, context, decision, consequences.
 - [23. chrony with NTS for time sync](0023-chrony-with-nts.md)
 - [24. OS updates through one Ansible run](0024-ansible-run-os-updates.md)
 - [25. Debian 13 for the guests until the CPUs have x86-64-v3](0025-debian-guests-until-x86-64-v3.md)
+- [26. ufw as the guest firewall, also for Podman](0026-ufw-as-guest-firewall.md)
+- [27. Gatus for uptime checks, generated from the apps map](0027-gatus-generated-from-apps-map.md)
