@@ -41,8 +41,17 @@ aide_var_files:
   - '/var/lib/NetworkManager/seen-bssids'
   - '/var/lib/misc/dnsmasq\\.leases'
 
-# rewritten at boot with the same content (cloud-init's /etc/hosts): owner, mode + checksum, no times
-aide_content_files: [/etc/hosts]
+# rewritten with the same content (cloud-init's /etc/hosts at boot, netbird on restart): owner, mode + checksum, no times
+aide_content_files:
+  - /etc/hosts
+  - /etc/ssh/ssh_config.d/99-netbird\\.conf
+  - /var/lib/netbird/state\\.json
+
+# dirs whose files get replaced (new mtime), owner + mode stay watched
+aide_var_dirs:
+  - /etc/apt/apt.conf.d
+  - /etc/ssh/ssh_config.d
+  - /var/lib/netbird
 
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:
@@ -70,6 +79,7 @@ aide_excludes_by_group:
     - /var/lib/pve-manager           # replication state + lock, appliance index
     - /var/lib/smartmontools
     - /etc/issue                    # pvebanner rewrites it at boot
+    - /etc/apt/apt.conf.d/76pveproxy   # generated from datacenter.cfg, comes and goes
     - /dev                          # vm disks, isos, usb, corosync shm
     - "{{ storage_pool_host }}"                          # pve-3: mergerfs pool
     - "{{ storage_disks | map(attribute='path') | list }}"   # pve-3: its disks

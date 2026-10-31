@@ -55,7 +55,8 @@
 | `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
 | `aide_login_homes` | admin home, `/root` | Homes with history files on the `VarFile` rule (see Notes) |
 | `aide_history_files` | bash, less, vim, python, wget history | Regex of the history file names in those homes |
-| `aide_content_files` | `/etc/hosts` | Rewritten at boot with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
+| `aide_content_files` | `/etc/hosts`, netbird's `99-netbird.conf` + `state.json` | Rewritten with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
+| `aide_var_dirs` | `/etc/apt/apt.conf.d`, `/etc/ssh/ssh_config.d`, `/var/lib/netbird` | Dirs whose files get replaced: owner and mode watched, times not (`VarDir`). Added and removed files still show |
 | `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids`, dnsmasq leases | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
 | `aide_run_timeout` / `aide_run_poll` | 3600 s / 30 s | Limits for `--init` and `--update` |
 | `aide_check_nice` / `aide_check_io_class` | 19 / idle | Priority of the check |
@@ -67,7 +68,7 @@
 
 - All hosts: `/run` (tmpfs), ansible's temp dirs and payloads, `.cache` in the admin's and root's home, `aide.db.new`, `/var/log` (every line is on the log LXC already, see [ADR 0022](../../../docs/adr/0022-central-logging-relp.md)), `/var/lib/rsyslog`, apt's caches and lists, PackageKit's db, node-exporter's textfiles
 - docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root` and `/opt/stacks` (live apps until the podman migration), the CIFS mount root, the PBS staging folder, cloud-init state (`/var/lib/cloud`, `/var/tmp/cloud-init`), `/dev/disk/by-uuid` (the cloud-init ISO gets a dated UUID)
-- proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, state pve rebuilds itself (`/var/lib/lxc`, `/var/cache/lxc`, lxcfs, corosync, `/var/lib/proxmox-backup`, `/var/lib/pve-firewall`, replication state, smartmontools, `/etc/issue`), all of `/dev`, and on pve-3 the pool, its disks and the PBS datastore
+- proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, state pve rebuilds itself (`/var/lib/lxc`, `/var/cache/lxc`, lxcfs, corosync, `/var/lib/proxmox-backup`, `/var/lib/pve-firewall`, replication state, smartmontools, `/etc/issue`, `76pveproxy` from `datacenter.cfg`), all of `/dev`, and on pve-3 the pool, its disks and the PBS datastore
 - lxc_containers: `/dev/.lxc` (procfs), the pool bind mount
 
 ## Notes
