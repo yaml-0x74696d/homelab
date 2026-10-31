@@ -31,7 +31,7 @@ Apps as quadlets:
 Updates:
 - `AutoUpdate=registry` with a `podman-auto-update.timer` per user, weekly (Sunday 13:00, `podman_base_auto_update_time`) with a random delay
 - Every container has a `HealthCmd` and `Notify=healthy`, so an image that starts but doesn't work is rolled back
-- A wrapper around `podman auto-update` (`roles/podman_base`) pushes updated, rolled back and failed units to ntfy. App down/up is Uptime Kuma's job, so there is no `OnFailure=`
+- A wrapper around `podman auto-update` (`roles/podman_base`) pushes updated, rolled back and failed units to ntfy. App down/up is Gatus' job, so there is no `OnFailure=`
 
 Secrets and access:
 - Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), so no `.env` file sits on disk
@@ -62,4 +62,4 @@ Rollout:
 
 - Once done, this supersedes [0002](0002-generic-docker-app-role.md) (`docker_app` role) and [0006](0006-latest-images-notify-only.md) (`:latest` + Diun)
 
-- Related: [0002](0002-generic-docker-app-role.md), [0006](0006-latest-images-notify-only.md), [0012](0012-no-kubernetes.md) (why not K8s), [0017](0017-smb-shares-to-docker-vms.md) (CIFS mounts), [0024](0024-ansible-run-os-updates.md) (OS updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian pod hosts), [0026](0026-ufw-as-guest-firewall.md) (firewall)
+- Related: [0002](0002-generic-docker-app-role.md), [0006](0006-latest-images-notify-only.md), [0012](0012-no-kubernetes.md) (why not K8s), [0017](0017-smb-shares-to-docker-vms.md) (CIFS mounts), [0024](0024-ansible-run-os-updates.md) (OS updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian pod hosts), [0026](0026-ufw-as-guest-firewall.md) (firewall), [0027](0027-gatus-generated-from-apps-map.md) (gatus)

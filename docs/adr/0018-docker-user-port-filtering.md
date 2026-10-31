@@ -28,7 +28,7 @@ How it works:
 
 Who may call (`docker_backend_callers` in `group_vars/all/ports.yml`):
 - docker-1: Traefik, Homepage, Home Assistant
-- docker-2: Prometheus, Grafana, Uptime Kuma
+- docker-2: Prometheus, Grafana
 - mqtt-exporter only accepts calls from docker-2
 
 What's filtered and what's open:

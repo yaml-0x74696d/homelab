@@ -13,7 +13,7 @@ netbird_relay_ports: { min: 49160, max: 49200 }   # coturn relay range, narrow s
 # apps in apps.yml take their port from there, the rest stay literal
 app_ports:
   grafana: "{{ apps['grafana'].port }}"
-  uptime_kuma: "{{ apps['uptime-kuma'].port }}"
+  gatus: "{{ apps['gatus'].port }}"
   nextcloud: "{{ apps['nextcloud'].port }}"
   immich: "{{ apps['immich'].port }}"
   jellyfin: "{{ apps['jellyfin'].port }}"
@@ -26,13 +26,12 @@ app_ports:
   mqtt_exporter: 9641
 
 # published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.
-# backends only answer traefik + ha (docker-1) and prometheus/kuma (docker-2)
+# backends only answer traefik + ha (docker-1) and prometheus/gatus (docker-2)
 docker_backend_callers: ["{{ docker1_ip }}", "{{ docker2_ip }}"]
 docker_published_allow:
-  - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage, kuma
+  - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage
   - { port: "{{ app_ports.prometheus }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.grafana }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.uptime_kuma }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.homelable }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.influxdb }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.nginx }}", src: "{{ docker_backend_callers }}" }

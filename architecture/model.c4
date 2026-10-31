@@ -143,7 +143,7 @@ model {
   }
 
   observability = system "Observability" {
-    technology "Prometheus, Grafana, InfluxDB, Uptime Kuma"
+    technology "Prometheus, Grafana, InfluxDB, Gatus"
     description "Metrics, dashboards and uptime checks"
     prometheus = container "Prometheus" { style { icon tech:prometheus } }
     grafana = ui "Grafana" { style { icon tech:grafana } }
@@ -151,7 +151,7 @@ model {
       technology "time series"
       style { icon tech:influxdb }
     }
-    uptime-kuma = ui "Uptime Kuma"
+    gatus = ui "Gatus" { description "Checks generated from the apps map" }
     node-exporter = container "node-exporter" { #ops; description "Per host" }
     log-server = store "Log server" {
       technology "rsyslog, RELP"
@@ -228,7 +228,7 @@ model {
   edge.traefik -[https]-> media.jellyfin "routes"
   edge.traefik -[https]-> media.paperless.web "routes"
   edge.traefik -[https]-> observability.grafana "routes"
-  edge.traefik -[https]-> observability.uptime-kuma "routes"
+  edge.traefik -[https]-> observability.gatus "routes"
   edge.traefik -[https]-> observability.prometheus "routes"
   edge.traefik -[https]-> automation.homeassistant "routes"
   edge.traefik -> cloudflare "ACME DNS-01 TXT records"
@@ -272,7 +272,8 @@ model {
   observability.prometheus -[scrape]-> automation.mqtt-exporter "sensor metrics"
   observability.grafana -> observability.prometheus "queries"
   observability.grafana -> observability.influxdb "queries"
-  observability.uptime-kuma -[https]-> edge.traefik "probes every route"
+  observability.gatus -[https]-> edge.traefik "probes every route"
+  observability.gatus -> ntfy "down alerts"
   observability.rsyslog -[relp]-> observability.log-server "forwards every log line"
 
   // operations

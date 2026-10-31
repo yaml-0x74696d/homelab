@@ -11,16 +11,24 @@
     fail_msg: "{{ podman_app_name }}: runtime compose, state absent/purged or wrong host"
     quiet: true
 
-# pilot-1 scope: the rest of the schema lands with the paperless pr
+# cifs, keep-id and pods land with the paperless pr
 - name: Check built features for {{ podman_app_name }}
   ansible.builtin.assert:
     that:
-      - podman_app_entry.secrets | length == 0
       - podman_app_entry.cifs | default([]) | length == 0
       - podman_app_entry.container_uid | default(0) == 0
       - podman_app_entry.containers | length == 1
-    fail_msg: "{{ podman_app_name }}: secrets, cifs, keep-id and pods aren't in podman_app_entry yet"
+    fail_msg: "{{ podman_app_name }}: cifs, keep-id and pods aren't in podman_app yet"
     quiet: true
+
+- name: Check the secret sources of {{ podman_app_name }}
+  ansible.builtin.assert:
+    that: (item.vault is defined) != (item.template is defined)
+    fail_msg: "{{ podman_app_name }}: secret {{ item.name }} needs exactly one of vault or template"
+    quiet: true
+  loop: "{{ podman_app_entry.secrets }}"
+  loop_control:
+    label: "{{ item.name }}"
 
 - name: Check the unit templates for {{ podman_app_name }}
   ansible.builtin.stat:
@@ -179,6 +187,51 @@
     from_ip: "{{ item.src }}"
     comment: "podman {{ podman_app_name }}"
   loop: "{{ podman_app_rules }}"
+
+- name: Render the secrets of {{ podman_app_name }}
+  ansible.builtin.set_fact:
+    podman_app_secret_data: >-
+      {{ podman_app_secret_data | default({}) | combine({item.name:
+         lookup('ansible.builtin.template', podman_app_src + '/' + item.template) if item.template is defined
+         else lookup('ansible.builtin.vars', item.vault)}) }}
+  loop: "{{ podman_app_entry.secrets }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+
+# compares the real content, no hash label
+- name: Read the current secrets of {{ podman_app_name }}
+  ansible.builtin.command: "podman secret inspect --showsecret --format {{ '{{.SecretData}}' }} {{ item.name }}"
+  loop: "{{ podman_app_entry.secrets }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+  become_user: "{{ podman_app_user }}"
+  environment: "{{ podman_app_user_env }}"
+  register: podman_app_secret_current
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  no_log: true
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: Create or replace the secrets of {{ podman_app_name }}
+  ansible.builtin.command: "podman secret create --replace {{ item.item.name }} -"
+  args:
+    stdin: "{{ podman_app_secret_data[item.item.name] }}"
+    stdin_add_newline: false
+  loop: "{{ podman_app_secret_current.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name | default('') }}"
+  become: true
+  become_user: "{{ podman_app_user }}"
+  environment: "{{ podman_app_user_env }}"
+  when:
+    - item.rc is defined
+    - item.rc != 0 or item.stdout | trim != podman_app_secret_data[item.item.name] | trim
+  changed_when: true
+  notify: Restart app
+  no_log: true
 
 # so the image pull doesn't eat TimeoutStartSec
 - name: Pull images for {{ podman_app_name }}

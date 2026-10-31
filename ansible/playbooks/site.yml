@@ -40,8 +40,10 @@
   import_playbook: deploy-grafana.yml
 - name: Deploy nginx
   import_playbook: deploy-nginx.yml
-- name: Deploy uptime-kuma
-  import_playbook: deploy-uptime-kuma.yml
+- name: Deploy gatus
+  import_playbook: deploy-app.yml
+  vars:
+    app: gatus
 - name: Deploy diun
   import_playbook: deploy-diun.yml
 - name: Deploy hostapd

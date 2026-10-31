@@ -41,7 +41,7 @@
 | Host | Databases | Left out |
 |---|---|---|
 | docker-1 | Authentik (Postgres), Gitea, Vaultwarden, Home Assistant recorder (SQLite) | Mosquitto state |
-| docker-2 | Grafana, Uptime Kuma, Homelable (SQLite), InfluxDB | Pi-hole query log, Prometheus TSDB (bulky, old metrics aren't worth keeping) |
+| docker-2 | Grafana, Gatus, Homelable (SQLite), InfluxDB | Pi-hole query log, Prometheus TSDB (bulky, old metrics aren't worth keeping) |
 | docker-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin + library (SQLite) | Jellyfin cache and transcodes |
 
 - The bulk data on the CIFS pool (photos, media, documents, files) isn't in here

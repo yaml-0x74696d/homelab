@@ -39,7 +39,7 @@ deployment {
         instanceOf observability.prometheus
         instanceOf observability.grafana
         instanceOf observability.influxdb
-        instanceOf observability.uptime-kuma
+        instanceOf observability.gatus
         instanceOf apps.homelable
         instanceOf ops.docker-proxy
         instanceOf ops.diun

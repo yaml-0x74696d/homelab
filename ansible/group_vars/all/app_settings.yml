@@ -15,6 +15,12 @@ authentik_tag: "2026.8.3"
 authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12", "2025.2", "2025.4",
                    "2025.6", "2025.8", "2025.10", "2025.12", "2026.2", "2026.5", "2026.8"]
 
+# gatus (apps/gatus): every check is generated from apps.yml + the inventory
+gatus_interval: 60s
+gatus_failure_threshold: 3        # failed checks in a row before ntfy
+gatus_cert_min_validity: 168h     # warn a week before a route's cert runs out
+gatus_dns_resolver: 1.1.1.1       # outside view for the domain's A record (ddns)
+
 # influxdb long-term sensor store (docker-2); secrets in vault
 influxdb_org: homelab
 influxdb_bucket: sensors

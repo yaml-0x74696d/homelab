@@ -9,6 +9,9 @@ AutoUpdate=registry
 User={{ item.user }}
 {% endif %}
 StopTimeout={{ item.stop_timeout | default(podman_app_stop_timeout) }}
+{% if not item.healthcheck | default(true) %}
+Notify=false
+{% endif %}
 NoNewPrivileges={{ item.no_new_privileges | default(true) | lower }}
 {% if item.read_only | default(false) %}
 ReadOnly=true

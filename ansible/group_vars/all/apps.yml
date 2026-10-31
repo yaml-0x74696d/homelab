@@ -3,18 +3,22 @@
 # roles/podman_app/meta/argument_specs.yml. `runtime: compose` = still on docker:
 # edge routes it, deploy-app.yml refuses it. the line goes at the app's cutover.
 apps:
-  uptime-kuma:
+  gatus:
     host: docker-2
     uid: 2010
     port: 3001
     allow_from: [edge, netbird]
-    secrets: []
+    secrets:
+      - name: gatus-config
+        template: config.yaml.j2
     dirs:
       - path: data
     containers:
-      - name: uptime-kuma
-        image: docker.io/louislam/uptime-kuma
-        tag: "1"
+      - name: gatus
+        image: ghcr.io/twin/gatus
+        tag: stable
+        healthcheck: false   # scratch image, nothing to run a check with
+        add_caps: [NET_RAW]  # runs as root in the container, so pings use raw sockets
     routes:
       - host: status
 
@@ -83,5 +87,58 @@ apps:
     routes:
       - host: paperless
 
-# docker-1's apps (no published port yet) and the pve/pbs routes join in phase 2, with edge
+  # docker-1: no published port yet (traefik reaches them on proxy-net), ports come in phase 2
+  authentik:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: auth
+
+  vaultwarden:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: vault
+      - host: vault
+        path: /admin
+        middlewares: [authentik]
+
+  gitea:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: git
+
+  searxng:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: search
+
+  homepage:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: home
+
+  pdfcraft:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: pdf
+
+  homeassistant:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: ha
+
+  esphome:
+    host: docker-1
+    runtime: compose
+    routes:
+      - host: esphome
+        middlewares: [authentik]
+
+# the pve/pbs routes join in phase 2, with edge
 infra_routes: []

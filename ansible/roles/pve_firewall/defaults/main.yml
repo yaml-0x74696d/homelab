@@ -16,8 +16,8 @@ pve_firewall_netbird_dns_https: ["{{ docker1_ip }}", "{{ dns_ip }}"]
 # ssh (22) to the pve hosts — real shells only
 pve_firewall_ssh_hosts: "{{ admin_hosts }}"
 
-# web ui (8006) — admins, ui-only devices + the infra callers (homepage widget, kuma)
-pve_firewall_ui_hosts: "{{ admin_hosts + admin_ui_hosts + [{'ip': docker1_ip, 'c': 'homepage widget'}, {'ip': docker2_ip, 'c': 'uptime-kuma'}] }}"
+# web ui (8006) — admins, ui-only devices + the infra callers (homepage widget, gatus)
+pve_firewall_ui_hosts: "{{ admin_hosts + admin_ui_hosts + [{'ip': docker1_ip, 'c': 'homepage widget'}, {'ip': docker2_ip, 'c': 'gatus'}] }}"
 
 # cluster mesh (corosync / migration between nodes)
 pve_firewall_node_ips: ["{{ pve1_ip }}", "{{ pve2_ip }}", "{{ pve3_ip }}"]

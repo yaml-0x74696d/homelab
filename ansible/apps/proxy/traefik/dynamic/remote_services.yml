@@ -65,11 +65,11 @@ http:
       tls: { certResolver: "cloudflare" }
       service: "nginx-service"
 
-    uptime-kuma-router:
+    gatus-router:
       rule: "Host(`status.{{ env "DOMAIN" }}`)"
       entryPoints: ["websecure"]
       tls: { certResolver: "cloudflare" }
-      service: "uptime-kuma-service"
+      service: "gatus-service"
 
     nextcloud-router:
       rule: "Host(`cloud.{{ env "DOMAIN" }}`)"
@@ -160,10 +160,10 @@ http:
         servers:
           - url: "http://{{ env "DOCKER2_IP" }}:{{ env "NGINX_PORT" }}"
 
-    uptime-kuma-service:
+    gatus-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "UPTIME_KUMA_PORT" }}"
+          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "GATUS_PORT" }}"
 
     nextcloud-service:
       loadBalancer:

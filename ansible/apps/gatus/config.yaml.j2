@@ -1,0 +1,77 @@
+# managed by ansible (apps/gatus). every check comes from apps.yml and the inventory
+storage:
+  type: sqlite
+  path: /data/data.db
+
+alerting:
+  ntfy:
+    url: "{{ ntfy_url | regex_replace('/[^/]+$', '') }}"
+    topic: "{{ ntfy_url | split('/') | last }}"
+{% if ntfy_token %}
+    token: "{{ ntfy_token }}"
+{% endif %}
+    default-alert:
+      failure-threshold: {{ gatus_failure_threshold }}
+      send-on-resolved: true
+
+endpoints:
+{# the user's view: route through traefik, tls included #}
+{% for name, app in apps | dictsort %}
+{% for r in app.routes | default([]) %}
+  - name: "{{ name }}{{ ' ' ~ r.path if r.path is defined else '' }}"
+    group: {{ app.host }}
+    url: "https://{{ r.host }}.{{ domain }}{{ r.path | default('') }}"
+    interval: {{ gatus_interval }}
+    conditions:
+      - "[STATUS] < 400"
+      - "[CERTIFICATE_EXPIRATION] > {{ gatus_cert_min_validity }}"
+    alerts:
+      - type: ntfy
+{% endfor %}
+{% endfor %}
+{# traefik itself, so 'traefik down' isn't just every route at once #}
+  - name: traefik
+    group: edge
+    url: "tcp://{{ app_sources.edge }}:443"
+    interval: {{ gatus_interval }}
+    conditions: ["[CONNECTED] == true"]
+    alerts:
+      - type: ntfy
+{% for g in ['docker_hosts', 'lxc_containers'] %}
+{% for h in groups[g] %}
+  - name: {{ h }}
+    group: {{ g }}
+    url: "icmp://{{ hostvars[h].ansible_host }}"
+    interval: {{ gatus_interval }}
+    conditions: ["[CONNECTED] == true"]
+    alerts:
+      - type: ntfy
+{% endfor %}
+{% endfor %}
+{% for h in groups['proxmox'] %}
+  - name: {{ h }}
+    group: proxmox
+    url: "tcp://{{ hostvars[h].ansible_host }}:{{ pve_ui_port }}"
+    interval: {{ gatus_interval }}
+    conditions: ["[CONNECTED] == true"]
+    alerts:
+      - type: ntfy
+{% endfor %}
+  - name: pbs
+    group: proxmox
+    url: "tcp://{{ pve3_ip }}:{{ pbs_port }}"
+    interval: {{ gatus_interval }}
+    conditions: ["[CONNECTED] == true"]
+    alerts:
+      - type: ntfy
+{# cloudflare-ddns has no port: check the record it keeps alive, from outside #}
+  - name: cloudflare-ddns
+    group: external
+    url: "{{ gatus_dns_resolver }}"
+    dns:
+      query-name: "{{ domain }}"
+      query-type: A
+    interval: {{ gatus_interval }}
+    conditions: ["[DNS_RCODE] == NOERROR"]
+    alerts:
+      - type: ntfy

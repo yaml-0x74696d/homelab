@@ -1,6 +1,6 @@
 ---
 # one podman app from group_vars/all/apps.yml:
-#   ansible-playbook playbooks/deploy-app.yml -e app=uptime-kuma
+#   ansible-playbook playbooks/deploy-app.yml -e app=gatus
 # hosts: can't read group_vars, so the play spans every app host and the role only runs on the app's
 - name: Deploy one podman app
   hosts: docker_hosts:podman_hosts

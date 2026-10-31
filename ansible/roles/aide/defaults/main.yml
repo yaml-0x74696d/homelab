@@ -58,6 +58,8 @@ aide_excludes_by_group:
   docker_hosts:
     - /var/lib/docker
     - /var/lib/containerd
+    - /var/lib/containers       # root podman storage
+    - /dev/shm                  # podman lock files, tmpfs
     - "{{ apps_root }}"
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"   # rootless podman images + containers, per app user
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"   # module payloads when ansible runs as the svc user

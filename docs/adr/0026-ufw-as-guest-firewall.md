@@ -29,4 +29,4 @@ Status: Accepted
 
 - Accepted: no firewalld on the guests while they run Debian ([0025](0025-debian-guests-until-x86-64-v3.md))
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (cloud-init), [0018](0018-docker-user-port-filtering.md) (Docker's ports), [0021](0021-podman-quadlets.md) (Podman), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (cloud-init), [0018](0018-docker-user-port-filtering.md) (Docker's ports), [0021](0021-podman-quadlets.md) (Podman), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian), [0027](0027-gatus-generated-from-apps-map.md) (gatus)

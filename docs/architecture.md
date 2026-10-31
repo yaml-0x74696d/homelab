@@ -62,7 +62,7 @@ Each node runs one Docker VM, grouped by what the apps need.
 | VM | Node | Purpose | Apps |
 |---|---|---|---|
 | docker-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, Home Assistant, MQTT, ESPHome, SearXNG, pdfcraft, DDNS |
-| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, InfluxDB, Uptime Kuma, Homelable, nginx |
+| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, InfluxDB, Gatus, Homelable, nginx |
 | docker-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
 - All three also run Diun, docker-socket-proxy, the PBS client and AIDE
@@ -139,7 +139,7 @@ How a request from a browser reaches an app.
 - Apps on docker-2/3 and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 15 routes)
 - The apps on docker-2/3 publish their ports, but the `DOCKER-USER` firewall chain only lets a few callers in:
   - Traefik, Homepage and Home Assistant from docker-1
-  - Prometheus, Grafana and Uptime Kuma from docker-2
+  - Prometheus, Grafana and Gatus from docker-2
 
 ## Certificates
 
@@ -226,7 +226,7 @@ Prometheus for metrics, ntfy for alerts.
   - the ESP32 sensors, through mqtt-exporter
 - InfluxDB keeps the sensor data long-term
 - Grafana shows dashboards on top of both
-- Uptime Kuma checks if the apps are up and has a status page
+- Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
 - Homepage is the start page, with live tiles from Docker (through the socket proxy) and the Proxmox API
 
 Alerts:
