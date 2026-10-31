@@ -189,6 +189,66 @@
   notify: [Reload user units, Restart app]
   when: not (ansible_check_mode and podman_app_user_new)
 
+# apps/<name>/config/ mirrors <app dir>/config/. root-owned so the app can't rewrite it, world-readable
+# because workers often run as a non-root uid (lands on a subuid = "other"). secrets go into podman secrets
+- name: Mirror the config dirs of {{ podman_app_name }}
+  ansible.builtin.file:
+    path: "{{ podman_app_dir }}/config/{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ [{'path': ''}] + podman_app_config | selectattr('state', 'eq', 'directory') }}"
+  loop_control:
+    label: "{{ item.path or '.' }}"
+  when: podman_app_config | length > 0 and not (ansible_check_mode and podman_app_user_new)
+
+- name: Copy the config files of {{ podman_app_name }}
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ podman_app_dir }}/config/{{ item.path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ podman_app_config | selectattr('state', 'eq', 'file') | rejectattr('path', 'search', '\\.j2$') }}"
+  loop_control:
+    label: "{{ item.path }}"
+  notify: Restart app
+  when: not (ansible_check_mode and podman_app_user_new)
+
+- name: Render the config templates of {{ podman_app_name }}
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ podman_app_dir }}/config/{{ item.path | regex_replace('\\.j2$', '') }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ podman_app_config | selectattr('state', 'eq', 'file') | selectattr('path', 'search', '\\.j2$') }}"
+  loop_control:
+    label: "{{ item.path }}"
+  notify: Restart app
+  when: not (ansible_check_mode and podman_app_user_new)
+
+- name: Find config files on the host for {{ podman_app_name }}
+  ansible.builtin.find:
+    paths: "{{ podman_app_dir }}/config"
+    file_type: any
+    recurse: true
+    hidden: true
+  register: podman_app_config_live
+  when: podman_app_config | length > 0
+
+# a file deleted from the repo goes on the host too
+- name: Drop stale config of {{ podman_app_name }}
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ podman_app_config_live.files | default([]) | map(attribute='path') | map('relpath', podman_app_dir ~ '/config')
+            | difference(podman_app_config | map(attribute='path') | map('regex_replace', '\\.j2$', ''))
+            | map('regex_replace', '^', podman_app_dir ~ '/config/') | sort | reverse }}"
+  notify: Restart app
+  when: podman_app_config | length > 0
+
 - name: Read the ufw rules
   ansible.builtin.command: ufw status
   register: podman_app_ufw_status

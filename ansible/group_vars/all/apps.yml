@@ -46,8 +46,14 @@ apps:
 
   nginx:
     host: docker-2
-    runtime: compose
+    uid: 2020
     port: 8087
+    allow_from: [edge, netbird, homepage]
+    secrets: []
+    containers:
+      - name: nginx
+        image: docker.io/library/nginx
+        tag: alpine
     routes:
       - host: web
 

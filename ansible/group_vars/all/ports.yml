@@ -34,7 +34,6 @@ docker_published_allow:
   - { port: "{{ app_ports.grafana }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.homelable }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.influxdb }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.nginx }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.jellyfin }}", src: "{{ docker_backend_callers }}" }

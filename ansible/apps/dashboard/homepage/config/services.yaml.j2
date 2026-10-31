@@ -53,9 +53,7 @@
         - Nginx Web:
             icon: nginx
             href: https://web.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: nginx
+            siteMonitor: http://{{ hostvars[apps['nginx'].host].ansible_host }}:{{ apps['nginx'].port }}
         # monitoring & dashboards
         - Prometheus:
             icon: prometheus

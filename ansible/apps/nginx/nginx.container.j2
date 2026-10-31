@@ -1,0 +1,8 @@
+[Unit]
+Description=nginx
+
+[Container]
+Volume={{ podman_app_dir }}/config/html:/usr/share/nginx/html:ro
+Volume={{ podman_app_dir }}/config/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+PublishPort={{ podman_app_entry.port }}:80
+HealthCmd=wget -qO /dev/null http://127.0.0.1/

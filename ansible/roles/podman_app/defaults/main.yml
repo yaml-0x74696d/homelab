@@ -8,6 +8,8 @@ podman_app_home: "/home/{{ podman_app_user }}"
 podman_app_dir: "{{ podman_apps_root }}/{{ podman_app_name }}"
 podman_app_src: "{{ playbook_dir }}/../apps/{{ podman_app_name }}"
 podman_app_quadlet_dir: "{{ podman_app_home }}/.config/containers/systemd"
+# apps/<name>/config/ as filetree items (path relative, src, state), empty when the app has none
+podman_app_config: "{{ query('community.general.filetree', podman_app_src ~ '/config') if (podman_app_src ~ '/config') is directory else [] }}"
 
 # subuid range = uid * count, so ranges never overlap while uids stay unique
 podman_app_subid_count: 65536

@@ -35,6 +35,7 @@ Updates:
 
 Secrets and access:
 - Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), as a value or rendered into a config file, so no `.env` file sits on disk
+- Plain config comes from `apps/<name>/config/` into `/srv/apps/<name>/config/`, root-owned and mounted read-only. State lives in the app's other dirs, the only part that needs a backup
 - No app gets a container socket, so Diun and docker-proxy are dropped
 
 Storage:

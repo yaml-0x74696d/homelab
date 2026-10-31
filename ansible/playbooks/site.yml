@@ -39,7 +39,9 @@
 - name: Deploy grafana
   import_playbook: deploy-grafana.yml
 - name: Deploy nginx
-  import_playbook: deploy-nginx.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: nginx
 - name: Deploy gatus
   import_playbook: deploy-app.yml
   vars:

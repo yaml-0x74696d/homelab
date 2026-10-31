@@ -23,10 +23,11 @@
    - `container.d/10-homelab.conf`: house rules (`Notify=healthy`, `HealthOnFailure=kill`, restart with backoff, start timeout, `WantedBy=default.target`)
    - `<container>.container.d/50-map.conf`: what the map says (image + tag, `AutoUpdate=registry` unless `auto_update: false`, `User=`, `StopTimeout=`, `Notify=false` + `HealthOnFailure=none` for `healthcheck: false`, `NoNewPrivileges=`, caps, `ReadOnly=`)
    - `<container>.container`: rendered from `apps/<name>/<container>.container.j2` (volumes, ports, env, health)
-7. ufw: one rule per port and `allow_from` source
-8. Podman secrets as the user: the value from the vault variable or the rendered template, replaced only when the content differs (`podman secret inspect --showsecret`)
-9. Pulls the images as the user (so a pull never eats the start timeout), reloads + restarts on unit changes, starts the units
-10. Enables the user's `podman-auto-update.timer` (schedule + ntfy wrapper from `roles/podman_base`), then `podman image prune -af`: every image the app doesn't run goes, old tags too. Each app has its own user, so this never touches another app's images
+7. Config: `apps/<name>/config/` mirrored to `/srv/apps/<name>/config/`, `*.j2` rendered, the rest copied, files gone from the repo removed. Owned by root and world-readable (worker uids land on subuids), so the app can't rewrite it; units mount it `:ro`. A change restarts the app
+8. ufw: one rule per port and `allow_from` source
+9. Podman secrets as the user: the value from the vault variable or the rendered template, replaced only when the content differs (`podman secret inspect --showsecret`)
+10. Pulls the images as the user (so a pull never eats the start timeout), reloads + restarts on unit changes, starts the units
+11. Enables the user's `podman-auto-update.timer` (schedule + ntfy wrapper from `roles/podman_base`), then `podman image prune -af`: every image the app doesn't run goes, old tags too. Each app has its own user, so this never touches another app's images
 
 ## The apps.yml entry
 
@@ -55,6 +56,7 @@ apps:
 ```
 
 - `runtime: compose` marks an app that still runs on Docker: edge routes it, gatus checks it, `deploy-app.yml` refuses it
+- Config vs secrets: anything secret goes in `secrets:` (a podman secret), plain config and static files in `apps/<name>/config/`
 - A secret's `Secret=` line (env or mount, target) is in the app's unit template, the map only says where the value comes from
 - `allow_from` names resolve through `app_sources` (`group_vars/all/app_settings.yml`), an app name to its host's IP
 
