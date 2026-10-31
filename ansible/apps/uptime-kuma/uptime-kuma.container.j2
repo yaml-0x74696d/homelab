@@ -5,6 +5,6 @@ Description=uptime-kuma
 [Container]
 Volume={{ podman_app_dir }}/data:/app/data:Z
 PublishPort={{ podman_app_entry.port }}:3001
-# the image's own HEALTHCHECK
+# the image's own HEALTHCHECK, same start period
 HealthCmd=/app/extra/healthcheck
-HealthStartPeriod=1m
+HealthStartPeriod=3m
