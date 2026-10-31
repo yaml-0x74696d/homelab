@@ -5,12 +5,12 @@
 
 ![System landscape](docs/img/index.png)
 
-- Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), all 21 views, clickable (built by `.github/workflows/pages.yml`)
-- More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views)
+- Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), all 23 views, clickable (built by `.github/workflows/pages.yml`)
+- More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views); sensors and the IoT gateway: [docs/iot.md](docs/iot.md)
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 4 Podman apps + hostapd, 19 Ansible roles, 33 playbooks, 22 C4 views
+- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 4 Podman apps + hostapd, 20 Ansible roles, 33 playbooks, 23 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -31,7 +31,7 @@
 | docker-2 | VM 202 | pve-2 | 4 | 4 GB (2 GB) | 32 GB | .202 (+ DNS service IP .53) |
 | docker-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 32 GB | .203 |
 | netbird | VM 250 | pve-2 | 2 | 2 GB (1 GB) | 20 GB | .250 |
-| storage | CT 300 | pve-3 | 2 | 2 GB + 512 MB swap | 24 GB | .150 |
+| storage | CT 300 | pve-3 | 2 | 1 GB + 512 MB swap | 24 GB | .150 |
 | log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
 | iot | CT 302 | pve-1 | 1 | 512 MB + 256 MB swap | 8 GB | .152 + IoT `.50.10` on `vmbr1` |
 
@@ -57,6 +57,7 @@
 | Home | Home Assistant | docker-1 | Home automation |
 | Home | Mosquitto | iot (CT 302) | MQTT broker, from Debian |
 | Home | mqtt-exporter | iot (CT 302) | MQTT → Prometheus, from Debian |
+| Home | nginx | iot (CT 302) | Firmware downloads for the sensors, from Debian |
 | Home | hostapd | pve-1 | IoT WiFi bridge |
 | Monitoring | Prometheus | docker-2 | Metrics |
 | Monitoring | Grafana | docker-2 | Dashboards |
@@ -76,7 +77,7 @@ tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-i
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   inventory.yml    docker_hosts, proxmox, lxc_containers, iot_ap, netbird_agent
-  roles/           aide, chrony, cronie, docker_app, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
+  roles/           aide, chrony, cronie, docker_app, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
   apps/<name>/     Compose file + templates per app (25), hostapd config
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
@@ -112,7 +113,7 @@ justfile         setup · lint · check · deploy · deploy-app · c4 · diagram
 - PVE firewall (`roles/pve_firewall`): cluster policy drop, NetBird VM fenced (inbound = what NetBird serves, egress to the LAN limited to routing peer + DNS/HTTPS + RELP to the log LXC); host lockdown layer written, off by default (lockout risk)
 - Docker VMs (`vm-preparation.yml` = `roles/vm_base` + ufw + Docker): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
 - LXCs (`roles/lxc_base`): SSH key-only (root by key, no passwords), fail2ban, unattended security updates, node_exporter
-- IoT gateway LXC: PVE guest firewall and ufw with the same inbound rules, from the IoT net only 1883, egress limited to DNS, RELP and HTTP/HTTPS; one shared MQTT user, no TLS (accepted risk, [ADR 0028](docs/adr/0028-iot-gateway-lxc.md))
+- IoT gateway LXC: PVE guest firewall and ufw with the same inbound rules, from the IoT net only 1883 and 80 (firmware downloads), egress limited to DNS, RELP and HTTP/HTTPS; one shared MQTT user, no TLS (accepted risk, [ADR 0028](docs/adr/0028-iot-gateway-lxc.md))
 - Published container ports bypass ufw → filtered in `DOCKER-USER` by source (only Traefik / Prometheus hosts reach backends)
 - Docker daemon: `no-new-privileges`, `live-restore`, capped JSON logs; Homepage reads Docker only through a read-only socket proxy
 - NetBird VM (NixOS): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window

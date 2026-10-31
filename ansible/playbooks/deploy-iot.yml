@@ -1,13 +1,13 @@
 ---
-# iot gateway lxc (CT 302): mqtt broker + exporter for the iot net and the lan consumers.
-# first: deploy-pve-firewall.yml, tofu apply (the ct), base.yml -l iot, aide.yml -l iot
+# iot gateway lxc (CT 302): mqtt broker + exporter for the iot net and the lan consumers, firmware downloads for the sensors.
+# first: deploy-pve-firewall.yml, tofu apply (the ct), base.yml -l iot. after: aide.yml -l iot (docs/iot.md)
 
 - name: Iot gateway
   hosts: iot
   vars:
     # inbound, the same as iot.fw (roles/pve_firewall). callers: app_settings.yml
     iot_ufw_rules: >-
-      {{ [{'port': mqtt_port, 'proto': 'tcp', 'src': iot_cidr}]
+      {{ iot_net_ports | map('community.general.dict_kv', 'port') | map('combine', {'proto': 'tcp', 'src': iot_cidr}) | list
          + mqtt_lan_clients | map(attribute='ip') | map('community.general.dict_kv', 'src')
            | map('combine', {'port': mqtt_port, 'proto': 'tcp'}) | list
          + [{'port': mqtt_exporter_port, 'proto': 'tcp', 'src': prometheus_ip}] }}
@@ -44,7 +44,7 @@
       ignore_errors: "{{ ansible_check_mode }}"
 
     # node-exporter's rule comes from roles/lxc_base
-    - name: Ufw mqtt + exporter
+    - name: Ufw mqtt, firmware, exporter
       ansible.builtin.include_role:
         name: lxc_base
         tasks_from: ufw_rules
@@ -64,3 +64,7 @@
     - name: Exporter
       ansible.builtin.include_role:
         name: mqtt_exporter
+
+    - name: Firmware downloads
+      ansible.builtin.include_role:
+        name: ota_server

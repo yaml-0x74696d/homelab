@@ -43,6 +43,7 @@ pve_firewall_iot_vmid: "{{ vmids.iot }}"
 pve_firewall_iot_cidr: "{{ iot_cidr }}"
 pve_firewall_iot_nic: net1                      # the ct's leg on the iot bridge (tofu/lxc.tf, eth1)
 pve_firewall_iot_mqtt_clients: "{{ mqtt_lan_clients }}"
+pve_firewall_iot_net_ports: "{{ iot_net_ports }}"
 
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.

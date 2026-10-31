@@ -29,4 +29,4 @@ Format: status, context, decision, consequences.
 - [25. Debian 13 for the guests until the CPUs have x86-64-v3](0025-debian-guests-until-x86-64-v3.md)
 - [26. ufw as the guest firewall, also for Podman](0026-ufw-as-guest-firewall.md)
 - [27. Gatus for uptime checks, generated from the apps map](0027-gatus-generated-from-apps-map.md)
-- [28. IoT gateway LXC: MQTT hub, own firmware, one shared user without TLS](0028-iot-gateway-lxc.md)
+- [28. IoT gateway LXC: MQTT hub, firmware pulled from the gateway, one shared user without TLS](0028-iot-gateway-lxc.md)

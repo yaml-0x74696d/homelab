@@ -56,6 +56,11 @@ resource "proxmox_virtual_environment_container" "storage" {
     volume = local.storage.storage_pool_host
     path   = local.storage.storage_root
   }
+
+  # a new lxc_template is for new cts only, existing ones update through apt
+  lifecycle {
+    ignore_changes = [operating_system[0].template_file_id]
+  }
 }
 
 # central rsyslog (relp), on pve-3 because it's always on
@@ -112,6 +117,11 @@ resource "proxmox_virtual_environment_container" "log" {
       keys     = local.ssh_keys
       password = var.vm_password
     }
+  }
+
+  # a new lxc_template is for new cts only, existing ones update through apt
+  lifecycle {
+    ignore_changes = [operating_system[0].template_file_id]
   }
 }
 
@@ -182,5 +192,10 @@ resource "proxmox_virtual_environment_container" "iot" {
       keys     = local.ssh_keys
       password = var.vm_password
     }
+  }
+
+  # a new lxc_template is for new cts only, existing ones update through apt
+  lifecycle {
+    ignore_changes = [operating_system[0].template_file_id]
   }
 }

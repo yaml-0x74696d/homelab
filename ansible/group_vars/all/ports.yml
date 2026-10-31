@@ -7,6 +7,7 @@ docker_metrics_port: 9323
 docker_proxy_port: 2375
 mqtt_port: 1883
 mqtt_exporter_port: 9641   # on the iot lxc, prometheus scrapes it
+ota_port: 80   # firmware downloads on the iot lxc, iot leg only (roles/ota_server)
 log_relp_port: 20514   # rsyslog relp to the log lxc
 netbird_relay_ports: { min: 49160, max: 49200 }   # coturn relay range, narrow so the router forward stays small
 

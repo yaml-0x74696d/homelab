@@ -24,6 +24,7 @@ deployment {
         description "IoT gateway, legs on the LAN and the IoT wifi"
         instanceOf automation.mosquitto
         instanceOf automation.mqtt-exporter
+        instanceOf automation.ota
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
       }

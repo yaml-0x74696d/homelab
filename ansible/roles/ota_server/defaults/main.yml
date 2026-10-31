@@ -1,0 +1,6 @@
+---
+# firmware downloads for the iot net, nothing else on this nginx
+ota_server_package: nginx
+ota_server_listen: "{{ iot_ip }}"   # iot leg only, never the lan
+ota_server_port: "{{ ota_port }}"
+ota_server_root: /srv/firmware      # .bin files, uploaded by hand (scp over the lan leg)

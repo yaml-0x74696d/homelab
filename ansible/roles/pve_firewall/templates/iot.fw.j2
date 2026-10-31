@@ -8,8 +8,10 @@ policy_out: DROP
 
 [RULES]
 
-# iot net: the broker, nothing else, and only on the iot leg
-IN ACCEPT -i {{ pve_firewall_iot_nic }} -source {{ pve_firewall_iot_cidr }} -p tcp -dport {{ mqtt_port }} -log nolog
+# iot net: the broker and firmware downloads, nothing else, and only on the iot leg
+{% for p in pve_firewall_iot_net_ports %}
+IN ACCEPT -i {{ pve_firewall_iot_nic }} -source {{ pve_firewall_iot_cidr }} -p tcp -dport {{ p }} -log nolog
+{% endfor %}
 
 # lan: the consumers, scrapes, ssh, ping
 {% for h in pve_firewall_iot_mqtt_clients %}

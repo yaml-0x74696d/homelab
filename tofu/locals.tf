@@ -26,7 +26,7 @@ locals {
   docker_vms = { for k, v in local.vms : k => v if k != "netbird" }
 
   lxcs = {
-    "storage" = { vmid = local.net.vmids.storage, node = "pve-3", cores = 2, memory = 2048, swap = 512, disk = 24, ip = local.net.storage_ip, mac = local.macs.storage.lan }
+    "storage" = { vmid = local.net.vmids.storage, node = "pve-3", cores = 2, memory = 1024, swap = 512, disk = 24, ip = local.net.storage_ip, mac = local.macs.storage.lan }
     "log"     = { vmid = local.net.vmids.log, node = "pve-3", cores = 1, memory = 512, swap = 256, disk = 32, ip = local.net.log_ip, mac = local.macs.log.lan }
     "iot"     = { vmid = local.net.vmids.iot, node = local.net.iot_node, cores = 1, memory = 512, swap = 256, disk = 8, ip = local.net.iot_lan_ip, mac = local.macs.iot.lan, iot_ip = local.net.iot_ip, iot_mac = local.macs.iot.iot }
   }

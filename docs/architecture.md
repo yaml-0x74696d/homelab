@@ -258,17 +258,19 @@ Cron:
 
 ## Home automation
 
-The sensors talk MQTT, their readings end up in Home Assistant and Prometheus.
+The sensors talk MQTT, their readings end up in Home Assistant and Prometheus. How to add a sensor or rebuild the gateway: [iot.md](iot.md).
 
 ![](img/automation.png)
 
 ![](img/sensor-reading.png)
 
+![](img/firmware-update.png)
+
 - Data flow: ESP32 → Mosquitto → mqtt-exporter → Prometheus/Grafana, Home Assistant subscribes too
-- Mosquitto and mqtt-exporter run in the IoT gateway LXC (`iot`, CT 302), the only guest on the IoT bridge, with a second leg on the LAN for the consumers ([ADR 0028](adr/0028-iot-gateway-lxc.md))
+- Mosquitto, mqtt-exporter and the OTA server (nginx) run in the IoT gateway LXC (`iot`, CT 302), the only guest on the IoT bridge, with a second leg on the LAN for the consumers ([ADR 0028](adr/0028-iot-gateway-lxc.md))
 - Both come from Debian's repo (`roles/mosquitto`, `roles/mqtt_exporter`, `deploy-iot.yml`): one shared MQTT user (password in the vault), no TLS, plain 1883. Accepted risk: anyone on the IoT WiFi with the password can read and fake every sensor
 - The exporter turns `home/<device>/temperature` and `humidity` into `iot_temperature_celsius` and `iot_humidity_percent`
-- Two firewall layers with the same inbound rules from one list in `app_settings.yml`: the PVE guest firewall (`iot.fw`) and ufw inside (ufw additionally answers ping). From the IoT net only 1883; from the LAN 1883 from Home Assistant's host, the exporter port and node_exporter from Prometheus' host, SSH
+- Two firewall layers with the same inbound rules from one list in `app_settings.yml`: the PVE guest firewall (`iot.fw`) and ufw inside (ufw additionally answers ping). From the IoT net only 1883 and 80 (firmware downloads); from the LAN 1883 from Home Assistant's host, the exporter port and node_exporter from Prometheus' host, SSH
 - Outbound only DNS to the router, RELP to the log LXC and HTTP/HTTPS to the internet (`iot.fw`), the rest of the LAN and the IoT net are dropped
 - The IoT leg has no gateway, nothing routes through the LXC
 - A broken broker only exposes the broker, not docker-1's vault and SSO
@@ -276,7 +278,8 @@ The sensors talk MQTT, their readings end up in Home Assistant and Prometheus.
 - Home Assistant's broker address is set in its MQTT integration (UI), not in the repo
 - Prometheus keeps 15 days; the long-term sensor history is Home Assistant's (long-term statistics, hourly)
 - Home Assistant runs on docker-1
-- The sensors run my own PlatformIO firmware and only talk MQTT
+- The sensors run ESPHome (YAML, compiled in the ESPHome add-on) or my own C code, and only talk MQTT: readings out, commands in, Home Assistant through MQTT discovery, no ESPHome API
+- Firmware updates are pulled: I copy the `.bin` to `/srv/firmware` on the gateway, a "Flash from gateway" button in Home Assistant tells the device over MQTT, the device downloads it from `iot_ip:80` and reboots. Nothing connects into the IoT net
 
 ## Delivery
 
