@@ -29,8 +29,6 @@ grafana_pass: "CHANGE_ME"
 grafana_oidc_id: "CHANGE_ME"
 grafana_oidc_secret: "CHANGE_ME"
 
-influxdb_admin_pass: "CHANGE_ME"
-influxdb_admin_token: "CHANGE_ME"
 
 searxng_secret: "CHANGE_ME"
 

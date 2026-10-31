@@ -85,10 +85,11 @@ argument_specs:
             type: list
             elements: dict
             default: []
-            description: Dirs under the app's data dir, owned by svc-<name>
+            description: Dirs under the app's data dir, owned by svc-<name> (= root in the container) unless owner is set
             options:
               path: {type: str, required: true}
               mode: {type: str, default: "0750"}
+              owner: {type: int, description: "uid:gid inside the container that owns the dir, for apps not running as root"}
           cifs:
             type: list
             elements: dict

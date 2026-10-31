@@ -1,3 +1,5 @@
+{# prometheus' own host: a pasta container can't reach the vm's own ip, host.containers.internal it is #}
+{% macro addr(host, ip) %}{{ 'host.containers.internal' if host == apps['prometheus'].host else ip }}{% endmacro %}
 global:
   scrape_interval: {{ prometheus_scrape_interval }}
   evaluation_interval: {{ prometheus_scrape_interval }}
@@ -17,16 +19,16 @@ scrape_configs:
   - job_name: 'node-exporter'
     static_configs:
       - targets:
-          - '{{ docker1_ip }}:{{ node_exporter_port }}'
-          - '{{ docker2_ip }}:{{ node_exporter_port }}'
-          - '{{ docker3_ip }}:{{ node_exporter_port }}'
+          - '{{ addr('docker-1', docker1_ip) }}:{{ node_exporter_port }}'
+          - '{{ addr('docker-2', docker2_ip) }}:{{ node_exporter_port }}'
+          - '{{ addr('docker-3', docker3_ip) }}:{{ node_exporter_port }}'
 
   - job_name: 'docker-engines'
     static_configs:
       - targets:
-          - '{{ docker1_ip }}:{{ docker_metrics_port }}'
-          - '{{ docker2_ip }}:{{ docker_metrics_port }}'
-          - '{{ docker3_ip }}:{{ docker_metrics_port }}'
+          - '{{ addr('docker-1', docker1_ip) }}:{{ docker_metrics_port }}'
+          - '{{ addr('docker-2', docker2_ip) }}:{{ docker_metrics_port }}'
+          - '{{ addr('docker-3', docker3_ip) }}:{{ docker_metrics_port }}'
 
   - job_name: 'esp32_sensors'
     scrape_interval: {{ prometheus_scrape_interval }}

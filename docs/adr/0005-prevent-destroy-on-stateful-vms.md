@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- The Docker volumes (Postgres, SQLite, Redis, Influx) live on the VM disks
+- The Docker volumes (Postgres, SQLite, Redis) live on the VM disks
 - NetBird's management database (SQLite) lives on its VM disk once NixOS is installed
 - Some attribute changes make the provider replace a VM instead of updating it
 

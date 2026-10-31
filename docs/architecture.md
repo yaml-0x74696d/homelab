@@ -62,7 +62,7 @@ Each node runs one Docker VM, grouped by what the apps need.
 | VM | Node | Purpose | Apps |
 |---|---|---|---|
 | docker-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, Home Assistant, MQTT, ESPHome, SearXNG, pdfcraft, DDNS |
-| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, InfluxDB, Gatus, nginx |
+| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, Gatus, nginx |
 | docker-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
 - All three also run Diun, docker-socket-proxy, the PBS client and AIDE
@@ -203,7 +203,7 @@ Where backups go:
 How a backup runs:
 - Every Docker VM has the PBS client (`roles/pbs`), started by a timer every evening at 20:00
 - A random delay keeps the hosts from starting at the same time
-- First the databases are dumped (Postgres, SQLite `.backup`, Influx)
+- First the databases are dumped (Postgres, SQLite `.backup`)
 - Then `/opt/stacks` (`apps_root`) goes up as one archive, and `/srv/apps` (`podman_apps_root`) as a second one once the host runs a Podman app
 - A failed run is pushed to ntfy
 - The client's token can only write backups, not delete them
@@ -224,8 +224,7 @@ Prometheus for metrics, ntfy for alerts.
   - the PVE hosts
   - node-exporter and the Docker engine on every VM
   - the ESP32 sensors, through mqtt-exporter
-- InfluxDB keeps the sensor data long-term
-- Grafana shows dashboards on top of both
+- Grafana shows dashboards on top of it
 - Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
 - Homepage is the start page: Gatus' summary on top, Proxmox stats for nodes, VMs and LXCs, and a tile per app generated from the apps map (`homepage:` block), with an up badge where the map has the app's port
 
@@ -254,11 +253,12 @@ Cron:
 
 ## Home automation
 
-The sensors talk MQTT, their data ends up in Prometheus and InfluxDB.
+The sensors talk MQTT, their data ends up in Prometheus.
 
 ![](img/automation.png)
 
-- Data flow: ESP32 → Mosquitto (docker-1) → mqtt-exporter → Prometheus/Grafana + InfluxDB
+- Data flow: ESP32 → Mosquitto (docker-1) → mqtt-exporter → Prometheus/Grafana
+- Prometheus keeps 15 days; the long-term sensor history is Home Assistant's (long-term statistics, hourly)
 - Home Assistant and ESPHome also run on docker-1
 - The sensors send over MQTT, not over the ESPHome API
 

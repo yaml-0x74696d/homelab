@@ -45,14 +45,6 @@ apps:
     routes:
       - host: grafana
 
-  influxdb:
-    host: docker-2
-    runtime: compose
-    port: 8086
-    homepage: {group: Admin, icon: influxdb, label: InfluxDB}
-    routes:
-      - host: influx
-
   nginx:
     host: docker-2
     uid: 2020
@@ -69,8 +61,17 @@ apps:
 
   prometheus:
     host: docker-2
-    runtime: compose
+    uid: 2040
     port: 9091
+    allow_from: [edge, netbird, homepage]   # netbird = docker-2's ip, so grafana and gatus are in
+    secrets: []
+    dirs:
+      - path: data
+        owner: 65534   # prom/prometheus runs as nobody, not root
+    containers:
+      - name: prometheus
+        image: docker.io/prom/prometheus
+        tag: latest
     homepage: {group: Admin, icon: prometheus}
     routes:
       - host: prom

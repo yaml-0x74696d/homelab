@@ -31,9 +31,9 @@
 - name: Deploy home assistant
   import_playbook: deploy-homeassistant.yml
 - name: Deploy prometheus
-  import_playbook: deploy-prometheus.yml
-- name: Deploy influxdb
-  import_playbook: deploy-influxdb.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: prometheus
 - name: Deploy grafana
   import_playbook: deploy-app.yml
   vars:

@@ -47,12 +47,6 @@ http:
       tls: { certResolver: "cloudflare" }
       service: "grafana-service"
 
-    influxdb-router:
-      rule: "Host(`influx.{{ env "DOMAIN" }}`)"
-      entryPoints: ["websecure"]
-      tls: { certResolver: "cloudflare" }
-      service: "influxdb-service"
-
     nginx-router:
       rule: "Host(`web.{{ env "DOMAIN" }}`)"
       entryPoints: ["websecure"]
@@ -139,11 +133,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ env "DOCKER2_IP" }}:{{ env "GRAFANA_PORT" }}"
-
-    influxdb-service:
-      loadBalancer:
-        servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "INFLUXDB_PORT" }}"
 
     nginx-service:
       loadBalancer:

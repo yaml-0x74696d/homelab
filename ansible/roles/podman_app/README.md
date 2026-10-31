@@ -18,7 +18,7 @@
 2. Writes `svc-<name>:<uid*65536>:65536` to `/etc/subuid` and `/etc/subgid` **before** creating the user, so useradd doesn't add a second range. Then checks there's exactly one line each
 3. Creates group + user `svc-<name>` with the map's `uid`: locked password, `nologin`, member of `svc-apps` (may read the ntfy env file)
 4. Linger, then starts `user@<uid>.service`. A range change on an existing user runs `podman system migrate`
-5. Data dir `/srv/apps/<name>` (+ `dirs`), owned by `svc-<name>`
+5. Data dir `/srv/apps/<name>` (+ `dirs`), owned by `svc-<name>`. A dir with `owner: <uid>` belongs to that uid inside the container instead (host id `uid*65536 + owner - 1`), and the app dir becomes `0711` so the uid can pass through
 6. Unit files for each container:
    - `container.d/10-homelab.conf`: house rules (`Notify=healthy`, `HealthOnFailure=kill`, restart with backoff, start timeout, `WantedBy=default.target`)
    - `<container>.container.d/50-map.conf`: what the map says (image + tag, `AutoUpdate=registry` unless `auto_update: false`, `User=`, `StopTimeout=`, `Notify=false` + `HealthOnFailure=none` for `healthcheck: false`, `NoNewPrivileges=`, caps, `ReadOnly=`)
