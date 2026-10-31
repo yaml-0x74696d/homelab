@@ -193,7 +193,7 @@
   changed_when: podman_app_pull.stdout | length > 0
   when: not (ansible_check_mode and podman_app_user_result is changed)
 
-- name: Apply unit changes for {{ podman_app_name }}
+- name: Apply unit changes
   ansible.builtin.meta: flush_handlers
 
 # quadlets can't be enabled, WantedBy=default.target starts them at boot
