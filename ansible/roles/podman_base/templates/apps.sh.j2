@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# managed by ansible (roles/podman_base). every app runs rootless as its own svc user,
+# so plain `podman ps` sees none of them. this walks all of them.
+#   apps [ps]               every app's containers
+#   apps logs <app> [args]  podman logs of the app's container (args go to podman logs)
+#   apps status <app>       the app's systemd user units
+set -euo pipefail
+
+[ "$(id -u)" -eq 0 ] || exec sudo "$0" "$@"
+
+prefix='{{ podman_svc_prefix }}'
+users() { getent group '{{ podman_svc_group }}' | cut -d: -f4 | tr , '\n' | grep -v '^$' | sort; }
+as() { local u=$1; shift; sudo -u "$u" XDG_RUNTIME_DIR="/run/user/$(id -u "$u")" "$@"; }
+
+case "${1:-ps}" in
+  ps)
+    for u in $(users); do
+      as "$u" podman ps --format "$u{% raw %}\t{{.Names}}\t{{.Status}}\t{{.Ports}}{% endraw %}"
+    done | column -t -s $'\t'
+    ;;
+  logs)
+    app=${2:?usage: apps logs <app> [podman logs args]}
+    shift 2
+    as "$prefix$app" podman logs "$@" "$app"
+    ;;
+  status)
+    app=${2:?usage: apps status <app>}
+    systemctl --user -M "$prefix$app@" --no-pager list-units --type=service --all
+    ;;
+  *)
+    echo "usage: apps [ps] | apps logs <app> [args] | apps status <app>" >&2
+    exit 2
+    ;;
+esac
