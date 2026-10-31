@@ -3,21 +3,39 @@ title: Dashboard
 headerStyle: boxedWidgets
 statusStyle: "basic"
 disableIndexing: true
+# background.jpg is personal and not in git: put your own into config/images/
+background:
+  image: /images/background.jpg
+  blur: none
+  brightness: 100
+  saturate: 0
 theme: dark
-color: red
+color: neutral   # tiles + blocks grey; red comes only from custom.css accents
 hideErrors: true
 layout:
-  Quickaccess:
+  Status:
     style: row
-    columns: 5
+    columns: 1
   Servers:
     style: row
     columns: 4
-  VM:
-    initiallyCollapsed: true
+  VMs:
     style: row
-    columns: 6
-  Services:
+    columns: 5
+  LXCs:
+    style: row
+    columns: 3
+  Homecloud:
+    style: row
+    columns: 5
+  Home:
+    style: row
+    columns: 3
+  Tools:
+    style: row
+    columns: 4
+    initiallyCollapsed: true
+  Admin:
     style: row
     columns: 5
     initiallyCollapsed: true

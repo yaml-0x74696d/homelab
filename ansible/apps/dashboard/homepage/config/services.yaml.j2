@@ -1,139 +1,28 @@
----
-- Quickaccess:
-    - Nextcloud:
-        icon: nextcloud
-        href: https://cloud.{{ domain }}
-        server: docker-3
-        container: nextcloud
-    - Immich:
-        icon: /images/immich.png
-        href: https://photo.{{ domain }}
-        server: docker-3
-        container: immich_server
-    - Jellyfin:
-        icon: jellyfin
-        href: https://media.{{ domain }}
-        server: docker-3
-        container: jellyfin
-    - Vaultwarden:
-        icon: /images/vaultwarden.png
-        href: https://vault.{{ domain }}
-        server: docker-1
-        container: vaultwarden
-    - FritzBoX:
-        icon: fritzbox
-        href: https://{{ gateway_ip }}
-        ping: {{ homepage_ping_target }}
-
-- Services:
-        # edge & access
-        - Traefik:
-            icon: /images/traefik.png
-            href: https://proxy.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: traefik
-        - Authentik:
-            icon: authentik
-            href: https://auth.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: authentik-server
-        - Pi-hole:
-            icon: /images/pihole.png
-            href: https://dns.{{ domain }}/admin/login
-            showStats: true
-            server: docker-2
-            container: pihole
-        - Cloudflare DDNS:
-            icon: cloudflare
-            showStats: true
-            server: docker-1
-            container: cloudflare-ddns
-        - Nginx Web:
-            icon: nginx
-            href: https://web.{{ domain }}
-            siteMonitor: http://{{ hostvars[apps['nginx'].host].ansible_host }}:{{ apps['nginx'].port }}
-        # monitoring & dashboards
-        - Prometheus:
-            icon: prometheus
-            href: https://prom.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: prometheus
-        - Grafana:
-            icon: grafana
-            href: https://grafana.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: grafana
-        - InfluxDB:
-            icon: influxdb
-            href: https://influx.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: influxdb
-        - Gatus:
-            icon: gatus
-            href: https://status.{{ domain }}
-            siteMonitor: http://{{ hostvars[apps['gatus'].host].ansible_host }}:{{ apps['gatus'].port }}
+{# app tiles come from apps.yml (homepage: block) and infra_routes. badge = siteMonitor on the app's
+   port, so only for apps with a port in the map (docker-1's come with edge). stats only for servers + vms #}
+{% macro tiles(group) %}
+{% for name, a in apps.items() if a.homepage is defined and a.homepage.group == group and a.state | default('present') == 'present' %}
+{% set url = 'http://' ~ hostvars[a.host].ansible_host ~ ':' ~ a.port if a.port is defined else none %}
+        - {{ a.homepage.label | default(name | capitalize) }}:
+            icon: {{ a.homepage.icon }}
+            href: https://{{ a.routes[0].host }}.{{ domain }}{{ a.homepage.path | default('') }}
+{% if url %}
+            siteMonitor: {{ url }}
+{% endif %}
+{% if a.homepage.widget is defined and url %}
             widget:
-                type: gatus
-                url: http://{{ hostvars[apps['gatus'].host].ansible_host }}:{{ apps['gatus'].port }}
-        - Homepage:
-            icon: homepage
-            href: https://home.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: homepage
-        # home & iot
-        - Home Assistant:
-            icon: /images/homeassistant.png
-            href: https://ha.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: homeassistant
-        - ESPHome:
-            icon: esphome
-            href: https://esphome.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: esphome
-        - MQTT Broker:
-            icon: mdi-access-point-network
-            showStats: true
-            server: docker-1
-            container: mosquitto
-        - MQTT Exporter:
-            icon: mdi-transmission-tower
-            showStats: true
-            server: docker-1
-            container: mqtt-exporter
-        # apps & utilities
-        - Gitea:
-            icon: gitea
-            href: https://git.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: gitea
-        - Paperless:
-            icon: paperless-ngx
-            href: https://paperless.{{ domain }}
-            showStats: true
-            server: docker-3
-            container: paperless
-        - SearXNG:
-            icon: searxng
-            href: https://search.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: searxng
-        - PDFcraft:
-            icon: /images/pdfcraft.png
-            href: https://pdf.{{ domain }}
-            showStats: true
-            server: docker-1
-            container: pdfcraft
+                type: {{ a.homepage.widget }}
+                url: {{ url }}
+{% endif %}
+{% endfor %}
+{% for r in infra_routes if r.homepage is defined and r.homepage.group == group %}
+        - {{ r.homepage.label }}:
+            icon: {{ r.homepage.icon }}
+            href: https://{{ r.host }}.{{ domain }}{{ r.homepage.path | default('') }}
+{% endfor %}
+{% endmacro %}
+- Status:
+{{ tiles('Status') }}
 
 - Servers:
         - PVE-1:
@@ -180,7 +69,7 @@
                 password: "{{ pbs_homepage_token | default('') }}"
                 fields: ["datastore_usage", "failed_tasks_24h"]
 
-- VM:
+- VMs:
             - docker-1:
                 icon: /images/debian.png
                 proxmoxNode: pve-1
@@ -203,40 +92,39 @@
                 href: https://{{ docker3_ip }}:{{ cockpit_port }}/
                 fields: ["cpu", "mem"]
             - netbird:
-                icon: netbird
+                icon: nixos
                 proxmoxNode: pve-2
                 proxmoxVMID: {{ vmids.netbird }}
                 showStats: true
                 href: https://nb.{{ domain }}
                 fields: ["cpu", "mem"]
+
+- LXCs:
             - storage:
                 icon: /images/lxc.png
-                # showStats hits qemu/<vmid> for this lxc and 500s; query the lxc path directly
-                widget:
-                    type: customapi
-                    url: https://{{ pve3_ip }}:{{ pve_ui_port }}/api2/json/nodes/pve-3/lxc/{{ vmids.storage }}/status/current
-                    method: GET
-                    headers:
-                        Authorization: "PVEAPIToken={{ homepage_pve_token_id }}={{ proxmox_secret }}"
-                    mappings:
-                        - field: data.cpu
-                          label: CPU
-                          format: percent
-                        - field: data.mem
-                          label: MEM
-                          format: bytes
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.storage }}
+                proxmoxType: lxc
+                showStats: true
+                fields: ["cpu", "mem"]
             - log:
                 icon: /images/lxc.png
-                widget:
-                    type: customapi
-                    url: https://{{ pve3_ip }}:{{ pve_ui_port }}/api2/json/nodes/pve-3/lxc/{{ vmids.log }}/status/current
-                    method: GET
-                    headers:
-                        Authorization: "PVEAPIToken={{ homepage_pve_token_id }}={{ proxmox_secret }}"
-                    mappings:
-                        - field: data.cpu
-                          label: CPU
-                          format: percent
-                        - field: data.mem
-                          label: MEM
-                          format: bytes
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.log }}
+                proxmoxType: lxc
+                showStats: true
+                fields: ["cpu", "mem"]
+
+- Homecloud:
+{{ tiles('Homecloud') }}
+- Home:
+{{ tiles('Home') }}
+        - FritzBox:
+            icon: fritzbox
+            href: https://{{ gateway_ip }}
+            ping: {{ homepage_ping_target }}
+
+- Tools:
+{{ tiles('Tools') }}
+- Admin:
+{{ tiles('Admin') }}

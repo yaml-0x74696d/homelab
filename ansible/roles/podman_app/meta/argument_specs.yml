@@ -85,10 +85,11 @@ argument_specs:
             type: list
             elements: dict
             default: []
-            description: Dirs under the app's data dir, owned by svc-<name>
+            description: Dirs under the app's data dir, owned by svc-<name> (= root in the container) unless owner is set
             options:
               path: {type: str, required: true}
               mode: {type: str, default: "0750"}
+              owner: {type: int, description: "uid:gid inside the container that owns the dir, for apps not running as root"}
           cifs:
             type: list
             elements: dict
@@ -103,6 +104,15 @@ argument_specs:
           start_timeout:
             type: str
             description: TimeoutStartSec, default podman_app_start_timeout
+          homepage:
+            type: dict
+            description: Read by homepage's template, not by this role. no block = no tile
+            options:
+              group: {type: str, required: true, description: "Status, Homecloud, Home, Tools or Admin"}
+              icon: {type: str, required: true, description: "Homepage icon name or /images/<file>"}
+              label: {type: str, description: "Tile name, default the app's name capitalized"}
+              path: {type: str, description: Appended to the route in the tile's link}
+              widget: {type: str, description: "Homepage widget type that only needs the app's url (gatus)"}
           routes:
             type: list
             elements: dict

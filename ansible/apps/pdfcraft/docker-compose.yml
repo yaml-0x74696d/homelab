@@ -2,6 +2,8 @@ services:
   pdfcraft:
     image: ghcr.io/pdfcrafttool/pdfcraft:latest
     container_name: pdfcraft
+    ports:
+      - "${PORT}:80"   # edge routes it
     restart: unless-stopped
     networks:
       - proxy-net

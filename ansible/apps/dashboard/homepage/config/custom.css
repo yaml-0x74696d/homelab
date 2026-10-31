@@ -29,3 +29,31 @@ html, body {
 a:hover { color: var(--accent) !important; }
 ::selection { background: var(--accent); color: var(--fg-strong); }
 ::-webkit-scrollbar-thumb { background: var(--accent-dim); }
+
+/* tiles: dark panel, thin frame, red edge as the accent; full red frame on hover */
+.service-card, .bookmark, .information-widget {
+    background-color: rgb(20 20 20 / 0.9) !important;
+    border: 1px solid #3c3c3c !important;
+    border-left: 2px solid var(--accent) !important;
+    border-radius: 2px !important;
+    box-shadow: none !important;
+}
+.service-card:hover, .bookmark:hover { border-color: var(--accent) !important; }
+
+/* stat blocks inside a tile: lifted a step above the tile, own frame */
+.service-block {
+    background-color: #2a2d2e !important;
+    border: 1px solid #3c3c3c !important;
+    border-radius: 2px !important;
+}
+.service-block div:first-child { color: var(--fg-strong) !important; }
+
+/* group headings: quiet text, short red underline */
+.service-group-name, .bookmark-group-name {
+    color: #9d9d9d !important;
+    font-size: 13px !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--accent);
+    display: inline-block;
+}

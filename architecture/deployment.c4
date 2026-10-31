@@ -38,7 +38,6 @@ deployment {
         instanceOf edge.pihole
         instanceOf observability.prometheus
         instanceOf observability.grafana
-        instanceOf observability.influxdb
         instanceOf observability.gatus
         instanceOf ops.docker-proxy
         instanceOf ops.diun

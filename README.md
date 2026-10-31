@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 2 LXCs, 22 compose apps + 2 Podman apps + hostapd, 16 Ansible roles, 38 playbooks, 21 C4 views
+- 3 Proxmox nodes, 4 VMs + 2 LXCs, 19 compose apps + 4 Podman apps + hostapd, 16 Ansible roles, 35 playbooks, 21 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -60,7 +60,6 @@
 | Home | hostapd | pve-1 | IoT WiFi bridge |
 | Monitoring | Prometheus | docker-2 | Metrics |
 | Monitoring | Grafana | docker-2 | Dashboards |
-| Monitoring | InfluxDB | docker-2 | Time series database |
 | Monitoring | Gatus | docker-2 | Uptime checks, generated from the apps map |
 | Monitoring | Diun | All Docker hosts | Image update notices |
 | Tools | Homepage (`dashboard`) | docker-1 | Landing page |
@@ -92,7 +91,7 @@ justfile         setup · lint · check · deploy · deploy-app · c4 · diagram
 - `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
 - `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps`, `base`, `private/private.yml` YAML into JSON with yq-go
 - `nixos/update.sh` + `aide-accept.sh` read the NetBird IP from the same file
-- Ports: one `app_ports` map → compose, Traefik routes, Homepage tiles, Prometheus targets, firewall
+- Ports: one `app_ports` map → compose, Traefik routes, Prometheus targets, firewall
 - Secrets: one `vault.yml` (Ansible Vault), every app gets them via its `.env.j2` → `${VAR}` in compose
 - No magic numbers: every timeout, schedule, size and port is a named variable (role defaults, playbook `vars:`, Nix `let`)
 

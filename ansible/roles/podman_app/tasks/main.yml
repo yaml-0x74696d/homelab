@@ -129,14 +129,17 @@
     state: directory
     mode: '0755'
 
+# owner = a uid inside the container, mapped to the host id of the svc user's range. the app dir is then
+# passable (0711) so that uid gets through it to its own dir without listing it
 - name: Ensure data dirs for {{ podman_app_name }}
   ansible.builtin.file:
     path: "{{ podman_app_dir }}{{ ('/' + item.path) if item.path else '' }}"
     state: directory
-    owner: "{{ podman_app_user }}"
-    group: "{{ podman_app_user }}"
+    owner: "{{ podman_app_user if item.owner | default(0) == 0 else podman_app_entry.uid * podman_app_subid_count + item.owner - 1 }}"
+    group: "{{ podman_app_user if item.owner | default(0) == 0 else podman_app_entry.uid * podman_app_subid_count + item.owner - 1 }}"
     mode: "{{ item.mode | default('0750') }}"
-  loop: "{{ [{'path': ''}] + podman_app_entry.dirs | default([]) }}"
+  loop: "{{ [{'path': '', 'mode': '0711' if podman_app_entry.dirs | default([]) | selectattr('owner', 'defined') | list | length > 0 else '0750'}]
+            + podman_app_entry.dirs | default([]) }}"
   loop_control:
     label: "{{ item.path or '.' }}"
   when: not (ansible_check_mode and podman_app_user_new)

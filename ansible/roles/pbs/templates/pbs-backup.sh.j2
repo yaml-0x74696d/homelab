@@ -47,13 +47,6 @@ if [ -f "{{ base }}/{{ j.path }}" ]; then
 else
   log "skip sqlite {{ j.name }} — {{ base }}/{{ j.path }} absent"
 fi
-{% elif j.type == 'influx' %}
-log "dump influx {{ j.name }}"
-docker exec {{ j.container }} sh -c 'export INFLUX_TOKEN="$DOCKER_INFLUXDB_INIT_ADMIN_TOKEN"; rm -rf /tmp/pbs-influx && influx backup /tmp/pbs-influx' \
-  || fail "influx backup {{ j.name }}"
-docker cp {{ j.container }}:/tmp/pbs-influx "$STAGING/{{ j.name }}" || fail "influx cp {{ j.name }}"
-[ -n "$(ls -A "$STAGING/{{ j.name }}" 2>/dev/null)" ] || fail "influx {{ j.name }} dump is empty"
-docker exec {{ j.container }} rm -rf /tmp/pbs-influx || true
 {% endif %}
 {% endfor %}
 

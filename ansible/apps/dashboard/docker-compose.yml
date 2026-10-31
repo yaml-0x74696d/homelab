@@ -2,6 +2,8 @@ services:
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
+    ports:
+      - "${PORT}:3000"   # edge routes it
     restart: unless-stopped
     environment:
       - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}

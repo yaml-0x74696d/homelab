@@ -19,23 +19,31 @@ apps:
         tag: stable
         healthcheck: false   # scratch image, nothing to run a check with
         add_caps: [NET_RAW]  # runs as root in the container, so pings use raw sockets
+    homepage: {group: Status, icon: gatus, widget: gatus}
     routes:
       - host: status
         middlewares: [authentik]
 
   grafana:
     host: docker-2
-    runtime: compose
+    uid: 2030
     port: 3000
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: grafana-admin-pass
+        vault: grafana_pass
+      - name: grafana-oidc-secret
+        vault: grafana_oidc_secret
+    dirs:
+      - path: data
+        mode: "0770"   # grafana runs as 472:0 in the container, gid 0 = svc-grafana's group
+    containers:
+      - name: grafana
+        image: docker.io/grafana/grafana-oss
+        tag: latest
+    homepage: {group: Admin, icon: grafana}
     routes:
       - host: grafana
-
-  influxdb:
-    host: docker-2
-    runtime: compose
-    port: 8086
-    routes:
-      - host: influx
 
   nginx:
     host: docker-2
@@ -47,13 +55,24 @@ apps:
       - name: nginx
         image: docker.io/library/nginx
         tag: alpine
+    homepage: {group: Tools, icon: nginx, label: Web}
     routes:
       - host: web
 
   prometheus:
     host: docker-2
-    runtime: compose
+    uid: 2040
     port: 9091
+    allow_from: [edge, netbird, homepage]   # netbird = docker-2's ip, so grafana and gatus are in
+    secrets: []
+    dirs:
+      - path: data
+        owner: 65534   # prom/prometheus runs as nobody, not root
+    containers:
+      - name: prometheus
+        image: docker.io/prom/prometheus
+        tag: latest
+    homepage: {group: Admin, icon: prometheus}
     routes:
       - host: prom
         middlewares: [authentik]   # grafana reaches prom internally, not via this url
@@ -62,6 +81,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8080
+    homepage: {group: Homecloud, icon: nextcloud}
     routes:
       - host: cloud
         middlewares: [nextcloud-dav]
@@ -70,6 +90,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8081
+    homepage: {group: Homecloud, icon: /images/immich.png}
     routes:
       - host: photo
 
@@ -77,6 +98,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8082
+    homepage: {group: Homecloud, icon: jellyfin}
     routes:
       - host: media
 
@@ -84,6 +106,7 @@ apps:
     host: docker-3
     runtime: compose
     port: 8083
+    homepage: {group: Homecloud, icon: paperless-ngx}
     routes:
       - host: paperless
 
@@ -91,12 +114,16 @@ apps:
   authentik:
     host: docker-1
     runtime: compose
+    port: 9000
+    homepage: {group: Admin, icon: authentik}
     routes:
       - host: auth
 
   vaultwarden:
     host: docker-1
     runtime: compose
+    port: 8084
+    homepage: {group: Homecloud, icon: /images/vaultwarden.png}
     routes:
       - host: vault
       - host: vault
@@ -106,36 +133,48 @@ apps:
   gitea:
     host: docker-1
     runtime: compose
+    port: 3002
+    extra_ports:
+      - {port: 2222, allow_from: [lan, netbird]}   # git over ssh
+    homepage: {group: Tools, icon: gitea}
     routes:
       - host: git
 
   searxng:
     host: docker-1
     runtime: compose
+    port: 8085
+    homepage: {group: Tools, icon: searxng, label: SearXNG}
     routes:
       - host: search
 
   homepage:
     host: docker-1
     runtime: compose
+    port: 3003
     routes:
       - host: home
 
   pdfcraft:
     host: docker-1
     runtime: compose
+    port: 8086
+    homepage: {group: Tools, icon: /images/pdfcraft.png, label: PDFcraft}
     routes:
       - host: pdf
 
   homeassistant:
     host: docker-1
     runtime: compose
+    port: 8123
+    homepage: {group: Home, icon: /images/homeassistant.png, label: Home Assistant}
     routes:
       - host: ha
 
   esphome:
     host: docker-1
     runtime: compose
+    homepage: {group: Home, icon: esphome, label: ESPHome}
     routes:
       - host: esphome
         middlewares: [authentik]
@@ -147,4 +186,6 @@ infra_routes:
   - host: pve-3
   - host: pbs
   - host: dns     # pi-hole ui, goes with pi-hole in phase 2
+    homepage: {group: Admin, icon: /images/pihole.png, label: Pi-hole, path: /admin/login}
   - host: proxy   # traefik's own dashboard
+    homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}

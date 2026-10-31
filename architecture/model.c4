@@ -142,14 +142,10 @@ model {
   }
 
   observability = system "Observability" {
-    technology "Prometheus, Grafana, InfluxDB, Gatus"
+    technology "Prometheus, Grafana, Gatus"
     description "Metrics, dashboards and uptime checks"
     prometheus = container "Prometheus" { style { icon tech:prometheus } }
     grafana = ui "Grafana" { style { icon tech:grafana } }
-    influxdb = db "InfluxDB" {
-      technology "time series"
-      style { icon tech:influxdb }
-    }
     gatus = ui "Gatus" { description "Checks generated from the apps map" }
     node-exporter = container "node-exporter" { #ops; description "Per host" }
     log-server = store "Log server" {
@@ -261,7 +257,6 @@ model {
   automation.sensor -[mqtt]-> automation.mosquitto "publishes readings"
   automation.sensor -> automation.ap "wifi"
   automation.homeassistant -[mqtt]-> automation.mosquitto "subscribes"
-  automation.homeassistant -> observability.influxdb "long-term history"
   automation.mqtt-exporter -[mqtt]-> automation.mosquitto "subscribes"
   automation.esphome -> automation.sensor "flashes firmware"
 
@@ -269,7 +264,6 @@ model {
   observability.prometheus -[scrape]-> observability.node-exporter "host metrics"
   observability.prometheus -[scrape]-> automation.mqtt-exporter "sensor metrics"
   observability.grafana -> observability.prometheus "queries"
-  observability.grafana -> observability.influxdb "queries"
   observability.gatus -[https]-> edge.traefik "probes every route"
   observability.gatus -> ntfy "down alerts"
   observability.rsyslog -[relp]-> observability.log-server "forwards every log line"
