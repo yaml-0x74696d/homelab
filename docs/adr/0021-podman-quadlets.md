@@ -25,13 +25,13 @@ Rootless, one user per app:
 Apps as quadlets:
 - A new `podman_app` role renders quadlet units from Jinja templates (`*.container.j2`, `*.pod.j2`, `*.network.j2`)
 - Apps with more than one container get one `.pod`
-- One central apps map in `group_vars/all/apps.yml` describes each app: host, uid, units, secrets, dirs, cifs, ufw, routes
+- One central apps map in `group_vars/all/apps.yml` describes each app: host, uid, units, secrets, dirs, cifs, `allow_from`, routes
 - The playbooks stay thin
 
 Updates:
-- `AutoUpdate=registry` with a `podman-auto-update.timer` per user, nightly with a random delay
+- `AutoUpdate=registry` with a `podman-auto-update.timer` per user, weekly (Sunday 13:00, `podman_base_auto_update_time`) with a random delay
 - Every container has a `HealthCmd` and `Notify=healthy`, so an image that starts but doesn't work is rolled back
-- Failures are pushed to ntfy through `OnFailure=`
+- A wrapper around `podman auto-update` (`roles/podman_base`) pushes updated, rolled back and failed units to ntfy. App down/up is Uptime Kuma's job, so there is no `OnFailure=`
 
 Secrets and access:
 - Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), so no `.env` file sits on disk
@@ -55,10 +55,10 @@ Rollout:
 - Easier: updates and rollbacks happen without manual pulls, and failures land in ntfy
 - Easier: systemd owns the start order, the restarts and the mount dependencies
 
-- Harder: rootless apps can't share a container network. App-to-app traffic goes over `<host ip>:<port>`, with a ufw rule for each caller
+- Harder: rootless apps can't share a container network. App-to-app traffic goes over `<host ip>:<port>`, with a firewall rule for each caller
 - Harder: more files per app (one unit per container, pod and network) instead of one compose file
 
-- Accepted: an update can still break a service between two nightly runs. Health checks and rollback limit the damage, and ntfy reports it
+- Accepted: an update can still break a service between two weekly runs. Health checks and rollback limit the damage, and ntfy reports it
 
 - Once done, this supersedes [0002](0002-generic-docker-app-role.md) (`docker_app` role) and [0006](0006-latest-images-notify-only.md) (`:latest` + Diun)
 
