@@ -10,9 +10,11 @@ podman_base_packages:
   - systemd-container
   - acl
   - jq
+  - bsdextrautils   # column, for `apps ps`
 
 podman_base_ntfy_env: /etc/podman-ntfy.env
 podman_base_wrapper: /usr/local/bin/podman-auto-update-ntfy
+podman_base_apps_helper: /usr/local/bin/apps   # `apps ps` = every svc user's containers
 
 # one time for every svc user's podman-auto-update.timer, upstream adds RandomizedDelaySec=900
 podman_base_auto_update_time: "Sun *-*-* 13:00:00"   # midday, someone is around to fix it

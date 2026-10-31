@@ -9,10 +9,11 @@
 
 ## How it works
 
-1. Installs `podman_base_packages`: Podman with `crun`, what Debian only recommends for rootless (`passt`, `uidmap`, `dbus-user-session`, `catatonit`), `systemd-container`, `acl`, `jq`
+1. Installs `podman_base_packages`: Podman with `crun`, what Debian only recommends for rootless (`passt`, `uidmap`, `dbus-user-session`, `catatonit`), `systemd-container`, `acl`, `jq`, `bsdextrautils` (column)
 2. `short-name-mode = "enforcing"` in `/etc/containers/registries.conf.d/`: an ambiguous short image name fails instead of picking a registry
 3. Group `podman_svc_group` (`svc-apps`) and `/etc/podman-ntfy.env` (root:svc-apps, 0640) with the ntfy URL and token
-4. Drop-ins in `/etc/systemd/user/` for every user:
+4. `/usr/local/bin/apps`, the all-apps view (see below)
+5. Drop-ins in `/etc/systemd/user/` for every user:
    - `podman-auto-update.timer`: `OnCalendar=` cleared, then `podman_base_auto_update_time`
    - `podman-auto-update.service`: runs the wrapper (`podman_base_wrapper`) instead of `podman auto-update`
 
@@ -23,12 +24,21 @@
 - Quiet when nothing changed
 - Exits 1 on rolled back / failed, so the unit shows as failed in `systemctl --user`
 
+## The apps helper
+
+- Every app runs rootless as its own user, so `podman ps` as the admin shows none of them
+- `apps` (`podman_base_apps_helper`) walks every member of `podman_svc_group`, as root (it re-runs itself through sudo):
+  - `apps` / `apps ps`: all containers with user, status and ports
+  - `apps logs <app> [args]`: `podman logs` of the app's container, as its svc user (`apps logs gatus --tail 50`)
+  - `apps status <app>`: the app's systemd user units
+
 ## Settings
 
 | Variable | Default | What |
 |---|---|---|
 | `podman_base_packages` | see above | Package set |
 | `podman_base_wrapper` | `/usr/local/bin/podman-auto-update-ntfy` | The auto-update wrapper |
+| `podman_base_apps_helper` | `/usr/local/bin/apps` | The all-apps view |
 | `podman_base_ntfy_env` | `/etc/podman-ntfy.env` | ntfy settings for the wrapper |
 | `podman_base_auto_update_time` | `Sun *-*-* 13:00:00` | One schedule for every svc user. Upstream adds `RandomizedDelaySec=900` |
 | `podman_svc_group` | group_vars `app_settings.yml` | Shared with `roles/podman_app` |

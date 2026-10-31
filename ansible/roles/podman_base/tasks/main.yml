@@ -32,6 +32,12 @@
     dest: "{{ podman_base_wrapper }}"
     mode: '0755'
 
+- name: Install the apps helper
+  ansible.builtin.template:
+    src: apps.sh.j2
+    dest: "{{ podman_base_apps_helper }}"
+    mode: '0755'
+
 - name: Ensure user unit drop-in dirs
   ansible.builtin.file:
     path: "/etc/systemd/user/{{ item }}.d"
