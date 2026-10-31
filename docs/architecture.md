@@ -258,9 +258,11 @@ Cron:
 
 ## Home automation
 
-The sensors talk MQTT, their data ends up in Prometheus.
+The sensors talk MQTT, their readings end up in Home Assistant and Prometheus.
 
 ![](img/automation.png)
+
+![](img/sensor-reading.png)
 
 - Data flow: ESP32 → Mosquitto → mqtt-exporter → Prometheus/Grafana, Home Assistant subscribes too
 - Mosquitto and mqtt-exporter run in the IoT gateway LXC (`iot`, CT 302), the only guest on the IoT bridge, with a second leg on the LAN for the consumers ([ADR 0028](adr/0028-iot-gateway-lxc.md))

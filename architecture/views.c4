@@ -163,6 +163,17 @@ views "Flows" {
     household <- media.immich.server "done"
   }
 
+  dynamic view sensor-reading {
+    title "A sensor reading"
+    variant sequence
+    automation.sensor -> automation.ap "joins the iot wifi"
+    automation.sensor -> automation.mosquitto "publishes home/<device>/temperature + humidity"
+    automation.homeassistant <- automation.mosquitto "pushes it (subscribed): automations, long-term statistics"
+    automation.mqtt-exporter <- automation.mosquitto "pushes it (subscribed to home/+/+)"
+    observability.prometheus -> automation.mqtt-exporter "scrapes iot_temperature_celsius, iot_humidity_percent"
+    observability.grafana -> observability.prometheus "queries the last 15 days"
+  }
+
   dynamic view backup {
     title "Nightly backup"
     variant sequence
