@@ -1,0 +1,7 @@
+# managed by ansible (roles/mosquitto). debian's mosquitto.conf keeps persistence + the log file
+listener {{ mosquitto_port }}
+allow_anonymous false
+password_file {{ mosquitto_passwd_file }}
+
+# also into the journal, so rsyslog ships it to the log lxc
+log_dest syslog

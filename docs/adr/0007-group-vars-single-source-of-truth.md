@@ -45,7 +45,7 @@ How each tool reads it:
 
 - Easier: an IP, port or schedule is changed once, and tofu plan, the Nix build and Ansible all pick it up
 
-- Harder: YAML that OpenTofu or Nix reads must stay plain. Jinja values (`mqtt_broker_ip: "{{ docker1_ip }}"`, the allow lists in `ports.yml`) only work in Ansible
+- Harder: YAML that OpenTofu or Nix reads must stay plain. Jinja values (`mqtt_broker_ip: "{{ iot_lan_ip }}"`, the allow lists in `ports.yml`) only work in Ansible
 - Harder: `nix flake check --no-build` can't work, because facts.nix needs a build
 - Harder: flakes only see files tracked by git, so a new vars file has to be added to git first
 

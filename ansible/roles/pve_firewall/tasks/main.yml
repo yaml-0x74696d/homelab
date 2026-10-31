@@ -7,7 +7,7 @@
   ansible.builtin.command: "touch /etc/pve/firewall/{{ item }}.fw"
   args:
     creates: "/etc/pve/firewall/{{ item }}.fw"
-  loop: "{{ ['cluster', pve_firewall_netbird_vmid, pve_firewall_log_vmid] + pve_firewall_open_guests }}"
+  loop: "{{ ['cluster', pve_firewall_netbird_vmid, pve_firewall_log_vmid, pve_firewall_iot_vmid] + pve_firewall_open_guests }}"
   run_once: true
 
 - name: Pre-create the host fw file
@@ -33,6 +33,13 @@
   ansible.builtin.template:  # noqa: risky-file-permissions
     src: log.fw.j2
     dest: "/etc/pve/firewall/{{ pve_firewall_log_vmid }}.fw"
+    unsafe_writes: true
+  run_once: true
+
+- name: Iot gateway lxc firewall
+  ansible.builtin.template:  # noqa: risky-file-permissions
+    src: iot.fw.j2
+    dest: "/etc/pve/firewall/{{ pve_firewall_iot_vmid }}.fw"
     unsafe_writes: true
   run_once: true
 

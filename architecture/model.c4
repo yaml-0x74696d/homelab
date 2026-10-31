@@ -124,15 +124,23 @@ model {
   }
 
   automation = system "Home automation" {
-    technology "Home Assistant, Mosquitto, ESPHome"
+    technology "Home Assistant, Mosquitto"
     description "Home Assistant and the sensor network"
     homeassistant = container "Home Assistant"
-    mosquitto = container "Mosquitto" { #parked; technology "MQTT broker" }
-    esphome = ui "ESPHome" { #parked }
-    mqtt-exporter = container "mqtt-exporter" { #parked }
+    mosquitto = container "Mosquitto" { technology "MQTT broker" }
+    mqtt-exporter = container "mqtt-exporter"
+    ota = container "nginx" {
+      technology "firmware downloads"
+      description "Serves the sensors' .bin files, IoT leg only"
+    }
+    esphome = container "ESPHome" {
+      #parked
+      technology "firmware builder"
+      description "Home Assistant add-on, compiles the device yamls"
+    }
     sensor = device "ESP32 sensor" {
       #iot
-      description "Temperature/humidity on the isolated IoT wifi"
+      description "ESPHome or own C, temperature/humidity on the isolated IoT wifi"
     }
     ap = container "IoT access point" {
       #iot
@@ -254,11 +262,13 @@ model {
   storage.pbs -> ntfy "job alerts"
 
   // home automation
-  automation.sensor -[mqtt]-> automation.mosquitto "publishes readings"
+  automation.sensor -[mqtt]-> automation.mosquitto "publishes readings, gets commands"
   automation.sensor -> automation.ap "wifi"
-  automation.homeassistant -[mqtt]-> automation.mosquitto "subscribes"
+  automation.sensor -> automation.ota "pulls firmware" { technology "HTTP" }
+  automation.homeassistant -[mqtt]-> automation.mosquitto "subscribes, sends commands"
+  admin -> automation.esphome "compiles firmware"
+  admin -> automation.ota "uploads firmware (scp)"
   automation.mqtt-exporter -[mqtt]-> automation.mosquitto "subscribes"
-  automation.esphome -> automation.sensor "flashes firmware"
 
   // observability
   observability.prometheus -[scrape]-> observability.node-exporter "host metrics"

@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: mqtt_exporter
+  author: tim
+  description: mqtt topics to prometheus metrics (debian prometheus-mqtt-exporter)
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

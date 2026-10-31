@@ -1,8 +1,0 @@
----
-- name: Deploy esphome
-  hosts: docker-1
-  become: true
-  roles:
-    - role: docker_app
-      vars:
-        docker_app_name: esphome

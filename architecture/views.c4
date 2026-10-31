@@ -24,7 +24,7 @@ views {
 views "Deployment" {
   deployment view pve1 {
     title "pve-1: what runs where"
-    include home.pve1, home.pve1.*, home.pve1.docker1.*, home.pve1.hostapd.*, home.pve1.iot.*
+    include home.pve1, home.pve1.*, home.pve1.docker1.*, home.pve1.gateway.*, home.pve1.hostapd.*, home.pve1.iot.*
     style home.pve1.iot { color amber }
   }
   deployment view pve2 {
@@ -161,6 +161,30 @@ views "Flows" {
     media.immich.server -> storage.samba "writes original"
     media.immich.server -> media.immich.pg "stores metadata"
     household <- media.immich.server "done"
+  }
+
+  dynamic view sensor-reading {
+    title "A sensor reading"
+    variant sequence
+    automation.sensor -> automation.ap "joins the iot wifi"
+    automation.sensor -> automation.mosquitto "publishes home/<device>/temperature + humidity"
+    automation.homeassistant <- automation.mosquitto "pushes it (subscribed): automations, long-term statistics"
+    automation.mqtt-exporter <- automation.mosquitto "pushes it (subscribed to home/+/+)"
+    observability.prometheus -> automation.mqtt-exporter "scrapes iot_temperature_celsius, iot_humidity_percent"
+    observability.grafana -> observability.prometheus "queries the last 15 days"
+  }
+
+  dynamic view firmware-update {
+    title "Firmware update"
+    variant sequence
+    admin -> automation.esphome "compiles <device>.bin"
+    admin -> automation.ota "scp to /srv/firmware over the lan leg"
+    admin -> automation.homeassistant "presses Flash from gateway"
+    automation.homeassistant -> automation.mosquitto "publishes the button press"
+    automation.sensor <- automation.mosquitto "pushes it (subscribed)"
+    automation.sensor -> automation.ota "GET /<device>.bin"
+    automation.sensor <- automation.ota "firmware"
+    automation.sensor -> automation.mosquitto "reboots, reconnects"
   }
 
   dynamic view backup {

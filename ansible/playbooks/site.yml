@@ -22,12 +22,6 @@
   import_playbook: deploy-pdfcraft.yml
 - name: Deploy searxng
   import_playbook: deploy-searxng.yml
-- name: Deploy mosquitto
-  import_playbook: deploy-mosquitto.yml
-- name: Deploy mqtt-exporter
-  import_playbook: deploy-mqtt-exporter.yml
-- name: Deploy esphome
-  import_playbook: deploy-esphome.yml
 - name: Deploy home assistant
   import_playbook: deploy-homeassistant.yml
 - name: Deploy prometheus
@@ -50,6 +44,8 @@
   import_playbook: deploy-diun.yml
 - name: Deploy hostapd
   import_playbook: deploy-hostapd.yml
+- name: Deploy iot gateway (lxc)
+  import_playbook: deploy-iot.yml
 # needs pve-3 powered on
 - name: Deploy storage (mergerfs + samba)
   import_playbook: deploy-storage.yml

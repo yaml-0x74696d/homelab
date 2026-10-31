@@ -1,0 +1,3 @@
+---
+# filters with ufw (roles/samba), so lxc_base adds the node-exporter rule there
+lxc_base_ufw: true

@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: ota_server
+  author: tim
+  description: nginx serving firmware files to the iot net
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

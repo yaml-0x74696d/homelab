@@ -114,6 +114,13 @@
                 proxmoxType: lxc
                 showStats: true
                 fields: ["cpu", "mem"]
+            - iot:
+                icon: /images/lxc.png
+                proxmoxNode: {{ iot_node }}
+                proxmoxVMID: {{ vmids.iot }}
+                proxmoxType: lxc
+                showStats: true
+                fields: ["cpu", "mem"]
 
 - Homecloud:
 {{ tiles('Homecloud') }}
