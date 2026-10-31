@@ -3,6 +3,10 @@ storage:
   type: sqlite
   path: /data/data.db
 
+# dark unless the browser asks for light (gatus lets the os preference win)
+ui:
+  dark-mode: true
+
 alerting:
   ntfy:
     url: "{{ ntfy_url | regex_replace('/[^/]+$', '') }}"
