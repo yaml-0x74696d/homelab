@@ -16,6 +16,7 @@ Status: Accepted
 - Gatus runs on docker-2 as a rootless Podman app in Kuma's slot (port 3001, `status.<domain>`)
 - `apps/gatus/config.yaml.j2` generates every check: each route in `apps.yml` (status and certificate expiry), Traefik, a ping for every guest in the inventory, the PVE and PBS ports, and the domain's A record
 - Alerts go to ntfy, with server and topic split from the one `ntfy_url` ([0019](0019-ntfy-single-alert-channel.md))
+- Route names are pinned to Traefik's IP in Gatus' container (`AddHost=`, from `apps.yml` and `app_sources.edge`): the checks don't depend on DNS, so a DNS outage can't turn every check red
 
 - Enforced by: the config is rendered into a Podman secret by `roles/podman_app`, nothing is edited in a UI
 
