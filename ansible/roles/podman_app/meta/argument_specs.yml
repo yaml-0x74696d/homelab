@@ -1,5 +1,5 @@
 ---
-# the apps.yml schema. checked at every deploy; the ci play runs it over every entry
+# the apps.yml schema, checked at every deploy
 argument_specs:
   main:
     short_description: Deploy one rootless podman app from its apps.yml entry
@@ -64,8 +64,6 @@ argument_specs:
               name: {type: str, required: true, description: Podman secret name}
               vault: {type: str, description: Vault variable holding the value}
               template: {type: str, description: "File secret: template in apps/<name>/ rendered into the secret"}
-              uid: {type: int, description: "File secret owner in the container, default the container user"}
-              mode: {type: str, default: "0400", description: File secret mode}
           containers:
             type: list
             elements: dict

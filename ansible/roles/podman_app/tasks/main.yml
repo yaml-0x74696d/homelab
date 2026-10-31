@@ -1,6 +1,5 @@
 ---
-# argument_specs validates the entry but doesn't fill its defaults, hence the | default() below.
-# a first --check has no svc user yet, so the tasks that need it skip then
+# argument_specs validates the entry but doesn't fill its defaults, hence the | default() below
 
 - name: Check the entry of {{ podman_app_name }}
   ansible.builtin.assert:
@@ -50,7 +49,19 @@
 
 - name: Resolve allow_from for {{ podman_app_name }}
   ansible.builtin.set_fact:
-    podman_app_rules: "{{ lookup('ansible.builtin.template', 'firewall-rules.j2') | from_yaml or [] }}"
+    podman_app_rules: "{{ (lookup('ansible.builtin.template', 'firewall-rules.j2') | from_yaml or []) | unique }}"
+
+- name: Check the svc user {{ podman_app_user }}
+  ansible.builtin.command: "id -u {{ podman_app_user }}"
+  register: podman_app_user_before
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# a first --check has no svc user yet, so the tasks that need it skip then
+- name: Note if new user {{ podman_app_user }}
+  ansible.builtin.set_fact:
+    podman_app_user_new: "{{ podman_app_user_before.rc != 0 }}"
 
 # before the user exists, else useradd adds a second, random range
 - name: Reserve the subuid/subgid range of {{ podman_app_user }}
@@ -79,7 +90,6 @@
     shell: /usr/sbin/nologin
     password: '!'
     password_lock: true
-  register: podman_app_user_result
 
 - name: Read the subid lines of {{ podman_app_user }}
   ansible.builtin.command: "grep -c '^{{ podman_app_user }}:' /etc/{{ item }}"
@@ -110,7 +120,7 @@
   become: true
   become_user: "{{ podman_app_user }}"
   environment: "{{ podman_app_user_env }}"
-  when: podman_app_subid is changed and podman_app_user_result is not changed
+  when: podman_app_subid is changed and not podman_app_user_new
   changed_when: true
 
 - name: Ensure the apps root
@@ -129,7 +139,7 @@
   loop: "{{ [{'path': ''}] + podman_app_entry.dirs | default([]) }}"
   loop_control:
     label: "{{ item.path or '.' }}"
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: Ensure quadlet dirs for {{ podman_app_name }}
   ansible.builtin.file:
@@ -141,7 +151,7 @@
   loop: "{{ [podman_app_home + '/.config', podman_app_home + '/.config/containers', podman_app_quadlet_dir,
             podman_app_quadlet_dir + '/container.d']
             + podman_app_entry.containers | map(attribute='name') | map('regex_replace', '^(.*)$', podman_app_quadlet_dir + '/\\1.container.d') }}"
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: House rules for {{ podman_app_name }}
   ansible.builtin.template:
@@ -151,7 +161,7 @@
     group: "{{ podman_app_user }}"
     mode: '0640'
   notify: [Reload user units, Restart app]
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: Map settings for {{ podman_app_name }}
   ansible.builtin.template:
@@ -164,7 +174,7 @@
   loop_control:
     label: "{{ item.name }}"
   notify: [Reload user units, Restart app]
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: Unit files for {{ podman_app_name }}
   ansible.builtin.template:
@@ -177,7 +187,27 @@
   loop_control:
     label: "{{ item.name }}"
   notify: [Reload user units, Restart app]
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
+
+- name: Read the ufw rules
+  ansible.builtin.command: ufw status
+  register: podman_app_ufw_status
+  changed_when: false
+  check_mode: false
+
+# rules this app had before (comment 'podman <app>') that aren't wanted anymore
+- name: Find stale ufw rules of {{ podman_app_name }}
+  ansible.builtin.set_fact:
+    podman_app_ufw_stale: "{{ lookup('ansible.builtin.template', 'ufw-stale.j2') | from_yaml or [] }}"
+
+- name: Drop stale ufw rules of {{ podman_app_name }}
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port | string }}"
+    proto: "{{ item.proto }}"
+    from_ip: "{{ item.src }}"
+    delete: true
+  loop: "{{ podman_app_ufw_stale }}"
 
 - name: Allow ports in ufw for {{ podman_app_name }}
   community.general.ufw:
@@ -213,7 +243,7 @@
   failed_when: false
   check_mode: false
   no_log: true
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: Create or replace the secrets of {{ podman_app_name }}
   ansible.builtin.command: "podman secret create --replace {{ item.item.name }} -"
@@ -244,7 +274,7 @@
   environment: "{{ podman_app_user_env }}"
   register: podman_app_pull
   changed_when: podman_app_pull.stdout | length > 0
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: Apply unit changes
   ansible.builtin.meta: flush_handlers
@@ -261,7 +291,7 @@
   become: true
   become_user: "{{ podman_app_user }}"
   environment: "{{ podman_app_user_env }}"
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: Enable auto-update for {{ podman_app_user }}
   ansible.builtin.systemd_service:
@@ -272,13 +302,13 @@
   become: true
   become_user: "{{ podman_app_user }}"
   environment: "{{ podman_app_user_env }}"
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: Drop old images of {{ podman_app_name }}
-  ansible.builtin.command: podman image prune -f
+  ansible.builtin.command: podman image prune -af
   become: true
   become_user: "{{ podman_app_user }}"
   environment: "{{ podman_app_user_env }}"
   register: podman_app_prune
   changed_when: podman_app_prune.stdout | length > 0
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)

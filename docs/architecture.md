@@ -204,7 +204,7 @@ How a backup runs:
 - Every Docker VM has the PBS client (`roles/pbs`), started by a timer every evening at 20:00
 - A random delay keeps the hosts from starting at the same time
 - First the databases are dumped (Postgres, SQLite `.backup`, Influx)
-- Then `/opt/stacks` (`apps_root`) goes up as one archive
+- Then `/opt/stacks` (`apps_root`) goes up as one archive, and `/srv/apps` (`podman_apps_root`) as a second one once the host runs a Podman app
 - A failed run is pushed to ntfy
 - The client's token can only write backups, not delete them
 

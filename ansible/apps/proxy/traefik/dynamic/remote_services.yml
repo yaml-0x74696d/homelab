@@ -69,6 +69,7 @@ http:
       rule: "Host(`status.{{ env "DOMAIN" }}`)"
       entryPoints: ["websecure"]
       tls: { certResolver: "cloudflare" }
+      middlewares: ["authentik@file"]   # topology + internal ips, sso only
       service: "gatus-service"
 
     nextcloud-router:

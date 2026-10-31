@@ -8,8 +8,9 @@ HOST="$(hostname -s)"
 notify() {
   [ -n "${NTFY_URL:-}" ] || return 0
   local hdr=(-H "Title: $1" -H "Priority: $2" -H "Tags: package")
-  [ -n "${NTFY_TOKEN:-}" ] && hdr+=(-H "Authorization: Bearer $NTFY_TOKEN")
-  curl -fsS -m "$NTFY_TIMEOUT" "${hdr[@]}" -d "$3" "$NTFY_URL" >/dev/null 2>&1 || true
+  # token through stdin, argv shows up in ps
+  if [ -n "${NTFY_TOKEN:-}" ]; then printf 'header = "Authorization: Bearer %s"\n' "$NTFY_TOKEN"; fi \
+    | curl -fsS -K - -m "$NTFY_TIMEOUT" "${hdr[@]}" -d "$3" "$NTFY_URL" >/dev/null 2>&1 || true
 }
 
 # json on stdout, errors go to the journal

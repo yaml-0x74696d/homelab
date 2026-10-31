@@ -26,7 +26,7 @@
 7. ufw: one rule per port and `allow_from` source
 8. Podman secrets as the user: the value from the vault variable or the rendered template, replaced only when the content differs (`podman secret inspect --showsecret`)
 9. Pulls the images as the user (so a pull never eats the start timeout), reloads + restarts on unit changes, starts the units
-10. Enables the user's `podman-auto-update.timer` (schedule + ntfy wrapper from `roles/podman_base`), prunes old images
+10. Enables the user's `podman-auto-update.timer` (schedule + ntfy wrapper from `roles/podman_base`), then `podman image prune -af`: every image the app doesn't run goes, old tags too. Each app has its own user, so this never touches another app's images
 
 ## The apps.yml entry
 
@@ -72,7 +72,7 @@ apps:
 
 ## Notes
 
-- Drop-ins override the main file, so a template can't change a house rule or a map field. Change the map or the default instead
+- Drop-ins override single-value keys of the main file (`Image=`, `Notify=`, `Restart=`), so a template can't change a house rule or a map field there. List keys (`Volume=`, `Environment=`, `AddCapability=`) add up instead
 - Every container needs a `HealthCmd=`: `Notify=healthy` waits for it, so a container without one never counts as started. An image that can't run one (scratch) gets `healthcheck: false`
 - No comments at the end of a line in the templates: systemd reads them as part of the value
 - Quadlets can't be enabled. `WantedBy=default.target` starts them with the user manager, which linger starts at boot

@@ -30,11 +30,11 @@ Apps as quadlets:
 
 Updates:
 - `AutoUpdate=registry` with a `podman-auto-update.timer` per user, weekly (Sunday 13:00, `podman_base_auto_update_time`) with a random delay
-- Every container has a `HealthCmd` and `Notify=healthy`, so an image that starts but doesn't work is rolled back
+- Every container has a `HealthCmd` and `Notify=healthy`, so an image that starts but doesn't work is rolled back. An image that can't run a check (`scratch`) is marked `healthcheck: false` in the map
 - A wrapper around `podman auto-update` (`roles/podman_base`) pushes updated, rolled back and failed units to ntfy. App down/up is Gatus' job, so there is no `OnFailure=`
 
 Secrets and access:
-- Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), so no `.env` file sits on disk
+- Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), as a value or rendered into a config file, so no `.env` file sits on disk
 - No app gets a container socket, so Diun and docker-proxy are dropped
 
 Storage:
@@ -47,7 +47,7 @@ Rollout:
 - The VMs are rebuilt in place one at a time, with the same VMID, IP and MAC
 - Each rebuild only happens after a restore rehearsal worked
 
-- Enforced by: a quadlet dry-run in CI (`quadlet -dryrun` on the rendered templates), an Ansible syntax check and ansible-lint in `just check`
+- Enforced by: `argument_specs` on every deploy, `scripts/check_wiring.py` and ansible-lint in pre-commit (so `just check` and CI)
 
 ## Consequences
 

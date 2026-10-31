@@ -6,7 +6,7 @@
   become: true
   become_user: "{{ podman_app_user }}"
   environment: "{{ podman_app_user_env }}"
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)
 
 - name: Restart app
   ansible.builtin.systemd_service:
@@ -19,4 +19,4 @@
   become: true
   become_user: "{{ podman_app_user }}"
   environment: "{{ podman_app_user_env }}"
-  when: not (ansible_check_mode and podman_app_user_result is changed)
+  when: not (ansible_check_mode and podman_app_user_new)

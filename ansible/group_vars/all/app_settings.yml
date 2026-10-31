@@ -20,6 +20,10 @@ gatus_interval: 60s
 gatus_failure_threshold: 3        # failed checks in a row before ntfy
 gatus_cert_min_validity: 168h     # warn a week before a route's cert runs out
 gatus_dns_resolver: 1.1.1.1       # outside view for the domain's A record (ddns)
+gatus_ping_groups: [docker_hosts, lxc_containers]
+gatus_auth_middlewares: [authentik]   # routes behind these get a backend check too
+gatus_data: /data                 # data dir inside the container
+gatus_db_file: data.db
 
 # influxdb long-term sensor store (docker-2); secrets in vault
 influxdb_org: homelab

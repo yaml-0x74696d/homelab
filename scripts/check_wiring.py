@@ -10,7 +10,8 @@ from pathlib import Path
 
 import yaml
 
-UID_MAX = 65534          # svc uids, subuid range = uid * 65536
+UID_MIN = 2000           # svc uids, below are login users
+UID_MAX = 65534          # subuid range = uid * 65536 has to stay in 32 bit
 PORT_MIN_ROOTLESS = 1024
 APPS_MAP = "ansible/group_vars/all/apps.yml"
 APP_SETTINGS = "ansible/group_vars/all/app_settings.yml"
@@ -73,6 +74,8 @@ def traefik_routes(repo):
 
 def main():
     repo = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
+    if re.search(r"\{\{|\{%", (repo / APPS_MAP).read_text()):
+        errors.append(f"{APPS_MAP}: jinja found, it has to stay pure data (edge and ci read it with yq)")
     amap = load(repo, APPS_MAP)
     apps, infra = amap.get("apps") or {}, amap.get("infra_routes") or []
     sources = set((load(repo, APP_SETTINGS).get("app_sources") or {}).keys())
@@ -82,24 +85,30 @@ def main():
     uids, routes_map, ports_by_host = {}, {}, {}
     for name, a in apps.items():
         podman = a.get("runtime", "podman") == "podman"
+        if not isinstance(a, dict):
+            errors.append(f"{name}: entry isn't a mapping")
+            continue
         if a.get("host") not in hosts:
             errors.append(f"{name}: host '{a.get('host')}' is not in the inventory")
         for r in a.get("routes", []):
+            if "host" not in r:
+                errors.append(f"{name}: route without host")
+                continue
             key = (r["host"], r.get("path"))
             if key in routes_map:
                 errors.append(f"{name}: route {r['host']}{r.get('path') or ''} also in {routes_map[key][0]}")
             routes_map[key] = (name, r.get("middlewares", []))
         ports = ([a["port"]] if "port" in a else []) + [p["port"] for p in a.get("extra_ports", [])]
         for p in ports:
-            other = ports_by_host.setdefault(a["host"], {}).get(p)
+            other = ports_by_host.setdefault(a.get("host"), {}).get(p)
             if other:
                 errors.append(f"{name}: port {p} on {a['host']} also used by {other}")
-            ports_by_host[a["host"]][p] = name
+            ports_by_host[a.get("host")][p] = name
         if not podman:
             continue
         uid = a.get("uid")
-        if not isinstance(uid, int) or not 0 < uid <= UID_MAX:
-            errors.append(f"{name}: uid {uid} missing or out of 1..{UID_MAX}")
+        if not isinstance(uid, int) or not UID_MIN <= uid <= UID_MAX:
+            errors.append(f"{name}: uid {uid} missing or out of {UID_MIN}..{UID_MAX}")
         elif uid in uids:
             errors.append(f"{name}: uid {uid} also used by {uids[uid]}")
         else:
@@ -111,6 +120,9 @@ def main():
             if src not in sources and src not in apps:
                 errors.append(f"{name}: allow_from '{src}' is neither in app_sources nor an app")
         for c in a.get("containers", []):
+            if "name" not in c:
+                errors.append(f"{name}: container without name")
+                continue
             if "." not in c.get("image", "").split("/")[0]:
                 errors.append(f"{name}/{c.get('name')}: image '{c.get('image')}' isn't fully qualified")
             unit = repo / APPS_DIR / name / f"{c['name']}.container.j2"
@@ -133,6 +145,8 @@ def main():
     for (h, path), (name, mws) in routes_map.items():
         if (h, path) not in served:
             errors.append(f"{name}: route {h}{path or ''} has no traefik router")
+        elif set(served[(h, path)]) != set(mws):
+            errors.append(f"{name}: route {h}{path or ''} middlewares {sorted(mws)} in apps.yml, {sorted(served[(h, path)])} in traefik")
         for mw in mws:
             if mw not in mws_defined:
                 errors.append(f"{name}: middleware '{mw}' isn't defined in traefik")

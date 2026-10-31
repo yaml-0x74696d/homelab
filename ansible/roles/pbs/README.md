@@ -1,6 +1,6 @@
 # pbs
 
-- Proxmox Backup client: dumps the databases first, then pushes one archive of the apps folder
+- Proxmox Backup client: dumps the databases first, then pushes the apps folders (Docker and Podman) as archives
 - Only data: the VMs are rebuilt from OpenTofu + Ansible and the configs live in git. Only the volumes and databases can't be replaced
 - Uses the file-level `proxmox-backup-client`, not vzdump VM images
 
@@ -63,7 +63,7 @@
 | `pbs_on_calendar` | `*-*-* 20:00:00` | When the backup runs (systemd OnCalendar) |
 | `pbs_randomized_delay` | `20m` | Random delay, so the three hosts don't start at once |
 | `pbs_jobs` | `[]` | Databases to dump: `{name, type: postgres\|sqlite\|influx, container?, path?, data_dir?, podman?}`, set in `host_vars`. `podman: true` = `path` is under `podman_apps_root` |
-| `pbs_exclude` | `[]` | Extra excludes for `apps.pxar`, set in `host_vars` |
+| `pbs_exclude` | `[]` | Extra excludes for `apps.pxar` and `podman-apps.pxar`, set in `host_vars` |
 | `pbs_datastore` | `homelab` | Datastore on the PBS server |
 | `pbs_token_id` | `backup@pbs!client` | API token |
 | `pbs_repository` | token@pve-3:port:datastore | Built from the values above |

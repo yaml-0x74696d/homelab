@@ -1,7 +1,7 @@
 # managed by ansible (apps/gatus). every check comes from apps.yml and the inventory
 storage:
   type: sqlite
-  path: /data/data.db
+  path: {{ gatus_data }}/{{ gatus_db_file }}
 
 # dark unless the browser asks for light (gatus lets the os preference win)
 ui:
@@ -20,17 +20,28 @@ alerting:
 
 endpoints:
 {# the user's view: route through traefik, tls included #}
-{% for name, app in apps | dictsort %}
+{% for name, app in apps | dictsort if app.state | default('present') == 'present' %}
 {% for r in app.routes | default([]) %}
+{% set behind_auth = r.middlewares | default([]) | intersect(gatus_auth_middlewares) | length > 0 %}
   - name: "{{ name }}{{ ' ' ~ r.path if r.path is defined else '' }}"
     group: {{ app.host }}
     url: "https://{{ r.host }}.{{ domain }}{{ r.path | default('') }}"
     interval: {{ gatus_interval }}
     conditions:
-      - "[STATUS] < 400"
+      - "{{ '[STATUS] == 302' if behind_auth else '[STATUS] < 400' }}"
       - "[CERTIFICATE_EXPIRATION] > {{ gatus_cert_min_validity }}"
     alerts:
       - type: ntfy
+{# behind sso the route only proves the login, so check the app on its port too. gatus' own vm: host.containers.internal #}
+{% if behind_auth and (r.port | default(app.port | default(none))) is not none %}
+  - name: "{{ name }}{{ ' ' ~ r.path if r.path is defined else '' }} backend"
+    group: {{ app.host }}
+    url: "http://{{ 'host.containers.internal' if app.host == apps[podman_app_name].host else hostvars[app.host].ansible_host }}:{{ r.port | default(app.port) }}{{ r.path | default('') }}"
+    interval: {{ gatus_interval }}
+    conditions: ["[STATUS] < 400"]
+    alerts:
+      - type: ntfy
+{% endif %}
 {% endfor %}
 {% endfor %}
 {# traefik itself, so 'traefik down' isn't just every route at once #}
@@ -41,7 +52,7 @@ endpoints:
     conditions: ["[CONNECTED] == true"]
     alerts:
       - type: ntfy
-{% for g in ['docker_hosts', 'lxc_containers'] %}
+{% for g in gatus_ping_groups %}
 {% for h in groups[g] %}
   - name: {{ h }}
     group: {{ g }}

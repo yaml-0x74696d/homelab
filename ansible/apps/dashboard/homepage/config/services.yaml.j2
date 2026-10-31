@@ -78,10 +78,10 @@
         - Gatus:
             icon: gatus
             href: https://status.{{ domain }}
-            siteMonitor: http://{{ docker2_ip }}:{{ apps['gatus'].port }}
+            siteMonitor: http://{{ hostvars[apps['gatus'].host].ansible_host }}:{{ apps['gatus'].port }}
             widget:
                 type: gatus
-                url: http://{{ docker2_ip }}:{{ apps['gatus'].port }}
+                url: http://{{ hostvars[apps['gatus'].host].ansible_host }}:{{ apps['gatus'].port }}
         - Homepage:
             icon: homepage
             href: https://home.{{ domain }}

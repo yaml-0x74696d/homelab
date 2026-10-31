@@ -7,7 +7,7 @@ apps:
     host: docker-2
     uid: 2010
     port: 3001
-    allow_from: [edge, netbird]
+    allow_from: [edge, netbird, homepage]
     secrets:
       - name: gatus-config
         template: config.yaml.j2
@@ -21,6 +21,7 @@ apps:
         add_caps: [NET_RAW]  # runs as root in the container, so pings use raw sockets
     routes:
       - host: status
+        middlewares: [authentik]
 
   grafana:
     host: docker-2

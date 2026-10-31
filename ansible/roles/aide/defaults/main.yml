@@ -36,6 +36,7 @@ aide_history_files: '\\.(bash_history|lesshst|viminfo|python_history|wget-hsts)'
 # rewritten by design (timer runs, apt's daily stamps, dhcp renewals): VarFile like debian's own rules
 aide_var_files:
   - '/var/lib/systemd/timers/stamp-[^/]+\\.timer'
+  - '/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/systemd/timers/stamp-[^/]+\\.timer'
   - '/var/lib/apt/periodic/[^/]+'
   - '/var/lib/NetworkManager/[^/]+\\.lease'
   - '/var/lib/NetworkManager/seen-bssids'
