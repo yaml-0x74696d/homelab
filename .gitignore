@@ -37,3 +37,6 @@ architecture/dist/
 .mcp.json
 .idea/
 .vscode/
+
+# homepage background, personal
+ansible/apps/dashboard/homepage/config/images/background.jpg

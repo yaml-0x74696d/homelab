@@ -3,6 +3,12 @@ title: Dashboard
 headerStyle: boxedWidgets
 statusStyle: "basic"
 disableIndexing: true
+# background.jpg is personal and not in git: put your own into config/images/
+background:
+  image: /images/background.jpg
+  blur: none
+  brightness: 100
+  saturate: 0
 theme: dark
 color: red
 hideErrors: true
