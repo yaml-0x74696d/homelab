@@ -21,7 +21,7 @@
 5. Data dir `/srv/apps/<name>` (+ `dirs`), owned by `svc-<name>`
 6. Unit files for each container:
    - `container.d/10-homelab.conf`: house rules (`Notify=healthy`, `HealthOnFailure=kill`, restart with backoff, start timeout, `WantedBy=default.target`)
-   - `<container>.container.d/50-map.conf`: what the map says (image + tag, `AutoUpdate=registry` unless `auto_update: false`, `User=`, `StopTimeout=`, `Notify=false` for `healthcheck: false`, `NoNewPrivileges=`, caps, `ReadOnly=`)
+   - `<container>.container.d/50-map.conf`: what the map says (image + tag, `AutoUpdate=registry` unless `auto_update: false`, `User=`, `StopTimeout=`, `Notify=false` + `HealthOnFailure=none` for `healthcheck: false`, `NoNewPrivileges=`, caps, `ReadOnly=`)
    - `<container>.container`: rendered from `apps/<name>/<container>.container.j2` (volumes, ports, env, health)
 7. ufw: one rule per port and `allow_from` source
 8. Podman secrets as the user: the value from the vault variable or the rendered template, replaced only when the content differs (`podman secret inspect --showsecret`)
