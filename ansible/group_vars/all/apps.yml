@@ -5,7 +5,6 @@
 apps:
   uptime-kuma:
     host: docker-2
-    runtime: compose
     uid: 2010
     port: 3001
     allow_from: [edge, netbird]
