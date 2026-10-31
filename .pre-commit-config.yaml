@@ -60,6 +60,14 @@ repos:
         files: ^ansible/
         pass_filenames: false
 
+      - id: check-wiring
+        name: apps.yml wiring (traefik, homepage, ports, pbs, units)
+        language: python
+        additional_dependencies: [pyyaml==6.0.2]
+        entry: python3 scripts/check_wiring.py
+        files: ^(ansible/(group_vars|host_vars|apps|inventory)|scripts/check_wiring)
+        pass_filenames: false
+
       - id: nix-flake-check
         name: nix flake check
         language: system

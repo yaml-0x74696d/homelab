@@ -140,5 +140,11 @@ apps:
       - host: esphome
         middlewares: [authentik]
 
-# the pve/pbs routes join in phase 2, with edge
-infra_routes: []
+# traefik routes that aren't apps. phase 2 adds what edge needs (scheme, tls)
+infra_routes:
+  - host: pve-1
+  - host: pve-2
+  - host: pve-3
+  - host: pbs
+  - host: dns     # pi-hole ui, goes with pi-hole in phase 2
+  - host: proxy   # traefik's own dashboard
