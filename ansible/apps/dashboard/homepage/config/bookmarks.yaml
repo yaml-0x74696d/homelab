@@ -1,11 +1,11 @@
 ---
 - Bookmarks:
     - Youtube:
-        - abbr: YT
+        - icon: youtube
           href: https://youtube.com
     - Cloudflare:
-        - abbr: CF
+        - icon: cloudflare
           href: https://dash.cloudflare.com/
     - RedHat:
-        - abbr: RH
+        - icon: si-redhat-#ee0000
           href: https://console.redhat.com/

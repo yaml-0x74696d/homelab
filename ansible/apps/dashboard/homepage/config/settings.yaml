@@ -10,7 +10,7 @@ background:
   brightness: 100
   saturate: 0
 theme: dark
-color: red
+color: neutral   # tiles + blocks grey; red comes only from custom.css accents
 hideErrors: true
 layout:
   Status:
