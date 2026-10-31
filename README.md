@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 2 LXCs, 25 compose apps + hostapd, 12 Ansible roles, 40 playbooks, 21 C4 views
+- 3 Proxmox nodes, 4 VMs + 2 LXCs, 25 compose apps + hostapd, 14 Ansible roles, 40 playbooks, 21 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -78,7 +78,7 @@ tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-i
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent
-  roles/           aide, chrony, cronie, docker_app, journald, login_notify, mergerfs, netbird_agent, pbs, pve_firewall, rsyslog, samba, update
+  roles/           aide, chrony, cronie, docker_app, journald, login_notify, mergerfs, netbird_agent, pbs, pve_firewall, rsyslog, samba, update, vm_base
   apps/<name>/     Compose file + templates per app (25), hostapd config
   playbooks/       deploy-<app>.yml, site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
@@ -112,7 +112,7 @@ justfile         setup · lint · check · deploy · c4 · diagrams
 
 - WAN: only the NetBird VM is forwarded (443/tcp, 3478/udp, narrow TURN relay range); apps are LAN / VPN only
 - PVE firewall (`roles/pve_firewall`): cluster policy drop, NetBird VM fenced (inbound = what NetBird serves, egress to the LAN limited to routing peer + DNS/HTTPS + RELP to the log LXC); host lockdown layer written, off by default (lockout risk)
-- Docker VMs (`vm-preparation.yml`): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
+- Docker VMs (`vm-preparation.yml` = `roles/vm_base` + ufw + Docker): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
 - Published container ports bypass ufw → filtered in `DOCKER-USER` by source (only Traefik / Prometheus hosts reach backends)
 - Docker daemon: `no-new-privileges`, `live-restore`, capped JSON logs; Homepage reads Docker only through a read-only socket proxy
 - NetBird VM (NixOS): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
@@ -135,7 +135,7 @@ justfile         setup · lint · check · deploy · c4 · diagrams
 
 ## Future plans
 
-- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, `AssertPathIsMountPoint=` + `Restart=`), restore rehearsal runbook, CI quadlet dry-run
+- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook, CI quadlet dry-run
 - Phase 2: edge = NixOS VM on pve-1 (1 GB) running Traefik + AdGuard Home natively (replaces the Traefik + Pi-hole containers)
 - Phase 3–4: docker-2 / docker-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
 - Phase 5: Home Assistant moves to HAOS (VM on pve-3)

@@ -56,6 +56,6 @@ The clients (`docker_app_cifs` in `roles/docker_app`):
 - Harder: `samba_shares` can only be added to at the end, because the position in the list sets the GID
 
 - Accepted: Immich doesn't officially support its library on CIFS (atomic moves, permissions). Its database stays local, and NFS is the fallback (open issue)
-- Accepted: because of `nofail`, a host still boots when the storage CT is down. But then an app can start on an empty mount point (the Podman plan adds `AssertPathIsMountPoint=` for that)
+- Accepted: because of `nofail`, a host still boots when the storage CT is down. But then an app can start on an empty mount point (the Podman plan adds a `findmnt` start gate for that, [0021](0021-podman-quadlets.md))
 
-- Related: [0002](0002-generic-docker-app-role.md) (`docker_app_cifs`), [0004](0004-mergerfs-instead-of-zfs.md) (pool), [0005](0005-prevent-destroy-on-stateful-vms.md) (DBs stay local)
+- Related: [0002](0002-generic-docker-app-role.md) (`docker_app_cifs`), [0004](0004-mergerfs-instead-of-zfs.md) (pool), [0005](0005-prevent-destroy-on-stateful-vms.md) (DBs stay local), [0021](0021-podman-quadlets.md) (mount gate)

@@ -38,7 +38,8 @@ Secrets and access:
 - No app gets a container socket, so Diun and docker-proxy are dropped
 
 Storage:
-- Services that use CIFS paths wait for the mount (`AssertPathIsMountPoint=` + `Restart=`)
+- CIFS mounts use `x-systemd.automount`, so a dropped share is remounted on the next access
+- Services that use CIFS paths wait for the share: `ExecStartPre=/usr/bin/ls <path>` (the access triggers the automount), then `ExecStartPre=/usr/bin/findmnt -t cifs <path>`, + `Restart=on-failure` with backoff (an assert never triggers `Restart=`, and autofs alone counts as a mountpoint)
 - `UserNS=keep-id` maps the container's UID onto `svc-<app>`
 
 Rollout:

@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: vm_base
+  author: tim
+  description: hardening and base packages for the debian vms
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

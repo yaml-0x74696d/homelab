@@ -72,7 +72,7 @@ Each node runs one Docker VM, grouped by what the apps need.
 How a VM is built:
 - OpenTofu creates it from the Debian genericcloud image
 - cloud-init sets the IP, the admin user and the SSH key
-- `vm-preparation.yml` hardens it and installs Docker
+- `vm-preparation.yml` hardens it (`roles/vm_base`) and installs Docker
 - Every VM has `prevent_destroy`, because the databases live on the VM disk ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md))
 
 Memory:

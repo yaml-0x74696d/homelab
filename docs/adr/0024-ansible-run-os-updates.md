@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - The apt hosts are pve-1/2/3, docker-1/2/3 and the storage and log LXCs
-- Only the docker VMs get unattended security updates (`vm-preparation.yml`), everything else waits for a manual run
+- Only the docker VMs get unattended security updates (`roles/vm_base`), everything else waits for a manual run
 - A kernel check via `uname -r` against `/boot` flags the LXCs every time, they have no kernel there
 - Checking only the kernel misses services still running on an old libc or openssl
 - With `force-confold` the package's new config lands as `*.dpkg-dist`, unnoticed

@@ -1,0 +1,33 @@
+---
+vm_base_packages:
+  - qemu-guest-agent
+  - cockpit
+  - auditd
+  - libpam-pwquality
+  - curl
+  - gnupg
+  - ca-certificates
+  - fail2ban
+  - apparmor
+  - apparmor-utils
+  - unattended-upgrades
+  - needrestart
+  - prometheus-node-exporter
+
+vm_base_sysctl:
+  net.ipv4.tcp_syncookies: 1
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.all.rp_filter: 1
+  kernel.randomize_va_space: 2
+  fs.suid_dumpable: 0
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv6.conf.all.disable_ipv6: 1
+  net.ipv6.conf.default.disable_ipv6: 1
+  kernel.kptr_restrict: 2
+
+vm_base_services:
+  - cockpit.socket
+  - auditd
+  - fail2ban
+  - apparmor
+  - prometheus-node-exporter
