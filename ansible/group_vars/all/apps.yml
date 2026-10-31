@@ -114,6 +114,7 @@ apps:
   authentik:
     host: docker-1
     runtime: compose
+    port: 9000
     homepage: {group: Admin, icon: authentik}
     routes:
       - host: auth
@@ -121,6 +122,7 @@ apps:
   vaultwarden:
     host: docker-1
     runtime: compose
+    port: 8084
     homepage: {group: Daily, icon: /images/vaultwarden.png}
     routes:
       - host: vault
@@ -131,6 +133,9 @@ apps:
   gitea:
     host: docker-1
     runtime: compose
+    port: 3002
+    extra_ports:
+      - {port: 2222, allow_from: [lan, netbird]}   # git over ssh
     homepage: {group: Tools, icon: gitea}
     routes:
       - host: git
@@ -138,6 +143,7 @@ apps:
   searxng:
     host: docker-1
     runtime: compose
+    port: 8085
     homepage: {group: Tools, icon: searxng, label: SearXNG}
     routes:
       - host: search
@@ -145,12 +151,14 @@ apps:
   homepage:
     host: docker-1
     runtime: compose
+    port: 3003
     routes:
       - host: home
 
   pdfcraft:
     host: docker-1
     runtime: compose
+    port: 8086
     homepage: {group: Tools, icon: /images/pdfcraft.png, label: PDFcraft}
     routes:
       - host: pdf
@@ -158,6 +166,7 @@ apps:
   homeassistant:
     host: docker-1
     runtime: compose
+    port: 8123
     homepage: {group: Home, icon: /images/homeassistant.png, label: Home Assistant}
     routes:
       - host: ha

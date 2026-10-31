@@ -34,6 +34,8 @@ services:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG}
     platform: linux/amd64   # ghcr 2025.2.4 is arm64-only; fail the pull, don't crashloop
     container_name: authentik-server
+    ports:
+      - "${PORT}:9000"   # edge routes it
     restart: unless-stopped
     command: server
     environment: *authentik-env

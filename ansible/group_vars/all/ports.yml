@@ -20,6 +20,13 @@ app_ports:
   paperless: "{{ apps['paperless'].port }}"
   nginx: "{{ apps['nginx'].port }}"
   pihole: 8088
+  authentik: "{{ apps['authentik'].port }}"
+  vaultwarden: "{{ apps['vaultwarden'].port }}"
+  gitea: "{{ apps['gitea'].port }}"
+  searxng: "{{ apps['searxng'].port }}"
+  homepage: "{{ apps['homepage'].port }}"
+  pdfcraft: "{{ apps['pdfcraft'].port }}"
+  homeassistant: "{{ apps['homeassistant'].port }}"
   prometheus: "{{ apps['prometheus'].port }}"
   mqtt_exporter: 9641
 
@@ -28,6 +35,14 @@ app_ports:
 docker_backend_callers: ["{{ docker1_ip }}", "{{ docker2_ip }}"]
 docker_published_allow:
   - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage
+  - { port: "{{ app_ports.authentik }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.vaultwarden }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.gitea }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.searxng }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.homepage }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.pdfcraft }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ app_ports.homeassistant }}", src: "{{ docker_backend_callers }}" }
+  - { port: "{{ apps['gitea'].extra_ports[0].port }}", src: ["{{ lan_cidr }}"] }   # git over ssh, netbird arrives from the lan
   - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.jellyfin }}", src: "{{ docker_backend_callers }}" }

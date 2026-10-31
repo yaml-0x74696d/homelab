@@ -18,6 +18,8 @@ services:
   searxng:
     image: searxng/searxng:latest
     container_name: searxng
+    ports:
+      - "${PORT}:8080"   # edge routes it
     restart: unless-stopped
     depends_on:
       searxng-redis:

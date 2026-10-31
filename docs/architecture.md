@@ -135,9 +135,9 @@ How a request from a browser reaches an app.
 4. Traefik passes the request on to the app
 
 - Plain HTTP on port 80 only redirects to HTTPS on 443
-- Apps on docker-1 are found through their container labels
+- Apps on docker-1 are found through their container labels. They also publish their port from `apps.yml`, filtered like the others, so the edge VM can route them directly
 - Apps on docker-2/3 and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 15 routes)
-- The apps on docker-2/3 publish their ports, but the `DOCKER-USER` firewall chain only lets a few callers in:
+- Published app ports go through the `DOCKER-USER` firewall chain, which only lets a few callers in (Gitea's ssh port: the LAN):
   - Traefik, Homepage and Home Assistant from docker-1
   - Prometheus, Grafana and Gatus from docker-2
 
