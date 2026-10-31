@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 2 LXCs, 23 compose apps + 2 Podman apps + hostapd, 16 Ansible roles, 39 playbooks, 21 C4 views
+- 3 Proxmox nodes, 4 VMs + 2 LXCs, 22 compose apps + 2 Podman apps + hostapd, 16 Ansible roles, 38 playbooks, 21 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -67,7 +67,6 @@
 | Tools | Gitea | docker-1 | git server |
 | Tools | SearXNG | docker-1 | Search engine |
 | Tools | pdfcraft | docker-1 | PDF tools |
-| Tools | Homelable | docker-2 | Network inventory |
 | Tools | nginx | docker-2 | Website |
 | Tools | docker-socket-proxy (`docker-proxy`) | All Docker hosts | Read-only Docker API for Homepage |
 

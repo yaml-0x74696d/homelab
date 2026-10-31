@@ -40,7 +40,6 @@ deployment {
         instanceOf observability.grafana
         instanceOf observability.influxdb
         instanceOf observability.gatus
-        instanceOf apps.homelable
         instanceOf ops.docker-proxy
         instanceOf ops.diun
         instanceOf storage.pbs-client

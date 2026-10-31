@@ -38,7 +38,7 @@ What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/docker-{1,2,
 | Host | Databases |
 |---|---|
 | docker-1 | Authentik (Postgres), Gitea, Vaultwarden, Home Assistant recorder (SQLite) |
-| docker-2 | Grafana, Gatus, Homelable (SQLite), InfluxDB |
+| docker-2 | Grafana, Gatus (SQLite), InfluxDB |
 | docker-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin + library (SQLite) |
 
 - Enforced by: the timer runs on its own, and a failed run or an empty dump sends an ntfy alert (`ERR` trap)

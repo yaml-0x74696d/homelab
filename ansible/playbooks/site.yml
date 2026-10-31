@@ -30,8 +30,6 @@
   import_playbook: deploy-esphome.yml
 - name: Deploy home assistant
   import_playbook: deploy-homeassistant.yml
-- name: Deploy homelable
-  import_playbook: deploy-homelable.yml
 - name: Deploy prometheus
   import_playbook: deploy-prometheus.yml
 - name: Deploy influxdb

@@ -62,7 +62,7 @@ Each node runs one Docker VM, grouped by what the apps need.
 | VM | Node | Purpose | Apps |
 |---|---|---|---|
 | docker-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, Home Assistant, MQTT, ESPHome, SearXNG, pdfcraft, DDNS |
-| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, InfluxDB, Gatus, Homelable, nginx |
+| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, InfluxDB, Gatus, nginx |
 | docker-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
 - All three also run Diun, docker-socket-proxy, the PBS client and AIDE

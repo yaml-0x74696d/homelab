@@ -30,13 +30,6 @@ apps:
     routes:
       - host: grafana
 
-  homelable:
-    host: docker-2
-    runtime: compose
-    port: 8085
-    routes:
-      - host: homelable
-
   influxdb:
     host: docker-2
     runtime: compose

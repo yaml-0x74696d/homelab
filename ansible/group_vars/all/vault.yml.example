@@ -32,9 +32,6 @@ grafana_oidc_secret: "CHANGE_ME"
 influxdb_admin_pass: "CHANGE_ME"
 influxdb_admin_token: "CHANGE_ME"
 
-homelable_key: "CHANGE_ME"
-homelable_hash: "CHANGE_ME"
-
 searxng_secret: "CHANGE_ME"
 
 nextcloud_admin_pass: "CHANGE_ME"

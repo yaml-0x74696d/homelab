@@ -87,7 +87,6 @@ model {
     }
     homepage = ui "Homepage" { technology "dashboard" }
     pdfcraft = ui "PDFCraft" { technology "pdf tools, wasm" }
-    homelable = ui "Homelable" { technology "network inventory" }
   }
 
   media = system "Home cloud" {
@@ -222,7 +221,6 @@ model {
   edge.traefik -[https]-> apps.searxng.web "routes"
   edge.traefik -[https]-> apps.homepage "routes"
   edge.traefik -[https]-> apps.pdfcraft "routes"
-  edge.traefik -[https]-> apps.homelable "routes"
   edge.traefik -[https]-> media.nextcloud.web "routes"
   edge.traefik -[https]-> media.immich.server "routes"
   edge.traefik -[https]-> media.jellyfin "routes"

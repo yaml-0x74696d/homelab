@@ -4,7 +4,6 @@
 pbs_jobs:
   - { name: grafana, type: sqlite, path: grafana/data/grafana.db }
   - { name: gatus, type: sqlite, path: "gatus/data/{{ gatus_db_file }}", podman: true }
-  - { name: homelable, type: sqlite, path: homelable/data/homelab.db }
   - { name: influxdb, type: influx, container: influxdb, data_dir: influxdb/data }
 
 pbs_exclude:
