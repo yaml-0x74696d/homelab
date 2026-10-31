@@ -7,6 +7,7 @@
 set -euo pipefail
 
 [ "$(id -u)" -eq 0 ] || exec sudo "$0" "$@"
+cd /   # the svc users can't enter the caller's home
 
 prefix='{{ podman_svc_prefix }}'
 users() { getent group '{{ podman_svc_group }}' | cut -d: -f4 | tr , '\n' | grep -v '^$' | sort; }
