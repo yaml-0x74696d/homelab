@@ -1,0 +1,109 @@
+---
+- name: Install podman + firewalld
+  ansible.builtin.apt:
+    name: "{{ podman_base_packages }}"
+    state: present
+    update_cache: true
+
+- name: Fail on ambiguous short image names
+  ansible.builtin.copy:
+    dest: /etc/containers/registries.conf.d/50-short-name-mode.conf
+    mode: '0644'
+    content: |
+      short-name-mode = "enforcing"
+
+- name: Create the svc users' group
+  ansible.builtin.group:
+    name: "{{ podman_base_group }}"
+    system: true
+
+- name: Write the ntfy env file
+  ansible.builtin.template:
+    src: podman-ntfy.env.j2
+    dest: "{{ podman_base_ntfy_env }}"
+    owner: root
+    group: "{{ podman_base_group }}"
+    mode: '0640'
+  no_log: true
+
+- name: Install the auto-update wrapper
+  ansible.builtin.template:
+    src: podman-auto-update-ntfy.sh.j2
+    dest: "{{ podman_base_wrapper }}"
+    mode: '0755'
+
+- name: Ensure user unit drop-in dirs
+  ansible.builtin.file:
+    path: "/etc/systemd/user/{{ item }}.d"
+    state: directory
+    mode: '0755'
+  loop:
+    - podman-auto-update.timer
+    - podman-auto-update.service
+
+# empty OnCalendar= first, else upstream's daily stays as a second trigger
+- name: Set the auto-update time for every user
+  ansible.builtin.copy:
+    dest: /etc/systemd/user/podman-auto-update.timer.d/schedule.conf
+    mode: '0644'
+    content: |
+      [Timer]
+      OnCalendar=
+      OnCalendar={{ podman_base_auto_update_time }}
+
+- name: Run auto-update through the wrapper
+  ansible.builtin.copy:
+    dest: /etc/systemd/user/podman-auto-update.service.d/ntfy.conf
+    mode: '0644'
+    content: |
+      [Service]
+      EnvironmentFile={{ podman_base_ntfy_env }}
+      ExecStart=
+      ExecStart={{ podman_base_wrapper }}
+
+- name: Firewalld
+  tags: [firewalld]
+  block:
+    # --check doesn't install the package, so the unit doesn't exist yet
+    - name: Enable firewalld
+      ansible.builtin.systemd:
+        name: firewalld
+        state: started
+        enabled: true
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: Read the default zone
+      ansible.builtin.command: firewall-cmd --get-default-zone
+      register: podman_base_zone
+      changed_when: false
+      check_mode: false
+      failed_when: false
+
+    - name: Default zone drop
+      ansible.builtin.command: firewall-cmd --set-default-zone=drop
+      when: podman_base_zone.stdout != 'drop'
+      changed_when: true
+
+    - name: Allow ssh from the lan, rate-limited
+      ansible.posix.firewalld:
+        zone: drop
+        rich_rule: >-
+          rule family="ipv4" source address="{{ lan_cidr }}"
+          port port="{{ ssh_port }}" protocol="tcp"
+          limit value="{{ podman_base_ssh_limit }}" accept
+        permanent: true
+        immediate: true
+        state: enabled
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: Allow host ports from the lan
+      ansible.posix.firewalld:
+        zone: drop
+        rich_rule: >-
+          rule family="ipv4" source address="{{ lan_cidr }}"
+          port port="{{ item }}" protocol="tcp" accept
+        permanent: true
+        immediate: true
+        state: enabled
+      ignore_errors: "{{ ansible_check_mode }}"
+      loop: "{{ podman_base_lan_ports }}"

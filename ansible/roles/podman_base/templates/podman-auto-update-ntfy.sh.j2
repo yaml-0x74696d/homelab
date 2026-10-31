@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# managed by ansible (roles/podman_base). runs as each svc user from podman-auto-update.service.
+# pushes updated / rolled back / failed units, quiet when nothing changed.
+set -uo pipefail
+
+HOST="$(hostname -s)"
+
+notify() {
+  [ -n "${NTFY_URL:-}" ] || return 0
+  local hdr=(-H "Title: $1" -H "Priority: $2" -H "Tags: package")
+  [ -n "${NTFY_TOKEN:-}" ] && hdr+=(-H "Authorization: Bearer $NTFY_TOKEN")
+  curl -fsS -m "$NTFY_TIMEOUT" "${hdr[@]}" -d "$3" "$NTFY_URL" >/dev/null 2>&1 || true
+}
+
+# json on stdout, errors go to the journal
+out=$(/usr/bin/podman auto-update --format json)
+rc=$?
+printf '%s\n' "$out"
+
+# Updated: "true" | "false" | "pending" | "rolled back" | "failed"
+lines=$(jq -r '.[] | select(.Updated != "false") | "\(.Updated): \(.Unit) \(.Image)"' <<<"$out" 2>/dev/null)
+
+if [ "$rc" -ne 0 ] || grep -qE '^(failed|rolled back):' <<<"$lines"; then
+  notify "podman auto-update: problems on $HOST" high "$USER, exit $rc"$'\n'"${lines:-see journalctl --user -u podman-auto-update}"
+  exit 1
+fi
+[ -z "$lines" ] && exit 0
+notify "podman auto-update on $HOST" default "$USER"$'\n'"$lines"
