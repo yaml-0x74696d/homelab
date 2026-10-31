@@ -21,7 +21,7 @@ The setup:
 - Authentik on docker-1 (`apps/authentik`, `deploy-authentik.yml`): server, worker and Postgres (`authentik_pg_tag`)
 - MFA is enforced in Authentik
 - Every app keeps a local admin as a break-glass account, except Vaultwarden (`SSO_ONLY=true`)
-- The version is pinned in `group_vars/all/apps.yml` (`authentik_tag` + `authentik_series`)
+- The version is pinned in `group_vars/all/app_settings.yml` (`authentik_tag` + `authentik_series`)
 
 Two ways apps use it:
 - OIDC, for apps that support it

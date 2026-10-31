@@ -19,7 +19,7 @@ Status: Accepted
 
 The channel:
 - One ntfy.sh topic, outbound only: lab → ntfy.sh → phone app
-- Shared variables in `group_vars/all/apps.yml`: `ntfy_url` (includes the topic), `ntfy_token` (optional), `ntfy_timeout` (10 s)
+- Shared variables in `group_vars/all/app_settings.yml`: `ntfy_url` (includes the topic), `ntfy_token` (optional), `ntfy_timeout` (10 s)
 - The real values are in the vault
 - On the free tier, the topic name is the secret, so it's long and random
 

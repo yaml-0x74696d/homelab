@@ -1,0 +1,25 @@
+---
+# one podman app from group_vars/all/apps.yml:
+#   ansible-playbook playbooks/deploy-app.yml -e app=uptime-kuma
+# hosts: can't read group_vars, so the play spans every app host and the role only runs on the app's
+- name: Deploy one podman app
+  hosts: docker_hosts:podman_hosts
+  become: true
+
+  pre_tasks:
+    - name: Check the app is a podman app
+      ansible.builtin.assert:
+        that:
+          - app is defined
+          - app in apps
+          - apps[app].runtime | default('podman') == 'podman'
+        fail_msg: "{{ app | default('-e app=<name> missing') }}: not in apps.yml, or still runtime: compose"
+        quiet: true
+      run_once: true
+
+  roles:
+    - role: podman_app
+      vars:
+        podman_app_name: "{{ app }}"
+        podman_app_entry: "{{ apps[app] }}"
+      when: inventory_hostname == apps[app].host

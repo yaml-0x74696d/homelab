@@ -12,7 +12,7 @@
 
 ![Deploying one app](../../../docs/img/deploy-app.svg)
 
-1. Creates `<apps_root>/<app>/` on the host (`/opt/apps/<app>`)
+1. Creates `<apps_root>/<app>/` on the host (`/opt/stacks/<app>`)
 2. Creates extra folders with owner and mode (`docker_app_dirs`), e.g. data folders a container writes to as a fixed UID
 3. Makes sure the Docker networks exist on the host (`proxy-net` by default, the compose file declares it `external`)
 4. Creates empty files once if they're missing (`docker_app_touch`, e.g. `acme.json` with mode `0600`). They're never overwritten

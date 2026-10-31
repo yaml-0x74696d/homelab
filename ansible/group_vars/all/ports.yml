@@ -9,19 +9,20 @@ mqtt_port: 1883
 log_relp_port: 20514   # rsyslog relp to the log lxc
 netbird_relay_ports: { min: 49160, max: 49200 }   # coturn relay range, narrow so the router forward stays small
 
-# published on the docker hosts; compose, traefik, homepage and prometheus read these
+# published on the docker hosts; compose, traefik, homepage and prometheus read these.
+# apps in apps.yml take their port from there, the rest stay literal
 app_ports:
-  grafana: 3000
-  uptime_kuma: 3001
-  nextcloud: 8080
-  immich: 8081
-  jellyfin: 8082
-  paperless: 8083
-  homelable: 8085
-  influxdb: 8086
-  nginx: 8087
+  grafana: "{{ apps['grafana'].port }}"
+  uptime_kuma: "{{ apps['uptime-kuma'].port }}"
+  nextcloud: "{{ apps['nextcloud'].port }}"
+  immich: "{{ apps['immich'].port }}"
+  jellyfin: "{{ apps['jellyfin'].port }}"
+  paperless: "{{ apps['paperless'].port }}"
+  homelable: "{{ apps['homelable'].port }}"
+  influxdb: "{{ apps['influxdb'].port }}"
+  nginx: "{{ apps['nginx'].port }}"
   pihole: 8088
-  prometheus: 9091
+  prometheus: "{{ apps['prometheus'].port }}"
   mqtt_exporter: 9641
 
 # published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.

@@ -21,9 +21,10 @@
   3. Dumps every database in `pbs_jobs`
   4. Pushes to PBS
   5. Wipes the staging folder
-- The push sends two archives under the backup ID `<host>`:
+- The push sends these archives under the backup ID `<host>`:
   - `dumps.pxar`: the staging folder with the dumps
   - `apps.pxar`: `apps_root`, without the live database files, because the dumps replace them
+  - `podman-apps.pxar`: `podman_apps_root`, same excludes, only once the host has a Podman app
 
 ## Dump types
 
@@ -61,7 +62,7 @@
 |---|---|---|
 | `pbs_on_calendar` | `*-*-* 20:00:00` | When the backup runs (systemd OnCalendar) |
 | `pbs_randomized_delay` | `20m` | Random delay, so the three hosts don't start at once |
-| `pbs_jobs` | `[]` | Databases to dump: `{name, type: postgres\|sqlite\|influx, container?, path?, data_dir?}`, set in `host_vars` |
+| `pbs_jobs` | `[]` | Databases to dump: `{name, type: postgres\|sqlite\|influx, container?, path?, data_dir?, podman?}`, set in `host_vars`. `podman: true` = `path` is under `podman_apps_root` |
 | `pbs_exclude` | `[]` | Extra excludes for `apps.pxar`, set in `host_vars` |
 | `pbs_datastore` | `homelab` | Datastore on the PBS server |
 | `pbs_token_id` | `backup@pbs!client` | API token |

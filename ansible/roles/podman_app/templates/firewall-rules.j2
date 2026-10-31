@@ -1,0 +1,10 @@
+{# one rule per port and source, rendered as yaml. names: app_sources first, else another app's host ip #}
+{% set ports = ([{'port': podman_app_entry.port, 'proto': 'tcp', 'allow_from': podman_app_entry.allow_from}] if podman_app_entry.port is defined else [])
+               + podman_app_entry.extra_ports | default([]) %}
+{% for p in ports %}
+{% for name in p.allow_from %}
+- port: {{ p.port }}
+  proto: {{ p.proto | default('tcp') }}
+  src: "{{ app_sources[name] if name in app_sources else hostvars[apps[name].host].ansible_host }}"
+{% endfor %}
+{% endfor %}

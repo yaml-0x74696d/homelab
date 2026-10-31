@@ -14,7 +14,7 @@
 
 - name: Create the svc users' group
   ansible.builtin.group:
-    name: "{{ podman_base_group }}"
+    name: "{{ podman_svc_group }}"
     system: true
 
 - name: Write the ntfy env file
@@ -22,7 +22,7 @@
     src: podman-ntfy.env.j2
     dest: "{{ podman_base_ntfy_env }}"
     owner: root
-    group: "{{ podman_base_group }}"
+    group: "{{ podman_svc_group }}"
     mode: '0640'
   no_log: true
 
@@ -79,14 +79,14 @@
       check_mode: false
       failed_when: false
 
-    - name: Default zone drop
-      ansible.builtin.command: firewall-cmd --set-default-zone=drop
-      when: podman_base_zone.stdout != 'drop'
+    - name: Set the default zone
+      ansible.builtin.command: firewall-cmd --set-default-zone={{ podman_firewalld_zone }}
+      when: podman_base_zone.stdout != podman_firewalld_zone
       changed_when: true
 
     - name: Allow ssh from the lan, rate-limited
       ansible.posix.firewalld:
-        zone: drop
+        zone: "{{ podman_firewalld_zone }}"
         rich_rule: >-
           rule family="ipv4" source address="{{ lan_cidr }}"
           port port="{{ ssh_port }}" protocol="tcp"
@@ -98,7 +98,7 @@
 
     - name: Allow host ports from the lan
       ansible.posix.firewalld:
-        zone: drop
+        zone: "{{ podman_firewalld_zone }}"
         rich_rule: >-
           rule family="ipv4" source address="{{ lan_cidr }}"
           port port="{{ item }}" protocol="tcp" accept

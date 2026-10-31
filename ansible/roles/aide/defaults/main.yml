@@ -59,7 +59,7 @@ aide_excludes_by_group:
     - /var/lib/docker
     - /var/lib/containerd
     - "{{ apps_root }}"
-    - /opt/stacks               # live docker apps until the podman migration
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"   # rootless podman images + containers, per app user
     - "{{ cifs_mount_root }}"   # pool shares
     - "{{ pbs_staging_dir }}"
     - /var/lib/cloud            # cloud-init state, rewritten every boot

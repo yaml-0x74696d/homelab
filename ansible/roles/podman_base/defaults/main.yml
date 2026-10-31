@@ -12,8 +12,6 @@ podman_base_packages:
   - jq
   - firewalld
 
-# every svc-<app> user joins it (podman_app), it may read the ntfy env file
-podman_base_group: svc-apps
 podman_base_ntfy_env: /etc/podman-ntfy.env
 podman_base_wrapper: /usr/local/bin/podman-auto-update-ntfy
 

@@ -20,3 +20,5 @@ docker_app_restart: []
 docker_app_compose_state: present
 docker_app_compose_pull: policy
 docker_app_compose_remove_orphans: false
+# podman_app's unit templates share apps/<name>/ during the migration; never rendered here
+docker_app_quadlet_files: ["*.container.j2", "*.pod.j2", "*.network.j2", "*.volume.j2"]

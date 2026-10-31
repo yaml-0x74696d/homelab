@@ -11,11 +11,11 @@
 
 1. Installs `podman_base_packages`: Podman with `crun`, what Debian only recommends for rootless (`passt`, `uidmap`, `dbus-user-session`, `catatonit`), `systemd-container`, `acl`, `jq`, `firewalld`
 2. `short-name-mode = "enforcing"` in `/etc/containers/registries.conf.d/`: an ambiguous short image name fails instead of picking a registry
-3. Group `svc-apps` and `/etc/podman-ntfy.env` (root:svc-apps, 0640) with the ntfy URL and token
+3. Group `podman_svc_group` (`svc-apps`) and `/etc/podman-ntfy.env` (root:svc-apps, 0640) with the ntfy URL and token
 4. Drop-ins in `/etc/systemd/user/` for every user:
    - `podman-auto-update.timer`: `OnCalendar=` cleared, then `podman_base_auto_update_time`
    - `podman-auto-update.service`: runs the wrapper (`podman_base_wrapper`) instead of `podman auto-update`
-5. firewalld: enabled, default zone `drop`, from `lan_cidr` only ssh (rate-limited) and `podman_base_lan_ports`
+5. firewalld: enabled, default zone `podman_firewalld_zone` (`drop`), from `lan_cidr` only ssh (rate-limited) and `podman_base_lan_ports`
 
 ## The auto-update wrapper
 
@@ -29,12 +29,12 @@
 | Variable | Default | What |
 |---|---|---|
 | `podman_base_packages` | see above | Package set |
-| `podman_base_group` | `svc-apps` | Group of the svc users, may read the ntfy env file |
 | `podman_base_wrapper` | `/usr/local/bin/podman-auto-update-ntfy` | The auto-update wrapper |
 | `podman_base_ntfy_env` | `/etc/podman-ntfy.env` | ntfy settings for the wrapper |
 | `podman_base_auto_update_time` | `Sun *-*-* 13:00:00` | One schedule for every svc user. Upstream adds `RandomizedDelaySec=900` |
 | `podman_base_ssh_limit` | `6/m` | firewalld rate limit on ssh from the LAN |
 | `podman_base_lan_ports` | cockpit, node_exporter | Host ports open to the LAN |
+| `podman_svc_group`, `podman_firewalld_zone` | group_vars `app_settings.yml` | Shared with `roles/podman_app` |
 | `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars / vault | Shared ntfy settings. With an empty URL nothing is pushed |
 
 ## Notes

@@ -14,5 +14,5 @@ let
     if builtins.pathExists "${private}/private.yml"
     then "${private}/private.yml" else "${private}/private.yml.example";
 in
-read "network" // read "ports" // read "hosts" // read "apps" // read "base"
+read "network" // read "ports" // read "hosts" // read "app_settings" // read "apps" // read "base"
 // toJson "private" privateFile // { private_file = privateFile; }

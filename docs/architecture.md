@@ -83,7 +83,7 @@ Memory:
 How an app is deployed:
 - Each app is a folder `ansible/apps/<name>/` plus a playbook `deploy-<name>.yml`
 - All compose apps use the same `docker_app` role ([ADR 0002](adr/0002-generic-docker-app-role.md)), hostapd on pve-1 is plain tasks
-- App data lives under `/opt/apps/<name>` on the VM
+- App data lives under `/opt/stacks/<name>` (`apps_root`) on the VM
 
 ## Storage
 
@@ -204,7 +204,7 @@ How a backup runs:
 - Every Docker VM has the PBS client (`roles/pbs`), started by a timer every evening at 20:00
 - A random delay keeps the hosts from starting at the same time
 - First the databases are dumped (Postgres, SQLite `.backup`, Influx)
-- Then `/opt/apps` goes up as one archive
+- Then `/opt/stacks` (`apps_root`) goes up as one archive
 - A failed run is pushed to ntfy
 - The client's token can only write backups, not delete them
 

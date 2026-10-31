@@ -80,6 +80,7 @@
   ansible.builtin.find:
     paths: "{{ docker_app_src }}"
     patterns: "*.j2"
+    excludes: "{{ docker_app_quadlet_files }}"
     recurse: true
     hidden: true
   delegate_to: localhost

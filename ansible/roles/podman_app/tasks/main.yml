@@ -1,0 +1,245 @@
+---
+# argument_specs validates the entry but doesn't fill its defaults, hence the | default() below.
+# a first --check has no svc user yet, so the tasks that need it skip then
+
+- name: Check the entry of {{ podman_app_name }}
+  ansible.builtin.assert:
+    that:
+      - podman_app_entry.runtime | default('podman') == 'podman'
+      - podman_app_entry.state | default('present') == 'present'
+      - podman_app_entry.host == inventory_hostname
+    fail_msg: "{{ podman_app_name }}: runtime compose, state absent/purged or wrong host"
+    quiet: true
+
+# pilot-1 scope: the rest of the schema lands with the paperless pr
+- name: Check built features for {{ podman_app_name }}
+  ansible.builtin.assert:
+    that:
+      - podman_app_entry.secrets | length == 0
+      - podman_app_entry.cifs | default([]) | length == 0
+      - podman_app_entry.container_uid | default(0) == 0
+      - podman_app_entry.containers | length == 1
+    fail_msg: "{{ podman_app_name }}: secrets, cifs, keep-id and pods aren't in podman_app_entry yet"
+    quiet: true
+
+- name: Check the unit templates for {{ podman_app_name }}
+  ansible.builtin.stat:
+    path: "{{ podman_app_src }}/{{ item.name }}.container.j2"
+  loop: "{{ podman_app_entry.containers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: localhost
+  become: false
+  register: podman_app_tpl_stat
+  failed_when: not podman_app_tpl_stat.stat.exists
+
+- name: Check the allow_from names of {{ podman_app_name }}
+  ansible.builtin.assert:
+    that: item in app_sources or item in apps
+    fail_msg: "{{ podman_app_name }}: allow_from '{{ item }}' is neither in app_sources nor an app"
+    quiet: true
+  loop: "{{ (podman_app_entry.allow_from + podman_app_entry.extra_ports | default([]) | map(attribute='allow_from') | flatten) | unique }}"
+
+- name: Resolve allow_from for {{ podman_app_name }}
+  ansible.builtin.set_fact:
+    podman_app_rules: "{{ lookup('ansible.builtin.template', 'firewall-rules.j2') | from_yaml or [] }}"
+
+# before the user exists, else useradd adds a second, random range
+- name: Reserve the subuid/subgid range of {{ podman_app_user }}
+  ansible.builtin.lineinfile:
+    path: "/etc/{{ item }}"
+    regexp: "^{{ podman_app_user }}:"
+    line: "{{ podman_app_user }}:{{ podman_app_entry.uid * podman_app_subid_count }}:{{ podman_app_subid_count }}"
+    create: true
+    mode: '0644'
+  loop: [subuid, subgid]
+  register: podman_app_subid
+
+- name: Create group {{ podman_app_user }}
+  ansible.builtin.group:
+    name: "{{ podman_app_user }}"
+    gid: "{{ podman_app_entry.uid }}"
+
+- name: Create user {{ podman_app_user }}
+  ansible.builtin.user:
+    name: "{{ podman_app_user }}"
+    uid: "{{ podman_app_entry.uid }}"
+    group: "{{ podman_app_user }}"
+    groups: "{{ podman_svc_group }}"
+    append: true
+    home: "{{ podman_app_home }}"
+    shell: /usr/sbin/nologin
+    password: '!'
+    password_lock: true
+  register: podman_app_user_result
+
+- name: Read the subid lines of {{ podman_app_user }}
+  ansible.builtin.command: "grep -c '^{{ podman_app_user }}:' /etc/{{ item }}"
+  loop: [subuid, subgid]
+  register: podman_app_subid_count_out
+  changed_when: false
+  failed_when: podman_app_subid_count_out.stdout != '1'
+
+- name: User env for {{ podman_app_name }}
+  ansible.builtin.set_fact:
+    podman_app_user_env:
+      XDG_RUNTIME_DIR: "/run/user/{{ podman_app_entry.uid }}"
+      DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ podman_app_entry.uid }}/bus"
+
+- name: Enable linger for {{ podman_app_user }}
+  ansible.builtin.command: "loginctl enable-linger {{ podman_app_user }}"
+  args:
+    creates: "/var/lib/systemd/linger/{{ podman_app_user }}"
+
+- name: Start the user manager of {{ podman_app_user }}
+  ansible.builtin.systemd_service:
+    name: "user@{{ podman_app_entry.uid }}.service"
+    state: started
+
+# an existing user's storage still maps the old range until migrated
+- name: Migrate podman storage to the new range for {{ podman_app_user }}
+  ansible.builtin.command: podman system migrate
+  become: true
+  become_user: "{{ podman_app_user }}"
+  environment: "{{ podman_app_user_env }}"
+  when: podman_app_subid is changed and podman_app_user_result is not changed
+  changed_when: true
+
+- name: Ensure the apps root
+  ansible.builtin.file:
+    path: "{{ podman_apps_root }}"
+    state: directory
+    mode: '0755'
+
+- name: Ensure data dirs for {{ podman_app_name }}
+  ansible.builtin.file:
+    path: "{{ podman_app_dir }}{{ ('/' + item.path) if item.path else '' }}"
+    state: directory
+    owner: "{{ podman_app_user }}"
+    group: "{{ podman_app_user }}"
+    mode: "{{ item.mode | default('0750') }}"
+  loop: "{{ [{'path': ''}] + podman_app_entry.dirs | default([]) }}"
+  loop_control:
+    label: "{{ item.path or '.' }}"
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: Ensure quadlet dirs for {{ podman_app_name }}
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ podman_app_user }}"
+    group: "{{ podman_app_user }}"
+    mode: '0750'
+  loop: "{{ [podman_app_home + '/.config', podman_app_home + '/.config/containers', podman_app_quadlet_dir,
+            podman_app_quadlet_dir + '/container.d']
+            + podman_app_entry.containers | map(attribute='name') | map('regex_replace', '^(.*)$', podman_app_quadlet_dir + '/\\1.container.d') }}"
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: House rules for {{ podman_app_name }}
+  ansible.builtin.template:
+    src: 10-homelab.conf.j2
+    dest: "{{ podman_app_quadlet_dir }}/container.d/10-homelab.conf"
+    owner: "{{ podman_app_user }}"
+    group: "{{ podman_app_user }}"
+    mode: '0640'
+  notify: [Reload user units, Restart app]
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: Map settings for {{ podman_app_name }}
+  ansible.builtin.template:
+    src: 50-map.conf.j2
+    dest: "{{ podman_app_quadlet_dir }}/{{ item.name }}.container.d/50-map.conf"
+    owner: "{{ podman_app_user }}"
+    group: "{{ podman_app_user }}"
+    mode: '0640'
+  loop: "{{ podman_app_entry.containers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: [Reload user units, Restart app]
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: Unit files for {{ podman_app_name }}
+  ansible.builtin.template:
+    src: "{{ podman_app_src }}/{{ item.name }}.container.j2"
+    dest: "{{ podman_app_quadlet_dir }}/{{ item.name }}.container"
+    owner: "{{ podman_app_user }}"
+    group: "{{ podman_app_user }}"
+    mode: '0640'
+  loop: "{{ podman_app_entry.containers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: [Reload user units, Restart app]
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: Allow ports in ufw for {{ podman_app_name }}
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port | string }}"
+    proto: "{{ item.proto }}"
+    from_ip: "{{ item.src }}"
+    comment: "podman {{ podman_app_name }}"
+  loop: "{{ podman_app_rules }}"
+  when: "'podman_hosts' not in group_names"
+
+- name: Allow ports in firewalld for {{ podman_app_name }}
+  ansible.posix.firewalld:
+    zone: "{{ podman_firewalld_zone }}"
+    rich_rule: >-
+      rule family="ipv4" source address="{{ item.src }}"
+      port port="{{ item.port }}" protocol="{{ item.proto }}" accept
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ podman_app_rules }}"
+  when: "'podman_hosts' in group_names"
+  tags: [firewalld]
+
+# so the image pull doesn't eat TimeoutStartSec
+- name: Pull images for {{ podman_app_name }}
+  ansible.builtin.shell: "podman image exists {{ item.image }}:{{ item.tag }} || podman pull -q {{ item.image }}:{{ item.tag }}"
+  loop: "{{ podman_app_entry.containers }}"
+  loop_control:
+    label: "{{ item.image }}:{{ item.tag }}"
+  become: true
+  become_user: "{{ podman_app_user }}"
+  environment: "{{ podman_app_user_env }}"
+  register: podman_app_pull
+  changed_when: podman_app_pull.stdout | length > 0
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: Apply unit changes for {{ podman_app_name }}
+  ansible.builtin.meta: flush_handlers
+
+# quadlets can't be enabled, WantedBy=default.target starts them at boot
+- name: Start {{ podman_app_name }}
+  ansible.builtin.systemd_service:
+    name: "{{ item.name }}.service"
+    state: started
+    scope: user
+  loop: "{{ podman_app_entry.containers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+  become_user: "{{ podman_app_user }}"
+  environment: "{{ podman_app_user_env }}"
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: Enable auto-update for {{ podman_app_user }}
+  ansible.builtin.systemd_service:
+    name: podman-auto-update.timer
+    state: started
+    enabled: true
+    scope: user
+  become: true
+  become_user: "{{ podman_app_user }}"
+  environment: "{{ podman_app_user_env }}"
+  when: not (ansible_check_mode and podman_app_user_result is changed)
+
+- name: Drop old images of {{ podman_app_name }}
+  ansible.builtin.command: podman image prune -f
+  become: true
+  become_user: "{{ podman_app_user }}"
+  environment: "{{ podman_app_user_env }}"
+  register: podman_app_prune
+  changed_when: podman_app_prune.stdout | length > 0
+  when: not (ansible_check_mode and podman_app_user_result is changed)
