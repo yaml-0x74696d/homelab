@@ -13,4 +13,4 @@ vm_password   = "CHANGE_ME"   # must equal the ansible vault sudo_pass
 # pve_endpoint     = "https://192.168.178.101:8006/"
 # vm_datastore     = "local-lvm"
 # debian_image_url = "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
-# lxc_template     = "local:vztmpl/debian-13-standard_13.0-1_amd64.tar.zst"
+# lxc_template     = "local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst"

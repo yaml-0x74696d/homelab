@@ -50,6 +50,6 @@ variable "debian_image_url" {
 
 variable "lxc_template" {
   type        = string
-  default     = "local:vztmpl/debian-13-standard_13.0-1_amd64.tar.zst"
+  default     = "local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst"
   description = "OS template for the LXCs, on every node that runs one (pveam download local ...)"
 }

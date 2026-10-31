@@ -24,7 +24,7 @@ cp terraform.tfvars.example terraform.tfvars   # then edit
 ## 3. LXC template (once per node with an LXC: pve-3 and `iot_node`)
 
 ```bash
-pveam update && pveam download local debian-13-standard_13.0-1_amd64.tar.zst
+pveam update && pveam download local debian-13-standard_13.6-1_amd64.tar.zst
 ```
 
 - If the file name differs from the default, change `lxc_template`
