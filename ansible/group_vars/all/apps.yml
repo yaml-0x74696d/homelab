@@ -25,8 +25,21 @@ apps:
 
   grafana:
     host: docker-2
-    runtime: compose
+    uid: 2030
     port: 3000
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: grafana-admin-pass
+        vault: grafana_pass
+      - name: grafana-oidc-secret
+        vault: grafana_oidc_secret
+    dirs:
+      - path: data
+        mode: "0770"   # grafana runs as 472:0 in the container, gid 0 = svc-grafana's group
+    containers:
+      - name: grafana
+        image: docker.io/grafana/grafana-oss
+        tag: latest
     routes:
       - host: grafana
 

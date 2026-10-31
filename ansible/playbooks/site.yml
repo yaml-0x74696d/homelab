@@ -35,7 +35,9 @@
 - name: Deploy influxdb
   import_playbook: deploy-influxdb.yml
 - name: Deploy grafana
-  import_playbook: deploy-grafana.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: grafana
 - name: Deploy nginx
   import_playbook: deploy-app.yml
   vars:

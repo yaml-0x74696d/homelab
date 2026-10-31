@@ -30,7 +30,6 @@ docker_backend_callers: ["{{ docker1_ip }}", "{{ docker2_ip }}"]
 docker_published_allow:
   - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage
   - { port: "{{ app_ports.prometheus }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.grafana }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.influxdb }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }

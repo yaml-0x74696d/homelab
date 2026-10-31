@@ -64,9 +64,7 @@
         - Grafana:
             icon: grafana
             href: https://grafana.{{ domain }}
-            showStats: true
-            server: docker-2
-            container: grafana
+            siteMonitor: http://{{ hostvars[apps['grafana'].host].ansible_host }}:{{ apps['grafana'].port }}
         - InfluxDB:
             icon: influxdb
             href: https://influx.{{ domain }}

@@ -2,7 +2,7 @@
 # what pbs backs up on docker-2 (see roles/pbs).
 # prometheus tsdb is skipped on purpose — bulky, recomputable, config already in git.
 pbs_jobs:
-  - { name: grafana, type: sqlite, path: grafana/data/grafana.db }
+  - { name: grafana, type: sqlite, path: grafana/data/grafana.db, podman: true }
   - { name: gatus, type: sqlite, path: "gatus/data/{{ gatus_db_file }}", podman: true }
   - { name: influxdb, type: influx, container: influxdb, data_dir: influxdb/data }
 
