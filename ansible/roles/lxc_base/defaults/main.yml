@@ -6,6 +6,7 @@ lxc_base_packages:
   - unattended-upgrades
   - needrestart
   - prometheus-node-exporter
+  - curl                      # checks in docs/iot.md, the template has none
 
 lxc_base_services:
   - fail2ban

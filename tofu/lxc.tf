@@ -57,9 +57,10 @@ resource "proxmox_virtual_environment_container" "storage" {
     path   = local.storage.storage_root
   }
 
-  # a new lxc_template is for new cts only, existing ones update through apt
+  # template and first user only count at creation: a new template is for new cts, existing ones update
+  # through apt; the api never returns keys/password, so an imported ct would otherwise always be replaced
   lifecycle {
-    ignore_changes = [operating_system[0].template_file_id]
+    ignore_changes = [operating_system[0].template_file_id, initialization[0].user_account]
   }
 }
 
@@ -119,9 +120,10 @@ resource "proxmox_virtual_environment_container" "log" {
     }
   }
 
-  # a new lxc_template is for new cts only, existing ones update through apt
+  # template and first user only count at creation: a new template is for new cts, existing ones update
+  # through apt; the api never returns keys/password, so an imported ct would otherwise always be replaced
   lifecycle {
-    ignore_changes = [operating_system[0].template_file_id]
+    ignore_changes = [operating_system[0].template_file_id, initialization[0].user_account]
   }
 }
 
@@ -194,8 +196,9 @@ resource "proxmox_virtual_environment_container" "iot" {
     }
   }
 
-  # a new lxc_template is for new cts only, existing ones update through apt
+  # template and first user only count at creation: a new template is for new cts, existing ones update
+  # through apt; the api never returns keys/password, so an imported ct would otherwise always be replaced
   lifecycle {
-    ignore_changes = [operating_system[0].template_file_id]
+    ignore_changes = [operating_system[0].template_file_id, initialization[0].user_account]
   }
 }

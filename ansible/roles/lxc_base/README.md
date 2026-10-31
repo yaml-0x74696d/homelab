@@ -9,7 +9,7 @@
 
 ## How it works
 
-1. Installs `lxc_base_packages` (fail2ban, unattended-upgrades, needrestart, node_exporter)
+1. Installs `lxc_base_packages` (fail2ban, unattended-upgrades, needrestart, node_exporter, curl)
 2. unattended-upgrades: `vm_base`'s file (`tasks_from: unattended_upgrades`), security origins only, no automatic reboot
 3. sshd drop-in `/etc/ssh/sshd_config.d/10-homelab.conf`, checked with `sshd -t`: root by key only (Ansible logs in as root here), no passwords, no X11, `MaxAuthTries` + keepalive from group_vars. A drop-in, because the first value sshd reads wins
 4. fail2ban: the `sshd` jail on the journal (`backend = systemd`)
