@@ -23,7 +23,7 @@ mqtt_user: iot                    # shared by sensors, ha and the exporter; pass
 # and the node-exporter rules (lxc_base, log.fw)
 prometheus_ip: "{{ hostvars[apps['prometheus'].host].ansible_host }}"
 mqtt_lan_clients:
-  - { ip: "{{ hostvars[apps['homeassistant'].host].ansible_host }}", c: home assistant }   # ha_ip once haos has its own vm
+  - { ip: "{{ hostvars[apps['homeassistant'].host].ansible_host }}", c: home assistant }   # the haos vm
 
 # what the iot net may open on the gateway, only on its wifi card (ufw on wlan0): the broker + firmware downloads
 iot_net_ports: ["{{ mqtt_port }}", "{{ ota_port }}"]

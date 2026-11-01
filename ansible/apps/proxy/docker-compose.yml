@@ -15,6 +15,7 @@ services:
       - PVE3_IP=${PVE3_IP}
       - DOCKER2_IP=${DOCKER2_IP}
       - DOCKER3_IP=${DOCKER3_IP}
+      - HAOS_IP=${HAOS_IP}
       - PVE_UI_PORT=${PVE_UI_PORT}
       - PBS_PORT=${PBS_PORT}
       - GRAFANA_PORT=${GRAFANA_PORT}
@@ -26,6 +27,7 @@ services:
       - NGINX_PORT=${NGINX_PORT}
       - PIHOLE_PORT=${PIHOLE_PORT}
       - PROMETHEUS_PORT=${PROMETHEUS_PORT}
+      - HOMEASSISTANT_PORT=${HOMEASSISTANT_PORT}
     networks:
       proxy-net:
         # let other apps reach services by their public name without leaving the bridge

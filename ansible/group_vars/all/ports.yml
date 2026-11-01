@@ -28,11 +28,11 @@ app_ports:
   searxng: "{{ apps['searxng'].port }}"
   homepage: "{{ apps['homepage'].port }}"
   pdfcraft: "{{ apps['pdfcraft'].port }}"
-  homeassistant: "{{ apps['homeassistant'].port }}"
+  homeassistant: "{{ apps['homeassistant'].port }}"   # traefik routes it to the haos vm
   prometheus: "{{ apps['prometheus'].port }}"
 
 # published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.
-# backends only answer traefik + ha (docker-1) and prometheus/gatus (docker-2)
+# backends only answer traefik (docker-1) and prometheus/gatus (docker-2)
 docker_backend_callers: ["{{ docker1_ip }}", "{{ docker2_ip }}"]
 docker_published_allow:
   - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage
@@ -42,7 +42,6 @@ docker_published_allow:
   - { port: "{{ app_ports.searxng }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.homepage }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.pdfcraft }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.homeassistant }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ apps['gitea'].extra_ports[0].port }}", src: ["{{ lan_cidr }}"] }   # git over ssh, netbird arrives from the lan
   - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }

@@ -180,9 +180,10 @@ apps:
     routes:
       - host: pdf
 
+  # haos vm, home assistant updates and configures itself inside, ansible never deploys it
   homeassistant:
-    host: docker-1
-    runtime: compose
+    host: haos
+    runtime: vm
     port: 8123
     homepage: {group: Home, icon: /images/homeassistant.png, label: Home Assistant}
     routes:

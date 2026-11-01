@@ -79,6 +79,12 @@ http:
       tls: { certResolver: "cloudflare" }
       service: "jellyfin-service"
 
+    ha-router:
+      rule: "Host(`ha.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "ha-service"
+
     paperless-router:
       rule: "Host(`paperless.{{ env "DOMAIN" }}`)"
       entryPoints: ["websecure"]
@@ -163,3 +169,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ env "DOCKER3_IP" }}:{{ env "PAPERLESS_PORT" }}"
+
+    ha-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "HAOS_IP" }}:{{ env "HOMEASSISTANT_PORT" }}"

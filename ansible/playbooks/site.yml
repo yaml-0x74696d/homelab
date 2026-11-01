@@ -20,8 +20,6 @@
   import_playbook: deploy-pdfcraft.yml
 - name: Deploy searxng
   import_playbook: deploy-searxng.yml
-- name: Deploy home assistant
-  import_playbook: deploy-homeassistant.yml
 - name: Deploy prometheus
   import_playbook: deploy-app.yml
   vars:

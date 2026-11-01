@@ -60,11 +60,12 @@ Each node runs one Docker VM, grouped by what the apps need.
 
 | VM | Node | Purpose | Apps |
 |---|---|---|---|
-| docker-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, Home Assistant, SearXNG, pdfcraft, DDNS |
+| docker-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
 | docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, Gatus, nginx |
 | docker-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
 - All three also run Diun, docker-socket-proxy, the PBS client and AIDE
+- Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
 - docker-3 gets to run the heavy services, because pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)
 
@@ -140,9 +141,9 @@ How a request from a browser reaches an app.
 
 - Plain HTTP on port 80 only redirects to HTTPS on 443
 - Apps on docker-1 are found through their container labels. They also publish their port from `apps.yml`, filtered like the others, so the edge VM can route them directly
-- Apps on docker-2/3 and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 15 routes)
+- Apps on docker-2/3, Home Assistant on the HAOS VM and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 16 routes)
 - Published app ports go through the `DOCKER-USER` firewall chain, which only lets a few callers in (Gitea's ssh port: the LAN):
-  - Traefik, Homepage and Home Assistant from docker-1
+  - Traefik and Homepage from docker-1
   - Prometheus, Grafana and Gatus from docker-2
 
 ## Certificates

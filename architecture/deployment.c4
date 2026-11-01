@@ -10,7 +10,6 @@ deployment {
         instanceOf apps.searxng
         instanceOf apps.homepage
         instanceOf apps.pdfcraft
-        instanceOf automation.homeassistant
         instanceOf edge.ddns
         instanceOf ops.docker-proxy
         instanceOf ops.diun
@@ -63,7 +62,7 @@ deployment {
     }
 
     pve3 = node "pve-3" {
-      description "Storage node, always on, 6c / 15.5G"
+      description "Storage and cloud node, turned off now and then, 6c / 15.5G"
       docker3 = vm "docker-3" {
         instanceOf media.nextcloud
         instanceOf media.immich
@@ -75,6 +74,10 @@ deployment {
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
         instanceOf ops.chrony
+      }
+      haos = vm "haos" {
+        description "Home Assistant OS, appliance"
+        instanceOf automation.homeassistant
       }
       storage = lxc "storage" {
         instanceOf storage.samba

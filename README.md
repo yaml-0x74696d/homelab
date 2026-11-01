@@ -54,7 +54,7 @@
 | Media | Jellyfin | docker-3 | Video |
 | Media | Nextcloud | docker-3 | Files |
 | Media | Paperless | docker-3 | Documents |
-| Home | Home Assistant | docker-1 | Home automation |
+| Home | Home Assistant | haos (VM on pve-3) | Home automation, HAOS appliance |
 | Home | Mosquitto | iot (CT 302) | MQTT broker, from Debian |
 | Home | mqtt-exporter | iot (CT 302) | MQTT → Prometheus, from Debian |
 | Home | nginx | iot (CT 302) | Firmware downloads for the sensors, from Debian |
@@ -142,7 +142,6 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook, CI quadlet dry-run
 - Phase 2: edge = NixOS VM on pve-1 (1 GB) running Traefik + AdGuard Home natively (replaces the Traefik + Pi-hole containers)
 - Phase 3–4: docker-2 / docker-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
-- Phase 5: Home Assistant moves to HAOS (VM on pve-3)
 - Phase 6: docker-1 → Podman (Authentik, SearXNG)
 - Podman auto-update with rollback replaces `:latest` + Diun (ADR 0006)
 - Later: guest OS Debian → EL10 once the hardware has x86-64-v3 / AVX2 ([ADR 0025](docs/adr/0025-debian-guests-until-x86-64-v3.md)); Proxmox hosts stay Debian

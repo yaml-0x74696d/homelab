@@ -24,9 +24,9 @@ argument_specs:
             description: "Several hosts, one copy each. Only for apps nothing reaches: no port, routes, homepage or allow_from"
           runtime:
             type: str
-            choices: [podman, compose]
+            choices: [podman, compose, vm]
             default: podman
-            description: compose = still on docker, routed by edge but never deployed by this role
+            description: "compose = still on docker, vm = an appliance vm (haos). both routed by edge, never deployed by this role"
           state:
             type: str
             choices: [present, absent, purged]
