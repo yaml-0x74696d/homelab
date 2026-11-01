@@ -89,8 +89,10 @@ def main():
         if not isinstance(a, dict):
             errors.append(f"{name}: entry isn't a mapping")
             continue
-        if a.get("host") not in hosts:
-            errors.append(f"{name}: host '{a.get('host')}' is not in the inventory")
+        # hosts: one copy per host, only for apps nothing reaches (podman_app checks that at deploy)
+        for h in a.get("hosts") or [a.get("host")]:
+            if h not in hosts:
+                errors.append(f"{name}: host '{h}' is not in the inventory")
         for r in a.get("routes", []):
             if "host" not in r:
                 errors.append(f"{name}: route without host")

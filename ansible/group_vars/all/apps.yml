@@ -77,6 +77,23 @@ apps:
       - host: prom
         middlewares: [authentik]   # grafana reaches prom internally, not via this url
 
+  # two copies on two nodes write the same wan ip, one host down doesn't stop the updates
+  cloudflare-ddns:
+    hosts: [docker-1, docker-2]
+    uid: 2050
+    allow_from: []
+    secrets:
+      - name: cloudflare-api-token
+        vault: cf_token
+    containers:
+      - name: cloudflare-ddns
+        image: docker.io/favonia/cloudflare-ddns
+        tag: latest
+        user: "1000:1000"
+        healthcheck: false   # scratch image
+        read_only: true
+        drop_caps: [ALL]
+
   nextcloud:
     host: docker-3
     runtime: compose

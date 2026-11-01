@@ -6,7 +6,7 @@ Where a Podman app is described in the repo, where its files land on the host, a
 
 | To change | File |
 |---|---|
-| host, uid, port, image + tag, secrets, dirs, who may reach it | `group_vars/all/apps.yml` |
+| host (or `hosts:` for one copy per host), uid, port, image + tag, secrets, dirs, who may reach it | `group_vars/all/apps.yml` |
 | what a container mounts, publishes, checks | `apps/<app>/<container>.container.j2` |
 | an app's config files | `apps/<app>/config/` (`*.j2` rendered, the rest copied) |
 | a config file that isn't public | `<private_dir>/apps/<app>/config/` |

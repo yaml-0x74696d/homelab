@@ -9,8 +9,9 @@
   vars:
     ansible_become: false   # the inventory's become would beat the keyword and sudo on the controller
     render_dir: ""   # scripts/render_podman.sh sets it
-    # this host's apps; compose ones and absent ones drop out in the include's when
-    render_apps: "{{ apps | dict2items | selectattr('value.host', 'defined') | selectattr('value.host', 'eq', inventory_hostname) | list }}"
+    # this host's apps, a multi-host one on its first host only; compose ones and absent ones drop out in the include's when
+    render_apps: "{{ apps | dict2items | selectattr('value.host', 'defined') | selectattr('value.host', 'eq', inventory_hostname) | list
+                     + apps | dict2items | selectattr('value.hosts', 'defined') | selectattr('value.hosts.0', 'eq', inventory_hostname) | list }}"
 
   pre_tasks:
     # it gets wiped below, so only ever a rendered_config/example dir

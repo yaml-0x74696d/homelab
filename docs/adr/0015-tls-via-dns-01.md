@@ -30,7 +30,7 @@ NetBird VM (`nixos/netbird/netbird.nix`):
 - coturn reuses the same certificate for TURN over TLS (`turns:5349`)
 
 Public DNS:
-- cloudflare-ddns (`apps/utilities`) keeps the public records pointed at the current WAN IP, with the same token
+- cloudflare-ddns (Podman, one copy each on docker-1 and docker-2) keeps the public records pointed at the current WAN IP, with the same token
 
 - Enforced by: the FRITZ!Box forwards no port 80, and nftables on the NetBird VM only opens 443 + TURN
 
@@ -39,7 +39,7 @@ Public DNS:
 - Easier: real certificates for LAN-only names, and nothing on the WAN is needed to renew them
 - Easier: certificates renew on their own, about 30 days before they expire. If `acme.json` gets lost, they're simply issued again
 
-- Harder: the Cloudflare API token can edit DNS for the whole zone, it lives in the vault, on docker-1 (`.env` of `proxy` and `utilities`, mode `0600`) and on the NetBird VM
+- Harder: the Cloudflare API token can edit DNS for the whole zone, it lives in the vault, on docker-1 (`.env` of `proxy`, mode `0600`), as a Podman secret on docker-1 and docker-2 (cloudflare-ddns) and on the NetBird VM
 - Harder: renewals depend on Cloudflare's API and public DNS
 
 - Accepted: whoever gets root on docker-1 or the NetBird VM can edit the whole zone

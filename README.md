@@ -47,7 +47,7 @@
 |---|---|---|---|
 | Ingress | Traefik (`proxy`) | docker-1 | Reverse proxy, TLS via Cloudflare DNS |
 | Ingress | Pi-hole (`dns`) | docker-2 | DNS + ad blocking, split-horizon records |
-| Ingress | cloudflare-ddns (`utilities`) | docker-1 | Keeps the public record current |
+| Ingress | cloudflare-ddns | docker-1, docker-2 | Keeps the public records current, one copy per host |
 | Identity | Authentik | docker-1 | SSO, OIDC + forward-auth |
 | Identity | Vaultwarden | docker-1 | Passwords |
 | Media | Immich | docker-3 | Photos |

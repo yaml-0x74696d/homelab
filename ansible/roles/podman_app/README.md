@@ -14,7 +14,7 @@
 
 ## How it works
 
-1. Checks the entry: `runtime: podman`, `state: present`, the right host, only built features, one source per secret, a template per container, known `allow_from` names
+1. Checks the entry: `runtime: podman`, `state: present`, the right host (a `hosts:` entry: no port, routes, tiles or sources), only built features, one source per secret, a template per container, known `allow_from` names
 2. Writes `svc-<name>:<uid*65536>:65536` to `/etc/subuid` and `/etc/subgid` **before** creating the user, so useradd doesn't add a second range. Then checks there's exactly one line each
 3. Creates group + user `svc-<name>` with the map's `uid`: locked password, `nologin`, member of `svc-apps` (may read the ntfy env file)
 4. Linger, then starts `user@<uid>.service`. A range change on an existing user runs `podman system migrate`
@@ -55,6 +55,7 @@ apps:
       - host: status              # read by edge and gatus, not by this role
 ```
 
+- `hosts: [a, b]` instead of `host:` runs one copy on each host (cloudflare-ddns). Only for apps nothing reaches: no port, routes, homepage or `allow_from`, those resolve the app to one host
 - `runtime: compose` marks an app that still runs on Docker: edge routes it, gatus checks it, `deploy-app.yml` refuses it
 - Config vs secrets: anything secret goes in `secrets:` (a podman secret), plain config and static files in `apps/<name>/config/`
 - A secret's `Secret=` line (env or mount, target) is in the app's unit template, the map only says where the value comes from

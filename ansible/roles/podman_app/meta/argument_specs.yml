@@ -12,11 +12,16 @@ argument_specs:
         type: dict
         required: true
         description: The app's entry in apps.yml
+        mutually_exclusive: [[host, hosts]]
+        required_one_of: [[host, hosts]]
         options:
           host:
             type: str
-            required: true
             description: Inventory host the app runs on
+          hosts:
+            type: list
+            elements: str
+            description: "Several hosts, one copy each. Only for apps nothing reaches: no port, routes, homepage or allow_from"
           runtime:
             type: str
             choices: [podman, compose]

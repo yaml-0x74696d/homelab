@@ -6,9 +6,22 @@
     that:
       - podman_app_entry.runtime | default('podman') == 'podman'
       - podman_app_entry.state | default('present') == 'present'
-      - podman_app_entry.host == inventory_hostname
+      - inventory_hostname in podman_app_entry.hosts | default([podman_app_entry.host])
     fail_msg: "{{ podman_app_name }}: runtime compose, state absent/purged or wrong host"
     quiet: true
+
+# port, routes, tiles and firewall sources resolve the app to one host
+- name: Check a multi-host entry of {{ podman_app_name }}
+  ansible.builtin.assert:
+    that:
+      - podman_app_entry.port is undefined
+      - podman_app_entry.extra_ports | default([]) | length == 0
+      - podman_app_entry.routes | default([]) | length == 0
+      - podman_app_entry.homepage is undefined
+      - podman_app_entry.allow_from | length == 0
+    fail_msg: "{{ podman_app_name }}: hosts: is only for apps nothing reaches (no port, routes, homepage, allow_from)"
+    quiet: true
+  when: podman_app_entry.hosts is defined
 
 # cifs, keep-id and pods land with the paperless pr
 - name: Check built features for {{ podman_app_name }}

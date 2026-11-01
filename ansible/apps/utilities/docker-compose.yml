@@ -1,9 +1,0 @@
-services:
-  cloudflare-ddns:
-    image: favonia/cloudflare-ddns:latest
-    container_name: cloudflare-ddns
-    restart: unless-stopped
-    environment:
-      - CF_API_TOKEN=${CF_DNS_API_TOKEN}
-      - DOMAINS=${DOMAIN},www.${DOMAIN},vpn.${DOMAIN},nb.${DOMAIN}
-      - PROXIED=is(${DOMAIN}) || is(www.${DOMAIN})

@@ -13,7 +13,7 @@
           - app is defined
           - app in apps
           - apps[app].runtime | default('podman') == 'podman'
-          - apps[app].host in groups['docker_hosts'] + groups['podman_hosts'] | default([])
+          - apps[app].hosts | default([apps[app].host]) | difference(groups['docker_hosts'] + groups['podman_hosts'] | default([])) | length == 0
         fail_msg: "{{ app | default('-e app=<name> missing') }}: not in apps.yml, still runtime: compose, or its host isn't a docker/podman host"
         quiet: true
       run_once: true
@@ -23,4 +23,4 @@
       vars:
         podman_app_name: "{{ app }}"
         podman_app_entry: "{{ apps[app] }}"
-      when: inventory_hostname == apps[app].host
+      when: inventory_hostname in apps[app].hosts | default([apps[app].host])

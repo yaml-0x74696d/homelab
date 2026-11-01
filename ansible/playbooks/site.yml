@@ -10,8 +10,6 @@
   import_playbook: deploy-dns.yml
 - name: Deploy homepage
   import_playbook: deploy-dashboard.yml
-- name: Deploy cloudflare-ddns
-  import_playbook: deploy-utilities.yml
 - name: Deploy authentik
   import_playbook: deploy-authentik.yml
 - name: Deploy vaultwarden
@@ -36,6 +34,10 @@
   import_playbook: deploy-app.yml
   vars:
     app: nginx
+- name: Deploy cloudflare-ddns
+  import_playbook: deploy-app.yml
+  vars:
+    app: cloudflare-ddns
 - name: Deploy gatus
   import_playbook: deploy-app.yml
   vars:

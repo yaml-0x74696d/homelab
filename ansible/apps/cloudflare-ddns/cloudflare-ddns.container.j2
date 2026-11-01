@@ -1,0 +1,11 @@
+# image, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=cloudflare-ddns
+
+[Container]
+Secret=cloudflare-api-token,type=mount,target=/run/secrets/cloudflare-api-token,uid=1000,gid=1000,mode=0400
+Environment=CLOUDFLARE_API_TOKEN_FILE=/run/secrets/cloudflare-api-token
+Environment=DOMAINS={{ domain }},www.{{ domain }},vpn.{{ domain }},nb.{{ domain }}
+Environment="PROXIED=is({{ domain }}) || is(www.{{ domain }})"
+# the other copy keeps running, so a stop must never delete the records
+Environment=DELETE_ON_STOP=false

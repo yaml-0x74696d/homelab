@@ -42,6 +42,7 @@ deployment {
         instanceOf observability.prometheus
         instanceOf observability.grafana
         instanceOf observability.gatus
+        instanceOf edge.ddns
         instanceOf ops.docker-proxy
         instanceOf ops.diun
         instanceOf storage.pbs-client
