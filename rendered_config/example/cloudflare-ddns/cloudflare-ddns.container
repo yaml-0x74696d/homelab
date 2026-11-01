@@ -5,7 +5,10 @@ Description=cloudflare-ddns
 [Container]
 Secret=cloudflare-api-token,type=mount,target=/run/secrets/cloudflare-api-token,uid=1000,gid=1000,mode=0400
 Environment=CLOUDFLARE_API_TOKEN_FILE=/run/secrets/cloudflare-api-token
-Environment=DOMAINS=example.org,www.example.org,vpn.example.org,nb.example.org
+Environment=IP4_DOMAINS=example.org,www.example.org,vpn.example.org,nb.example.org
+# no nat on ipv6: detected prefix + the netbird vm's eui-64, the fritz!box only opens its firewall for it.
+# vpn is the fritz!box itself, its wan ipv6 isn't in the lan prefix, so a only
+Environment=IP6_DOMAINS=example.org{hostid6=mac(BC-24-11-00-02-50)},www.example.org{hostid6=mac(BC-24-11-00-02-50)},nb.example.org{hostid6=mac(BC-24-11-00-02-50)}
 Environment="PROXIED=is(example.org) || is(www.example.org)"
 # the other copy keeps running, so a stop must never delete the records
 Environment=DELETE_ON_STOP=false

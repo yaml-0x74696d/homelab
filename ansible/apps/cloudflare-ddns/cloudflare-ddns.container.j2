@@ -1,11 +1,15 @@
 # image, auto-update, house rules: drop-ins from roles/podman_app
+{% set nb6 = '{hostid6=mac(' ~ macs.netbird.lan | replace(':', '-') ~ ')}' %}
 [Unit]
 Description=cloudflare-ddns
 
 [Container]
 Secret=cloudflare-api-token,type=mount,target=/run/secrets/cloudflare-api-token,uid=1000,gid=1000,mode=0400
 Environment=CLOUDFLARE_API_TOKEN_FILE=/run/secrets/cloudflare-api-token
-Environment=DOMAINS={{ domain }},www.{{ domain }},vpn.{{ domain }},nb.{{ domain }}
+Environment=IP4_DOMAINS={{ domain }},www.{{ domain }},vpn.{{ domain }},nb.{{ domain }}
+# no nat on ipv6: detected prefix + the netbird vm's eui-64, the fritz!box only opens its firewall for it.
+# vpn is the fritz!box itself, its wan ipv6 isn't in the lan prefix, so a only
+Environment=IP6_DOMAINS={{ domain }}{{ nb6 }},www.{{ domain }}{{ nb6 }},nb.{{ domain }}{{ nb6 }}
 Environment="PROXIED=is({{ domain }}) || is(www.{{ domain }})"
 # the other copy keeps running, so a stop must never delete the records
 Environment=DELETE_ON_STOP=false
