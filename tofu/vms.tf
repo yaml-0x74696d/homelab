@@ -7,6 +7,11 @@ resource "proxmox_download_file" "debian" {
   url          = var.debian_image_url
   file_name    = basename(var.debian_image_url)
   overwrite    = false
+
+  # pve doesn't keep the source url, so an imported file has none. the url only counts at the download
+  lifecycle {
+    ignore_changes = [url]
+  }
 }
 
 resource "proxmox_virtual_environment_vm" "docker" {
