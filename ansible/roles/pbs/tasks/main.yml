@@ -8,7 +8,7 @@
 - name: Proxmox release key
   # download.proxmox.com's cdn serves a cert for the wrong host; enterprise host has a valid one (same key)
   ansible.builtin.get_url:
-    url: "https://enterprise.proxmox.com/debian/proxmox-release-{{ ansible_distribution_release }}.gpg"
+    url: "https://enterprise.proxmox.com/debian/proxmox-release-{{ ansible_facts['distribution_release'] }}.gpg"
     dest: /etc/apt/keyrings/proxmox-release.gpg
     mode: '0644'
 
@@ -22,7 +22,7 @@
     name: pbs-client
     types: [deb]
     uris: http://download.proxmox.com/debian/pbs-client
-    suites: ["{{ ansible_distribution_release }}"]
+    suites: ["{{ ansible_facts['distribution_release'] }}"]
     components: [main]
     architectures: [amd64]
     signed_by: /etc/apt/keyrings/proxmox-release.gpg
