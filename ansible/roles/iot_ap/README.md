@@ -1,7 +1,7 @@
 # iot_ap
 
 - The IoT WiFi, run inside the gateway LXC: hostapd on the WiFi card, DHCP from dnsmasq
-- The card itself is moved into the LXC by the first play of `playbooks/deploy-iot.yml` ([ADR 0029](../../../docs/adr/0029-wifi-card-in-the-gateway.md))
+- The card itself is moved into the LXC by the first play of `playbooks/deploy-iot.yml`, with a hook on the node that hands it back to the node when the CT stops ([ADR 0029](../../../docs/adr/0029-wifi-card-in-the-gateway.md))
 
 ## Runs on
 

@@ -16,6 +16,8 @@
       - "lxc.net.9.name: wlan0"
       - "lxc.net.9.ipv4.address: {{ iot_ip }}/{{ iot_cidr | split('/') | last }}"
       - "lxc.net.9.flags: up"
+      - "lxc.hook.stop: /usr/local/sbin/iot-wifi-back"
+      - "lxc.hook.pre-start: /usr/local/sbin/iot-wifi-back"
 
   tasks:
     - name: Only iot_node
@@ -40,6 +42,41 @@
       when: ("country " ~ iot_wifi_country ~ ":") not in iot_node_reg.stdout
       changed_when: true
 
+    # left alone, a stopped ct hands the card back late (with its netns) and as wlan0, and the next start fails.
+    # stop: takes the card out of the ct's netns under its node name. pre-start: waits/renames in case stop didn't run.
+    - name: Card back to the node when the ct stops
+      ansible.builtin.copy:
+        dest: /usr/local/sbin/iot-wifi-back
+        mode: "0755"
+        content: |
+          #!/bin/sh
+          # managed by ansible (deploy-iot.yml), lxc.hook.stop + lxc.hook.pre-start of CT {{ vmids.iot }}
+          nic={{ iot_wifi_nic }}
+          # hook.version 0 passes type and namespaces as args, version 1 as LXC_HOOK_TYPE / LXC_NET_NS
+          netns="${LXC_NET_NS:-}"
+          case "${LXC_HOOK_TYPE:-$3}" in
+          stop)
+              for a in "$@"; do case "$a" in net:*) netns="${a#net:}" ;; esac; done
+              [ -n "$netns" ] || exit 0
+              phy=$(nsenter --net="$netns" iw dev wlan0 info 2>/dev/null | awk '/wiphy/ {print "phy" $2}')
+              [ -n "$phy" ] || exit 0
+              nsenter --net="$netns" ip link set wlan0 down
+              nsenter --net="$netns" ip link set wlan0 name "$nic"
+              nsenter --net="$netns" iw phy "$phy" set netns 1
+              ;;
+          pre-start)
+              for i in $(seq 1 30); do
+                  [ -e "/sys/class/net/$nic/phy80211" ] && exit 0
+                  if [ -e /sys/class/net/wlan0/phy80211 ]; then
+                      ip link set wlan0 down && ip link set wlan0 name "$nic" && exit 0
+                  fi
+                  sleep 1
+              done
+              echo "$nic not back on the node after 30s" >&2
+              exit 1
+              ;;
+          esac
+
     # before any [snapshot] section, end of file when there's none
     - name: Card into the ct
       ansible.builtin.lineinfile:
@@ -52,7 +89,10 @@
 
   handlers:
     - name: Restart the iot ct
-      ansible.builtin.shell: "pct shutdown {{ vmids.iot }} --timeout 60 && pct start {{ vmids.iot }}"
+      ansible.builtin.shell: |
+        set -e
+        if [ "$(pct status {{ vmids.iot }})" = "status: running" ]; then pct shutdown {{ vmids.iot }} --timeout 60; fi
+        pct start {{ vmids.iot }}
       changed_when: true
       listen: Restart the iot ct
 
