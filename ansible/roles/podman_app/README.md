@@ -60,6 +60,12 @@ apps:
 - A secret's `Secret=` line (env or mount, target) is in the app's unit template, the map only says where the value comes from
 - `allow_from` names resolve through `app_sources` (`group_vars/all/app_settings.yml`), an app name to its host's IP
 
+## Rendered for review
+
+`rendered_config/example/` has every Podman app as this role writes it, filled in with the example values: `<app>.container`, `container.d/10-homelab.conf`, `<app>.container.d/50-map.conf`, `config/` and `secrets/<name>` (what each podman secret holds). Vault values show as `<vault:name>`.
+
+`just render` (`scripts/render_podman.sh example`) rebuilds it from a copy of the repo with the example files in place: `playbooks/render-podman.yml` runs `tasks/render.yml`, the same templates and vars as `main.yml`, without touching a host. CI fails when it's stale.
+
 ## Settings
 
 | Variable | Default | What |

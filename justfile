@@ -29,6 +29,10 @@ deploy app:
 deploy-app app:
     cd ansible && ansible-playbook playbooks/deploy-app.yml -e app={{ app }}
 
+# podman apps rendered with the example values: rendered_config/example
+render:
+    scripts/render_podman.sh example
+
 # export every view as png for the docs
 c4:
     {{ likec4 }} export png architecture --outdir {{ img_dir }} --flat --seq

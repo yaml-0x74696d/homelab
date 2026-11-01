@@ -68,6 +68,16 @@ repos:
         files: ^(ansible/(group_vars|host_vars|apps|inventory)|scripts/check_wiring)
         pass_filenames: false
 
+      # ansible-lint brings ansible-core along
+      - id: render-podman
+        name: rendered_config/example up to date
+        language: python
+        additional_dependencies: [ansible-lint==26.10.1]
+        entry: scripts/render_podman.sh check
+        files: ^(ansible/|scripts/render_podman|rendered_config/)
+        pass_filenames: false
+        stages: [manual]
+
       - id: nix-flake-check
         name: nix flake check
         language: system

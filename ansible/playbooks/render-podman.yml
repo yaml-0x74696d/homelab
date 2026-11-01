@@ -1,0 +1,48 @@
+---
+# every podman app's quadlets, drop-ins, config/ and secrets rendered with the example values for review,
+# nothing touches a host. run it through scripts/render_podman.sh (a clean copy with the examples in place).
+# the script masks the vault: every value renders as <vault:name>
+- name: Render podman apps
+  hosts: docker_hosts:podman_hosts
+  gather_facts: false
+  become: false
+  vars:
+    ansible_become: false   # the inventory's become would beat the keyword and sudo on the controller
+    render_dir: ""   # scripts/render_podman.sh sets it
+    # this host's apps; compose ones and absent ones drop out in the include's when
+    render_apps: "{{ apps | dict2items | selectattr('value.host', 'defined') | selectattr('value.host', 'eq', inventory_hostname) | list }}"
+
+  pre_tasks:
+    # it gets wiped below, so only ever a rendered_config/example dir
+    - name: Check the render dir
+      ansible.builtin.assert:
+        that: render_dir is search('/rendered_config/example$')
+        fail_msg: "render_dir must end in rendered_config/example, got '{{ render_dir }}'. run scripts/render_podman.sh"
+        quiet: true
+      run_once: true
+
+    - name: Start from an empty render dir
+      ansible.builtin.file:
+        path: "{{ render_dir }}"
+        state: "{{ item }}"
+        mode: "0755"
+      loop: [absent, directory]
+      delegate_to: localhost
+      run_once: true
+
+  tasks:
+    - name: Render the apps
+      ansible.builtin.include_role:
+        name: podman_app
+        tasks_from: render
+      vars:
+        podman_app_name: "{{ render_app.key }}"
+        podman_app_entry: "{{ render_app.value }}"
+        podman_app_render_dir: "{{ render_dir }}"
+      loop: "{{ render_apps }}"
+      loop_control:
+        loop_var: render_app
+        label: "{{ render_app.key }}"
+      when:
+        - render_app.value.runtime | default('podman') == 'podman'
+        - render_app.value.state | default('present') == 'present'
