@@ -105,8 +105,8 @@ resource "proxmox_virtual_environment_vm" "netbird" {
   # stateful once nixos lands: the mgmt sqlite db lives on this disk
   lifecycle {
     prevent_destroy = true
-    # the image only counts when the disk is created (and imported vms have none)
-    ignore_changes = [disk[0].import_from]
+    # image and cloud-init only count for the debian bootstrap, nixos owns disk and network after that
+    ignore_changes = [disk[0].import_from, initialization]
   }
 
   # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)
