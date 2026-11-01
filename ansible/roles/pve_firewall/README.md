@@ -1,7 +1,7 @@
 # pve_firewall
 
 - Writes the cluster, host and guest firewall rules from the shared variables
-- Scope: the NetBird VM, the log LXC, the IoT gateway LXC and the management access to the PVE hosts. The Docker VMs and the storage LXC stay unfiltered
+- Scope: the NetBird VM, the log LXC, the IoT gateway LXC, the HAOS VM and the management access to the PVE hosts. The Docker VMs and the storage LXC stay unfiltered
 - Done with Ansible, not OpenTofu, because bpg/proxmox can't manage the host-level firewall options
 
 ## Runs on
@@ -17,6 +17,7 @@
 | `/etc/pve/firewall/<netbird vmid>.fw` | The NetBird VM's allow list and egress rules |
 | `/etc/pve/firewall/<log vmid>.fw` | The log LXC: RELP only from known hosts |
 | `/etc/pve/firewall/<iot vmid>.fw` | The IoT gateway LXC: inbound as its ufw, egress limited |
+| `/etc/pve/firewall/<haos vmid>.fw` | The HAOS VM: HA's port from Traefik and Homepage, admins direct |
 | `/etc/pve/firewall/<vmid>.fw` | `enable: 0` for each guest that stays open |
 | `/etc/pve/nodes/<node>/host.fw` | Host lockdown, uses `GROUP pve-mgmt` |
 
@@ -52,11 +53,18 @@
 - Out (`policy_out: DROP`): DNS to the router (the CT's resolver), RELP to the log LXC, HTTP/HTTPS to the internet (apt, ntfy). The rest of the LAN is dropped. No NTP, the CT uses the host's clock
 - ufw inside only filters inbound, its outbound stays allow; the egress limit is this file
 
+## HAOS VM
+
+- In (`policy_in: DROP`): HA's port from `pve_firewall_haos_callers` (Traefik, Homepage's status dot), HA's port and the Observer (4357) from the admin hosts, ping from the LAN
+- So `ha.<domain>` is the way in, and nothing on the LAN reaches the Supervisor or the add-on ports
+- Out stays open: MQTT to the gateway, the FRITZ!Box integration, updates
+- LAN devices that fetch media from HA directly (Cast, TTS) are dropped too, they'd need a rule
+
 ## Settings
 
 | Variable | Default | What |
 |---|---|---|
-| `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird VM and the log + IoT LXCs are filtered |
+| `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird VM, the log + IoT LXCs and the HAOS VM are filtered |
 | `pve_firewall_host_enabled` | `false` | Host management lockdown, the layer that can lock you out |
 | `pve_firewall_lan_cidr` | `lan_cidr` | The LAN |
 | `pve_firewall_gateway_ip` | `gateway_ip` | The router, DNS fallback for the NetBird VM |
@@ -75,6 +83,10 @@
 | `pve_firewall_log_port` | `log_relp_port` | The RELP port |
 | `pve_firewall_prometheus_ip` | `prometheus_ip` (`app_settings.yml`) | May scrape the log and IoT LXCs |
 | `pve_firewall_iot_vmid` | `vmids.iot` | The IoT gateway LXC |
+| `pve_firewall_haos_vmid` | `vmids.haos` | The HAOS VM |
+| `pve_firewall_haos_port` | HA's `port` in `apps.yml` | HA's web port |
+| `pve_firewall_haos_callers` | `app_sources.edge`, Homepage's host | May reach HA's port |
+| `pve_firewall_haos_observer_port` | `4357` | The Supervisor's health page, admins only |
 | `pve_firewall_iot_mqtt_clients` | `mqtt_lan_clients` (`app_settings.yml`) | May reach the broker from the LAN |
 
 ## Rollout

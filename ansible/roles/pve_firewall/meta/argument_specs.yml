@@ -78,6 +78,20 @@ argument_specs:
         elements: dict
         description: May reach the broker from the LAN
         options: *hosts
+      pve_firewall_haos_vmid:
+        type: raw
+        description: The HAOS VM
+      pve_firewall_haos_port:
+        type: raw
+        description: HA's web port
+      pve_firewall_haos_callers:
+        type: list
+        elements: dict
+        description: May reach HA's port (Traefik, Homepage)
+        options: *hosts
+      pve_firewall_haos_observer_port:
+        type: int
+        description: The Supervisor's health page, admins only
       pve_firewall_open_guests:
         type: list
         elements: raw

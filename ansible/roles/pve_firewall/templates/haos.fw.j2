@@ -1,0 +1,17 @@
+# managed by ansible (roles/pve_firewall) — haos vm: ha only from traefik + homepage, admins direct for break-glass
+[OPTIONS]
+
+enable: 1
+policy_in: DROP
+policy_out: ACCEPT
+
+[RULES]
+
+{% for h in pve_firewall_haos_callers | unique(attribute='ip') %}
+IN ACCEPT -source {{ h.ip }} -p tcp -dport {{ pve_firewall_haos_port }} -log nolog # {{ h.c }}
+{% endfor %}
+{% for h in pve_firewall_ssh_hosts %}
+IN ACCEPT -source {{ h.ip }} -p tcp -dport {{ pve_firewall_haos_port }} -log nolog # {{ h.c }}, ha without traefik
+IN ACCEPT -source {{ h.ip }} -p tcp -dport {{ pve_firewall_haos_observer_port }} -log nolog # {{ h.c }}, observer
+{% endfor %}
+IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p icmp -log nolog

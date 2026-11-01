@@ -43,6 +43,14 @@ pve_firewall_prometheus_ip: "{{ prometheus_ip }}"
 pve_firewall_iot_vmid: "{{ vmids.iot }}"
 pve_firewall_iot_mqtt_clients: "{{ mqtt_lan_clients }}"
 
+# the haos vm: ha's port only from its callers (traefik follows app_sources.edge to the edge vm), admins also direct + the observer
+pve_firewall_haos_vmid: "{{ vmids.haos }}"
+pve_firewall_haos_port: "{{ apps['homeassistant'].port }}"
+pve_firewall_haos_callers:   # traefik + homepage's status dot, the same host until edge
+  - { ip: "{{ app_sources.edge }}", c: traefik }
+  - { ip: "{{ hostvars[apps['homepage'].host].ansible_host }}", c: homepage }
+pve_firewall_haos_observer_port: 4357   # haos' supervisor health page
+
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.
 # PRE-FLIGHT: add every other vmid that shows firewall=1 or it breaks.

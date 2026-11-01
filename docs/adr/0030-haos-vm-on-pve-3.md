@@ -17,6 +17,7 @@ Status: Accepted
 - HAOS VM 210 on pve-3 (`haos_ip`), built by OpenTofu from the HAOS image, 3 GB without a balloon floor
 - An appliance: HA updates and configures itself, Ansible never logs in. `haos` is in the inventory group `appliances` only so `apps.yml` can name it (`runtime: vm`)
 - No cloud-init in HAOS: the IP is a FRITZ!Box DHCP reservation on the MAC OpenTofu pins
+- The PVE guest firewall (`haos.fw`) only lets Traefik and Homepage reach HA's port, the admin hosts also reach it and the Observer directly
 - Behind Traefik: the trusted proxies are set in HA's UI (Settings → Network), HA keeps them in `.storage/http` and ignores an `http:` block in the YAML
 
 ## Consequences
