@@ -1,6 +1,8 @@
 ---
 # path to the app's source dir on the control node
 docker_app_src: "{{ playbook_dir }}/../apps/{{ docker_app_name }}"
+# private overlay outside the repo, <private_dir>/apps/<name>/, laid over the app dir after the copy
+docker_app_private_src: "{{ (private_dir | expanduser ~ '/apps/' ~ docker_app_name) if private_dir | default('') else '' }}"
 docker_app_root: "{{ apps_root }}"
 
 # extra dirs to create under <root>/<app>, e.g. [{path: data, owner: '472'}]

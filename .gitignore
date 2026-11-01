@@ -25,6 +25,8 @@ ansible/collections/
 tofu/.terraform/
 *.tfstate
 *.tfstate.*
+# saved plans hold every value unmasked (vm_password)
+*.plan
 
 # nix build output (symlink to the store)
 nixos/result*
@@ -38,5 +40,5 @@ architecture/dist/
 .idea/
 .vscode/
 
-# homepage background, personal
+# homepage background, personal (belongs in the private overlay, this catches a stray copy)
 ansible/apps/dashboard/homepage/config/images/background.jpg

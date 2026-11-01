@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 4 Podman apps + hostapd, 20 Ansible roles, 33 playbooks, 23 C4 views
+- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 4 Podman apps, 21 Ansible roles, 32 playbooks, 23 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -33,7 +33,7 @@
 | netbird | VM 250 | pve-2 | 2 | 2 GB (1 GB) | 20 GB | .250 |
 | storage | CT 300 | pve-3 | 2 | 1 GB + 512 MB swap | 24 GB | .150 |
 | log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
-| iot | CT 302 | pve-1 | 1 | 512 MB + 256 MB swap | 8 GB | .152 + IoT `.50.10` on `vmbr1` |
+| iot | CT 302 | pve-1 | 1 | 512 MB + 256 MB swap | 8 GB | .152 + IoT `.50.10` on its WiFi card |
 
 - Specs can be found in `tofu/locals.tf`; IDs + IPs are in `ansible/group_vars/all/network.yml`
 
@@ -58,7 +58,7 @@
 | Home | Mosquitto | iot (CT 302) | MQTT broker, from Debian |
 | Home | mqtt-exporter | iot (CT 302) | MQTT → Prometheus, from Debian |
 | Home | nginx | iot (CT 302) | Firmware downloads for the sensors, from Debian |
-| Home | hostapd | pve-1 | IoT WiFi bridge |
+| Home | hostapd + dnsmasq | iot (CT 302) | IoT WiFi + DHCP on pve-1's card, moved into the CT |
 | Monitoring | Prometheus | docker-2 | Metrics |
 | Monitoring | Grafana | docker-2 | Dashboards |
 | Monitoring | Gatus | docker-2 | Uptime checks, generated from the apps map |
@@ -76,9 +76,9 @@
 tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-init)
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
-  inventory.yml    docker_hosts, proxmox, lxc_containers, iot_ap, netbird_agent
-  roles/           aide, chrony, cronie, docker_app, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
-  apps/<name>/     Compose file + templates per app (25), hostapd config
+  inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent
+  roles/           aide, chrony, cronie, docker_app, iot_ap, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
+  apps/<name>/     Compose file + templates per app (25)
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
 architecture/    LikeC4 model: landscape, containers, deployment, 8 flows

@@ -76,6 +76,16 @@
     label: "{{ item.path | relpath(docker_app_src) }}"
   notify: Restart app containers
 
+# private_dir overlay (same layout as apps/<name>/), outside the repo, never shown in --diff
+- name: Copy private files for {{ docker_app_name }}
+  ansible.builtin.copy:
+    src: "{{ docker_app_private_src }}/"
+    dest: "{{ docker_app_root }}/{{ docker_app_name }}/"
+    mode: u=rwX,g=rX,o=rX
+  diff: false
+  notify: Restart app containers
+  when: docker_app_private_src and docker_app_private_src is directory
+
 - name: Find templates for {{ docker_app_name }}
   ansible.builtin.find:
     paths: "{{ docker_app_src }}"

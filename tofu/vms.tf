@@ -7,6 +7,11 @@ resource "proxmox_download_file" "debian" {
   url          = var.debian_image_url
   file_name    = basename(var.debian_image_url)
   overwrite    = false
+
+  # pve doesn't keep the source url, so an imported file has none. the url only counts at the download
+  lifecycle {
+    ignore_changes = [url]
+  }
 }
 
 resource "proxmox_virtual_environment_vm" "docker" {
@@ -18,9 +23,14 @@ resource "proxmox_virtual_environment_vm" "docker" {
   on_boot   = true
   started   = true
 
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
   # stateful: docker volumes (dbs) live on the vm disk — never let tofu recreate these
   lifecycle {
     prevent_destroy = true
+    # the image only counts when the disk is created (and imported vms have none)
+    ignore_changes = [disk[0].import_from]
   }
 
   # qemu-guest-agent comes from vm-preparation; flip to true and re-apply after
@@ -89,9 +99,14 @@ resource "proxmox_virtual_environment_vm" "netbird" {
   on_boot   = true
   started   = true
 
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
   # stateful once nixos lands: the mgmt sqlite db lives on this disk
   lifecycle {
     prevent_destroy = true
+    # image and cloud-init only count for the debian bootstrap, nixos owns disk and network after that
+    ignore_changes = [disk[0].import_from, initialization]
   }
 
   # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)

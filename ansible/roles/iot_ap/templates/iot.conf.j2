@@ -1,0 +1,7 @@
+# managed by ansible (roles/iot_ap). dhcp for the iot wifi only, no dns, no router: nothing routes out of the iot net
+interface={{ iot_ap_interface }}
+bind-interfaces
+port=0
+dhcp-range={{ iot_ap_dhcp_range[0] }},{{ iot_ap_dhcp_range[1] }},{{ iot_ap_dhcp_lease }}
+dhcp-option=option:router
+dhcp-authoritative

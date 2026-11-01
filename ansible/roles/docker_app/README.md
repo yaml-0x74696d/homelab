@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- Every `deploy-<app>.yml` (25 apps, hostapd is plain tasks), the host is picked by the playbook's `hosts:`
+- Every `deploy-<app>.yml` (25 apps), the host is picked by the playbook's `hosts:`
 - `site.yml` imports them all
 
 ## How it works
@@ -38,6 +38,7 @@
 |---|---|---|
 | `docker_app_name` | | The app, required |
 | `docker_app_src` | `apps/<name>` | Source folder on the controller |
+| `docker_app_private_src` | `<private_dir>/apps/<name>` | Private files laid over the app dir, outside the repo, never in `--diff`. Empty without `private_dir` |
 | `docker_app_root` | `apps_root` | Parent folder on the host |
 | `docker_app_dirs` | `[]` | Extra folders, e.g. `[{path: data, owner: '472'}]` |
 | `docker_app_networks` | `[proxy-net]` | Docker networks to create on the host |

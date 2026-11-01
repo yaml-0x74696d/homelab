@@ -213,9 +213,25 @@
     owner: root
     group: root
     mode: '0644'
-  loop: "{{ podman_app_config | selectattr('state', 'eq', 'file') | rejectattr('path', 'search', '\\.j2$') }}"
+  loop: "{{ podman_app_config_public | rejectattr('path', 'in', podman_app_config_private | map(attribute='path') | list)
+            | selectattr('state', 'eq', 'file') | rejectattr('path', 'search', '\\.j2$') }}"
   loop_control:
     label: "{{ item.path }}"
+  notify: Restart app
+  when: not (ansible_check_mode and podman_app_user_new)
+
+# private_dir overlay: copied as is, never shown in --diff
+- name: Copy the private config files of {{ podman_app_name }}
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ podman_app_dir }}/config/{{ item.path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop: "{{ podman_app_config_private | selectattr('state', 'eq', 'file') }}"
+  loop_control:
+    label: "{{ item.path }}"
+  diff: false
   notify: Restart app
   when: not (ansible_check_mode and podman_app_user_new)
 
@@ -226,7 +242,8 @@
     owner: root
     group: root
     mode: '0644'
-  loop: "{{ podman_app_config | selectattr('state', 'eq', 'file') | selectattr('path', 'search', '\\.j2$') }}"
+  loop: "{{ podman_app_config_public | rejectattr('path', 'in', podman_app_config_private | map(attribute='path') | list)
+            | selectattr('state', 'eq', 'file') | selectattr('path', 'search', '\\.j2$') }}"
   loop_control:
     label: "{{ item.path }}"
   notify: Restart app

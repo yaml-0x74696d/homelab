@@ -46,10 +46,10 @@
 ## IoT gateway LXC
 
 - Inbound the same as the ufw inside (`playbooks/deploy-iot.yml`), so a root shell in the CT can't open anything. Both read `mqtt_lan_clients` and `prometheus_ip`. ufw's default `before.rules` additionally answer ping (and take mDNS/UPnP multicast) from anywhere
-- `ipfilter: 1`: each NIC only sends from its own configured IP
-- In from the IoT net: only `mqtt_port`, only on `pve_firewall_iot_nic` (`net1`)
+- Covers the LAN leg (`net0`) only. The IoT net is the CT's WiFi card (`wlan0`, moved in by `deploy-iot.yml`), not a Proxmox NIC, so only the ufw inside filters it ([ADR 0029](../../../docs/adr/0029-wifi-card-in-the-gateway.md))
+- `ipfilter: 1`: the NIC only sends from its own configured IP
 - In from the LAN: `mqtt_port` from Home Assistant's host, `mqtt_exporter_port` and node-exporter from Prometheus' host, SSH + ICMP
-- Out (`policy_out: DROP`): DNS to the router (the CT's resolver), RELP to the log LXC, HTTP/HTTPS to the internet (apt, ntfy). The rest of the LAN and the IoT net are dropped. No NTP, the CT uses the host's clock
+- Out (`policy_out: DROP`): DNS to the router (the CT's resolver), RELP to the log LXC, HTTP/HTTPS to the internet (apt, ntfy). The rest of the LAN is dropped. No NTP, the CT uses the host's clock
 - ufw inside only filters inbound, its outbound stays allow; the egress limit is this file
 
 ## Settings
@@ -75,8 +75,6 @@
 | `pve_firewall_log_port` | `log_relp_port` | The RELP port |
 | `pve_firewall_prometheus_ip` | `prometheus_ip` (`app_settings.yml`) | May scrape the log and IoT LXCs |
 | `pve_firewall_iot_vmid` | `vmids.iot` | The IoT gateway LXC |
-| `pve_firewall_iot_cidr` | `iot_cidr` | The IoT net, may reach the broker only |
-| `pve_firewall_iot_nic` | `net1` | The CT's IoT leg, the only NIC the IoT rule accepts on |
 | `pve_firewall_iot_mqtt_clients` | `mqtt_lan_clients` (`app_settings.yml`) | May reach the broker from the LAN |
 
 ## Rollout

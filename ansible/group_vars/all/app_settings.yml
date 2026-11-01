@@ -25,8 +25,7 @@ prometheus_ip: "{{ hostvars[apps['prometheus'].host].ansible_host }}"
 mqtt_lan_clients:
   - { ip: "{{ hostvars[apps['homeassistant'].host].ansible_host }}", c: home assistant }   # ha_ip once haos has its own vm
 
-# what the iot net may open on the gateway, only on its iot leg: the broker + firmware downloads.
-# one list for both firewall layers
+# what the iot net may open on the gateway, only on its wifi card (ufw on wlan0): the broker + firmware downloads
 iot_net_ports: ["{{ mqtt_port }}", "{{ ota_port }}"]
 
 # gatus (apps/gatus): every check is generated from apps.yml + the inventory

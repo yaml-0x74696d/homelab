@@ -1,6 +1,6 @@
 ---
 # allow rules tagged with lxc_base_ufw_rules_comment: adds lxc_base_ufw_rules, drops the tagged ones not in it anymore.
-# lxc_base_ufw_rules: [{port, proto: tcp, src: <ip or cidr>}]. deploy-iot.yml uses it too (tasks_from)
+# lxc_base_ufw_rules: [{port, proto: tcp, src: <ip, cidr or any>, iface: <only in on it, optional>}]. deploy-iot.yml uses it too (tasks_from)
 - name: Read the ufw rules
   ansible.builtin.command: ufw status
   register: lxc_base_ufw_rules_status
@@ -18,6 +18,8 @@
     port: "{{ item.port | string }}"
     proto: "{{ item.proto }}"
     from_ip: "{{ item.src }}"
+    direction: "{{ 'in' if item.iface is defined else omit }}"
+    interface: "{{ item.iface | default(omit) }}"
     delete: true
   loop: "{{ lxc_base_ufw_rules_stale }}"
 
@@ -27,6 +29,8 @@
     port: "{{ item.port | string }}"
     proto: "{{ item.proto }}"
     from_ip: "{{ item.src }}"
+    direction: "{{ 'in' if item.iface is defined else omit }}"
+    interface: "{{ item.iface | default(omit) }}"
     comment: "{{ lxc_base_ufw_rules_comment }}"
   loop: "{{ lxc_base_ufw_rules }}"
   ignore_errors: "{{ ansible_check_mode }}"

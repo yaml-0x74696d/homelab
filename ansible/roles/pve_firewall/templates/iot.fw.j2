@@ -1,4 +1,5 @@
-# managed by ansible (roles/pve_firewall) — iot gateway lxc. inbound = the ufw inside, egress only here
+# managed by ansible (roles/pve_firewall) — iot gateway lxc, lan leg. inbound = the ufw inside, egress only here.
+# the iot net is on the ct's wifi card, not a pve nic, so only the ufw inside filters it
 [OPTIONS]
 
 enable: 1
@@ -7,11 +8,6 @@ policy_in: DROP
 policy_out: DROP
 
 [RULES]
-
-# iot net: the broker and firmware downloads, nothing else, and only on the iot leg
-{% for p in pve_firewall_iot_net_ports %}
-IN ACCEPT -i {{ pve_firewall_iot_nic }} -source {{ pve_firewall_iot_cidr }} -p tcp -dport {{ p }} -log nolog
-{% endfor %}
 
 # lan: the consumers, scrapes, ssh, ping
 {% for h in pve_firewall_iot_mqtt_clients %}
@@ -23,11 +19,10 @@ IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p tcp -dport {{ ssh_port }} -log 
 IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p icmp -log nolog
 
 # egress: dns to the router (what tofu set as resolver), relp to the log lxc,
-# http/https to the internet (apt, ntfy). nothing else, the lan and the iot net stay shut
+# http/https to the internet (apt, ntfy). nothing else, the rest of the lan stays shut
 OUT ACCEPT -dest {{ pve_firewall_gateway_ip }} -p udp -dport 53 -log nolog
 OUT ACCEPT -dest {{ pve_firewall_gateway_ip }} -p tcp -dport 53 -log nolog
 OUT ACCEPT -dest {{ pve_firewall_log_ip }} -p tcp -dport {{ pve_firewall_log_port }} -log nolog
 OUT DROP -dest {{ pve_firewall_lan_cidr }} -log nolog
-OUT DROP -dest {{ pve_firewall_iot_cidr }} -log nolog
 OUT ACCEPT -p tcp -dport 80 -log nolog
 OUT ACCEPT -p tcp -dport 443 -log nolog

@@ -144,8 +144,8 @@ model {
     }
     ap = container "IoT access point" {
       #iot
-      technology "hostapd"
-      description "Isolated wifi for the sensors"
+      technology "hostapd, dnsmasq"
+      description "Isolated wifi + DHCP for the sensors, on the node's wifi card moved into the gateway"
     }
   }
 
