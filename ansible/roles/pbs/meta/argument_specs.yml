@@ -1,0 +1,63 @@
+---
+argument_specs:
+  main:
+    short_description: Proxmox Backup client, db dumps first, then the apps folders
+    options:
+      pbs_on_calendar:
+        type: str
+        description: systemd OnCalendar of the backup timer
+      pbs_randomized_delay:
+        type: str
+        description: Random delay so the hosts don't hit the datastore at once
+      pbs_datastore:
+        type: str
+        description: Datastore on the PBS
+      pbs_token_id:
+        type: str
+        description: API token, backup-only
+      pbs_repository:
+        type: str
+        description: Full repository string
+      pbs_id:
+        type: str
+        description: Backup group id, one per host
+      pbs_ntfy_url:
+        type: str
+        description: ntfy topic for failures, empty = off
+      pbs_ntfy_token:
+        type: str
+        no_log: true
+        description: ntfy token
+      pbs_timeout:
+        type: str
+        description: A wedged push is killed after this
+      pbs_jobs:
+        type: list
+        elements: dict
+        description: Databases to dump before the push (host_vars)
+        options:
+          name:
+            type: str
+            required: true
+            description: Dump name
+          type:
+            type: str
+            required: true
+            choices: [postgres, sqlite]
+            description: Database type
+          container:
+            type: str
+            description: Postgres container
+          path:
+            type: str
+            description: sqlite file, relative to the apps folder
+          data_dir:
+            type: str
+            description: Postgres data dir, left out of the flat archive
+          podman:
+            type: bool
+            description: The app runs on Podman
+      pbs_exclude:
+        type: list
+        elements: str
+        description: Extra excludes for the flat archive

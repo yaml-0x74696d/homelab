@@ -1,0 +1,18 @@
+---
+# the iot gateway ct and the node's wifi card it gets
+iot_node_ct: "{{ vmids.iot }}"
+iot_node_nic: "{{ iot_wifi_nic }}"
+iot_node_country: "{{ iot_wifi_country }}"            # regulatory domain, the ct isn't allowed to set it
+iot_node_ct_address: "{{ iot_ip }}/{{ iot_cidr | split('/') | last }}"
+iot_node_ct_start_timeout: 120                        # seconds until ssh answers after a restart
+
+# raw lxc lines, the api can't set them. lxc.net.9: clear of proxmox's own net0.. lines.
+# phys moves the whole phy into the ct, the hook hands it back at stop
+iot_node_ct_lines:
+  - "lxc.net.9.type: phys"
+  - "lxc.net.9.link: {{ iot_node_nic }}"
+  - "lxc.net.9.name: wlan0"
+  - "lxc.net.9.ipv4.address: {{ iot_node_ct_address }}"
+  - "lxc.net.9.flags: up"
+  - "lxc.hook.stop: /usr/local/sbin/iot-wifi-back"
+  - "lxc.hook.pre-start: /usr/local/sbin/iot-wifi-back"

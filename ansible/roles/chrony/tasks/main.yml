@@ -10,6 +10,7 @@
     src: chrony.conf.j2
     dest: /etc/chrony/chrony.conf
     mode: "0644"
+    validate: /usr/sbin/chronyd -p -f %s
   notify: Restart chrony
 
 # --check doesn't install the package, so the unit doesn't exist yet

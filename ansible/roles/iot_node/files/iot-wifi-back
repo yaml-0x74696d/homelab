@@ -1,0 +1,35 @@
+#!/bin/sh
+# managed by ansible (roles/iot_node). lxc.hook.stop + lxc.hook.pre-start of the iot gateway ct.
+# left alone, a stopped ct hands the card back late (with its netns) and as wlan0, and the next start fails.
+# stop: takes the card out of the ct's netns under its node name. pre-start: renames a stray wlan0 (crash)
+set -u
+# shellcheck source=/dev/null
+. /etc/default/iot-wifi   # NIC=<the card's name on the node>
+
+# hook.version 0 passes type and namespaces as args, version 1 as LXC_HOOK_TYPE / LXC_NET_NS
+netns="${LXC_NET_NS:-}"
+case "${LXC_HOOK_TYPE:-${3:-}}" in
+stop)
+    for a in "$@"; do case "$a" in net:*) netns="${a#net:}" ;; esac; done
+    [ -n "$netns" ] || exit 0
+    phy=$(nsenter --net="$netns" iw dev wlan0 info 2>/dev/null | awk '/wiphy/ {print "phy" $2}')
+    [ -n "$phy" ] || exit 0
+    nsenter --net="$netns" ip link set wlan0 down
+    nsenter --net="$netns" ip link property del dev wlan0 altname "$NIC" 2>/dev/null
+    nsenter --net="$netns" ip link set wlan0 name "$NIC"
+    nsenter --net="$netns" iw phy "$phy" set netns 1
+    ;;
+pre-start)
+    for _ in $(seq 1 30); do
+        [ -e "/sys/class/net/$NIC/phy80211" ] && exit 0
+        if [ -e /sys/class/net/wlan0/phy80211 ]; then
+            ip link set wlan0 down
+            ip link property del dev wlan0 altname "$NIC" 2>/dev/null   # udev hands the old name back as an altname
+            ip link set wlan0 name "$NIC" && exit 0
+        fi
+        sleep 1
+    done
+    echo "$NIC not back on the node after 30s" >&2
+    exit 1
+    ;;
+esac

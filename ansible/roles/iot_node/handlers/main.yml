@@ -1,0 +1,17 @@
+---
+- name: Restart the iot ct
+  ansible.builtin.shell: |
+    set -e
+    if [ "$(pct status {{ iot_node_ct }})" = "status: running" ]; then pct shutdown {{ iot_node_ct }} --timeout 60; fi
+    pct start {{ iot_node_ct }}
+  changed_when: true
+  listen: Restart the iot ct
+
+- name: Wait for the iot ct
+  ansible.builtin.wait_for:
+    host: "{{ iot_lan_ip }}"
+    port: "{{ ssh_port }}"
+    timeout: "{{ iot_node_ct_start_timeout }}"
+  delegate_to: localhost
+  become: false
+  listen: Restart the iot ct

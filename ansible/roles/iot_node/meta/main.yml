@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: iot_node
+  author: tim
+  description: the node side of the iot gateway, the wifi card moved into the ct
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

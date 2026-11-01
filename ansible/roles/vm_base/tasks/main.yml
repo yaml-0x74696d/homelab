@@ -31,6 +31,7 @@
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     state: present
+    validate: /usr/sbin/sshd -t -f %s
   loop:
     - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
     - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }

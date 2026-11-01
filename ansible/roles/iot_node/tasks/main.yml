@@ -1,0 +1,39 @@
+---
+- name: Regulatory domain at boot
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/cfg80211-regdom.conf
+    content: "options cfg80211 ieee80211_regdom={{ iot_node_country }}\n"
+    mode: "0644"
+
+- name: Read the regulatory domain
+  ansible.builtin.command: iw reg get
+  register: iot_node_reg
+  changed_when: false
+  check_mode: false
+
+- name: Regulatory domain now
+  ansible.builtin.command: "iw reg set {{ iot_node_country }}"
+  when: ("country " ~ iot_node_country ~ ":") not in iot_node_reg.stdout
+  changed_when: true
+
+- name: Card name for the hook
+  ansible.builtin.copy:
+    dest: /etc/default/iot-wifi
+    content: "NIC={{ iot_node_nic }}\n"
+    mode: "0644"
+
+- name: Hook that hands the card back
+  ansible.builtin.copy:
+    src: iot-wifi-back
+    dest: /usr/local/sbin/iot-wifi-back
+    mode: "0755"
+
+# before any [snapshot] section, end of file when there's none. no # markers: proxmox moves comments to the description
+- name: Card into the ct
+  ansible.builtin.lineinfile:
+    path: "/etc/pve/lxc/{{ iot_node_ct }}.conf"
+    regexp: "^{{ item.split(':')[0] | regex_escape }}:"
+    line: "{{ item }}"
+    insertbefore: '^\['
+  loop: "{{ iot_node_ct_lines }}"
+  notify: Restart the iot ct

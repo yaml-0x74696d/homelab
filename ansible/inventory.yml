@@ -1,12 +1,6 @@
 all:
-  vars:
-    ansible_user: "{{ admin_user }}"
-    ansible_python_interpreter: /usr/bin/python3
   children:
     lxc_containers:
-      vars:
-        ansible_user: root
-        ansible_become: false
       hosts:
         storage:
           ansible_host: "{{ storage_ip }}"
@@ -15,9 +9,6 @@ all:
         iot:
           ansible_host: "{{ iot_lan_ip }}"
     docker_hosts:
-      vars:
-        ansible_become: true
-        ansible_become_password: "{{ sudo_pass }}"
       hosts:
         docker-1:
           ansible_host: "{{ docker1_ip }}"
@@ -26,9 +17,6 @@ all:
         docker-3:
           ansible_host: "{{ docker3_ip }}"
     proxmox:
-      vars:
-        ansible_user: root
-        ansible_become: false
       hosts:
         pve-1:
           ansible_host: "{{ pve1_ip }}"

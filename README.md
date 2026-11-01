@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 4 Podman apps, 21 Ansible roles, 32 playbooks, 23 C4 views
+- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 4 Podman apps, 22 Ansible roles, 32 playbooks, 23 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
@@ -76,8 +76,9 @@
 tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-init)
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
-  inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent
-  roles/           aide, chrony, cronie, docker_app, iot_ap, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
+  group_vars/<group>.yml  login per group (user, become)
+  inventory.yml    hosts only: docker_hosts, proxmox, lxc_containers, netbird_agent
+  roles/           aide, chrony, cronie, docker_app, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
   apps/<name>/     Compose file + templates per app (25)
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)

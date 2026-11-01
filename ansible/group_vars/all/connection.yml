@@ -1,0 +1,4 @@
+---
+# how ansible logs in. per group: group_vars/<group>.yml (a variable, so it beats the play's become: keyword)
+ansible_user: "{{ admin_user }}"
+ansible_python_interpreter: /usr/bin/python3

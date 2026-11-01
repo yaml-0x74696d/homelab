@@ -7,7 +7,7 @@
 - name: Check the wifi card is here
   ansible.builtin.assert:
     that: iot_ap_nic.stat.exists
-    fail_msg: "no {{ iot_ap_interface }} in the ct: the first play of deploy-iot.yml moves it in (raw lxc.net lines on iot_node + ct restart)"
+    fail_msg: "no {{ iot_ap_interface }} in the ct: roles/iot_node moves it in (first play of deploy-iot.yml)"
   when: not ansible_check_mode
 
 - name: Install hostapd, dnsmasq, iw
@@ -47,6 +47,7 @@
     src: iot.conf.j2
     dest: /etc/dnsmasq.d/iot.conf
     mode: "0644"
+    validate: /usr/sbin/dnsmasq --test -C %s
   notify: Restart dnsmasq
   ignore_errors: "{{ ansible_check_mode }}"   # no /etc/dnsmasq.d before the package
 

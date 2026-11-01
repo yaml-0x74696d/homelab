@@ -1,0 +1,84 @@
+---
+argument_specs:
+  main:
+    short_description: Cluster, host and guest firewall rules from the shared variables
+    options:
+      pve_firewall_cluster_enabled:
+        type: bool
+        description: Master switch, on = the guests with rules get filtered
+      pve_firewall_host_enabled:
+        type: bool
+        description: Host management lockdown
+      pve_firewall_lan_cidr:
+        type: str
+        description: The LAN
+      pve_firewall_gateway_ip:
+        type: str
+        description: The router
+      pve_firewall_routing_peers:
+        type: list
+        elements: str
+        description: NetBird routing peers the NetBird VM may reach fully
+      pve_firewall_netbird_dns_https:
+        type: list
+        elements: str
+        description: LAN hosts the NetBird VM may reach on DNS and HTTPS only
+      pve_firewall_ssh_hosts:
+        type: list
+        elements: dict
+        description: May SSH to the nodes
+        options: &hosts
+          ip:
+            type: str
+            required: true
+            description: Address
+          c:
+            type: str
+            description: Comment in the rule
+      pve_firewall_ui_hosts:
+        type: list
+        elements: dict
+        description: May open the web UI
+        options: *hosts
+      pve_firewall_node_ips:
+        type: list
+        elements: str
+        description: The nodes, for corosync and migration
+      pve_firewall_netbird_vmid:
+        type: raw
+        description: The NetBird VM
+      pve_firewall_netbird_relay_range:
+        type: str
+        description: TURN relay ports, min:max
+      pve_firewall_netbird_turn_ports:
+        type: list
+        elements: raw
+        description: STUN/TURN and TURN over TLS
+      pve_firewall_log_vmid:
+        type: raw
+        description: The log LXC
+      pve_firewall_log_ip:
+        type: str
+        description: The log LXC's address
+      pve_firewall_log_port:
+        type: raw
+        description: RELP port
+      pve_firewall_log_sources:
+        type: list
+        elements: str
+        description: May send RELP to the log LXC
+      pve_firewall_prometheus_ip:
+        type: str
+        description: May scrape the log and IoT LXCs
+      pve_firewall_iot_vmid:
+        type: raw
+        description: The IoT gateway LXC
+      pve_firewall_iot_mqtt_clients:
+        type: list
+        elements: dict
+        description: May reach the broker from the LAN
+        options: *hosts
+      pve_firewall_open_guests:
+        type: list
+        elements: raw
+        description: Guests with the firewall bit on that stay unfiltered

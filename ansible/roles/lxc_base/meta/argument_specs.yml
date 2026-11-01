@@ -1,0 +1,48 @@
+---
+argument_specs:
+  main:
+    short_description: Hardening and base packages for every LXC
+    options:
+      lxc_base_packages:
+        type: list
+        elements: str
+        description: Packages every LXC gets
+      lxc_base_services:
+        type: list
+        elements: str
+        description: Services enabled and started
+      lxc_base_node_exporter_listen:
+        type: str
+        description: node_exporter's listen address, the LAN address only
+      lxc_base_ufw:
+        type: bool
+        description: The LXC filters with ufw, so it gets the node-exporter rule
+  ufw_rules:
+    short_description: Allow rules tagged with a comment, stale tagged ones dropped (deploy-iot.yml uses it too)
+    options:
+      lxc_base_ufw_rules_comment:
+        type: str
+        required: true
+        description: Tag on every rule, the stale check only looks at these
+      lxc_base_ufw_rules:
+        type: list
+        elements: dict
+        required: true
+        description: The rules
+        options:
+          port:
+            type: raw
+            required: true
+            description: Port number
+          proto:
+            type: str
+            required: true
+            choices: [tcp, udp]
+            description: Protocol
+          src:
+            type: str
+            required: true
+            description: Source IP, CIDR or any
+          iface:
+            type: str
+            description: Only in on this interface
