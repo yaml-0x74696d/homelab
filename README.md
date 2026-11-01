@@ -6,7 +6,7 @@
 ![System landscape](docs/img/index.png)
 
 - Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), all 23 views, clickable (built by `.github/workflows/pages.yml`)
-- More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views); sensors and the IoT gateway: [docs/iot.md](docs/iot.md)
+- More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views); sensors and the IoT gateway: [docs/iot.md](docs/iot.md); how ansible/ is laid out and which variable wins: [docs/ansible-layout.md](docs/ansible-layout.md)
 
 ## Overview
 
