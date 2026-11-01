@@ -38,12 +38,10 @@ pve_firewall_log_sources: ["{{ docker1_ip }}", "{{ docker2_ip }}", "{{ docker3_i
 # who scrapes node-exporter (log + iot lxc) and the mqtt exporter (iot lxc)
 pve_firewall_prometheus_ip: "{{ prometheus_ip }}"
 
-# the iot gateway lxc: inbound = its ufw (playbooks/deploy-iot.yml), both from app_settings.yml
+# the iot gateway lxc, its lan leg: inbound = its ufw (playbooks/deploy-iot.yml), both from app_settings.yml.
+# the iot leg is its wifi card, no veth, so this firewall never sees it
 pve_firewall_iot_vmid: "{{ vmids.iot }}"
-pve_firewall_iot_cidr: "{{ iot_cidr }}"
-pve_firewall_iot_nic: net1                      # the ct's leg on the iot bridge (tofu/lxc.tf, eth1)
 pve_firewall_iot_mqtt_clients: "{{ mqtt_lan_clients }}"
-pve_firewall_iot_net_ports: "{{ iot_net_ports }}"
 
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.

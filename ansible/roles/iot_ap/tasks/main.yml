@@ -1,0 +1,62 @@
+---
+- name: Wifi card in the ct
+  ansible.builtin.stat:
+    path: "/sys/class/net/{{ iot_ap_interface }}"
+  register: iot_ap_nic
+
+- name: Check the wifi card is here
+  ansible.builtin.assert:
+    that: iot_ap_nic.stat.exists
+    fail_msg: "no {{ iot_ap_interface }} in the ct: the first play of deploy-iot.yml moves it in (raw lxc.net lines on iot_node + ct restart)"
+  when: not ansible_check_mode
+
+- name: Install hostapd, dnsmasq, iw
+  ansible.builtin.apt:
+    name: [hostapd, dnsmasq, iw]
+    state: present
+    update_cache: true
+
+# diff off: holds the wifi passphrase
+- name: Hostapd config
+  ansible.builtin.template:
+    src: hostapd.conf.j2
+    dest: /etc/hostapd/hostapd.conf
+    owner: root
+    group: root
+    mode: "0600"
+  diff: false
+  notify: Restart hostapd
+  ignore_errors: "{{ ansible_check_mode }}"   # --check doesn't install the package, no /etc/hostapd
+
+- name: Hostapd drop-in dir
+  ansible.builtin.file:
+    path: /etc/systemd/system/hostapd.service.d
+    state: directory
+    mode: "0755"
+
+# was wifi-txpower.service on the node
+- name: Tx power after every start
+  ansible.builtin.template:
+    src: txpower.conf.j2
+    dest: /etc/systemd/system/hostapd.service.d/txpower.conf
+    mode: "0644"
+  notify: Restart hostapd
+
+- name: Dhcp for the iot wifi
+  ansible.builtin.template:
+    src: iot.conf.j2
+    dest: /etc/dnsmasq.d/iot.conf
+    mode: "0644"
+  notify: Restart dnsmasq
+  ignore_errors: "{{ ansible_check_mode }}"   # no /etc/dnsmasq.d before the package
+
+# debian masks hostapd until it has a config
+- name: Enable hostapd and dnsmasq
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+    masked: false
+    daemon_reload: true
+  loop: [hostapd, dnsmasq]
+  ignore_errors: "{{ ansible_check_mode }}"

@@ -15,11 +15,13 @@ storage_ip: 192.168.178.150    # CT 300 on pve-3
 log_ip: 192.168.178.151        # CT 301 on pve-3, central rsyslog
 iot_lan_ip: 192.168.178.152    # CT 302, iot gateway (mqtt broker + exporter), lan leg
 netbird_ip: 192.168.178.250    # dmz vm on pve-2
-lan_bridge: vmbr0             # proxmox bridges (tofu + hostapd)
-iot_bridge: vmbr1
-iot_cidr: 192.168.50.0/24      # sensor wifi: static .2-.49, dhcp .50-.200 (dnsmasq on iot_node, by hand)
-iot_ip: 192.168.50.10          # CT 302's leg on the iot bridge, no gateway there
-iot_node: pve-1                # node with the iot bridge, = the iot_ap group
+lan_bridge: vmbr0             # proxmox bridge (tofu)
+iot_cidr: 192.168.50.0/24      # sensor wifi: static .2-.49, dhcp iot_dhcp_range (dnsmasq in CT 302)
+iot_ip: 192.168.50.10          # CT 302 on its wifi card (wlan0), the only address in the iot net besides the sensors
+iot_node: pve-1                # node with the wifi card, CT 302 runs here
+iot_wifi_nic: wlp0s12f0        # the card's name on iot_node, moved into CT 302 as wlan0
+iot_wifi_country: DE           # regulatory domain, set on iot_node (the ct isn't allowed to)
+iot_dhcp_range: [192.168.50.50, 192.168.50.200]
 dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (docker-2)
 mqtt_broker_ip: "{{ iot_lan_ip }}"   # lan consumers (ha); sensors use iot_ip
 

@@ -15,18 +15,18 @@ The network is split into four zones.
 | Zone | Network | What's in it |
 |---|---|---|
 | LAN | `192.168.178.0/24`, bridge `vmbr0` on every node | All nodes and guests, FRITZ!Box as gateway (`.1`) |
-| IoT | `192.168.50.0/24`, bridge `vmbr1` on pve-1 only | ESP32 sensors with static IPs, WiFi from hostapd on pve-1's onboard card, the IoT gateway LXC (`.10`). Static .2 to .49, DHCP .50 to .200 (dnsmasq on pve-1, `.1`) |
+| IoT | `192.168.50.0/24`, pve-1's onboard WiFi card, moved into the IoT gateway LXC | ESP32 sensors with static IPs and the gateway (`.10`), which runs the WiFi (hostapd) and DHCP (dnsmasq). Static .2 to .49, DHCP .50 to .200. No Proxmox bridge, no node in the zone |
 | DMZ | Inside the LAN, fenced by the PVE firewall | The NetBird VM (`.250`) with its own guest rules |
 | WAN | Internet | The FRITZ!Box forwards only to `.250`: 443/tcp, 3478/udp, 49160–49200/udp |
 
-- Only the IoT gateway LXC has a leg in the IoT zone, no VM does
+- Only the IoT gateway LXC is in the IoT zone, no VM and no node ([ADR 0029](adr/0029-wifi-card-in-the-gateway.md))
 
 ## Nodes
 
 Three Proxmox nodes, each with one Docker VM.
 
 **pve-1**: Dell Wyse 5070, 8 GB RAM
-- Runs docker-1, the IoT gateway LXC and the IoT WiFi (hostapd)
+- Runs docker-1 and the IoT gateway LXC, which holds pve-1's WiFi card
 
 ![](img/pve1.png)
 
@@ -51,7 +51,6 @@ Ansible also sets up a couple of services on the hosts themselves:
 | pve_firewall | All nodes |
 | AIDE | All nodes |
 | mergerfs | pve-3 |
-| hostapd | pve-1 |
 
 - `update.yml` updates every apt host one at a time (LXCs, VMs, then the nodes), restarts stale services, re-baselines AIDE and reports pending reboots ([0024](adr/0024-ansible-run-os-updates.md))
 
@@ -83,11 +82,11 @@ Memory:
 How an LXC is built:
 - OpenTofu creates it unprivileged from the Debian 13 template, Proxmox writes the IP, root's SSH key and the hostname (no cloud-init)
 - `base.yml` adds `roles/lxc_base`: SSH key-only, fail2ban, unattended security updates, node_exporter
-- The firewall depends on the LXC: ufw in storage, the PVE firewall in front of log, both in front of iot
+- The firewall depends on the LXC: ufw in storage, the PVE firewall in front of log, both in front of iot's LAN leg, ufw alone on its WiFi
 
 How an app is deployed:
 - Each app is a folder `ansible/apps/<name>/` plus a playbook `deploy-<name>.yml`
-- All compose apps use the same `docker_app` role ([ADR 0002](adr/0002-generic-docker-app-role.md)), hostapd on pve-1 is plain tasks
+- All compose apps use the same `docker_app` role ([ADR 0002](adr/0002-generic-docker-app-role.md))
 - App data lives under `/opt/stacks/<name>` (`apps_root`) on the VM
 
 ## Storage
@@ -267,14 +266,15 @@ The sensors talk MQTT, their readings end up in Home Assistant and Prometheus. H
 ![](img/firmware-update.png)
 
 - Data flow: ESP32 → Mosquitto → mqtt-exporter → Prometheus/Grafana, Home Assistant subscribes too
-- Mosquitto, mqtt-exporter and the OTA server (nginx) run in the IoT gateway LXC (`iot`, CT 302), the only guest on the IoT bridge, with a second leg on the LAN for the consumers ([ADR 0028](adr/0028-iot-gateway-lxc.md))
+- Mosquitto, mqtt-exporter and the OTA server (nginx) run in the IoT gateway LXC (`iot`, CT 302), with a second leg on the LAN for the consumers ([ADR 0028](adr/0028-iot-gateway-lxc.md))
+- The IoT WiFi runs in the same LXC: pve-1's WiFi card is moved into it (raw `lxc.net` lines from `deploy-iot.yml`), hostapd and dnsmasq run there (`roles/iot_ap`). pve-1 only keeps the regulatory domain ([ADR 0029](adr/0029-wifi-card-in-the-gateway.md))
 - Both come from Debian's repo (`roles/mosquitto`, `roles/mqtt_exporter`, `deploy-iot.yml`): one shared MQTT user (password in the vault), no TLS, plain 1883. Accepted risk: anyone on the IoT WiFi with the password can read and fake every sensor
 - The exporter turns `home/<device>/temperature` and `humidity` into `iot_temperature_celsius` and `iot_humidity_percent`
-- Two firewall layers with the same inbound rules from one list in `app_settings.yml`: the PVE guest firewall (`iot.fw`) and ufw inside (ufw additionally answers ping). From the IoT net only 1883 and 80 (firmware downloads); from the LAN 1883 from Home Assistant's host, the exporter port and node_exporter from Prometheus' host, SSH
-- Outbound only DNS to the router, RELP to the log LXC and HTTP/HTTPS to the internet (`iot.fw`), the rest of the LAN and the IoT net are dropped
-- The IoT leg has no gateway, nothing routes through the LXC
+- LAN leg: two firewall layers with the same inbound rules, the PVE guest firewall (`iot.fw`) and ufw inside (ufw additionally answers ping): 1883 from Home Assistant's host, the exporter port and node_exporter from Prometheus' host, SSH
+- WiFi: ufw alone, only `on wlan0`: 1883 and 80 (firmware downloads) from the IoT net, 67/udp for DHCP. The card isn't a Proxmox NIC, so the PVE firewall never sees this traffic
+- Outbound on the LAN leg only DNS to the router, RELP to the log LXC and HTTP/HTTPS to the internet (`iot.fw`), the rest of the LAN is dropped
+- The IoT side has no gateway and no router option in DHCP, the LXC doesn't forward, nothing routes through it
 - A broken broker only exposes the broker, not docker-1's vault and SSO
-- DHCP for the IoT net is dnsmasq on pve-1, set up by hand; it's the first candidate to move onto the gateway
 - Home Assistant's broker address is set in its MQTT integration (UI), not in the repo
 - Prometheus keeps 15 days; the long-term sensor history is Home Assistant's (long-term statistics, hourly)
 - Home Assistant runs on docker-1

@@ -30,3 +30,4 @@ Format: status, context, decision, consequences.
 - [26. ufw as the guest firewall, also for Podman](0026-ufw-as-guest-firewall.md)
 - [27. Gatus for uptime checks, generated from the apps map](0027-gatus-generated-from-apps-map.md)
 - [28. IoT gateway LXC: MQTT hub, firmware pulled from the gateway, one shared user without TLS](0028-iot-gateway-lxc.md)
+- [29. The IoT WiFi card moves into the gateway LXC, pve-1 leaves the IoT net](0029-wifi-card-in-the-gateway.md)

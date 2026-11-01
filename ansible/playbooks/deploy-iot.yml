@@ -1,23 +1,81 @@
 ---
-# iot gateway lxc (CT 302): mqtt broker + exporter for the iot net and the lan consumers, firmware downloads for the sensors.
-# first: deploy-pve-firewall.yml, tofu apply (the ct), base.yml -l iot. after: aide.yml -l iot (docs/iot.md)
+# iot gateway lxc (CT 302): the iot wifi (card moved into the ct), mqtt broker + exporter for the sensors and the lan
+# consumers, firmware downloads. first: deploy-pve-firewall.yml, tofu apply (the ct), base.yml -l iot.
+# after: aide.yml -l iot (docs/iot.md)
+
+# the api can't set raw lxc keys, so the card goes in here. a changed line restarts the ct
+- name: Wifi card into the iot gateway
+  hosts: proxmox   # hosts: can't read group_vars, iot_node picks the node below
+  gather_facts: false
+  vars:
+    iot_ct_conf: "/etc/pve/lxc/{{ vmids.iot }}.conf"
+    # lxc.net.9: clear of proxmox's own net0.. lines. phys moves the whole phy, back to the node when the ct stops
+    iot_ct_wifi_lines:
+      - "lxc.net.9.type: phys"
+      - "lxc.net.9.link: {{ iot_wifi_nic }}"
+      - "lxc.net.9.name: wlan0"
+      - "lxc.net.9.ipv4.address: {{ iot_ip }}/{{ iot_cidr | split('/') | last }}"
+      - "lxc.net.9.flags: up"
+
+  tasks:
+    - name: Only iot_node
+      ansible.builtin.meta: end_host
+      when: inventory_hostname != iot_node
+
+    # stays on the node: the ct may not set it, hostapd there runs without country_code
+    - name: Regulatory domain at boot
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/cfg80211-regdom.conf
+        content: "options cfg80211 ieee80211_regdom={{ iot_wifi_country }}\n"
+        mode: "0644"
+
+    - name: Read the regulatory domain
+      ansible.builtin.command: iw reg get
+      register: iot_node_reg
+      changed_when: false
+      check_mode: false
+
+    - name: Regulatory domain now
+      ansible.builtin.command: "iw reg set {{ iot_wifi_country }}"
+      when: ("country " ~ iot_wifi_country ~ ":") not in iot_node_reg.stdout
+      changed_when: true
+
+    # before any [snapshot] section, end of file when there's none
+    - name: Card into the ct
+      ansible.builtin.lineinfile:
+        path: "{{ iot_ct_conf }}"
+        regexp: "^{{ item.split(':')[0] | regex_escape }}:"
+        line: "{{ item }}"
+        insertbefore: '^\['
+      loop: "{{ iot_ct_wifi_lines }}"
+      notify: Restart the iot ct
+
+  handlers:
+    - name: Restart the iot ct
+      ansible.builtin.shell: "pct shutdown {{ vmids.iot }} --timeout 60 && pct start {{ vmids.iot }}"
+      changed_when: true
+      listen: Restart the iot ct
+
+    - name: Wait for the iot ct
+      ansible.builtin.wait_for:
+        host: "{{ iot_lan_ip }}"
+        port: "{{ ssh_port }}"
+        timeout: 120
+      delegate_to: localhost
+      become: false
+      listen: Restart the iot ct
 
 - name: Iot gateway
   hosts: iot
   vars:
-    # inbound, the same as iot.fw (roles/pve_firewall). callers: app_settings.yml
+    # inbound. the lan part is the same as iot.fw (roles/pve_firewall), the wifi part only on wlan0 (nothing else
+    # filters it). dhcp clients have no address yet, so 67 is from any. callers: app_settings.yml, network.yml
     iot_ufw_rules: >-
-      {{ iot_net_ports | map('community.general.dict_kv', 'port') | map('combine', {'proto': 'tcp', 'src': iot_cidr}) | list
+      {{ iot_net_ports | map('community.general.dict_kv', 'port') | map('combine', {'proto': 'tcp', 'src': iot_cidr, 'iface': 'wlan0'}) | list
+         + [{'port': 67, 'proto': 'udp', 'src': 'any', 'iface': 'wlan0'}]
          + mqtt_lan_clients | map(attribute='ip') | map('community.general.dict_kv', 'src')
            | map('combine', {'port': mqtt_port, 'proto': 'tcp'}) | list
          + [{'port': mqtt_exporter_port, 'proto': 'tcp', 'src': prometheus_ip}] }}
-
-  pre_tasks:
-    - name: Ct node runs the iot bridge
-      ansible.builtin.assert:
-        that: iot_node in groups['iot_ap']
-        fail_msg: "iot_node (network.yml) and the iot_ap group (inventory.yml) must name the same node"
-      run_once: true
 
   tasks:
     - name: Install ufw
@@ -44,7 +102,7 @@
       ignore_errors: "{{ ansible_check_mode }}"
 
     # node-exporter's rule comes from roles/lxc_base
-    - name: Ufw mqtt, firmware, exporter
+    - name: Ufw wifi, mqtt, firmware, exporter
       ansible.builtin.include_role:
         name: lxc_base
         tasks_from: ufw_rules
@@ -56,6 +114,10 @@
       community.general.ufw:
         state: enabled
       ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: Wifi and dhcp
+      ansible.builtin.include_role:
+        name: iot_ap
 
     - name: Broker
       ansible.builtin.include_role:

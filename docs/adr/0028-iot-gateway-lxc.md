@@ -1,6 +1,6 @@
 # 28. IoT gateway LXC: MQTT hub, firmware pulled from the gateway, one shared user without TLS
 
-Status: Accepted
+Status: Accepted, the WiFi side amended by [0029](0029-wifi-card-in-the-gateway.md)
 
 ## Context
 
@@ -22,9 +22,8 @@ Status: Accepted
 ## Decision
 
 The gateway (`iot`, CT 302, `tofu/lxc.tf`):
-- Debian 13 LXC, unprivileged, on `iot_node` (pve-1), the only guest on `vmbr1`
-- Two legs: `iot_ip` (`.50.10`) on the IoT net without a gateway, `iot_lan_ip` (`.152`) on the LAN for the consumers. Nothing routes through it
-- `iot_node` and the inventory group `iot_ap` (hostapd) name the node; `deploy-iot.yml` checks they match
+- Debian 13 LXC, unprivileged, on `iot_node` (pve-1)
+- Two legs: `iot_ip` (`.50.10`) on the IoT net without a gateway (pve-1's WiFi card, moved in, [0029](0029-wifi-card-in-the-gateway.md)), `iot_lan_ip` (`.152`) on the LAN for the consumers. Nothing routes through it
 
 What runs there (`playbooks/deploy-iot.yml`):
 - Mosquitto from Debian (`roles/mosquitto`): one shared user `mqtt_user`, the password from the vault (`mqtt_password`), no anonymous logins, no TLS, plain `mqtt_port` (1883)
@@ -38,19 +37,19 @@ The devices:
 - Topics `home/<device>/<measurement>` for every device (ESPHome: `topic_prefix` + a `state_topic` per sensor)
 - Firmware updates are pulled: a "Flash from gateway" button in Home Assistant tells the device over MQTT to download `<device>.bin` from the gateway. Nothing updates on its own, the first flash is by USB
 
-Two firewall layers, the same inbound rules from one list (`iot_net_ports`, `mqtt_lan_clients`, `prometheus_ip` in `app_settings.yml`):
+Two firewall layers on the LAN leg, the same inbound rules from one list (`mqtt_lan_clients`, `prometheus_ip` in `app_settings.yml`); the IoT side is ufw alone ([0029](0029-wifi-card-in-the-gateway.md)):
 - The PVE guest firewall (`roles/pve_firewall`, `iot.fw`), enforced by the host, so a root shell in the CT can't open anything
 - ufw inside (`deploy-iot.yml`, [0026](0026-ufw-as-guest-firewall.md)); it drops its own rules that left the list. Its default `before.rules` also answer ping and accept mDNS/UPnP multicast from anywhere, `iot.fw` doesn't
-- From the IoT net: only 1883 and 80, and only on the IoT NIC (`-i net1`, `ipfilter` on)
+- From the IoT net (ufw, `on wlan0`): only 1883 and 80 (`iot_net_ports`), plus DHCP
 - From the LAN: 1883 from Home Assistant's host, 9641 and node_exporter from Prometheus' host, SSH
-- Out, in `iot.fw` only (`policy_out: DROP`): DNS to the router, RELP to the log LXC, HTTP/HTTPS to the internet for apt and ntfy. The rest of the LAN and the IoT net are dropped, ufw's outbound stays open
+- Out, in `iot.fw` only (`policy_out: DROP`): DNS to the router, RELP to the log LXC, HTTP/HTTPS to the internet for apt and ntfy. The rest of the LAN is dropped, ufw's outbound stays open
 - Metrics: `iot_temperature_celsius`, `iot_humidity_percent`, the device in the `sensor` label
 
 What may move onto the gateway:
-- IoT-facing services: DHCP for the IoT net first (today dnsmasq on pve-1, by hand: static 192.168.50.2 to .49, DHCP .50 to .200), then NTP
+- IoT-facing services: WiFi and DHCP are there now ([0029](0029-wifi-card-in-the-gateway.md)), NTP could follow
 - Not apps. Home Assistant, dashboards and anything with a web UI stay on the app hosts
 
-- Enforced by: `iot.fw` and ufw, the `iot_node`/`iot_ap` check in `deploy-iot.yml`, `allow_anonymous false` in the broker config, the IoT leg without a gateway
+- Enforced by: `iot.fw` and ufw, `allow_anonymous false` in the broker config, the IoT leg without a gateway
 
 ## Consequences
 
@@ -69,6 +68,6 @@ What may move onto the gateway:
 - Accepted: firmware goes over plain HTTP; the md5 only catches a broken download, anyone on the IoT WiFi with the password can trigger a flash of what the gateway serves
 - Accepted: the gateway is not backed up, its config is in git, the broker state is disposable and the firmware files are rebuilt in the add-on
 
-- Later: moving the WiFi and the gateway to pve-2 (same WiFi card) is `iot_node` + `iot_ap`, plus the hand-made bridge, dnsmasq and hostapd's interface name on the new node
+- Later: moving the gateway to pve-2 (same WiFi card) is `iot_node` and `iot_wifi_nic`
 
 - Related: [0007](0007-group-vars-single-source-of-truth.md) (ips, ports), [0009](0009-aide-with-manual-accept.md) (AIDE excludes), [0016](0016-ansible-vault-for-secrets.md) (the password), [0022](0022-central-logging-relp.md) (logs), [0026](0026-ufw-as-guest-firewall.md) (ufw)

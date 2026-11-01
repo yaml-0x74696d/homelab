@@ -21,16 +21,13 @@ deployment {
       }
       gateway = lxc "iot" {
         #iot
-        description "IoT gateway, legs on the LAN and the IoT wifi"
+        description "IoT gateway: LAN leg + the node's wifi card"
+        instanceOf automation.ap
         instanceOf automation.mosquitto
         instanceOf automation.mqtt-exporter
         instanceOf automation.ota
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
-      }
-      hostapd = host "hostapd" {
-        #iot
-        instanceOf automation.ap
       }
       iot = zone "IoT wifi" {
         #iot

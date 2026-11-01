@@ -1,9 +1,13 @@
-{# lines of `ufw status` with this comment whose port/proto/src isn't in lxc_base_ufw_rules (as in podman_app), compared as text #}
+{# lines of `ufw status` with this comment whose port/proto/iface/src isn't in lxc_base_ufw_rules (as in podman_app), compared as text #}
 {% set wanted = [] %}
-{% for r in lxc_base_ufw_rules %}{% set _ = wanted.append(r.port ~ '/' ~ r.proto ~ ' ' ~ r.src) %}{% endfor %}
+{% for r in lxc_base_ufw_rules %}{% set _ = wanted.append(r.port ~ '/' ~ r.proto ~ ' ' ~ (r.iface | default('')) ~ ' ' ~ r.src) %}{% endfor %}
 {% for line in lxc_base_ufw_rules_status.stdout_lines | default([]) if line is search('# ' ~ lxc_base_ufw_rules_comment ~ '$') and '(v6)' not in line %}
-{% set m = line | regex_search('^(\\d+)/(\\w+)\\s+ALLOW\\s+(\\S+)', '\\1', '\\2', '\\3') %}
-{% if m and (m[0] ~ '/' ~ m[1] ~ ' ' ~ m[2]) not in wanted %}
-- {port: {{ m[0] }}, proto: {{ m[1] }}, src: "{{ m[2] }}"}
+{% set m = line | regex_search('^(\\d+)/(\\w+)( on \\S+)?\\s+ALLOW\\s+(\\S+)', '\\1', '\\2', '\\3', '\\4') %}
+{% if m %}
+{% set iface = (m[2] or '') | replace(' on ', '') %}
+{% set src = 'any' if m[3] == 'Anywhere' else m[3] %}
+{% if (m[0] ~ '/' ~ m[1] ~ ' ' ~ iface ~ ' ' ~ src) not in wanted %}
+- {port: {{ m[0] }}, proto: {{ m[1] }}, src: "{{ src }}"{{ (', iface: ' ~ iface) if iface else '' }}}
+{% endif %}
 {% endif %}
 {% endfor %}

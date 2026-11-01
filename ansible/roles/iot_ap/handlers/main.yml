@@ -1,0 +1,13 @@
+---
+- name: Restart hostapd
+  ansible.builtin.systemd:
+    name: hostapd
+    state: restarted
+    daemon_reload: true
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Restart dnsmasq
+  ansible.builtin.systemd:
+    name: dnsmasq
+    state: restarted
+  ignore_errors: "{{ ansible_check_mode }}"

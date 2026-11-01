@@ -24,7 +24,7 @@ views {
 views "Deployment" {
   deployment view pve1 {
     title "pve-1: what runs where"
-    include home.pve1, home.pve1.*, home.pve1.docker1.*, home.pve1.gateway.*, home.pve1.hostapd.*, home.pve1.iot.*
+    include home.pve1, home.pve1.*, home.pve1.docker1.*, home.pve1.gateway.*, home.pve1.iot.*
     style home.pve1.iot { color amber }
   }
   deployment view pve2 {

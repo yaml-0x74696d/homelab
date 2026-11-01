@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- Every `deploy-<app>.yml` (25 apps, hostapd is plain tasks), the host is picked by the playbook's `hosts:`
+- Every `deploy-<app>.yml` (25 apps), the host is picked by the playbook's `hosts:`
 - `site.yml` imports them all
 
 ## How it works

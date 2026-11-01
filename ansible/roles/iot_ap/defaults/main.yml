@@ -1,0 +1,9 @@
+---
+# the iot wifi, run inside the gateway lxc on the card deploy-iot.yml moves in (wlan0)
+iot_ap_interface: wlan0
+iot_ap_ssid: "{{ wifi_ssid }}"         # vault
+iot_ap_passphrase: "{{ wifi_pass }}"   # vault
+iot_ap_channel: 6
+iot_ap_txpower: 1300                   # mBm, 13 dBm: the flat, not the street
+iot_ap_dhcp_range: "{{ iot_dhcp_range }}"
+iot_ap_dhcp_lease: 12h
