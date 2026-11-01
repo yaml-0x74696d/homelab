@@ -20,7 +20,9 @@ docker_app_cifs_vers: "3.1.1"   # smb dialect for the pool mounts
 docker_app_restart: []
 # templates that hold secrets besides .env (paths relative to the app dir, with .j2): rendered without --diff
 docker_app_secret_templates: []
-docker_app_secret_tpl_paths: "{{ docker_app_secret_templates | map('regex_replace', '^', docker_app_src ~ '/') | list }}"
+# every .env.j2 plus those, relative to the app dir (read after the template search in tasks/main.yml)
+docker_app_secret_rel: "{{ docker_app_tpls.files | map(attribute='path') | map('relpath', docker_app_src)
+                           | select('search', '(^|/)\\.env\\.j2$') | list + docker_app_secret_templates }}"
 # docker_compose_v2 options
 docker_app_compose_state: present
 docker_app_compose_pull: policy

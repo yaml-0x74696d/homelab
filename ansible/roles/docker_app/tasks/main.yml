@@ -102,10 +102,10 @@
     src: "{{ item.path }}"
     dest: "{{ docker_app_root }}/{{ docker_app_name }}/{{ item.path | relpath(docker_app_src) | regex_replace('\\.j2$', '') }}"
     mode: "0644"
-  loop: "{{ docker_app_tpls.files | rejectattr('path', 'search', '\\.env\\.j2$')
-           | rejectattr('path', 'in', docker_app_secret_tpl_paths) | list }}"
+  loop: "{{ docker_app_tpls.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
+  when: (item.path | relpath(docker_app_src)) not in docker_app_secret_rel
   notify: Restart app containers
 
 # .env and docker_app_secret_templates hold secrets: never in --diff
@@ -114,10 +114,10 @@
     src: "{{ item.path }}"
     dest: "{{ docker_app_root }}/{{ docker_app_name }}/{{ item.path | relpath(docker_app_src) | regex_replace('\\.j2$', '') }}"
     mode: "{{ '0600' if item.path.endswith('.env.j2') else '0644' }}"   # the app reads the others as its own uid
-  loop: "{{ docker_app_tpls.files | selectattr('path', 'search', '\\.env\\.j2$') | list
-           + docker_app_tpls.files | selectattr('path', 'in', docker_app_secret_tpl_paths) | list }}"
+  loop: "{{ docker_app_tpls.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
+  when: (item.path | relpath(docker_app_src)) in docker_app_secret_rel
   diff: false
   notify: Restart app containers
 
