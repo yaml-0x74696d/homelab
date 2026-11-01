@@ -16,4 +16,8 @@
       vars:
         docker_app_name: dashboard
         docker_app_restart: [homepage]
+        docker_app_secret_templates:   # api tokens inline, kept out of --diff
+          - homepage/config/proxmox.yaml.j2
+          - homepage/config/secrets.yaml.j2
+          - homepage/config/services.yaml.j2
         docker_app_compose_remove_orphans: true

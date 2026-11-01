@@ -34,7 +34,7 @@ views "Deployment" {
   }
   deployment view pve3 {
     title "pve-3: what runs where"
-    include home.pve3, home.pve3.*, home.pve3.docker3.*, home.pve3.storage.*, home.pve3.log.*, home.pve3.pbs.*
+    include home.pve3, home.pve3.*, home.pve3.docker3.*, home.pve3.haos.*, home.pve3.storage.*, home.pve3.log.*, home.pve3.pbs.*
   }
 }
 

@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - pve-3 has 4 data disks of mixed sizes: 3× 3 TB and 1× 2 TB, about 11 TB together
-- pve-3 is always on and also holds the PBS datastore
+- pve-3 also holds the PBS datastore
 - Data: media, Nextcloud files, photos, documents, ISO images, Time Machine backups, other backups
 
 - Alternatives:

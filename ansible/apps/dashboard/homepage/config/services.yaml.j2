@@ -98,6 +98,13 @@
                 showStats: true
                 href: https://nb.{{ domain }}
                 fields: ["cpu", "mem"]
+            - haos:
+                icon: home-assistant
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.haos }}
+                showStats: true
+                href: https://ha.{{ domain }}
+                fields: ["cpu", "mem"]
 
 - LXCs:
             - storage:

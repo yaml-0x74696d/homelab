@@ -19,7 +19,7 @@
 5. Adds ufw allow rules (`docker_app_ufw`)
 6. Mirrors the subfolders, then copies every file that isn't `.j2` (mode `u=rwX,g=rX,o=rX`, so only files that are executable in the source stay executable)
 7. Finds every `*.j2` on the controller (including hidden ones like `.env.j2`) and renders it next to its source, without the `.j2`
-8. Rendered `.env` files get mode `0600`, other templates `0644`
+8. Rendered `.env` files get mode `0600`, other templates `0644`. `.env` and the `docker_app_secret_templates` are rendered without `--diff`
 9. CIFS: installs `cifs-utils`, writes the credentials to `/etc/cifs/<share>.creds` (mode `0600`, `no_log`) and adds an fstab mount with `nofail,_netdev`
 10. Starts the app with `docker_compose_v2` (`pull: policy`, so it only pulls images that are missing)
 11. A handler restarts the containers in `docker_app_restart` when a file or template changed
@@ -47,6 +47,7 @@
 | `docker_app_cifs` | `[]` | Pool mounts: `{share, user, path, uid, gid, file_mode?, dir_mode?, extra_opts?}`, the password comes from the vault (`smb_passwords[user]`) |
 | `docker_app_cifs_vers` | `3.1.1` | SMB version for the mounts |
 | `docker_app_restart` | `[]` | Containers to restart when the config changes |
+| `docker_app_secret_templates` | `[]` | Templates besides `.env` that hold secrets, relative to the app dir (`homepage/config/secrets.yaml.j2`): never shown in `--diff` |
 | `docker_app_compose_state` | `present` | Passed to `docker_compose_v2` |
 | `docker_app_compose_pull` | `policy` | Passed to `docker_compose_v2` |
 | `docker_app_compose_remove_orphans` | `false` | Passed to `docker_compose_v2` |

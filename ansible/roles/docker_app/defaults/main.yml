@@ -18,6 +18,9 @@ docker_app_cifs: []
 docker_app_cifs_vers: "3.1.1"   # smb dialect for the pool mounts
 # containers to restart when config changes, e.g. [homepage]
 docker_app_restart: []
+# templates that hold secrets besides .env (paths relative to the app dir, with .j2): rendered without --diff
+docker_app_secret_templates: []
+docker_app_secret_tpl_paths: "{{ docker_app_secret_templates | map('regex_replace', '^', docker_app_src ~ '/') | list }}"
 # docker_compose_v2 options
 docker_app_compose_state: present
 docker_app_compose_pull: policy

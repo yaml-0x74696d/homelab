@@ -126,7 +126,7 @@ model {
   automation = system "Home automation" {
     technology "Home Assistant, Mosquitto"
     description "Home Assistant and the sensor network"
-    homeassistant = container "Home Assistant"
+    homeassistant = container "Home Assistant" { technology "HAOS" }
     mosquitto = container "Mosquitto" { technology "MQTT broker" }
     mqtt-exporter = container "mqtt-exporter"
     ota = container "nginx" {

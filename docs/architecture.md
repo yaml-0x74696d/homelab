@@ -37,7 +37,8 @@ Three Proxmox nodes, each with one Docker VM.
 ![](img/pve2.png)
 
 **pve-3**: custom build, 16 GB RAM, 1 SSD + 4 HDDs
-- Runs docker-3, the storage LXC and the log LXC
+- Runs docker-3, the HAOS VM, the storage LXC and the log LXC
+- Gets turned off now and then, so only what may be down runs here
 - Has the mergerfs pool
 - PBS is installed directly on the host
 

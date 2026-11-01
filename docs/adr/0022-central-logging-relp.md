@@ -27,7 +27,7 @@ On every guest (`roles/journald`, `roles/rsyslog`, `playbooks/base.yml`) and the
 - The NetBird VM takes the journal over the syslog socket (the NixOS module's `imuxsock`) and writes `messages`, `secure`, `boot.log`
 
 The log LXC (CT 301, `.151`, pve-3):
-- pve-3 is always on, and the LXC is separate from the app VMs, so a dead VM's last logs survive
+- The LXC is separate from the app VMs, so a dead VM's last logs survive. While pve-3 is off, the senders queue on disk and catch up
 - Takes RELP on `log_relp_port` (20514) and writes `/var/log/remote/<host>/<program>.log`
 - The host name comes from the sender's ip through a lookup table built from the inventory, not from what the message claims
 - Keeps 90 days, daily rotation, compressed
