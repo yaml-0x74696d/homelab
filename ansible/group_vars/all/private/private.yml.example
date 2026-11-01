@@ -17,6 +17,7 @@ macs:
   docker-2: { lan: "BC:24:11:00:02:02" }
   docker-3: { lan: "BC:24:11:00:02:03" }
   netbird: { lan: "BC:24:11:00:02:50" }   # nixos matches the nic by it
+  haos: { lan: "BC:24:11:00:02:10" }   # the fritz!box pins haos_ip to it
   storage: { lan: "BC:24:11:00:03:00" }
   log: { lan: "BC:24:11:00:03:01" }
   iot: { lan: "BC:24:11:00:03:02" }

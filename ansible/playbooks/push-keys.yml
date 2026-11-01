@@ -1,6 +1,6 @@
 ---
 - name: Push ssh keys to cluster
-  hosts: all
+  hosts: all:!appliances
   become: false
 
   tasks:

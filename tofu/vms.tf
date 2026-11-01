@@ -168,3 +168,70 @@ resource "proxmox_virtual_environment_vm" "netbird" {
     firewall    = true
   }
 }
+
+# home assistant os: an appliance, ha's own updates and config inside, no cloud-init, no ansible
+resource "proxmox_virtual_environment_vm" "haos" {
+  name      = "haos"
+  node_name = local.vms.haos.node
+  vm_id     = local.vms.haos.vmid
+  on_boot   = true
+  started   = true
+
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
+  # stateful: ha's config and history live on this disk
+  lifecycle {
+    prevent_destroy = true
+    # the image only counts when the disk is created
+    ignore_changes = [disk[0].import_from]
+  }
+
+  # haos ships the guest agent, pbs snapshots freeze the fs through it
+  agent { enabled = true }
+
+  # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
+  serial_device { device = "socket" }
+
+  # haos only boots uefi
+  bios    = "ovmf"
+  machine = "q35"
+  efi_disk {
+    datastore_id      = var.vm_datastore
+    type              = "4m"
+    pre_enrolled_keys = false
+  }
+
+  cpu {
+    cores = local.vms.haos.cores
+    type  = "host"
+  }
+
+  memory {
+    dedicated = local.vms.haos.memory
+    floating  = local.vms.haos.balloon
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  scsi_hardware = "virtio-scsi-single"
+
+  disk {
+    datastore_id = var.vm_datastore
+    import_from  = var.haos_image
+    interface    = "scsi0"
+    size         = local.vms.haos.disk
+    iothread     = true
+    discard      = "on"
+    ssd          = true
+  }
+
+  # dhcp, the fritz!box pins haos_ip to this mac
+  network_device {
+    bridge      = local.net.lan_bridge
+    mac_address = local.vms.haos.mac0
+    firewall    = true
+  }
+}

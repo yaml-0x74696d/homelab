@@ -24,7 +24,7 @@ tofu/
 ├── providers.tf               provider pin, login (token, SSH for the disk import)
 ├── variables.tf               inputs: credentials, image, template, datastores
 ├── locals.tf                  group_vars read in, the guest maps
-├── vms.tf                     cloud images, docker-1/2/3, netbird
+├── vms.tf                     cloud images, docker-1/2/3, netbird, haos
 ├── lxc.tf                     storage, log, iot
 ├── terraform.tfvars.example   the keys for terraform.tfvars
 └── README.md                  first setup, step by step

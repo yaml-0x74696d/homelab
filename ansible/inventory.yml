@@ -31,3 +31,8 @@ all:
       # members stay in their primary group (docker_hosts/proxmox) for connection vars.
       hosts:
         docker-2:   # routing peer
+    appliances:
+      # vms ansible never logs in to (haos): only here so apps.yml can name them as a host
+      hosts:
+        haos:
+          ansible_host: "{{ haos_ip }}"

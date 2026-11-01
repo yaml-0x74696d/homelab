@@ -15,6 +15,7 @@ storage_ip: 192.168.178.150    # CT 300 on pve-3
 log_ip: 192.168.178.151        # CT 301 on pve-3, central rsyslog
 iot_lan_ip: 192.168.178.152    # CT 302, iot gateway (mqtt broker + exporter), lan leg
 netbird_ip: 192.168.178.250    # dmz vm on pve-2
+haos_ip: 192.168.178.210       # home assistant os vm on pve-3, appliance (no ansible). lease pinned by its mac
 lan_bridge: vmbr0             # proxmox bridge (tofu)
 iot_cidr: 192.168.50.0/24      # sensor wifi: static .2-.49, dhcp iot_dhcp_range (dnsmasq in CT 302)
 iot_ip: 192.168.50.10          # CT 302 on its wifi card (wlan0), the only address in the iot net besides the sensors
@@ -26,4 +27,4 @@ dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (do
 mqtt_broker_ip: "{{ iot_lan_ip }}"   # lan consumers (ha); sensors use iot_ip
 
 # proxmox guest ids (tofu creates them with the same ids)
-vmids: { docker1: 201, docker2: 202, docker3: 203, netbird: 250, storage: 300, log: 301, iot: 302 }
+vmids: { docker1: 201, docker2: 202, docker3: 203, haos: 210, netbird: 250, storage: 300, log: 301, iot: 302 }

@@ -2,7 +2,7 @@
 # swap debian's default motd for fastfetch, fleet-wide.
 # become/user come from inventory per group (docker=sudo, pve/storage=root).
 - name: Fastfetch login banner
-  hosts: all
+  hosts: all:!appliances
   tasks:
     - name: Install fastfetch
       ansible.builtin.apt:
