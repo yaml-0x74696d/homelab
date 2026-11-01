@@ -14,8 +14,12 @@ podman_app_config_public: "{{ query('community.general.filetree', podman_app_src
 podman_app_private_src: "{{ (private_dir | expanduser ~ '/apps/' ~ podman_app_name ~ '/config') if private_dir | default('') else '' }}"
 podman_app_config_private: "{{ query('community.general.filetree', podman_app_private_src)
                                if podman_app_private_src and podman_app_private_src is directory else [] }}"
-podman_app_config: "{{ podman_app_config_public | rejectattr('path', 'in', podman_app_config_private | map(attribute='path') | list) | list
-                       + podman_app_config_private }}"
+# the public items the overlay doesn't replace, then everything
+podman_app_config_own: "{{ podman_app_config_public | rejectattr('path', 'in', podman_app_config_private | map(attribute='path') | list) | list }}"
+podman_app_config: "{{ podman_app_config_own + podman_app_config_private }}"
+
+# render.yml only (playbooks/render-podman.yml): one folder per app goes here
+podman_app_render_dir: ""
 
 # subuid range = uid * count, so ranges never overlap while uids stay unique
 podman_app_subid_count: 65536

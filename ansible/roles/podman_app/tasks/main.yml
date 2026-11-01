@@ -213,8 +213,7 @@
     owner: root
     group: root
     mode: '0644'
-  loop: "{{ podman_app_config_public | rejectattr('path', 'in', podman_app_config_private | map(attribute='path') | list)
-            | selectattr('state', 'eq', 'file') | rejectattr('path', 'search', '\\.j2$') }}"
+  loop: "{{ podman_app_config_own | selectattr('state', 'eq', 'file') | rejectattr('path', 'search', '\\.j2$') }}"
   loop_control:
     label: "{{ item.path }}"
   notify: Restart app
@@ -242,8 +241,7 @@
     owner: root
     group: root
     mode: '0644'
-  loop: "{{ podman_app_config_public | rejectattr('path', 'in', podman_app_config_private | map(attribute='path') | list)
-            | selectattr('state', 'eq', 'file') | selectattr('path', 'search', '\\.j2$') }}"
+  loop: "{{ podman_app_config_own | selectattr('state', 'eq', 'file') | selectattr('path', 'search', '\\.j2$') }}"
   loop_control:
     label: "{{ item.path }}"
   notify: Restart app

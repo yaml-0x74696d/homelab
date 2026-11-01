@@ -1,0 +1,71 @@
+---
+# what main.yml writes for one app, rendered into podman_app_render_dir/<app>/ on the controller for review.
+# same templates, same vars; nothing touches the host. playbooks/render-podman.yml masks the vault first
+- name: Render {{ podman_app_name }}
+  delegate_to: localhost
+  become: false
+  vars:
+    podman_app_render_app: "{{ podman_app_render_dir }}/{{ podman_app_name }}"
+  block:
+    - name: Render dirs for {{ podman_app_name }}
+      ansible.builtin.file:
+        path: "{{ podman_app_render_app }}/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop: "{{ ['container.d', 'config', 'secrets']
+                + podman_app_entry.containers | map(attribute='name') | map('regex_replace', '$', '.container.d') | list
+                + podman_app_config | selectattr('state', 'eq', 'directory') | map(attribute='path') | map('regex_replace', '^', 'config/') | list }}"
+
+    - name: House rules for {{ podman_app_name }}
+      ansible.builtin.template:
+        src: 10-homelab.conf.j2
+        dest: "{{ podman_app_render_app }}/container.d/10-homelab.conf"
+        mode: "0644"
+
+    - name: Map settings for {{ podman_app_name }}
+      ansible.builtin.template:
+        src: 50-map.conf.j2
+        dest: "{{ podman_app_render_app }}/{{ item.name }}.container.d/50-map.conf"
+        mode: "0644"
+      loop: "{{ podman_app_entry.containers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Unit files for {{ podman_app_name }}
+      ansible.builtin.template:
+        src: "{{ podman_app_src }}/{{ item.name }}.container.j2"
+        dest: "{{ podman_app_render_app }}/{{ item.name }}.container"
+        mode: "0644"
+      loop: "{{ podman_app_entry.containers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Config files of {{ podman_app_name }}
+      ansible.builtin.copy:
+        src: "{{ item.src }}"
+        dest: "{{ podman_app_render_app }}/config/{{ item.path }}"
+        mode: "0644"
+      loop: "{{ podman_app_config_own | selectattr('state', 'eq', 'file') | rejectattr('path', 'search', '\\.j2$')
+                + podman_app_config_private | selectattr('state', 'eq', 'file') }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Config templates of {{ podman_app_name }}
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ podman_app_render_app }}/config/{{ item.path | regex_replace('\\.j2$', '') }}"
+        mode: "0644"
+      loop: "{{ podman_app_config_own | selectattr('state', 'eq', 'file') | selectattr('path', 'search', '\\.j2$') }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    # what the podman secret holds: the rendered template, or the vault var (masked)
+    - name: Secrets of {{ podman_app_name }}
+      ansible.builtin.copy:
+        content: "{{ lookup('ansible.builtin.template', podman_app_src + '/' + item.template) if item.template is defined
+                     else lookup('ansible.builtin.vars', item.vault) ~ '\n' }}"
+        dest: "{{ podman_app_render_app }}/secrets/{{ item.name }}"
+        mode: "0644"
+      loop: "{{ podman_app_entry.secrets }}"
+      loop_control:
+        label: "{{ item.name }}"

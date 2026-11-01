@@ -1,0 +1,25 @@
+# image, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=gatus
+
+[Container]
+Volume=/srv/apps/gatus/data:/data:Z
+Secret=gatus-config,type=mount,target=/config/config.yaml,mode=0400
+Environment=GATUS_CONFIG_PATH=/config/config.yaml
+PublishPort=3001:8080
+# every route straight to traefik: checks must not depend on dns
+AddHost=auth.example.org:192.168.178.201
+AddHost=cloud.example.org:192.168.178.201
+AddHost=git.example.org:192.168.178.201
+AddHost=grafana.example.org:192.168.178.201
+AddHost=ha.example.org:192.168.178.201
+AddHost=home.example.org:192.168.178.201
+AddHost=media.example.org:192.168.178.201
+AddHost=paperless.example.org:192.168.178.201
+AddHost=pdf.example.org:192.168.178.201
+AddHost=photo.example.org:192.168.178.201
+AddHost=prom.example.org:192.168.178.201
+AddHost=search.example.org:192.168.178.201
+AddHost=status.example.org:192.168.178.201
+AddHost=vault.example.org:192.168.178.201
+AddHost=web.example.org:192.168.178.201

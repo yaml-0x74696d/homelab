@@ -83,7 +83,8 @@ ansible/
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
 architecture/    LikeC4 model: landscape, containers, deployment, 8 flows
 docs/            Architecture, ADRs, exported diagrams
-justfile         setup · lint · check · deploy · deploy-app · c4 · diagrams
+rendered_config/ Podman apps rendered with example values for review (just render, CI keeps it current)
+justfile         setup · lint · check · deploy · deploy-app · render · c4 · diagrams
 ```
 
 ## Single source of truth
