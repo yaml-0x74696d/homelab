@@ -4,6 +4,8 @@
 # gets this dir as its `private` input. nothing secret here, secrets go in vault.yml.
 domain: example.org
 admin_user: admin              # login user on every host + app admin accounts
+# outside the repo: apps/<name>/config/ in here lays over the public config (nginx site, own images). unset = none
+private_dir: ~/homelab-private
 
 # admin key on the nixos boxes (ansible hosts + tofu use admin_ssh_pubkey_file instead)
 admin_ssh_pubkeys:

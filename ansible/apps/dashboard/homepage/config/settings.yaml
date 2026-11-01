@@ -3,7 +3,7 @@ title: Dashboard
 headerStyle: boxedWidgets
 statusStyle: "basic"
 disableIndexing: true
-# background.jpg is personal and not in git: put your own into config/images/
+# background.jpg and the /images/*.png logos come from the private overlay (<private_dir>/apps/dashboard/homepage/config/images/)
 background:
   image: /images/background.jpg
   blur: none
