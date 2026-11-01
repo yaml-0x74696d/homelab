@@ -4,70 +4,33 @@ Status: Accepted, the WiFi side amended by [0029](0029-wifi-card-in-the-gateway.
 
 ## Context
 
-- The sensors sit on their own WiFi (`iot_cidr`, bridge `vmbr1` on pve-1), hostapd runs on pve-1 itself
-- A broker on docker-1 needs a second network card there on that bridge, which puts the IoT net one hop from Traefik, Authentik and Vaultwarden on the same VM
-- I want MQTT as the hub: the devices run ESPHome (YAML) or my own C code, Home Assistant and Prometheus subscribe, more consumers can come later
-- I want nothing to connect into the IoT net: the devices open every connection, and only to the gateway. That also covers firmware updates
-- ESPHome's native API and its push OTA both need Home Assistant to connect to the device
-- A rootless Podman app can't run in an unprivileged LXC: `roles/podman_app` gives each app a subuid range at `uid*65536`, the CT only maps 65536 ids
+- The sensors (ESPHome or my own C) sit on their own WiFi. The broker ran on docker-1 with a leg in that net, one hop from the vault and SSO
+- I want MQTT as the hub, and nothing connecting into the IoT net: the devices open every connection, firmware updates included
 
 - Alternatives:
-  - Broker on docker-1 with an IoT leg (why not: a broken broker sits next to the vault and SSO, later pod-1)
-  - Broker on the edge VM (why not: same problem, next to the proxy)
-  - Own VM (why not: a whole kernel and 1 GB+ RAM on pve-1 for one daemon)
-  - ESPHome with its native API and push OTA (why not: Home Assistant connects into the IoT net, so the LAN needs a route there)
-  - Per-device users with ACLs and TLS (why not: certificates on ESP32s and an ACL per device, for a few sensors in my own flat)
-- Why: a small LXC is cheap, a broken broker there only exposes the broker, and with the firmware on the gateway too every connection starts in the IoT net
+  - Broker on docker-1 or the edge VM (why not: a broken broker sits next to the vault, SSO or the proxy)
+  - Own VM (why not: a kernel and 1 GB+ RAM for one daemon)
+  - ESPHome's native API and push OTA (why not: Home Assistant would connect into the IoT net)
+  - Per-device users, ACLs and TLS (why not: certificates on ESP32s for a few sensors in my flat)
+- Why: a small LXC is cheap, and a broken broker there only exposes the broker
 
 ## Decision
 
-The gateway (`iot`, CT 302, `tofu/lxc.tf`):
-- Debian 13 LXC, unprivileged, on `iot_node` (pve-1)
-- Two legs: `iot_ip` (`.50.10`) on the IoT net without a gateway (pve-1's WiFi card, moved in, [0029](0029-wifi-card-in-the-gateway.md)), `iot_lan_ip` (`.152`) on the LAN for the consumers. Nothing routes through it
-
-What runs there (`playbooks/deploy-iot.yml`):
-- Mosquitto from Debian (`roles/mosquitto`): one shared user `mqtt_user`, the password from the vault (`mqtt_password`), no anonymous logins, no TLS, plain `mqtt_port` (1883)
-- Debian's `prometheus-mqtt-exporter` (`roles/mqtt_exporter`) on `mqtt_exporter_port` (9641), scraped by Prometheus
-- Debian's `nginx` (`roles/ota_server`) on `iot_ip`:`ota_port` (80) only: `/srv/firmware` read-only, no listing, GET/HEAD only. I copy the files there with scp over the LAN leg
-- `roles/lxc_base` like every LXC: SSH key-only, fail2ban, unattended security updates, node_exporter
-
-The devices:
-- ESPHome compiled in the ESPHome add-on on Home Assistant, or my own C code. Device YAMLs and the C code live in a private repo, `secrets.yaml` comes from the vault
-- MQTT only: no `api:`, Home Assistant finds them through MQTT discovery and sends commands over MQTT
-- Topics `home/<device>/<measurement>` for every device (ESPHome: `topic_prefix` + a `state_topic` per sensor)
-- Firmware updates are pulled: a "Flash from gateway" button in Home Assistant tells the device over MQTT to download `<device>.bin` from the gateway. Nothing updates on its own, the first flash is by USB
-
-Two firewall layers on the LAN leg, the same inbound rules from one list (`mqtt_lan_clients`, `prometheus_ip` in `app_settings.yml`); the IoT side is ufw alone ([0029](0029-wifi-card-in-the-gateway.md)):
-- The PVE guest firewall (`roles/pve_firewall`, `iot.fw`), enforced by the host, so a root shell in the CT can't open anything
-- ufw inside (`deploy-iot.yml`, [0026](0026-ufw-as-guest-firewall.md)); it drops its own rules that left the list. Its default `before.rules` also answer ping and accept mDNS/UPnP multicast from anywhere, `iot.fw` doesn't
-- From the IoT net (ufw, `on wlan0`): only 1883 and 80 (`iot_net_ports`), plus DHCP
-- From the LAN: 1883 from Home Assistant's host, 9641 and node_exporter from Prometheus' host, SSH
-- Out, in `iot.fw` only (`policy_out: DROP`): DNS to the router, RELP to the log LXC, HTTP/HTTPS to the internet for apt and ntfy. The rest of the LAN is dropped, ufw's outbound stays open
-- Metrics: `iot_temperature_celsius`, `iot_humidity_percent`, the device in the `sensor` label
-
-What may move onto the gateway:
-- IoT-facing services: WiFi and DHCP are there now ([0029](0029-wifi-card-in-the-gateway.md)), NTP could follow
-- Not apps. Home Assistant, dashboards and anything with a web UI stay on the app hosts
-
-- Enforced by: `iot.fw` and ufw, `allow_anonymous false` in the broker config, the IoT leg without a gateway
+- A Debian LXC (`iot`, CT 302) with a leg in the IoT net and one on the LAN, nothing routes through it
+- Mosquitto, the MQTT exporter and an nginx for firmware files, all from Debian (`deploy-iot.yml`)
+- One shared MQTT user, password in the vault, no TLS
+- Devices talk MQTT only and pull their firmware from the gateway when Home Assistant tells them to
+- Two firewall layers on the LAN leg: the PVE guest firewall and ufw, from the same lists
+- Only IoT-facing services go there, no apps
 
 ## Consequences
 
-- Easier: a broken broker only exposes the broker, not the vault and SSO on pod-1 or the proxy on edge
-- Easier: no VM has a leg in the IoT net
-- Easier: nothing on the LAN needs a route into the IoT net, not even for firmware updates
-- Easier: everything there comes from Debian's repo and updates with `update.yml`, no images
-
-- Harder: one more guest to keep running
-- Harder: the firmware holds the MQTT password, a new password means reflashing every device
-- Harder: Home Assistant's broker address is set in its UI, not in the repo
-- Harder: an update is three manual steps: download from the add-on, scp to the gateway, press the button. AIDE reports every new file in `/srv/firmware`
-
-- Accepted: anyone on the IoT WiFi with the password can read and fake every sensor. Per-device users with ACLs and TLS stay possible later
+- Easier: no VM is in the IoT net, nothing on the LAN needs a route into it
+- Easier: everything is a Debian package and updates with `update.yml`
+- Harder: a new MQTT password means reflashing every device
+- Harder: a firmware update is three manual steps (build, scp, button)
+- Accepted: anyone on the IoT WiFi with the password can read and fake every sensor, and trigger a flash of what the gateway serves
 - Accepted: MQTT crosses the LAN in plain text to Home Assistant
-- Accepted: firmware goes over plain HTTP; the md5 only catches a broken download, anyone on the IoT WiFi with the password can trigger a flash of what the gateway serves
-- Accepted: the gateway is not backed up, its config is in git, the broker state is disposable and the firmware files are rebuilt in the add-on
+- Accepted: no backup, config is in git and the broker state is disposable
 
-- Later: moving the gateway to pve-2 (same WiFi card) is `iot_node` and `iot_wifi_nic`
-
-- Related: [0007](0007-group-vars-single-source-of-truth.md) (ips, ports), [0009](0009-aide-with-manual-accept.md) (AIDE excludes), [0016](0016-ansible-vault-for-secrets.md) (the password), [0022](0022-central-logging-relp.md) (logs), [0026](0026-ufw-as-guest-firewall.md) (ufw)
+- Related: [0016](0016-ansible-vault-for-secrets.md) (the password), [0026](0026-ufw-as-guest-firewall.md) (ufw), [0029](0029-wifi-card-in-the-gateway.md) (the WiFi card)
