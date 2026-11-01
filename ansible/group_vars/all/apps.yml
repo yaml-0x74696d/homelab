@@ -184,7 +184,7 @@ apps:
   homeassistant:
     host: haos
     runtime: vm
-    port: 8123
+    port: 80   # haos core serves on 80, 8123 only redirects there
     homepage: {group: Home, icon: /images/homeassistant.png, label: Home Assistant}
     routes:
       - host: ha
