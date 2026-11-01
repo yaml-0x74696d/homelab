@@ -28,6 +28,7 @@
     src: aide-check.sh.j2
     dest: /usr/local/sbin/aide-check
     mode: '0700'     # holds the ntfy token
+  diff: false   # the token stays out of --diff
 
 - name: Check units
   ansible.builtin.template:

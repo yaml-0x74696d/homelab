@@ -48,6 +48,7 @@
     src: pbs-backup.sh.j2
     dest: /usr/local/sbin/pbs-backup
     mode: '0750'
+  diff: false   # holds the ntfy token, stays out of --diff
 
 - name: Systemd units
   ansible.builtin.template:

@@ -4,6 +4,7 @@
     src: login-notify.sh.j2
     dest: /usr/local/sbin/login-notify
     mode: '0750'
+  diff: false   # holds the ntfy token, stays out of --diff
   notify: Restart login-notify
 
 - name: Service unit

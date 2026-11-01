@@ -118,3 +118,4 @@ For new and changed code, not for the compose apps on their way out:
 - Playbooks stay thin: hosts and order. Anything with more than a couple of tasks becomes a role with a README
 - A role with structured inputs (lists of dicts, entry points called from elsewhere) gets `meta/argument_specs.yml`
 - Login variables per group go in `group_vars/<group>.yml`, the inventory only lists hosts
+- A template or copy that holds a secret gets `diff: false` (or `no_log: true`), so `--diff` never prints it
