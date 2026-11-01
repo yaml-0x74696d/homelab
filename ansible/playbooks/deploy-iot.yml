@@ -61,6 +61,7 @@
               phy=$(nsenter --net="$netns" iw dev wlan0 info 2>/dev/null | awk '/wiphy/ {print "phy" $2}')
               [ -n "$phy" ] || exit 0
               nsenter --net="$netns" ip link set wlan0 down
+              nsenter --net="$netns" ip link property del dev wlan0 altname "$nic" 2>/dev/null
               nsenter --net="$netns" ip link set wlan0 name "$nic"
               nsenter --net="$netns" iw phy "$phy" set netns 1
               ;;
@@ -68,7 +69,9 @@
               for i in $(seq 1 30); do
                   [ -e "/sys/class/net/$nic/phy80211" ] && exit 0
                   if [ -e /sys/class/net/wlan0/phy80211 ]; then
-                      ip link set wlan0 down && ip link set wlan0 name "$nic" && exit 0
+                      ip link set wlan0 down
+                      ip link property del dev wlan0 altname "$nic" 2>/dev/null   # udev hands the old name back as an altname
+                      ip link set wlan0 name "$nic" && exit 0
                   fi
                   sleep 1
               done

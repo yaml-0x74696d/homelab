@@ -163,7 +163,7 @@ ansible iot -m shell -a "systemctl is-active hostapd dnsmasq mosquitto prometheu
 ```
 
 - WiFi: `iw dev` shows `wlan0` as `type AP` with the SSID, `wlan0` has `192.168.50.10`. On pve-1 `iw dev` is empty, the card is in the CT
-- CT 302 won't start (`Failed to retrieve ifindex for "wlp0s12f0"`): the card is still on pve-1 as `wlan0`. The hooks normally prevent that (stop moves the card back, pre-start renames a stray `wlan0`); if they didn't, `ip link set wlan0 down && ip link set wlan0 name wlp0s12f0` on pve-1, then `pct start 302`
+- CT 302 won't start (`Failed to retrieve ifindex for "wlp0s12f0"`): the card is still on pve-1 as `wlan0`. The hooks normally prevent that (stop moves the card back, pre-start renames a stray `wlan0`); if they didn't, on pve-1: `ip link set wlan0 down`, `ip link property del dev wlan0 altname wlp0s12f0`, `ip link set wlan0 name wlp0s12f0`, then `pct start 302`
 - Prometheus targets: `iot_sensors` and `node-exporter` on `192.168.178.152` are up
 - Exporter: `curl -s 192.168.178.152:9641/metrics | grep iot_` from docker-2
 - OTA server, on the gateway: `curl -sI http://192.168.50.10/<device>.bin` is a 200, `curl -sI http://192.168.50.10/` a 404, and nothing answers on `192.168.178.152:80`

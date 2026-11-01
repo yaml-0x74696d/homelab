@@ -9,7 +9,7 @@ Status: Accepted
 - The card is pve-1's onboard Intel AC 9560 (CNVi, `iwlwifi`), alone in its IOMMU group. The phy supports AP mode and `set_wiphy_netns`, so it can move into another network namespace
 - CNVi passthrough to a VM is known to be flaky: the card has no clean reset, it lives partly in the chipset
 - Tested 2026-11-01: with the phy moved into CT 302, hostapd in the unprivileged CT reaches `AP-ENABLED`. Setting the regulatory domain from inside fails (`Failed to set country code`), it needs root in the host namespace
-- When the CT stops, the kernel hands the card back only once the CT's network namespace is gone, and under its name inside the CT (`wlan0`): LXC can't rename a WiFi card back. The next start then fails (`Failed to retrieve ifindex`)
+- When the CT stops, the kernel hands the card back only once the CT's network namespace is gone, and under its name inside the CT (`wlan0`): LXC can't rename a WiFi card back, and udev hands the old name back as an `altname`, so a plain rename fails (`File exists`). The next start then fails (`Failed to retrieve ifindex`)
 
 - Alternatives:
   - Keep hostapd on pve-1, only DHCP onto the gateway (why not: pve-1 stays in the IoT net and needs its own firewall there)
@@ -21,7 +21,7 @@ Status: Accepted
 
 - The first play of `deploy-iot.yml` adds raw `lxc.net.9` lines to CT 302's config on `iot_node`: `type: phys` on `iot_wifi_nic`, named `wlan0` inside, `iot_ip` set by LXC, up. LXC moves the whole phy into the CT at start and back to the node at stop. The API can't set raw `lxc` keys, so it's Ansible on the node, not tofu
 - A changed line restarts the CT
-- A hook on the node (`/usr/local/sbin/iot-wifi-back`) gives the card back: as `lxc.hook.stop` it renames it to `iot_wifi_nic` inside the CT's namespace and moves the phy to the node itself, as `lxc.hook.pre-start` it renames a stray `wlan0` in case the stop hook didn't run (crash). So every stop and start works: GUI, `pct`, tofu, boot
+- A hook on the node (`/usr/local/sbin/iot-wifi-back`) gives the card back: as `lxc.hook.stop` it drops the `altname` and renames it to `iot_wifi_nic` inside the CT's namespace and moves the phy to the node itself, as `lxc.hook.pre-start` it renames a stray `wlan0` in case the stop hook didn't run (crash). So every stop and start works: GUI, `pct`, tofu, boot
 - The node keeps only the regulatory domain (`iot_wifi_country`, `cfg80211 ieee80211_regdom` at boot plus `iw reg set` now); hostapd in the CT runs without `country_code`
 - `roles/iot_ap` in the CT: hostapd (WPA2, 2.4 GHz, TX power by a drop-in) and dnsmasq for DHCP on `wlan0` only (`iot_dhcp_range`, no DNS, no router option)
 - No `vmbr1`, no address of pve-1 in the IoT net; CT 302 has no second veth
