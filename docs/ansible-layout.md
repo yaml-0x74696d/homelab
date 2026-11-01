@@ -1,6 +1,20 @@
 # Ansible layout
 
-Where things live in `ansible/`, and which value wins when the same variable is set in two places.
+Where things live in `ansible/` and which value wins when a variable is set twice. My cheat sheet for both.
+
+## Where does it go
+
+| I want to change | File |
+|---|---|
+| an IP, a CIDR, a VMID | `group_vars/all/network.yml` |
+| a port | `group_vars/all/ports.yml` |
+| an app: host, port, image, who may reach it, its Homepage tile | `group_vars/all/apps.yml` |
+| what one Podman container mounts or checks | `apps/<app>/<container>.container.j2` |
+| an app's config files | `apps/<app>/config/` |
+| a secret | `group_vars/all/vault.yml` (encrypted) |
+| the domain, a MAC, a disk | `group_vars/all/private/private.yml` |
+| one host only | `host_vars/<host>.yml` |
+| how a role behaves | `roles/<role>/defaults/main.yml` |
 
 ## Folders
 
@@ -8,27 +22,29 @@ Where things live in `ansible/`, and which value wins when the same variable is 
 ansible/
 ├── inventory.yml        groups: proxmox, docker_hosts, lxc_containers, netbird_agent
 ├── group_vars/all/      every shared variable, one topic per file
-├── host_vars/<host>.yml what only one host has (pbs_jobs, ufw switches)
-├── playbooks/           what runs where: pick hosts, call roles
-├── roles/<role>/        how something is installed
-└── apps/<app>/          what an app is made of (compose or quadlet templates, config/)
+├── host_vars/<host>.yml what only one host has
+├── playbooks/           what runs where: pick the hosts, call the roles
+├── roles/<role>/        how something gets installed
+└── apps/<app>/          what an app is made of
 ```
 
-- Standard Ansible: inventory, `group_vars/`, `host_vars/`, the role layout, role vars prefixed with the role name (ansible-lint `var-naming`)
-- Ours: `playbooks/` as a subfolder, so `group_vars/` counts as inventory group_vars (there's no `playbooks/group_vars/`); `apps/` and the `apps.yml` map, which Ansible itself knows nothing about
+- Standard Ansible: the inventory, `group_vars/`, `host_vars/`, the role layout, role vars named after the role (`podman_app_*`, ansible-lint checks it)
+- Mine: playbooks in their own folder, so `group_vars/` counts as inventory group_vars; `apps/` and the `apps.yml` map, Ansible itself knows nothing about apps
 
-A role:
+## A role
 
-| Path | What |
-|---|---|
-| `defaults/main.yml` | the role's dials, weakest level, point at group_vars (`mosquitto_port: "{{ mqtt_port }}"`) |
-| `tasks/main.yml` | the steps, other entry points via `tasks_from` |
-| `templates/*.j2` | Jinja templates |
-| `handlers/main.yml` | restarts and reloads, only on change |
-| `meta/main.yml` | galaxy info; `argument_specs.yml` checks the inputs |
-| `README.md` | what it does, step by step, and every variable |
+```
+roles/podman_app/
+├── defaults/main.yml    dials, the weakest level
+├── tasks/main.yml       the steps (render.yml: another entry point)
+├── templates/*.j2       Jinja templates
+├── handlers/main.yml    restarts, only on change
+├── meta/                galaxy info, argument_specs.yml checks the inputs
+└── README.md            what it does, step by step, every variable
+```
 
-Not used here: `vars/` (strong role vars) and `files/`.
+- Defaults point at group_vars (`mosquitto_port: "{{ mqtt_port }}"`): the value lives once, the role stays reusable
+- I don't use `vars/` (too strong to override) or `files/`
 
 ## group_vars/all
 
@@ -36,22 +52,22 @@ Not used here: `vars/` (strong role vars) and `files/`.
 |---|---|
 | `network.yml` | IPs, CIDRs, bridges, VMIDs, the IoT node and its WiFi card |
 | `ports.yml` | every port, once |
-| `apps.yml` | the apps map: host, uid, port, `allow_from`, secrets, dirs, containers, Homepage tile. Pure data, no Jinja |
-| `app_settings.yml` | settings around the apps: `apps_root`, ntfy, Gatus, MQTT |
-| `hosts.yml` | SSH, Docker logs, journald, AIDE times, the admin key |
-| `base.yml` | time and logging on every guest, nixos reads it too |
+| `apps.yml` | the apps map. Pure data without Jinja, edge and CI read it with yq. Gatus checks and Homepage tiles come from it |
+| `app_settings.yml` | around the apps: `apps_root`, ntfy, Gatus, MQTT |
+| `hosts.yml` | SSH, Docker logs, journald, AIDE, the admin key |
+| `base.yml` | time and logging, nixos reads it too |
 | `storage.yml` | pool paths, shares |
-| `vault.yml` | secrets, encrypted, not in git (`vault.yml.example` has the keys) |
-| `private/private.yml` | per-lab values (domain, MACs, disks), not in git (`private.yml.example`) |
+| `vault.yml` | secrets, encrypted, not in git. `vault.yml.example` has the keys |
+| `private/private.yml` | the domain, MACs, disks. Not secret, not public, not in git. `private.yml.example` |
 
-- Every literal value has one home, everything else refers to it. tofu and nixos read the same files ([ADR 0007](adr/0007-group-vars-single-source-of-truth.md))
-- A value used by one role only stays in that role's `defaults/`
+- One home per value, everything else refers to it. tofu and nixos read the same files ([ADR 0007](adr/0007-group-vars-single-source-of-truth.md))
+- A value only one role needs stays in that role's defaults
 
-## Variable precedence
+## Which value wins
 
-Weak to strong, the higher number wins:
+Weak to strong, the higher number wins. The marked ones are what I use:
 
-| # | Source | Here |
+| # | Source | |
 |---|---|---|
 | 1 | command-line values that aren't vars (`-u`, `-i`) | |
 | 2 | role `defaults/` | every role dial |
@@ -64,7 +80,7 @@ Weak to strong, the higher number wins:
 | 9 | inventory `host_vars/<host>` | `host_vars/` |
 | 10 | playbook `host_vars/<host>` | |
 | 11 | facts, cached `set_fact` | |
-| 12 | play `vars:` | `deploy-iot.yml` |
+| 12 | play `vars:` | e.g. `deploy-iot.yml` |
 | 13 | play `vars_prompt:` | |
 | 14 | play `vars_files:` | |
 | 15 | role `vars/` | |
@@ -72,19 +88,19 @@ Weak to strong, the higher number wins:
 | 17 | task `vars:` | |
 | 18 | `include_vars` | |
 | 19 | `set_fact`, `register` | |
-| 20 | role params (`roles:` / `include_role` `vars:`) | `deploy-app.yml` |
+| 20 | role params (`roles:`, `include_role` `vars:`) | `deploy-app.yml` |
 | 21 | include params | |
-| 22 | extra vars `-e`, always win | `-e app=gatus` |
+| 22 | extra vars `-e`, always | `-e app=gatus` |
 
-- Groups: a child group beats its parent, groups on the same level merge alphabetically unless `ansible_group_priority` is set
-- `"{{ … }}"` resolves when it's used, not when it's set, so a role default can point at a group var
+- A child group beats its parent. Groups on the same level merge alphabetically, unless `ansible_group_priority` says otherwise
+- `"{{ … }}"` resolves when it's used, not when it's set. That's why a role default can point at a group var
 
-## Keywords vs variables
+## Keywords lose to variables
 
-For connection settings (`become`, `user`, `connection`) a variable beats the play keyword:
+For connection settings (`become`, `user`, `connection`) the variable beats the play keyword:
 
 ```
 ansible.cfg < command line < keyword (become: false) < variable (ansible_become: true)
 ```
 
-The inventory sets `ansible_become: true` for some groups, so `become: false` on a play doesn't turn it off. Set `ansible_become: false` in the play's `vars:` instead.
+My inventory sets `ansible_become: true` for some groups, so `become: false` on a play changes nothing there. `ansible_become: false` in the play's `vars:` does.
