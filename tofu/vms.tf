@@ -23,9 +23,14 @@ resource "proxmox_virtual_environment_vm" "docker" {
   on_boot   = true
   started   = true
 
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
   # stateful: docker volumes (dbs) live on the vm disk — never let tofu recreate these
   lifecycle {
     prevent_destroy = true
+    # the image only counts when the disk is created (and imported vms have none)
+    ignore_changes = [disk[0].import_from]
   }
 
   # qemu-guest-agent comes from vm-preparation; flip to true and re-apply after
@@ -94,9 +99,14 @@ resource "proxmox_virtual_environment_vm" "netbird" {
   on_boot   = true
   started   = true
 
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
   # stateful once nixos lands: the mgmt sqlite db lives on this disk
   lifecycle {
     prevent_destroy = true
+    # the image only counts when the disk is created (and imported vms have none)
+    ignore_changes = [disk[0].import_from]
   }
 
   # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)
