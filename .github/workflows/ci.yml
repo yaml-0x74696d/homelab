@@ -42,6 +42,12 @@ jobs:
 
       - run: pip install "pre-commit==${PRE_COMMIT_VERSION}"
 
+      # hook envs (ansible-lint, likec4, ...) only rebuild when the config changes
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
       # tofu + ansible read it; the example is enough for the checks
       - run: cp ansible/group_vars/all/private/private.yml.example ansible/group_vars/all/private/private.yml
 

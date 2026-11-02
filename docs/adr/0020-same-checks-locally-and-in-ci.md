@@ -19,10 +19,11 @@ Status: Accepted
 
 ## Decision
 
-The checks (`.pre-commit-config.yaml`, 18 hooks):
+The checks (`.pre-commit-config.yaml`, 22 hooks):
 - File hygiene: whitespace, end of file, line endings, private keys, shebangs
 - Large files: 500 KB in general, 1500 KB for `docs/img/`
 - Linters: yamllint, shellcheck, ansible-lint (production profile), `tofu fmt` + `validate`
+- Workflows: actionlint (syntax, expressions), zizmor (security)
 - Secrets: gitleaks
 - The slow hooks only run with `--hook-stage manual`: gitleaks over all commits, `nix flake check`, `likec4 validate`
 
@@ -32,10 +33,11 @@ How to run them (`justfile`):
 - `just check` runs everything, the same as CI
 
 CI (`.github/workflows/`):
-- `ci.yml` has one job: `pre-commit run --all-files --hook-stage manual`
+- `ci.yml` has one job: `pre-commit run --all-files --hook-stage manual`, with the hook envs cached by the hash of `.pre-commit-config.yaml`
 - It checks out with `fetch-depth: 0`, so gitleaks sees the whole history
 - `pages.yml` builds the LikeC4 site on pushes to main that touch `architecture/**` (its own trigger, so its own file)
 - Actions are pinned by commit SHA, with the tag as a comment
+- `main` only changes through a PR with a green `checks` job, no bypass, no force-push or delete (ruleset). `testing` takes direct pushes, but no force-push or delete
 - Tool versions are pinned in the hook revs
 
 Configs:

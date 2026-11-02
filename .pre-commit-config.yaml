@@ -44,6 +44,17 @@ repos:
         pass_filenames: false
         stages: [manual]
 
+  # the workflows themselves: actionlint for syntax + expressions, zizmor for security
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.31.1
+    hooks:
+      - id: zizmor
+
   - repo: https://github.com/tofuutils/pre-commit-opentofu
     rev: v2.4.2
     hooks:

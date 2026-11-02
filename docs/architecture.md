@@ -295,8 +295,8 @@ Deploying, from the controller:
 - `nixos/update.sh` for the NetBird VM
 
 Checking:
-- `just check` runs the same 18 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
-- They cover yamllint, ansible-lint (production profile), shellcheck, tofu fmt/validate, nix flake check, LikeC4 validate and gitleaks
+- `just check` runs the same 22 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
+- They cover yamllint, ansible-lint (production profile), shellcheck, actionlint, zizmor, tofu fmt/validate, nix flake check, LikeC4 validate and gitleaks
 - Plus small checks for whitespace, private keys and file sizes
 - CI has two workflows: `ci.yml` runs the checks on pushes to main and testing and on every PR, `pages.yml` publishes the LikeC4 site when `architecture/` changes on main
 - All GitHub Actions are pinned to a commit SHA
