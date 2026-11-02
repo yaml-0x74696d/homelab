@@ -10,7 +10,7 @@
 
 ## How it works
 
-1. Installs `vm_base_packages` (guest agent, cockpit, auditd, fail2ban, AppArmor, unattended-upgrades, needrestart, node_exporter, ...)
+1. Installs `vm_base_packages` (guest agent, cockpit, auditd, fail2ban, AppArmor, unattended-upgrades, needrestart, ...), and node_exporter without its recommends (they pull ipmitool + openipmi)
 2. unattended-upgrades: security origins only, no automatic reboot
 3. sysctl from `vm_base_sysctl` (syncookies, no redirects, rp_filter, no IPv6, ...)
 4. Login banner in `/etc/issue` + `/etc/issue.net`

@@ -12,7 +12,6 @@ vm_base_packages:
   - apparmor-utils
   - unattended-upgrades
   - needrestart
-  - prometheus-node-exporter
 
 vm_base_sysctl:
   net.ipv4.tcp_syncookies: 1

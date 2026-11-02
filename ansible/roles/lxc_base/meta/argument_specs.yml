@@ -14,6 +14,9 @@ argument_specs:
       lxc_base_node_exporter_listen:
         type: str
         description: node_exporter's listen address, the LAN address only
+      lxc_base_node_exporter_restart_sec:
+        type: int
+        description: Seconds between node_exporter restarts, so it outlasts the boot race for its address
       lxc_base_ufw:
         type: bool
         description: The LXC filters with ufw, so it gets the node-exporter rule

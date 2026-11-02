@@ -5,7 +5,6 @@ lxc_base_packages:
   - python3-systemd           # fail2ban's journal backend
   - unattended-upgrades
   - needrestart
-  - prometheus-node-exporter
   - curl                      # checks in docs/iot.md, the template has none
 
 lxc_base_services:
@@ -14,6 +13,8 @@ lxc_base_services:
 
 # lan address only, never the iot leg
 lxc_base_node_exporter_listen: "{{ ansible_host }}:{{ node_exporter_port }}"
+# retry gap while the ct waits for that address at boot
+lxc_base_node_exporter_restart_sec: 5
 
 # true where the lxc filters with ufw (host_vars: storage, iot): node-exporter rule from prometheus_ip.
 # the pve firewall lets prometheus in on its own for log + iot (roles/pve_firewall)

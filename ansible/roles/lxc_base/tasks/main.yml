@@ -5,6 +5,13 @@
     state: present
     update_cache: true
 
+# its recommends pull ipmitool + openipmi, and there's no bmc anywhere
+- name: Install node-exporter without recommends
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+    install_recommends: false
+
 - name: Unattended-upgrades like the vms
   ansible.builtin.include_role:
     name: vm_base
@@ -33,6 +40,22 @@
     line: 'ARGS="--web.listen-address={{ lxc_base_node_exporter_listen }}"'
   notify: Restart node-exporter
   ignore_errors: "{{ ansible_check_mode }}"   # --check doesn't install the package
+
+# at boot it can start before the lan address is up: 5 instant retries, then systemd gives up
+- name: Node-exporter drop-in dir
+  ansible.builtin.file:
+    path: /etc/systemd/system/prometheus-node-exporter.service.d
+    state: directory
+    mode: "0755"
+
+- name: Space node-exporter's restarts
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/prometheus-node-exporter.service.d/10-restart.conf
+    content: |
+      [Service]
+      RestartSec={{ lxc_base_node_exporter_restart_sec }}
+    mode: "0644"
+  notify: Restart node-exporter
 
 - name: Set timezone
   community.general.timezone: { name: "{{ timezone }}" }

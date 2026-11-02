@@ -5,6 +5,13 @@
     state: present
     update_cache: true
 
+# its recommends pull ipmitool + openipmi, and there's no bmc anywhere
+- name: Install node-exporter without recommends
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+    install_recommends: false
+
 - name: Configure unattended-upgrades
   ansible.builtin.include_tasks: unattended_upgrades.yml
 
