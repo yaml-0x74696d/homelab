@@ -28,8 +28,8 @@ example | check)
     ' "$tmp/ansible/group_vars/all/vault.yml.example" > "$tmp/ansible/group_vars/all/vault.yml"
     echo dummy > "$tmp/ansible/.vault_pass"
 
-    # ci has no collections dir, ansible-lint keeps its own
-    if ! ANSIBLE_COLLECTIONS_PATH="$collections" ansible-galaxy collection list community.general >/dev/null 2>&1; then
+    # ci has no collections dir, ansible-lint keeps its own. grep, because list exits 0 when it finds nothing
+    if ! ANSIBLE_COLLECTIONS_PATH="$collections" ansible-galaxy collection list community.general 2>/dev/null | grep -q '^community\.general '; then
         ansible-galaxy collection install -r ansible/requirements.yml -p "$tmp/collections" >/dev/null
         collections="$tmp/collections:$collections"
     fi
