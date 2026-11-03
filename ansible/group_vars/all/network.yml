@@ -16,6 +16,7 @@ log_ip: 192.168.178.151        # CT 301 on pve-3, central rsyslog
 iot_lan_ip: 192.168.178.152    # CT 302, iot gateway (mqtt broker + exporter), lan leg
 netbird_ip: 192.168.178.250    # dmz vm on pve-2
 haos_ip: 192.168.178.210       # home assistant os vm on pve-3, appliance (no ansible). lease pinned by its mac
+ctl1_ip: 192.168.178.100       # raspberry pi 3 b+, semaphore. bare metal, static in its own network config
 lan_bridge: vmbr0             # proxmox bridge (tofu)
 iot_cidr: 192.168.50.0/24      # sensor wifi: static .2-.49, dhcp iot_dhcp_range (dnsmasq in CT 302)
 iot_ip: 192.168.50.10          # CT 302 on its wifi card (wlan0), the only address in the iot net besides the sensors

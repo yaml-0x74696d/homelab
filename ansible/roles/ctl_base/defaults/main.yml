@@ -1,0 +1,8 @@
+---
+# ctl-1: the pi that runs semaphore. vm_base + podman_base do the rest
+ctl_base_iface: eth0   # debian's raspi image keeps the old names
+ctl_base_ip: "{{ ctl1_ip }}"
+ctl_base_dns: ["{{ gateway_ip }}"]
+# hand-copied checkout semaphore runs from (apps/semaphore), readable by its svc group
+ctl_base_repo_dir: "{{ semaphore_repo_dir }}"
+ctl_base_repo_gid: "{{ apps['semaphore'].uid }}"   # = svc-semaphore's gid, may not exist yet

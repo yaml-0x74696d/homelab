@@ -88,6 +88,12 @@ aide_excludes_by_group:
     - "{{ storage_pool_host }}"                          # pve-3: mergerfs pool
     - "{{ storage_disks | map(attribute='path') | list }}"   # pve-3: its disks
     - "{{ pbs_datastore_path }}"
+  podman_hosts:
+    - /var/lib/containers
+    - /dev/shm
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"
+    - "{{ semaphore_repo_dir }}"   # ctl-1: checkout copied over by hand
   lxc_containers:
     - "{{ storage_root }}"   # pool bind mount
     - /dev/.lxc              # procfs from lxc, pids change every run

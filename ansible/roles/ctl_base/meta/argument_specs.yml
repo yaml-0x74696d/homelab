@@ -1,0 +1,21 @@
+---
+argument_specs:
+  main:
+    short_description: Network, ufw and repo access on ctl-1
+    options:
+      ctl_base_iface:
+        type: str
+        description: The LAN interface
+      ctl_base_ip:
+        type: str
+        description: Static address, prefix from lan_cidr
+      ctl_base_dns:
+        type: list
+        elements: str
+        description: Resolvers in /etc/resolv.conf
+      ctl_base_repo_dir:
+        type: path
+        description: Hand-copied checkout Semaphore runs from
+      ctl_base_repo_gid:
+        type: int
+        description: Gid that may read the repo (svc-semaphore's)

@@ -22,7 +22,7 @@ scrape_configs:
           - '{{ addr('docker-1', docker1_ip) }}:{{ node_exporter_port }}'
           - '{{ addr('docker-2', docker2_ip) }}:{{ node_exporter_port }}'
           - '{{ addr('docker-3', docker3_ip) }}:{{ node_exporter_port }}'
-{% for h in groups['lxc_containers'] %}
+{% for h in groups['lxc_containers'] + groups['podman_hosts'] %}
           - '{{ hostvars[h].ansible_host }}:{{ node_exporter_port }}'
 {% endfor %}
 

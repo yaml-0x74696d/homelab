@@ -31,6 +31,11 @@ all:
       # members stay in their primary group (docker_hosts/proxmox) for connection vars.
       hosts:
         docker-2:   # routing peer
+    podman_hosts:
+      # podman without docker. bare metal, outside tofu
+      hosts:
+        ctl-1:
+          ansible_host: "{{ ctl1_ip }}"
     appliances:
       # vms ansible never logs in to (haos): only here so apps.yml can name them as a host
       hosts:

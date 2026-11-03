@@ -1,0 +1,71 @@
+---
+# set by hand at flash time; this only keeps it, so no restart: a wrong file shows up at the next boot
+- name: Static address
+  ansible.builtin.template:
+    src: iface.j2
+    dest: "/etc/network/interfaces.d/{{ ctl_base_iface }}"
+    mode: "0644"
+
+- name: Resolvers
+  ansible.builtin.template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    mode: "0644"
+
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Default ufw policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+
+# app ports come from roles/podman_app
+- name: Ssh + node-exporter
+  community.general.ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: tcp
+    src: "{{ item.src }}"
+    direction: in
+  loop:
+    - { rule: limit, port: "{{ ssh_port }}", src: "{{ lan_cidr }}" }
+    - { rule: allow, port: "{{ node_exporter_port }}", src: "{{ prometheus_ip }}" }
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+
+- name: Repo dir
+  ansible.builtin.file:
+    path: "{{ ctl_base_repo_dir }}"
+    state: directory
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0750"
+
+# by gid, so it works before deploy-app.yml creates the group
+- name: Svc group may pass the home dir
+  ansible.posix.acl:
+    path: "{{ ctl_base_repo_dir | dirname }}"
+    etype: group
+    entity: "{{ ctl_base_repo_gid }}"
+    permissions: x
+    state: present
+
+# again on every run: rsync -p keeps the source's 0600 and masks the acl
+- name: Svc group may read the repo
+  ansible.posix.acl:
+    path: "{{ ctl_base_repo_dir }}"
+    etype: group
+    entity: "{{ ctl_base_repo_gid }}"
+    permissions: rX
+    default: "{{ item }}"
+    recursive: true
+    state: present
+  loop: [false, true]

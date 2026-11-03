@@ -40,6 +40,10 @@
   import_playbook: deploy-app.yml
   vars:
     app: gatus
+- name: Deploy semaphore
+  import_playbook: deploy-app.yml
+  vars:
+    app: semaphore
 - name: Deploy diun
   import_playbook: deploy-diun.yml
 - name: Deploy iot gateway (lxc)

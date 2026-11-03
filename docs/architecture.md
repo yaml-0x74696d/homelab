@@ -293,6 +293,7 @@ Deploying, from the controller:
 - `tofu apply` for the VMs and the LXCs
 - `ansible-playbook` for the hosts and the apps
 - `nixos/update.sh` for the NetBird VM
+- Semaphore on ctl-1 (a Raspberry Pi outside the cluster) runs scheduled playbooks from a checkout copied over by hand
 
 Checking:
 - `just check` runs the same 22 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))

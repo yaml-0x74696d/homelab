@@ -10,7 +10,7 @@
   roles: [update]
 
 - name: Update vms
-  hosts: docker_hosts
+  hosts: docker_hosts:podman_hosts
   serial: 1
   roles: [update]
 
@@ -23,7 +23,7 @@
 
 # on the apt hosts, not localhost, so -l <host> keeps it. set_fact/debug don't connect
 - name: Report
-  hosts: lxc_containers:docker_hosts:proxmox
+  hosts: lxc_containers:docker_hosts:podman_hosts:proxmox
   gather_facts: false
   run_once: true
   tasks:

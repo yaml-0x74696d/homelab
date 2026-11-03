@@ -9,3 +9,10 @@
         user: "{{ ansible_user }}"
         state: present
         key: "{{ lookup('file', admin_ssh_pubkey_file | expanduser) }}"
+
+    - name: Add semaphore's key
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ semaphore_ssh_pubkey }}"
+      when: semaphore_ssh_pubkey | default('') | length > 0

@@ -1,0 +1,4 @@
+---
+# raspberry pi, not a vm (roles/vm_base)
+vm_base_guest_agent: false
+vm_base_cockpit: false

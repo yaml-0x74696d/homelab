@@ -1,0 +1,4 @@
+auto {{ ctl_base_iface }}
+iface {{ ctl_base_iface }} inet static
+    address {{ ctl_base_ip }}/{{ lan_cidr.split('/')[1] }}
+    gateway {{ gateway_ip }}
