@@ -22,7 +22,7 @@
 | pve-1 | Dell Wyse 5070 | 8 GB | Running the IoT WiFi AP directly |
 | pve-2 | Dell Wyse 5070 | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Old gaming PC (Gigabyte 970A, GT 710) | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
-| ctl-1 | Raspberry Pi 3 B+, 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
+| ctl-1 | Raspberry Pi 3 B+ (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
 
 ## VM/LXC
 

@@ -1,16 +1,10 @@
 ---
-# set by hand at flash time; this only keeps it, so no restart: a wrong file shows up at the next boot
+# no reload: the address would move under the running play. takes over at the next boot
 - name: Static address
   ansible.builtin.template:
-    src: iface.j2
-    dest: "/etc/network/interfaces.d/{{ ctl_base_iface }}"
-    mode: "0644"
-
-- name: Resolvers
-  ansible.builtin.template:
-    src: resolv.conf.j2
-    dest: /etc/resolv.conf
-    mode: "0644"
+    src: lan.nmconnection.j2
+    dest: "/etc/NetworkManager/system-connections/{{ ctl_base_connection }}.nmconnection"
+    mode: "0600"
 
 - name: Install ufw
   ansible.builtin.apt:

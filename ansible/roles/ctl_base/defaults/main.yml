@@ -1,7 +1,9 @@
 ---
-# ctl-1: the pi that runs semaphore. vm_base + podman_base do the rest
-ctl_base_iface: eth0   # debian's raspi image keeps the old names
+# ctl-1: the pi that runs semaphore (raspberry pi os). vm_base + podman_base do the rest
+ctl_base_iface: eth0
+ctl_base_connection: lan   # networkmanager profile; replaces the in-memory "Wired connection 1"
 ctl_base_ip: "{{ ctl1_ip }}"
+# only internet names: hosts go by ip, auth.<domain> is pinned in the quadlet
 ctl_base_dns: ["{{ gateway_ip }}"]
 # hand-copied checkout semaphore runs from (apps/semaphore), readable by its svc group
 ctl_base_repo_dir: "{{ semaphore_repo_dir }}"
