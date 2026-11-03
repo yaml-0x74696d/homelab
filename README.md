@@ -106,7 +106,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - Needs: just, pre-commit, Ansible, OpenTofu, Nix, Node, d2 (only for `just diagrams`) (the hooks install ansible-lint, yamllint, shellcheck, actionlint, zizmor, gitleaks)
 - OpenTofu: tfvars from the example, `tofu apply`
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
-- Plain `ansible-playbook` is the main path; `ansible-navigator.yml` = optional EE run
+- Plain `ansible-playbook` is the main path; for an EE run copy `ansible-navigator.yml.example` → `ansible-navigator.yml` and mount the private folder
 - NixOS: nixos-anywhere once, then `nixos/update.sh`. `nix flake check` needs builds (facts.nix), `--no-build` fails
 
 ## Security

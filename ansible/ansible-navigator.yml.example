@@ -5,6 +5,11 @@ ansible-navigator:
     image: ghcr.io/ansible/community-ansible-dev-tools:latest   # navigator default; creator-ee is archived
     pull:
       policy: missing
+    # .vault_pass, vault.yml, private.yml are symlinks there; same path inside, or they dangle
+    volume-mounts:
+      - src: /path/to/private
+        dest: /path/to/private
+        options: ro
 
   playbook-artifact:
     enable: true
