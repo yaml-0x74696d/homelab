@@ -68,3 +68,4 @@
     state: started
     enabled: true
   loop: "{{ vm_base_services + (['cockpit.socket'] if vm_base_cockpit else []) }}"
+  ignore_errors: "{{ ansible_check_mode }}"   # --check doesn't install the packages
