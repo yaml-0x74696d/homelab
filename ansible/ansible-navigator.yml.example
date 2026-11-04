@@ -10,6 +10,10 @@ ansible-navigator:
       - src: /path/to/private
         dest: /path/to/private
         options: ro
+      # aide-accept.yml writes the db hashes here (ansible/aide links into it)
+      - src: /path/to/private/ansible/aide
+        dest: /path/to/private/ansible/aide
+        options: rw
 
   playbook-artifact:
     enable: true
