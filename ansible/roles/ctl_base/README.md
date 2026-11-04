@@ -19,8 +19,12 @@
 3. `base.yml -l ctl-1`, then `deploy-app.yml -e app=semaphore`
 4. Copy the checkout to `semaphore_repo_dir` with the private files as real files, not symlinks:
    ```
-   rsync -rLt --exclude .git --exclude ansible/collections ~/homelab/ ctl-1:homelab/
+   rsync -rLt --delete --delete-excluded \
+     --exclude .git --exclude .vault_pass --exclude .ansible --exclude ansible/collections \
+     --exclude tofu --exclude 'nixos/result*' --exclude architecture/dist \
+     ~/homelab/ ctl-1:homelab/
    ```
+   No vault password (it lives in Semaphore's key store), no tofu state, no nix store. `--delete-excluded` cleans up what an older copy left behind.
    Then run `ctl-preparation.yml` again, it sets the ACL on what arrived
 
 ## How it works
