@@ -60,6 +60,12 @@ http:
       middlewares: ["authentik@file"]   # topology + internal ips, sso only
       service: "gatus-service"
 
+    semaphore-router:
+      rule: "Host(`semaphore.{{ env "DOMAIN" }}`)"
+      entryPoints: ["websecure"]
+      tls: { certResolver: "cloudflare" }
+      service: "semaphore-service"
+
     nextcloud-router:
       rule: "Host(`cloud.{{ env "DOMAIN" }}`)"
       entryPoints: ["websecure"]
@@ -149,6 +155,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ env "DOCKER2_IP" }}:{{ env "GATUS_PORT" }}"
+
+    semaphore-service:
+      loadBalancer:
+        servers:
+          - url: "http://{{ env "CTL1_IP" }}:{{ env "SEMAPHORE_PORT" }}"
 
     nextcloud-service:
       loadBalancer:

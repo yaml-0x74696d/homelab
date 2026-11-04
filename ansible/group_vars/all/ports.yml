@@ -28,6 +28,7 @@ app_ports:
   searxng: "{{ apps['searxng'].port }}"
   homepage: "{{ apps['homepage'].port }}"
   pdfcraft: "{{ apps['pdfcraft'].port }}"
+  semaphore: "{{ apps['semaphore'].port }}"
   homeassistant: "{{ apps['homeassistant'].port }}"   # traefik routes it to the haos vm
   prometheus: "{{ apps['prometheus'].port }}"
 

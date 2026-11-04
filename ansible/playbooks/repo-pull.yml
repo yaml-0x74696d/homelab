@@ -1,0 +1,12 @@
+---
+# semaphore's checkout on ctl-1 to the latest semaphore_repo_version. gitignored private files stay,
+# a changed vault.yml/private.yml comes from ctl-0: ctl-preparation.yml -l ctl-1 -t private-files
+- name: Pull the checkout on ctl-1
+  hosts: podman_hosts
+  become: false
+  tasks:
+    - name: Pull {{ semaphore_repo_version }}
+      ansible.builtin.git:
+        repo: "{{ semaphore_repo_url }}"
+        dest: "{{ semaphore_repo_dir }}"
+        version: "{{ semaphore_repo_version }}"

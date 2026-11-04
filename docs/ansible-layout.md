@@ -21,7 +21,7 @@ Where things are kept in `ansible/`, and which value is used when a variable is 
 
 ```
 ansible/
-├── inventory.yml        hosts and groups only: proxmox, docker_hosts, lxc_containers, netbird_agent, appliances (never logged in to)
+├── inventory.yml        hosts and groups only: proxmox, docker_hosts, podman_hosts (ctl-1), lxc_containers, netbird_agent, appliances (never logged in to)
 ├── group_vars/all/      every shared variable, one topic per file
 ├── group_vars/<group>.yml  how a group is logged in to (user, become)
 ├── host_vars/<host>.yml what only one host has
@@ -107,7 +107,7 @@ For connection settings (`become`, `user`, `connection`) the play keyword is ove
 ansible.cfg < command line < keyword (become: false) < variable (ansible_become: true)
 ```
 
-`ansible_become: true` is set for `docker_hosts` (`group_vars/docker_hosts.yml`), so `become: false` on a play has no effect there. `ansible_become: false` in the play's `vars:` is needed instead.
+`ansible_become: true` is set for `docker_hosts` and `podman_hosts` (`group_vars/<group>.yml`), so `become: false` on a play has no effect there. `ansible_become: false` in the play's `vars:` is needed instead.
 
 ## Conventions
 

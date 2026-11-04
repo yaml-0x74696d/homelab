@@ -1,7 +1,7 @@
 ---
 - name: Install hardened package set
   ansible.builtin.apt:
-    name: "{{ vm_base_packages }}"
+    name: "{{ vm_base_packages + (['qemu-guest-agent'] if vm_base_guest_agent else []) + (['cockpit'] if vm_base_cockpit else []) }}"
     state: present
     update_cache: true
 
@@ -67,4 +67,5 @@
     name: "{{ item }}"
     state: started
     enabled: true
-  loop: "{{ vm_base_services }}"
+  loop: "{{ vm_base_services + (['cockpit.socket'] if vm_base_cockpit else []) }}"
+  ignore_errors: "{{ ansible_check_mode }}"   # --check doesn't install the packages

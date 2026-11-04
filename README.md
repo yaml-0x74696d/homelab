@@ -10,7 +10,7 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 4 Podman apps, 22 Ansible roles, 32 playbooks, 23 C4 views
+- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 5 Podman apps, 23 Ansible roles, 33 playbooks, 23 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
 - Every check runs the same locally and in CI: 22 pre-commit hooks (`just check`)
@@ -22,6 +22,7 @@
 | pve-1 | Dell Wyse 5070 | 8 GB | Running the IoT WiFi AP directly |
 | pve-2 | Dell Wyse 5070 | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Old gaming PC (Gigabyte 970A, GT 710) | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
+| ctl-1 | Raspberry Pi 3 B+ (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
 
 ## VM/LXC
 
@@ -68,6 +69,7 @@
 | Tools | SearXNG | docker-1 | Search engine |
 | Tools | pdfcraft | docker-1 | PDF tools |
 | Tools | nginx | docker-2 | Website |
+| Tools | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a git clone of `testing` |
 | Tools | docker-socket-proxy (`docker-proxy`) | All Docker hosts | Read-only Docker API for Homepage |
 
 ## File layout
@@ -77,8 +79,8 @@ tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-i
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   group_vars/<group>.yml  login per group (user, become)
-  inventory.yml    hosts only: docker_hosts, proxmox, lxc_containers, netbird_agent
-  roles/           aide, chrony, cronie, docker_app, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
+  inventory.yml    hosts only: docker_hosts, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent
+  roles/           aide, chrony, cronie, ctl_base, docker_app, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
   apps/<name>/     Compose file + templates per app (25)
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
@@ -106,6 +108,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - Needs: just, pre-commit, Ansible, OpenTofu, Nix, Node, d2 (only for `just diagrams`) (the hooks install ansible-lint, yamllint, shellcheck, actionlint, zizmor, gitleaks)
 - OpenTofu: tfvars from the example, `tofu apply`
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
+- ctl-1 (the Pi): admin user by hand (`roles/ctl_base/README.md`), then `ctl-preparation.yml`, `base.yml`, `deploy-app.yml -e app=semaphore`
 - Plain `ansible-playbook` is the main path; for an EE run copy `ansible-navigator.yml.example` → `ansible-navigator.yml` and mount the private folder
 - NixOS: nixos-anywhere once, then `nixos/update.sh`. `nix flake check` needs builds (facts.nix), `--no-build` fails
 

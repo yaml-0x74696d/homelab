@@ -43,7 +43,7 @@ Alerts and accepting:
 - The ntfy alert only has counts, the changed paths stay in the host's journal (`journalctl -u aide-check`)
 - Changes are accepted by hand: `aide-accept.yml` (Debian) or `nixos/aide-accept.sh` (NetBird) shows the diff, asks, then activates the new database
 - One exception: `update.yml` accepts on its own after an upgrade, but only if `aide --check` was clean right before it. Otherwise the host is left for `aide-accept.yml` ([0024](0024-ansible-run-os-updates.md))
-- The SHA256 of every accepted database is stored on the controller (`ansible/aide/<host>.sha256`, a symlink into the Tresorit-synced private folder)
+- The SHA256 of every accepted database is stored on the controller: Semaphore's dir on ctl-1 is the reference, ctl-0's `ansible/aide` (a symlink into the Tresorit-synced private folder) a copy ([0031](0031-semaphore-on-a-pi.md))
 
 - Enforced by: every run and every accept first compares the host's database with the stored hash. A mismatch stops the playbook
 
@@ -59,4 +59,4 @@ Alerts and accepting:
 - Accepted: changes made on a host while `update.yml` upgrades it go into the baseline unreviewed
 - Accepted: `/dev` on the pve nodes is unwatched (VM disks, ISOs, USB and corosync IPC churn there daily), so a payload in `/dev/shm` or a planted device node goes unseen
 
-- Related: `roles/aide`, [0008](0008-nixos-for-the-dmz-box.md), [0024](0024-ansible-run-os-updates.md) (auto-accept after upgrades)
+- Related: `roles/aide`, [0008](0008-nixos-for-the-dmz-box.md), [0024](0024-ansible-run-os-updates.md) (auto-accept after upgrades), [0031](0031-semaphore-on-a-pi.md) (hashes on ctl-1)

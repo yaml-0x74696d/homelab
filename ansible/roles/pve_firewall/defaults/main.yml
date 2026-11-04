@@ -33,7 +33,14 @@ pve_firewall_netbird_turn_ports: [3478, 5349]          # stun/turn + turns, tcp+
 pve_firewall_log_vmid: "{{ vmids.log }}"
 pve_firewall_log_ip: "{{ log_ip }}"
 pve_firewall_log_port: "{{ log_relp_port }}"
-pve_firewall_log_sources: ["{{ docker1_ip }}", "{{ docker2_ip }}", "{{ docker3_ip }}", "{{ storage_ip }}", "{{ iot_lan_ip }}", "{{ netbird_ip }}"]
+pve_firewall_log_sources:
+  - "{{ docker1_ip }}"
+  - "{{ docker2_ip }}"
+  - "{{ docker3_ip }}"
+  - "{{ storage_ip }}"
+  - "{{ iot_lan_ip }}"
+  - "{{ netbird_ip }}"
+  - "{{ ctl1_ip }}"
 
 # who scrapes node-exporter (log + iot lxc) and the mqtt exporter (iot lxc)
 pve_firewall_prometheus_ip: "{{ prometheus_ip }}"

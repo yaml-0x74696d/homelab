@@ -94,6 +94,33 @@ apps:
         read_only: true
         drop_caps: [ALL]
 
+  # runs the playbooks on a schedule, from a git clone (roles/ctl_base)
+  semaphore:
+    host: ctl-1
+    uid: 2060
+    port: 3000
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: semaphore-admin-pass
+        vault: semaphore_admin_pass
+      - name: semaphore-key-encryption
+        vault: semaphore_key_encryption
+      - name: semaphore-oidc
+        template: oidc.json.j2
+    dirs:
+      - path: data
+        owner: 1001   # the image's semaphore user
+      - path: aide    # accepted aide hashes, ctl-0 reads them back
+        owner: 1001
+        mode: "0755"
+    containers:
+      - name: semaphore
+        image: docker.io/semaphoreui/semaphore
+        tag: latest
+    homepage: {group: Admin, icon: semaphore}
+    routes:
+      - host: semaphore
+
   nextcloud:
     host: docker-3
     runtime: compose

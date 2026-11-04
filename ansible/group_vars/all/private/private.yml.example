@@ -11,6 +11,11 @@ private_dir: ~/homelab-private
 admin_ssh_pubkeys:
   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA_CHANGE_ME admin@controller"
 
+# admin_ssh_pubkey_file's content, for push-keys.yml run from semaphore (no ~/.ssh there). empty = read the file
+admin_ssh_pubkey: ""
+# semaphore's own key (its key store on ctl-1), push-keys.yml adds it next to the admin key. empty = none yet
+semaphore_ssh_pubkey: ""
+
 # nic macs, they pin the dhcp leases. samples = proxmox prefix BC:24:11 + the vmid.
 macs:
   docker-1: { lan: "BC:24:11:00:02:01" }

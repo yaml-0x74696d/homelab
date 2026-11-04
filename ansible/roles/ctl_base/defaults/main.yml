@@ -1,0 +1,16 @@
+---
+# ctl-1: the pi that runs semaphore (raspberry pi os). vm_base + podman_base do the rest
+ctl_base_iface: eth0
+ctl_base_connection: lan   # networkmanager profile; replaces the in-memory "Wired connection 1"
+ctl_base_ip: "{{ ctl1_ip }}"
+# only internet names: hosts go by ip, auth.<domain> is pinned in the quadlet
+ctl_base_dns: ["{{ gateway_ip }}"]
+# git clone semaphore runs from (apps/semaphore), readable by its svc group. repo-pull.yml keeps it current
+ctl_base_repo_dir: "{{ semaphore_repo_dir }}"
+ctl_base_repo_url: "{{ semaphore_repo_url }}"
+ctl_base_repo_version: "{{ semaphore_repo_version }}"
+ctl_base_repo_gid: "{{ apps['semaphore'].uid }}"   # = svc-semaphore's gid, may not exist yet
+# gitignored, so copied from the controller's checkout. paths relative to the repo root
+ctl_base_private_files:
+  - ansible/group_vars/all/vault.yml
+  - ansible/group_vars/all/private/private.yml

@@ -1,0 +1,10 @@
+---
+# ctl-1, the pi that runs semaphore. once by hand first: admin user, sudo, key (roles/ctl_base/README.md)
+- name: Provision ctl-1
+  hosts: podman_hosts
+  roles:
+    - vm_base
+    - podman_base
+    - ctl_base
+    # last, so the baseline already contains the hardening above
+    - aide

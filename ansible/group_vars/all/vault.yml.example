@@ -52,6 +52,12 @@ pbs_fingerprint: "CHANGE_ME"
 
 vault_netbird_setup_key: "CHANGE_ME"
 
+# semaphore on ctl-1 (apps/semaphore). key: head -c32 /dev/urandom | base64, losing it locks the key store
+semaphore_admin_pass: "CHANGE_ME"
+semaphore_key_encryption: "CHANGE_ME"
+semaphore_oidc_id: "CHANGE_ME"
+semaphore_oidc_secret: "CHANGE_ME"
+
 # the one mqtt user every sensor and consumer logs in with (mqtt_user in app_settings.yml).
 # one line; roles/mqtt_exporter escapes backslash, quote, backtick, dollar for systemd. it's also in the firmware
 mqtt_password: "CHANGE_ME"

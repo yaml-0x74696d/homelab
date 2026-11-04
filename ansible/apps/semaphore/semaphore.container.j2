@@ -1,0 +1,26 @@
+[Unit]
+Description=semaphore
+
+[Container]
+Volume={{ podman_app_dir }}/data:/var/lib/semaphore
+# same path as on the host, the ui's repository points here. ansible.cfg sits in ansible/
+Volume={{ semaphore_repo_dir }}:{{ semaphore_repo_dir }}:ro
+Volume={{ podman_app_dir }}/aide:{{ semaphore_aide_dir }}
+# host network: ansible has to reach ctl-1's own sshd, pasta would hand ctl1_ip back to the container.
+# semaphore listens on its default 3000 straight on the host, apps.yml's port has to stay at that
+Network=host
+Secret=semaphore-admin-pass,type=mount,target=/run/secrets/admin-pass,uid=1001,mode=0400
+Secret=semaphore-key-encryption,type=mount,target=/run/secrets/key-encryption,uid=1001,mode=0400
+Secret=semaphore-oidc,type=env,target=SEMAPHORE_OIDC_PROVIDERS
+Environment=SEMAPHORE_ADMIN_PASSWORD_FILE=/run/secrets/admin-pass
+Environment=SEMAPHORE_ACCESS_KEY_ENCRYPTION_FILE=/run/secrets/key-encryption
+Environment=SEMAPHORE_ADMIN={{ semaphore_admin_user }}
+Environment=SEMAPHORE_DB_DIALECT=sqlite
+Environment=SEMAPHORE_WEB_ROOT=https://semaphore.{{ domain }}
+Environment=SEMAPHORE_SCHEDULE_TIMEZONE={{ timezone }}
+Environment=TZ={{ timezone }}
+# roles/aide reads and writes the hashes here instead of the read-only checkout
+Environment=AIDE_CHECKSUM_DIR={{ semaphore_aide_dir }}
+# token exchange goes straight to traefik, container dns can't resolve auth.<domain>
+AddHost=auth.{{ domain }}:{{ app_sources.edge }}
+HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/ping

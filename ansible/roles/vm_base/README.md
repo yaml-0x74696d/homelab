@@ -6,6 +6,7 @@
 ## Runs on
 
 - `docker_hosts`, in `playbooks/vm-preparation.yml`. Not the PVE nodes or the NetBird VM
+- ctl-1 (bare metal) in `playbooks/ctl-preparation.yml`, without guest agent and cockpit
 - The LXCs get `roles/lxc_base`, which reuses `tasks/unattended_upgrades.yml`
 
 ## How it works
@@ -24,5 +25,7 @@
 |---|---|---|
 | `vm_base_packages` | see defaults | Package set |
 | `vm_base_sysctl` | see defaults | Kernel settings, name → value |
-| `vm_base_services` | cockpit, auditd, fail2ban, apparmor, node_exporter | Enabled and started |
+| `vm_base_services` | auditd, fail2ban, apparmor, node_exporter | Enabled and started |
+| `vm_base_guest_agent` | true | Installs qemu-guest-agent. Off on bare metal (ctl-1) |
+| `vm_base_cockpit` | true | Installs cockpit and starts its socket. Off on ctl-1 |
 | `login_banner_text`, `ssh_*`, `timezone` | group_vars | Shared with the other hosts |

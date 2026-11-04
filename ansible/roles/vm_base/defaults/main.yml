@@ -1,7 +1,5 @@
 ---
 vm_base_packages:
-  - qemu-guest-agent
-  - cockpit
   - auditd
   - libpam-pwquality
   - curl
@@ -25,8 +23,11 @@ vm_base_sysctl:
   kernel.kptr_restrict: 2
 
 vm_base_services:
-  - cockpit.socket
   - auditd
   - fail2ban
   - apparmor
   - prometheus-node-exporter
+
+# off on bare metal (ctl-1): no hypervisor to talk to, no ram for a web console
+vm_base_guest_agent: true
+vm_base_cockpit: true
