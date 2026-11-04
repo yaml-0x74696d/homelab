@@ -6,9 +6,9 @@
     dest: "/etc/NetworkManager/system-connections/{{ ctl_base_connection }}.nmconnection"
     mode: "0600"
 
-- name: Install ufw
+- name: Install ufw and git
   ansible.builtin.apt:
-    name: ufw
+    name: [ufw, git]
     state: present
 
 - name: Default ufw policies
@@ -35,13 +35,25 @@
   community.general.ufw:
     state: enabled
 
-- name: Repo dir
-  ansible.builtin.file:
-    path: "{{ ctl_base_repo_dir }}"
-    state: directory
-    owner: "{{ admin_user }}"
-    group: "{{ admin_user }}"
-    mode: "0750"
+# first clone only, updates come from repo-pull.yml
+- name: Clone the repo
+  ansible.builtin.git:
+    repo: "{{ ctl_base_repo_url }}"
+    dest: "{{ ctl_base_repo_dir }}"
+    version: "{{ ctl_base_repo_version }}"
+    update: false
+  become: false
+
+# 0640: group bits are the acl mask, 0600 would hide svc-semaphore's entry
+- name: Private files
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../{{ item }}"
+    dest: "{{ ctl_base_repo_dir }}/{{ item }}"
+    mode: "0640"
+  loop: "{{ ctl_base_private_files }}"
+  become: false
+  diff: false
+  tags: private-files
 
 # by gid, so it works before deploy-app.yml creates the group
 - name: Svc group may pass the home dir
@@ -52,7 +64,7 @@
     permissions: x
     state: present
 
-# again on every run: rsync -p keeps the source's 0600 and masks the acl
+# default acl covers what later pulls check out
 - name: Svc group may read the repo
   ansible.posix.acl:
     path: "{{ ctl_base_repo_dir }}"

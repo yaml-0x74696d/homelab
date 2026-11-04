@@ -94,7 +94,7 @@ apps:
         read_only: true
         drop_caps: [ALL]
 
-  # runs the playbooks on a schedule, from a hand-copied checkout (roles/ctl_base)
+  # runs the playbooks on a schedule, from a git clone (roles/ctl_base)
   semaphore:
     host: ctl-1
     uid: 2060
@@ -110,6 +110,9 @@ apps:
     dirs:
       - path: data
         owner: 1001   # the image's semaphore user
+      - path: aide    # accepted aide hashes, ctl-0 reads them back
+        owner: 1001
+        mode: "0755"
     containers:
       - name: semaphore
         image: docker.io/semaphoreui/semaphore

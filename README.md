@@ -69,7 +69,7 @@
 | Tools | SearXNG | docker-1 | Search engine |
 | Tools | pdfcraft | docker-1 | PDF tools |
 | Tools | nginx | docker-2 | Website |
-| Tools | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a hand-copied checkout |
+| Tools | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a git clone of `testing` |
 | Tools | docker-socket-proxy (`docker-proxy`) | All Docker hosts | Read-only Docker API for Homepage |
 
 ## File layout

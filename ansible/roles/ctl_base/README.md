@@ -1,6 +1,6 @@
 # ctl_base
 
-- What ctl-1 needs on top of `vm_base` + `podman_base`: static address, ufw, and read access to the checkout for Semaphore
+- What ctl-1 needs on top of `vm_base` + `podman_base`: static address, ufw, and the git clone Semaphore runs from
 - ctl-1 is a Raspberry Pi 3 B+ on Raspberry Pi OS Lite (trixie, 64-bit) outside the cluster, always on, running the Semaphore app (`apps/semaphore`)
 
 ## Runs on
@@ -17,23 +17,24 @@
    ```
    Then reboot ctl-1: it comes back on `ctl1_ip`. `vm_base` turns password logins off
 3. `base.yml -l ctl-1`, then `deploy-app.yml -e app=semaphore`
-4. Copy the checkout to `semaphore_repo_dir` with the private files as real files, not symlinks:
+4. `ctl-preparation.yml` clones `ctl_base_repo_url` (branch `ctl_base_repo_version`) and copies the gitignored `ctl_base_private_files` from the controller's checkout
+5. AIDE hashes: copy the controller's `ansible/aide/*.sha256` once into Semaphore's `aide` dir, owned by the container's uid 1001:
    ```
-   rsync -rLt --delete --delete-excluded \
-     --exclude .git --exclude .vault_pass --exclude .ansible --exclude ansible/collections \
-     --exclude tofu --exclude 'nixos/result*' --exclude architecture/dist \
-     ~/homelab/ ctl-1:homelab/
+   ansible ctl-1 -b -m copy -a "src=aide/ dest=/srv/apps/semaphore/aide/ owner=<subuid of 1001> group=<subuid of 1001> mode=0644"
    ```
-   No vault password (it lives in Semaphore's key store), no tofu state, no nix store. `--delete-excluded` cleans up what an older copy left behind.
-   Then run `ctl-preparation.yml` again, it sets the ACL on what arrived
 
 ## How it works
 
 - Static address: a NetworkManager keyfile (`ctl_base_connection`) with address, gateway and DNS. With it in place NetworkManager no longer creates its in-memory "Wired connection 1". Never reloaded, so the address changes at the next boot
 - DNS is the gateway only: the hosts are reached by IP, and `auth.<domain>` is pinned in the quadlet (`AddHost=`)
 - ufw: deny in, ssh rate-limited from the LAN, node-exporter from Prometheus only. Semaphore's port comes from `podman_app` (`allow_from`)
-- Checkout access: the home dir gets `g:<svc-semaphore gid>:x`, the checkout `rX` plus a default ACL. Set by gid, so it works before the group exists. In the rootless container that gid is gid 0, which the image's `semaphore` user runs as
-- The ACL is set again on every run: `rsync -p` copies the source's `0600` and the mask hides the group entry
+- The clone: `ctl-preparation.yml` clones once, after that `playbooks/repo-pull.yml` pulls (a Semaphore template). Vault password and tofu state never land on ctl-1, the vault password lives in Semaphore's key store
+- Private files: `vault.yml` and `private.yml` are gitignored, so they're copied from the controller. After a change on ctl-0: `ctl-preparation.yml -l ctl-1 -t private-files`. Mode `0640`, `0600` would hide the ACL entry behind the mask
+- Checkout access: the home dir gets `g:<svc-semaphore gid>:x`, the clone `rX` plus a default ACL that covers later pulls. Set by gid, so it works before the group exists. In the rootless container that gid is gid 0, which the image's `semaphore` user runs as
+- AIDE hashes: Semaphore keeps them in its own rw dir (`/srv/apps/semaphore/aide`, `AIDE_CHECKSUM_DIR` in the quadlet), the reference for every host. ctl-0's `ansible/aide` is a copy, pull it back after accepts:
+  ```
+  rsync -rt ctl-1:/srv/apps/semaphore/aide/ ~/homelab/ansible/aide/
+  ```
 
 ## Settings
 
@@ -43,12 +44,15 @@
 | `ctl_base_connection` | `lan` | NetworkManager profile name |
 | `ctl_base_ip` | `ctl1_ip` | Static address, prefix from `lan_cidr` |
 | `ctl_base_dns` | `[gateway_ip]` | Resolvers, internet names only |
-| `ctl_base_repo_dir` | `semaphore_repo_dir` | The checkout (`/home/<admin_user>/homelab`) |
+| `ctl_base_repo_dir` | `semaphore_repo_dir` | The clone (`/home/<admin_user>/homelab`) |
+| `ctl_base_repo_url` | `semaphore_repo_url` | Repo to clone |
+| `ctl_base_repo_version` | `semaphore_repo_version` | Branch, `repo-pull.yml` follows it |
 | `ctl_base_repo_gid` | `apps.semaphore.uid` | svc-semaphore's gid |
+| `ctl_base_private_files` | `vault.yml`, `private.yml` | Gitignored files copied from the controller |
 
 ## Notes
 
 - `vm_base` runs with `vm_base_guest_agent: false` and `vm_base_cockpit: false` here (`host_vars/ctl-1.yml`)
 - The journal is volatile and goes to the log CT (`base.yml`: journald + rsyslog), so the SD card only sees Semaphore's SQLite
-- No backup: the PBS client is amd64-only. Projects and templates are a few clicks to redo, run history is lost with the card
+- No backup: the PBS client is amd64-only. Projects and templates are a few clicks to redo, run history is lost with the card. The AIDE hashes survive as ctl-0's copy
 - Semaphore's own ssh key lives in its key store. Its public key goes into `authorized_keys` on the hosts like the controller's (`push-keys.yml`, on pve once into the cluster-wide `/etc/pve/priv/authorized_keys`)

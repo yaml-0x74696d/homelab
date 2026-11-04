@@ -2,9 +2,10 @@
 - name: Push ssh keys to cluster
   hosts: all:!appliances
   become: false
+  # admin_ssh_pubkey for controllers without the key file (semaphore), the file lookup only runs without it
   vars:
-    push_keys: "{{ [lookup('file', admin_ssh_pubkey_file | expanduser)]
-      + ([semaphore_ssh_pubkey] if semaphore_ssh_pubkey | default('') | length > 0 else []) }}"
+    push_keys: "{{ [admin_ssh_pubkey | default('', true) or lookup('file', admin_ssh_pubkey_file | expanduser),
+      semaphore_ssh_pubkey | default('')] | select | list }}"
 
   tasks:
     - name: Add keys to authorized_keys

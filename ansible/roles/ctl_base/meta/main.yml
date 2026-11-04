@@ -1,7 +1,7 @@
 galaxy_info:
   role_name: ctl_base
   author: tim
-  description: network, ufw and repo access on ctl-1, the semaphore pi (raspberry pi os)
+  description: network, ufw and the repo clone on ctl-1, the semaphore pi (raspberry pi os)
   license: MIT
   min_ansible_version: "2.15"
   platforms:

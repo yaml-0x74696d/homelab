@@ -32,7 +32,8 @@
 
 - Run `ansible-playbook playbooks/aide-accept.yml -l <host>` (one host at a time, `serial: 1`)
 - It checks the hash, runs `aide --update`, shows the first `aide_report_lines` lines of the diff and asks you to type "yes"
-- Yes: the new database is swapped in, and its SHA256 is written to `ansible/aide/<host>.sha256` on the controller
+- In Semaphore there's no prompt: the survey var `aide_accept=yes` accepts in the same run, the diff stays in the task log
+- Yes: the new database is swapped in, and its SHA256 is written to `aide_checksum_dir/<host>.sha256` on the controller
 - Anything else: the old baseline stays the reference
 - If it's not your change, don't accept. Find out what happened first
 - `playbooks/update.yml` accepts on its own, but only if the check right before the upgrade was clean (`roles/update`)
@@ -61,7 +62,7 @@
 | `aide_run_timeout` / `aide_run_poll` | 3600 s / 30 s | Limits for `--init` and `--update` |
 | `aide_check_nice` / `aide_check_io_class` | 19 / idle | Priority of the check |
 | `aide_report_lines` | 150 | Diff lines shown on accept |
-| `aide_checksum_dir` | `ansible/aide` | Where the hashes are stored on the controller. A gitignored symlink into the offsite-synced private folder, real dir so ansible's `copy` doesn't replace a file symlink |
+| `aide_checksum_dir` | `$AIDE_CHECKSUM_DIR`, else `ansible/aide` | Where the hashes are stored on the controller. Semaphore sets the env var to its rw volume on ctl-1, the reference copy. On ctl-0 `ansible/aide` is a gitignored symlink into the offsite-synced private folder, pulled from ctl-1 (`roles/ctl_base`) |
 | `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the check still runs, but nothing is pushed |
 
 ## Excluded paths

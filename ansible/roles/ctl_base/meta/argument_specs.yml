@@ -18,7 +18,17 @@ argument_specs:
         description: Resolvers, in the profile
       ctl_base_repo_dir:
         type: path
-        description: Hand-copied checkout Semaphore runs from
+        description: Git clone Semaphore runs from
+      ctl_base_repo_url:
+        type: str
+        description: Repo to clone
+      ctl_base_repo_version:
+        type: str
+        description: Branch of the first clone, repo-pull.yml keeps following it
       ctl_base_repo_gid:
         type: int
         description: Gid that may read the repo (svc-semaphore's)
+      ctl_base_private_files:
+        type: list
+        elements: str
+        description: Gitignored files copied from the controller's checkout, relative to the repo root

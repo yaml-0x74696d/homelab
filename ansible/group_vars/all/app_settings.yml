@@ -38,8 +38,11 @@ gatus_auth_middlewares: [authentik]   # routes behind these get a backend check 
 gatus_data: /data                 # data dir inside the container
 gatus_db_file: data.db
 
-# semaphore on ctl-1 (apps/semaphore, roles/ctl_base): the checkout is copied there by hand
+# semaphore on ctl-1 (apps/semaphore, roles/ctl_base): a git clone, playbooks/repo-pull.yml updates it
 semaphore_repo_dir: "/home/{{ admin_user }}/homelab"
+semaphore_repo_url: https://github.com/yaml-0x74696d/homelab.git
+semaphore_repo_version: testing
+semaphore_aide_dir: /aide   # in the container, the aide hashes (AIDE_CHECKSUM_DIR)
 semaphore_admin_user: admin   # local break-glass next to authentik
 
 
