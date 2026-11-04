@@ -2,20 +2,27 @@
 - name: Push ssh keys to cluster
   hosts: all:!appliances
   become: false
+  vars:
+    push_keys: "{{ [lookup('file', admin_ssh_pubkey_file | expanduser)]
+      + ([semaphore_ssh_pubkey] if semaphore_ssh_pubkey | default('') | length > 0 else []) }}"
 
-  # follow: on pve root's authorized_keys links into /etc/pve/priv, shared by the cluster
   tasks:
-    - name: Add public key to authorized_keys
+    - name: Add keys to authorized_keys
       ansible.posix.authorized_key:
         user: "{{ ansible_user }}"
         state: present
-        follow: true
-        key: "{{ lookup('file', admin_ssh_pubkey_file | expanduser) }}"
+        key: "{{ item }}"
+      loop: "{{ push_keys }}"
+      when: "'proxmox' not in group_names"
 
-    - name: Add semaphore's key
-      ansible.posix.authorized_key:
-        user: "{{ ansible_user }}"
-        state: present
-        follow: true
-        key: "{{ semaphore_ssh_pubkey }}"
-      when: semaphore_ssh_pubkey | default('') | length > 0
+    # pve root's authorized_keys links into /etc/pve/priv, one file for the whole cluster.
+    # pmxcfs refuses chmod/chown, so plain append, once
+    - name: Add keys to the pve cluster file
+      ansible.builtin.shell: >-
+        grep -qxF {{ item | quote }} /etc/pve/priv/authorized_keys
+        || { echo {{ item | quote }} >> /etc/pve/priv/authorized_keys; echo added; }
+      loop: "{{ push_keys }}"
+      register: pve_key
+      changed_when: "'added' in pve_key.stdout"
+      delegate_to: "{{ groups['proxmox'][0] }}"
+      run_once: true
