@@ -32,6 +32,16 @@ argument_specs:
         type: list
         elements: str
         description: Gitignored files copied from the controller's checkout, relative to the repo root
+      ctl_base_private_src:
+        type: str
+        description: The controller's overlays (<private_dir>/apps), mirrored to <ctl_base_private_dir>/apps. empty or missing = no sync
+      ctl_base_private_dir:
+        type: path
+        description: ctl-1's copy of private_dir, readable by svc-semaphore, mounted into semaphore at the same path
+      ctl_base_private_excludes:
+        type: list
+        elements: str
+        description: rsync excludes for the sync
       ctl_base_vault_pass_dummy:
         type: str
         description: Placeholder for ansible.cfg's vault_password_file, relative to the repo root

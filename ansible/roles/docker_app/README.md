@@ -38,7 +38,8 @@
 |---|---|---|
 | `docker_app_name` | | The app, required |
 | `docker_app_src` | `apps/<name>` | Source folder on the controller |
-| `docker_app_private_src` | `<private_dir>/apps/<name>` | Private files laid over the app dir, outside the repo, never in `--diff`. Empty without `private_dir` |
+| `docker_app_private_dir` | `$HOMELAB_PRIVATE_DIR`, else `private_dir` | Root of the private overlay. Semaphore sets the env var to its mount of ctl-1's copy (`roles/ctl_base`) |
+| `docker_app_private_src` | `<docker_app_private_dir>/apps/<name>` | Private files laid over the app dir, outside the repo, never in `--diff`. Empty without `private_dir`, a set `private_dir` without `apps/` fails the deploy |
 | `docker_app_root` | `apps_root` | Parent folder on the host |
 | `docker_app_dirs` | `[]` | Extra folders, e.g. `[{path: data, owner: '472'}]` |
 | `docker_app_networks` | `[proxy-net]` | Docker networks to create on the host |

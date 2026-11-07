@@ -6,9 +6,9 @@
     dest: "/etc/NetworkManager/system-connections/{{ ctl_base_connection }}.nmconnection"
     mode: "0600"
 
-- name: Install ufw and git
+- name: Install ufw, git and rsync
   ansible.builtin.apt:
-    name: [ufw, git]
+    name: [ufw, git, rsync]
     state: present
 
 - name: Default ufw policies
@@ -43,6 +43,8 @@
     version: "{{ ctl_base_repo_version }}"
     update: false
   become: false
+  vars:
+    ansible_become: false   # podman_hosts' inventory become beats the keyword
 
 # 0640: group bits are the acl mask, 0600 would hide svc-semaphore's entry
 - name: Private files
@@ -52,7 +54,38 @@
     mode: "0640"
   loop: "{{ ctl_base_private_files }}"
   become: false
+  vars:
+    ansible_become: false
   diff: false
+  tags: private-files
+
+# even without a source: semaphore's quadlet mounts it
+- name: Private dir
+  ansible.builtin.file:
+    path: "{{ ctl_base_private_dir }}"
+    state: directory
+    mode: "0750"
+  become: false
+  vars:
+    ansible_become: false
+  tags: private-files
+
+# mirror, so a file deleted on ctl-0 goes here too. no perms: new files take the default acl below
+- name: Sync the private overlays
+  ansible.posix.synchronize:
+    src: "{{ ctl_base_private_src }}/"
+    dest: "{{ ctl_base_private_dir }}/apps/"
+    archive: false
+    recursive: true
+    links: true
+    times: true
+    delete: true
+    rsync_opts: "{{ ctl_base_private_excludes | map('regex_replace', '^', '--exclude=') | list }}"
+  become: false
+  vars:
+    ansible_become: false
+  diff: false
+  when: ctl_base_private_src and ctl_base_private_src is directory
   tags: private-files
 
 # not a password, see ctl_base_vault_pass_dummy
@@ -63,26 +96,30 @@
     mode: "0640"
     force: false
   become: false
+  vars:
+    ansible_become: false
   tags: private-files
 
 # by gid, so it works before deploy-app.yml creates the group
 - name: Svc group may pass the home dir
   ansible.posix.acl:
-    path: "{{ ctl_base_repo_dir | dirname }}"
+    path: "{{ item }}"
     etype: group
     entity: "{{ ctl_base_repo_gid }}"
     permissions: x
     state: present
+  loop: "{{ [ctl_base_repo_dir, ctl_base_private_dir] | map('dirname') | unique }}"
 
-# default acl covers what later pulls check out. copy moves a temp file in, so the private files need the explicit pass too
-- name: Svc group may read the repo
+# default acl covers what later pulls check out. copy and rsync move temp files in and reset the mask,
+# so the private files need the explicit pass too
+- name: Svc group may read the repo and the private dir
   ansible.posix.acl:
-    path: "{{ ctl_base_repo_dir }}"
+    path: "{{ item.0 }}"
     etype: group
     entity: "{{ ctl_base_repo_gid }}"
     permissions: rX
-    default: "{{ item }}"
+    default: "{{ item.1 }}"
     recursive: true
     state: present
-  loop: [false, true]
+  loop: "{{ [ctl_base_repo_dir, ctl_base_private_dir] | product([false, true]) | list }}"
   tags: private-files

@@ -63,6 +63,7 @@ aide_excludes_by_group:
     - /var/lib/containers       # root podman storage
     - /dev/shm                  # podman lock files, tmpfs
     - "{{ apps_root }}"
+    - "{{ podman_apps_root }}"   # podman app data
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"   # rootless podman images + containers, per app user
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"   # module payloads when ansible runs as the svc user
     - "{{ cifs_mount_root }}"   # pool shares
@@ -94,7 +95,9 @@ aide_excludes_by_group:
     - /dev/shm
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"
-    - "{{ semaphore_repo_dir }}"   # ctl-1: checkout copied over by hand
+    - "{{ podman_apps_root }}"
+    - "{{ semaphore_repo_dir }}"   # ctl-1: git checkout, playbooks/repo-pull.yml keeps it current
+    - "{{ semaphore_private_dir }}"   # ctl-1: private_dir copy, roles/ctl_base syncs it
   lxc_containers:
     - "{{ storage_root }}"   # pool bind mount
     - /dev/.lxc              # procfs from lxc, pids change every run

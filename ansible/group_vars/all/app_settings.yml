@@ -42,6 +42,8 @@ gatus_db_file: data.db
 semaphore_repo_dir: "/home/{{ admin_user }}/homelab"
 semaphore_repo_url: https://github.com/yaml-0x74696d/homelab.git
 semaphore_repo_version: testing
+# ctl-1's copy of the controller's private_dir, mounted at the same path (HOMELAB_PRIVATE_DIR)
+semaphore_private_dir: "/home/{{ admin_user }}/homelab-private"
 semaphore_aide_dir: /aide   # in the container, the aide hashes (AIDE_CHECKSUM_DIR)
 semaphore_admin_user: admin   # local break-glass next to authentik
 

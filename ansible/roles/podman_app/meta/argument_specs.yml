@@ -128,3 +128,6 @@ argument_specs:
               path: {type: str, description: PathPrefix}
               middlewares: {type: list, elements: str, default: [], description: Names defined in the edge flake}
               port: {type: int, description: "Backend port, default the app's port"}
+      podman_app_private_dir:
+        type: str
+        description: Root of the private overlay, $HOMELAB_PRIVATE_DIR (semaphore) else private_dir. empty = none

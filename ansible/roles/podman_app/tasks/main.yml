@@ -10,6 +10,14 @@
     fail_msg: "{{ podman_app_name }}: runtime compose, state absent/purged or wrong host"
     quiet: true
 
+# a missing overlay would swap private files for public ones and drop the private-only ones as stale
+- name: Check the private overlay dir
+  ansible.builtin.assert:
+    that: (podman_app_private_dir ~ '/apps') is directory
+    fail_msg: "private_dir is set but {{ podman_app_private_dir }}/apps is missing (on semaphore: ctl-preparation.yml -l ctl-1 -t private-files)"
+    quiet: true
+  when: podman_app_private_dir | length > 0
+
 # port, routes, tiles and firewall sources resolve the app to one host
 - name: Check a multi-host entry of {{ podman_app_name }}
   ansible.builtin.assert:
@@ -55,8 +63,11 @@
 
 - name: Check the allow_from names of {{ podman_app_name }}
   ansible.builtin.assert:
-    that: item in app_sources or item in apps
-    fail_msg: "{{ podman_app_name }}: allow_from '{{ item }}' is neither in app_sources nor an app"
+    that: item in app_sources or (item in apps and apps[item].host is defined)
+    fail_msg: >-
+      {{ podman_app_name }}: allow_from '{{ item }}'
+      {{ 'is a multi-host app (hosts:), put the host you mean in app_sources' if item in apps
+         else 'is neither in app_sources nor an app' }}
     quiet: true
   loop: "{{ (podman_app_entry.allow_from + podman_app_entry.extra_ports | default([]) | map(attribute='allow_from') | flatten) | unique }}"
 

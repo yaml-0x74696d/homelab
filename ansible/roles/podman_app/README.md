@@ -14,7 +14,7 @@
 
 ## How it works
 
-1. Checks the entry: `runtime: podman`, `state: present`, the right host (a `hosts:` entry: no port, routes, tiles or sources), only built features, one source per secret, a template per container, known `allow_from` names
+1. Checks the entry: `runtime: podman`, `state: present`, the right host (a `hosts:` entry: no port, routes, tiles or sources), only built features, one source per secret, a template per container, known `allow_from` names (single-host apps only)
 2. Writes `svc-<name>:<uid*65536>:65536` to `/etc/subuid` and `/etc/subgid` **before** creating the user, so useradd doesn't add a second range. Then checks there's exactly one line each
 3. Creates group + user `svc-<name>` with the map's `uid`: locked password, `nologin`, member of `svc-apps` (may read the ntfy env file)
 4. Linger, then starts `user@<uid>.service`. A range change on an existing user runs `podman system migrate`
@@ -23,7 +23,7 @@
    - `container.d/10-homelab.conf`: house rules (`Notify=healthy`, `HealthOnFailure=kill`, restart with backoff, start timeout, `WantedBy=default.target`)
    - `<container>.container.d/50-map.conf`: what the map says (image + tag, `AutoUpdate=registry` unless `auto_update: false`, `User=`, `StopTimeout=`, `Notify=false` + `HealthOnFailure=none` for `healthcheck: false`, `NoNewPrivileges=`, caps, `ReadOnly=`)
    - `<container>.container`: rendered from `apps/<name>/<container>.container.j2` (volumes, ports, env, health)
-7. Config: `apps/<name>/config/` mirrored to `/srv/apps/<name>/config/`, `*.j2` rendered, the rest copied, files gone from the repo removed. With `private_dir` set (in `private.yml`), `<private_dir>/apps/<name>/config/` lays over it: plain files, no templates, a file there replaces the public one with the same path and is never shown in `--diff`. Owned by root and world-readable (worker uids land on subuids), so the app can't rewrite it; units mount it `:ro`. A change restarts the app
+7. Config: `apps/<name>/config/` mirrored to `/srv/apps/<name>/config/`, `*.j2` rendered, the rest copied, files gone from the repo removed. With `private_dir` set (in `private.yml`), `<private_dir>/apps/<name>/config/` lays over it: plain files, no templates, a file there replaces the public one with the same path and is never shown in `--diff`. A set `private_dir` without `apps/` fails the deploy, a silent public-only run would drop the private files as stale. Owned by root and world-readable (worker uids land on subuids), so the app can't rewrite it; units mount it `:ro`. A change restarts the app
 8. ufw: one rule per port and `allow_from` source
 9. Podman secrets as the user: the value from the vault variable or the rendered template, replaced only when the content differs (`podman secret inspect --showsecret`)
 10. Pulls the images as the user (so a pull never eats the start timeout), reloads + restarts on unit changes, starts the units
@@ -72,6 +72,7 @@ apps:
 | Variable | Default | What |
 |---|---|---|
 | `podman_app_name`, `podman_app_entry` | set by `deploy-app.yml` | The app's key and entry |
+| `podman_app_private_dir` | `$HOMELAB_PRIVATE_DIR`, else `private_dir` | Root of the private config overlay. Semaphore sets the env var to its mount of ctl-1's copy (`roles/ctl_base`) |
 | `podman_app_subid_count` | `65536` | Size of each subuid/subgid range |
 | `podman_app_start_timeout` | `5min` | `TimeoutStartSec=` when the entry has no `start_timeout` |
 | `podman_app_stop_timeout` | `10` | `StopTimeout=` when a container has no `stop_timeout` |

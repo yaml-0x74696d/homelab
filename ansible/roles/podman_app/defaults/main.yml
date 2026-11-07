@@ -10,8 +10,10 @@ podman_app_src: "{{ playbook_dir }}/../apps/{{ podman_app_name }}"
 podman_app_quadlet_dir: "{{ podman_app_home }}/.config/containers/systemd"
 # apps/<name>/config/ as filetree items (path relative, src, state, root), empty when the app has none
 podman_app_config_public: "{{ query('community.general.filetree', podman_app_src ~ '/config') if (podman_app_src ~ '/config') is directory else [] }}"
-# private overlay outside the repo, <private_dir>/apps/<name>/config/. plain files only, they win over public ones by path
-podman_app_private_src: "{{ (private_dir | expanduser ~ '/apps/' ~ podman_app_name ~ '/config') if private_dir | default('') else '' }}"
+# private overlay outside the repo, <private_dir>/apps/<name>/config/. plain files only, they win over public ones by path.
+# semaphore sets HOMELAB_PRIVATE_DIR to its mount of ctl-1's copy, its ~ is the container user's home
+podman_app_private_dir: "{{ lookup('ansible.builtin.env', 'HOMELAB_PRIVATE_DIR', default=private_dir | default('')) | expanduser }}"
+podman_app_private_src: "{{ (podman_app_private_dir ~ '/apps/' ~ podman_app_name ~ '/config') if podman_app_private_dir else '' }}"
 podman_app_config_private: "{{ query('community.general.filetree', podman_app_private_src)
                                if podman_app_private_src and podman_app_private_src is directory else [] }}"
 # the public items the overlay doesn't replace, then everything

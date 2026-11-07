@@ -1,4 +1,12 @@
 ---
+# a missing overlay would deploy the public files only
+- name: Check the private overlay dir
+  ansible.builtin.assert:
+    that: (docker_app_private_dir ~ '/apps') is directory
+    fail_msg: "private_dir is set but {{ docker_app_private_dir }}/apps is missing (on semaphore: ctl-preparation.yml -l ctl-1 -t private-files)"
+    quiet: true
+  when: docker_app_private_dir | length > 0
+
 - name: Ensure app dir for {{ docker_app_name }}
   ansible.builtin.file:
     path: "{{ docker_app_root }}/{{ docker_app_name }}"

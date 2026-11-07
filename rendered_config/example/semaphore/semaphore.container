@@ -5,6 +5,8 @@ Description=semaphore
 Volume=/srv/apps/semaphore/data:/var/lib/semaphore
 # same path as on the host, the ui's repository points here. ansible.cfg sits in ansible/
 Volume=/home/admin/homelab:/home/admin/homelab:ro
+# ctl-1's copy of private_dir (roles/ctl_base), the app roles' overlay
+Volume=/home/admin/homelab-private:/home/admin/homelab-private:ro
 Volume=/srv/apps/semaphore/aide:/aide
 # host network: ansible has to reach ctl-1's own sshd, pasta would hand ctl1_ip back to the container.
 # semaphore listens on its default 3000 straight on the host, apps.yml's port has to stay at that
@@ -23,8 +25,10 @@ Environment=TZ=Europe/Berlin
 Environment=AIDE_CHECKSUM_DIR=/aide
 # semaphore runs ansible from playbooks/, so it wouldn't find ansible.cfg on its own
 Environment=ANSIBLE_CONFIG=/home/admin/homelab/ansible/ansible.cfg
+# private.yml's private_dir (~/...) would expand to the container user's home here
+Environment=HOMELAB_PRIVATE_DIR=/home/admin/homelab-private
 # tasks only get the env vars listed here. single quotes keep the json quotes past systemd's parser
-Environment='SEMAPHORE_FORWARDED_ENV_VARS=["AIDE_CHECKSUM_DIR", "ANSIBLE_CONFIG"]'
+Environment='SEMAPHORE_FORWARDED_ENV_VARS=["AIDE_CHECKSUM_DIR", "ANSIBLE_CONFIG", "HOMELAB_PRIVATE_DIR"]'
 # token exchange goes straight to traefik, container dns can't resolve auth.<domain>
 AddHost=auth.example.org:192.168.178.201
 HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/ping

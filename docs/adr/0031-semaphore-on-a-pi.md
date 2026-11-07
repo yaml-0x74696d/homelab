@@ -30,8 +30,9 @@ The setup:
 The code it runs:
 - A git clone of the public repo on `semaphore_repo_version` (`testing`) at `semaphore_repo_dir`, mounted read-only into the container
 - `playbooks/repo-pull.yml` pulls it, as a Semaphore template
-- The quadlet sets `ANSIBLE_CONFIG` and `AIDE_CHECKSUM_DIR` and forwards both to the tasks (`SEMAPHORE_FORWARDED_ENV_VARS`), so templates need no variable group
+- The quadlet sets `ANSIBLE_CONFIG`, `AIDE_CHECKSUM_DIR` and `HOMELAB_PRIVATE_DIR` and forwards them to the tasks (`SEMAPHORE_FORWARDED_ENV_VARS`), so templates need no variable group
 - The gitignored `vault.yml` and `private.yml` come from ctl-0 (`ctl_base_private_files`, tag `private-files`)
+- ctl-0's `<private_dir>/apps` (the private config overlays, nothing else from that dir) is mirrored with rsync to `semaphore_private_dir` in the same run and mounted read-only at that path. `HOMELAB_PRIVATE_DIR` points `podman_app` and `docker_app` at it, `private.yml`'s `~/...` would be the container user's home
 - The vault password and Semaphore's ssh key live only in Semaphore's key store, encrypted with `semaphore_key_encryption`. No vault password and no tofu state on the Pi
 - `ansible.cfg` needs a `.vault_pass`, so the clone gets a dummy one, the real password comes from the key store
 - Semaphore's public key goes to every host through `push-keys.yml`
@@ -41,14 +42,14 @@ AIDE hashes:
 - `aide-accept.yml` accepts in Semaphore through the survey var `aide_accept=yes`, the diff stays in the task log
 - ctl-0's `ansible/aide` is a copy, pulled back with rsync after accepts. The NetBird VM's hash stays on ctl-0 (`nixos/aide-accept.sh`)
 
-- Enforced by: the read-only repo mount, ufw on ctl-1 (port from `allow_from` only, ssh from the LAN), and the hash compare in `roles/aide` before every run and accept
+- Enforced by: the read-only repo and private dir mounts, ufw on ctl-1 (port from `allow_from` only, ssh from the LAN), and the hash compare in `roles/aide` before every run and accept
 
 ## Consequences
 
 - Easier: updates and AIDE checks run on a schedule while ctl-0 is off, with a history per run
-- Easier: everything runs from one git branch, no hand-copied files besides the two private ones
+- Easier: everything runs from one git branch, the private files and `private_dir` come from one tagged run from ctl-0, nothing copied by hand
 
-- Harder: a vault or `private.yml` change needs a run from ctl-0 before Semaphore sees it
+- Harder: a vault, `private.yml` or `private_dir` change needs a run from ctl-0 before Semaphore sees it
 - Harder: ctl-1 holds the keys to every host, so it is the most valuable box to break into
 
 - Accepted: ctl-1 holds the AIDE hashes for all hosts, itself included. Root on ctl-1 could swap a database and its hash together. ctl-0's copy is the cross-check, if I pull it after every accept
