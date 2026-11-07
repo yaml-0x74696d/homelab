@@ -74,7 +74,7 @@
     permissions: x
     state: present
 
-# default acl covers what later pulls check out
+# default acl covers what later pulls check out. copy moves a temp file in, so the private files need the explicit pass too
 - name: Svc group may read the repo
   ansible.posix.acl:
     path: "{{ ctl_base_repo_dir }}"
@@ -85,3 +85,4 @@
     recursive: true
     state: present
   loop: [false, true]
+  tags: private-files
