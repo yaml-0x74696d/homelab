@@ -47,6 +47,14 @@ semaphore_private_dir: "/home/{{ admin_user }}/homelab-private"
 semaphore_aide_dir: /aide   # in the container, the aide hashes (AIDE_CHECKSUM_DIR)
 semaphore_admin_user: admin   # local break-glass next to authentik
 
+# public names cloudflare-ddns points at the wan ip, @ = the domain itself. not traefik routes,
+# so not in apps.yml. ip6: the netbird vm's address too, proxied: through cloudflare
+cloudflare_ddns_records:
+  - { host: "@", ip6: true, proxied: true }
+  - { host: www, ip6: true, proxied: true }
+  - { host: vpn, ip6: false, proxied: false }   # the fritz!box itself, its wan ipv6 isn't in the lan prefix
+  - { host: nb, ip6: true, proxied: false }     # netbird's own proxy
+
 
 # podman apps (roles/podman_base, podman_app): data under <root>/<app>, owned by <prefix><app>; pbs backs it up
 podman_apps_root: /srv/apps

@@ -16,10 +16,10 @@
   when: ("country " ~ iot_node_country ~ ":") not in iot_node_reg.stdout
   changed_when: true
 
-- name: Card name for the hook
+- name: Settings for the hook
   ansible.builtin.copy:
     dest: /etc/default/iot-wifi
-    content: "NIC={{ iot_node_nic }}\n"
+    content: "NIC={{ iot_node_nic }}\nWAIT={{ iot_node_hook_wait }}\n"
     mode: "0644"
 
 - name: Hook that hands the card back

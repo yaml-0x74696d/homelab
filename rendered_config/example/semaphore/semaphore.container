@@ -9,8 +9,9 @@ Volume=/home/admin/homelab:/home/admin/homelab:ro
 Volume=/home/admin/homelab-private:/home/admin/homelab-private:ro
 Volume=/srv/apps/semaphore/aide:/aide
 # host network: ansible has to reach ctl-1's own sshd, pasta would hand ctl1_ip back to the container.
-# semaphore listens on its default 3000 straight on the host, apps.yml's port has to stay at that
+# so semaphore listens on apps.yml's port straight on the host
 Network=host
+Environment=SEMAPHORE_PORT=:3000
 Secret=semaphore-admin-pass,type=mount,target=/run/secrets/admin-pass,uid=1001,mode=0400
 Secret=semaphore-key-encryption,type=mount,target=/run/secrets/key-encryption,uid=1001,mode=0400
 Secret=semaphore-oidc,type=env,target=SEMAPHORE_OIDC_PROVIDERS

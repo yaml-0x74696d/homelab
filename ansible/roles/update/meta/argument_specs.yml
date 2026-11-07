@@ -1,0 +1,50 @@
+---
+argument_specs:
+  main:
+    short_description: dist-upgrade with needrestart, conffile report and aide re-baseline, one host
+    options:
+      update_cache_valid_time:
+        type: int
+        description: Seconds before the apt cache is refreshed
+      update_conffile_dirs:
+        type: list
+        elements: path
+        description: Where to look for new package configs
+      update_conffile_patterns:
+        type: list
+        elements: str
+        description: File patterns that count as one
+      update_check_kernel:
+        type: bool
+        description: needrestart's kernel check, false on the lxcs
+      update_check_quorum:
+        type: bool
+        description: pvecm quorum check, true in the pve play
+      update_quorum_retries:
+        type: int
+        description: Quorum tries after the restarts
+      update_quorum_delay:
+        type: int
+        description: Seconds between them
+      update_aide_wait_retries:
+        type: int
+        description: Tries while a daily aide check is running
+      update_aide_wait_delay:
+        type: int
+        description: Seconds between them
+      update_ntfy_title:
+        type: str
+        description: ntfy title
+      update_ntfy_headers:
+        type: dict
+        description: Headers for every ntfy push
+  summary:
+    short_description: Print and push the results of all hosts, once on the controller (update.yml, rescue)
+    options:
+      update_summary_hosts:
+        type: list
+        elements: str
+        description: Hosts the summary covers, in play order
+      update_ntfy_headers:
+        type: dict
+        description: Headers for the push

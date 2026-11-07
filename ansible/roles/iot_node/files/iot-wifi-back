@@ -4,7 +4,7 @@
 # stop: takes the card out of the ct's netns under its node name. pre-start: renames a stray wlan0 (crash)
 set -u
 # shellcheck source=/dev/null
-. /etc/default/iot-wifi   # NIC=<the card's name on the node>
+. /etc/default/iot-wifi   # NIC=<the card's name on the node>, WAIT=<seconds pre-start waits for it>
 
 # hook.version 0 passes type and namespaces as args, version 1 as LXC_HOOK_TYPE / LXC_NET_NS
 netns="${LXC_NET_NS:-}"
@@ -20,7 +20,7 @@ stop)
     nsenter --net="$netns" iw phy "$phy" set netns 1
     ;;
 pre-start)
-    for _ in $(seq 1 30); do
+    for _ in $(seq 1 "$WAIT"); do
         [ -e "/sys/class/net/$NIC/phy80211" ] && exit 0
         if [ -e /sys/class/net/wlan0/phy80211 ]; then
             ip link set wlan0 down
@@ -29,7 +29,7 @@ pre-start)
         fi
         sleep 1
     done
-    echo "$NIC not back on the node after 30s" >&2
+    echo "$NIC not back on the node after ${WAIT}s" >&2
     exit 1
     ;;
 esac

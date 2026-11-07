@@ -52,9 +52,6 @@ argument_specs:
               port: {type: int, required: true}
               proto: {type: str, choices: [tcp, udp], default: tcp}
               allow_from: {type: list, elements: str, required: true}
-          metrics_port:
-            type: int
-            description: The app's own metrics endpoint, prometheus scrapes it
           allow_from:
             type: list
             elements: str

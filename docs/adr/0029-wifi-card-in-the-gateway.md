@@ -19,6 +19,8 @@ Status: Accepted
 - pve-1 only keeps the regulatory domain, the CT isn't allowed to set it
 - A hook on pve-1 hands the card back when the CT stops, otherwise it returns minutes later under the wrong name and the next start fails
 
+- Enforced by: `roles/iot_node` (`deploy-iot.yml`) writes the `lxc.net` lines, the hook and the regulatory domain on `iot_node` every run
+
 ## Consequences
 
 - Easier: no node in the IoT net, nothing set up by hand on pve-1

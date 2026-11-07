@@ -122,4 +122,5 @@
     recursive: true
     state: present
   loop: "{{ [ctl_base_repo_dir, ctl_base_private_dir] | product([false, true]) | list }}"
+  ignore_errors: "{{ ansible_check_mode }}"   # check mode doesn't create the private dir on a first run
   tags: private-files

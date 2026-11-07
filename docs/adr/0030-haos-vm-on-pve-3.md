@@ -20,6 +20,8 @@ Status: Accepted
 - The PVE guest firewall (`haos.fw`) only lets Traefik and Homepage reach HA's port, the admin hosts also reach it and the Observer directly
 - Behind Traefik: the trusted proxies are set in HA's UI (Settings → Network), HA keeps them in `.storage/http` and ignores an `http:` block in the YAML
 
+- Enforced by: `haos.fw` from `roles/pve_firewall` (`deploy-pve-firewall.yml`)
+
 ## Consequences
 
 - Easier: add-ons and HA's own updates, pve-1 has room for edge

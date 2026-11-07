@@ -6,13 +6,13 @@ views {
       color slate
       include edge, identity, remote, apps, media, automation, observability, storage
     }
-    include cloudflare, letsencrypt, ntfy, fritzbox
+    include cloudflare, letsencrypt, ntfy, fritzbox, github
     autoLayout TopBottom
   }
 
   deployment view physical {
     title "Deployment overview"
-    include home, home.*, home.pve1.*, home.pve2.*, home.pve3.*, home.pve2.dmz.*
+    include home, home.*, home.pve1.*, home.pve2.*, home.pve3.*, home.pve2.dmz.*, home.ctl1.*
     include home.pve1 with { navigateTo pve1 }
     include home.pve2 with { navigateTo pve2 }
     include home.pve3 with { navigateTo pve3 }
@@ -203,5 +203,8 @@ views "Flows" {
     ops.controller -> apps.gitea "pulls the repo"
     ops.controller -> ops.proxmox "tofu apply: VMs + LXC"
     ops.controller -> ops.hosts "ansible: renders + starts apps"
+    admin -> github "pushes the repo"
+    ops.semaphore -> github "pulls the repo (testing)"
+    ops.semaphore -> ops.hosts "ansible: renders + starts apps"
   }
 }

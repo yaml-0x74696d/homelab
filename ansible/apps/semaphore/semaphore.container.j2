@@ -1,3 +1,4 @@
+{% set uid = (podman_app_entry.dirs | selectattr('path', 'eq', 'data') | first).owner %}
 [Unit]
 Description=semaphore
 
@@ -9,10 +10,11 @@ Volume={{ semaphore_repo_dir }}:{{ semaphore_repo_dir }}:ro
 Volume={{ semaphore_private_dir }}:{{ semaphore_private_dir }}:ro
 Volume={{ podman_app_dir }}/aide:{{ semaphore_aide_dir }}
 # host network: ansible has to reach ctl-1's own sshd, pasta would hand ctl1_ip back to the container.
-# semaphore listens on its default 3000 straight on the host, apps.yml's port has to stay at that
+# so semaphore listens on apps.yml's port straight on the host
 Network=host
-Secret=semaphore-admin-pass,type=mount,target=/run/secrets/admin-pass,uid=1001,mode=0400
-Secret=semaphore-key-encryption,type=mount,target=/run/secrets/key-encryption,uid=1001,mode=0400
+Environment=SEMAPHORE_PORT=:{{ podman_app_entry.port }}
+Secret=semaphore-admin-pass,type=mount,target=/run/secrets/admin-pass,uid={{ uid }},mode=0400
+Secret=semaphore-key-encryption,type=mount,target=/run/secrets/key-encryption,uid={{ uid }},mode=0400
 Secret=semaphore-oidc,type=env,target=SEMAPHORE_OIDC_PROVIDERS
 Environment=SEMAPHORE_ADMIN_PASSWORD_FILE=/run/secrets/admin-pass
 Environment=SEMAPHORE_ACCESS_KEY_ENCRYPTION_FILE=/run/secrets/key-encryption
@@ -31,4 +33,4 @@ Environment=HOMELAB_PRIVATE_DIR={{ semaphore_private_dir }}
 Environment='SEMAPHORE_FORWARDED_ENV_VARS=["AIDE_CHECKSUM_DIR", "ANSIBLE_CONFIG", "HOMELAB_PRIVATE_DIR"]'
 # token exchange goes straight to traefik, container dns can't resolve auth.<domain>
 AddHost=auth.{{ domain }}:{{ app_sources.edge }}
-HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/ping
+HealthCmd=wget -qO /dev/null http://127.0.0.1:{{ podman_app_entry.port }}/api/ping

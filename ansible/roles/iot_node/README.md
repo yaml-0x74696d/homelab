@@ -10,7 +10,7 @@
 ## How it works
 
 1. Regulatory domain: `cfg80211 ieee80211_regdom` in `/etc/modprobe.d` for the next boot, `iw reg set` now if it differs. The CT isn't allowed to set it
-2. `/usr/local/sbin/iot-wifi-back` (from `files/`) plus `/etc/default/iot-wifi` with the card's name
+2. `/usr/local/sbin/iot-wifi-back` (from `files/`) plus `/etc/default/iot-wifi` with the card's name and the pre-start wait
 3. Raw lines in `/etc/pve/lxc/<ct>.conf`, the API can't set them: `lxc.net.9` as `phys` on the card, named `wlan0` in the CT, with `iot_ip`; the script as `lxc.hook.stop` and `lxc.hook.pre-start`
 4. A changed line restarts the CT (`pct shutdown` + `start`, not reboot) and waits for its SSH
 
@@ -25,6 +25,8 @@ The hook: left alone, a stopped CT hands the card back minutes later (with its n
 | `iot_node_country` | `iot_wifi_country` | Regulatory domain |
 | `iot_node_ct_address` | `iot_ip` + prefix | The CT's address on the card, set by LXC |
 | `iot_node_ct_start_timeout` | `120` | Seconds until SSH answers after a restart |
+| `iot_node_ct_stop_timeout` | `60` | Seconds `pct shutdown` waits before the restart |
+| `iot_node_hook_wait` | `30` | Seconds the pre-start hook waits for the card to come back |
 | `iot_node_ct_lines` | see defaults | The raw LXC lines |
 
 ## Notes

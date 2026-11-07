@@ -32,7 +32,7 @@
 | `update_check_kernel` | `true` | needrestart's kernel check. `false` on the LXCs, they run the node's kernel |
 | `update_check_quorum` | `false` | `true` in the pve play |
 | `update_quorum_retries`, `update_quorum_delay` | 6, 10 | Tries and seconds for the quorum check after the restarts |
-| `update_summary_hosts` | lxc_containers + docker_hosts + proxmox | Hosts the summary covers, in play order |
+| `update_summary_hosts` | lxc_containers + docker_hosts + podman_hosts + proxmox | Hosts the summary covers, in play order |
 | `update_aide_wait_retries`, `update_aide_wait_delay` | 60, 30 | How long to wait for a running daily AIDE check (tries, seconds) |
 | `update_ntfy_title` | homelab updates | ntfy title |
 | `update_ntfy_headers` | Title + Bearer `ntfy_token` if set | Headers for every ntfy push |
