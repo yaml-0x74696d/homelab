@@ -14,3 +14,5 @@ ctl_base_repo_gid: "{{ apps['semaphore'].uid }}"   # = svc-semaphore's gid, may 
 ctl_base_private_files:
   - ansible/group_vars/all/vault.yml
   - ansible/group_vars/all/private/private.yml
+# ansible.cfg's vault_password_file has to exist. the real password comes from semaphore's key store, ansible tries both
+ctl_base_vault_pass_dummy: ansible/.vault_pass

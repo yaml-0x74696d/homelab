@@ -32,3 +32,6 @@ argument_specs:
         type: list
         elements: str
         description: Gitignored files copied from the controller's checkout, relative to the repo root
+      ctl_base_vault_pass_dummy:
+        type: str
+        description: Placeholder for ansible.cfg's vault_password_file, relative to the repo root

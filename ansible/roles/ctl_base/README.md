@@ -30,6 +30,7 @@
 - ufw: deny in, ssh rate-limited from the LAN, node-exporter from Prometheus only. Semaphore's port comes from `podman_app` (`allow_from`)
 - The clone: `ctl-preparation.yml` clones once, after that `playbooks/repo-pull.yml` pulls (a Semaphore template). Vault password and tofu state never land on ctl-1, the vault password lives in Semaphore's key store
 - Private files: `vault.yml` and `private.yml` are gitignored, so they're copied from the controller. After a change on ctl-0: `ctl-preparation.yml -l ctl-1 -t private-files`. Mode `0640`, `0600` would hide the ACL entry behind the mask
+- Vault password: `ansible.cfg`'s `vault_password_file` has to exist, so the clone gets a `dummy` one (`ctl_base_vault_pass_dummy`), like CI. Ansible tries every vault secret, the real one comes from Semaphore's key store
 - Checkout access: the home dir gets `g:<svc-semaphore gid>:x`, the clone `rX` plus a default ACL that covers later pulls. Set by gid, so it works before the group exists. In the rootless container that gid is gid 0, which the image's `semaphore` user runs as
 - AIDE hashes: Semaphore keeps them in its own rw dir (`/srv/apps/semaphore/aide`, `AIDE_CHECKSUM_DIR` in the quadlet), the reference for every host. ctl-0's `ansible/aide` is a copy, pull it back after accepts:
   ```
@@ -49,6 +50,7 @@
 | `ctl_base_repo_version` | `semaphore_repo_version` | Branch, `repo-pull.yml` follows it |
 | `ctl_base_repo_gid` | `apps.semaphore.uid` | svc-semaphore's gid |
 | `ctl_base_private_files` | `vault.yml`, `private.yml` | Gitignored files copied from the controller |
+| `ctl_base_vault_pass_dummy` | `ansible/.vault_pass` | Placeholder for `vault_password_file` |
 
 ## Notes
 

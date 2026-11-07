@@ -55,6 +55,16 @@
   diff: false
   tags: private-files
 
+# not a password, see ctl_base_vault_pass_dummy
+- name: Dummy vault password file
+  ansible.builtin.copy:
+    content: "dummy\n"
+    dest: "{{ ctl_base_repo_dir }}/{{ ctl_base_vault_pass_dummy }}"
+    mode: "0640"
+    force: false
+  become: false
+  tags: private-files
+
 # by gid, so it works before deploy-app.yml creates the group
 - name: Svc group may pass the home dir
   ansible.posix.acl:
