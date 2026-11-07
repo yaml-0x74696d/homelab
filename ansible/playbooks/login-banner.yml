@@ -24,10 +24,10 @@
         file_type: file
       register: motd_scripts
 
-    # statoverride, so a package update doesn't make them executable again
+    # statoverride, so a package update doesn't make them executable again. --list prints 644, no leading 0
     - name: Disable dynamic motd scripts
       ansible.builtin.shell: >-
-        case "$(dpkg-statoverride --list {{ item.path | quote }})" in *' 0644 '*) ;;
+        case "$(dpkg-statoverride --list {{ item.path | quote }})" in *' 644 '*) ;;
         *) dpkg-statoverride --force-statoverride-add --update --add root root 0644 {{ item.path | quote }} && echo changed ;; esac
       register: motd_override
       changed_when: "'changed' in motd_override.stdout"
