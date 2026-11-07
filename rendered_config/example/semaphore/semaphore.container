@@ -21,6 +21,10 @@ Environment=SEMAPHORE_SCHEDULE_TIMEZONE=Europe/Berlin
 Environment=TZ=Europe/Berlin
 # roles/aide reads and writes the hashes here instead of the read-only checkout
 Environment=AIDE_CHECKSUM_DIR=/aide
+# semaphore runs ansible from playbooks/, so it wouldn't find ansible.cfg on its own
+Environment=ANSIBLE_CONFIG=/home/admin/homelab/ansible/ansible.cfg
+# tasks only get the env vars listed here. single quotes keep the json quotes past systemd's parser
+Environment='SEMAPHORE_FORWARDED_ENV_VARS=["AIDE_CHECKSUM_DIR", "ANSIBLE_CONFIG"]'
 # token exchange goes straight to traefik, container dns can't resolve auth.<domain>
 AddHost=auth.example.org:192.168.178.201
 HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/ping

@@ -32,7 +32,7 @@
 - Private files: `vault.yml` and `private.yml` are gitignored, so they're copied from the controller. After a change on ctl-0: `ctl-preparation.yml -l ctl-1 -t private-files`. Mode `0640`, `0600` would hide the ACL entry behind the mask
 - Vault password: `ansible.cfg`'s `vault_password_file` has to exist, so the clone gets a `dummy` one (`ctl_base_vault_pass_dummy`), like CI. Ansible tries every vault secret, the real one comes from Semaphore's key store
 - Checkout access: the home dir gets `g:<svc-semaphore gid>:x`, the clone `rX` plus a default ACL that covers later pulls. Set by gid, so it works before the group exists. In the rootless container that gid is gid 0, which the image's `semaphore` user runs as
-- AIDE hashes: Semaphore keeps them in its own rw dir (`/srv/apps/semaphore/aide`, `AIDE_CHECKSUM_DIR` in the quadlet), the reference for every host. ctl-0's `ansible/aide` is a copy, pull it back after accepts:
+- AIDE hashes: Semaphore keeps them in its own rw dir (`/srv/apps/semaphore/aide`, `AIDE_CHECKSUM_DIR` in the quadlet, passed to tasks through `SEMAPHORE_FORWARDED_ENV_VARS`), the reference for every host. ctl-0's `ansible/aide` is a copy, pull it back after accepts:
   ```
   rsync -rt ctl-1:/srv/apps/semaphore/aide/ ~/homelab/ansible/aide/
   ```

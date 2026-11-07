@@ -30,6 +30,7 @@ The setup:
 The code it runs:
 - A git clone of the public repo on `semaphore_repo_version` (`testing`) at `semaphore_repo_dir`, mounted read-only into the container
 - `playbooks/repo-pull.yml` pulls it, as a Semaphore template
+- The quadlet sets `ANSIBLE_CONFIG` and `AIDE_CHECKSUM_DIR` and forwards both to the tasks (`SEMAPHORE_FORWARDED_ENV_VARS`), so templates need no variable group
 - The gitignored `vault.yml` and `private.yml` come from ctl-0 (`ctl_base_private_files`, tag `private-files`)
 - The vault password and Semaphore's ssh key live only in Semaphore's key store, encrypted with `semaphore_key_encryption`. No vault password and no tofu state on the Pi
 - `ansible.cfg` needs a `.vault_pass`, so the clone gets a dummy one, the real password comes from the key store
