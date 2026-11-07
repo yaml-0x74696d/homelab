@@ -1,0 +1,88 @@
+---
+# no reload: the address would move under the running play. takes over at the next boot
+- name: Static address
+  ansible.builtin.template:
+    src: lan.nmconnection.j2
+    dest: "/etc/NetworkManager/system-connections/{{ ctl_base_connection }}.nmconnection"
+    mode: "0600"
+
+- name: Install ufw and git
+  ansible.builtin.apt:
+    name: [ufw, git]
+    state: present
+
+- name: Default ufw policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+
+# app ports come from roles/podman_app
+- name: Ssh + node-exporter
+  community.general.ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: tcp
+    src: "{{ item.src }}"
+    direction: in
+  loop:
+    - { rule: limit, port: "{{ ssh_port }}", src: "{{ lan_cidr }}" }
+    - { rule: allow, port: "{{ node_exporter_port }}", src: "{{ prometheus_ip }}" }
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+
+# first clone only, updates come from repo-pull.yml
+- name: Clone the repo
+  ansible.builtin.git:
+    repo: "{{ ctl_base_repo_url }}"
+    dest: "{{ ctl_base_repo_dir }}"
+    version: "{{ ctl_base_repo_version }}"
+    update: false
+  become: false
+
+# 0640: group bits are the acl mask, 0600 would hide svc-semaphore's entry
+- name: Private files
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../{{ item }}"
+    dest: "{{ ctl_base_repo_dir }}/{{ item }}"
+    mode: "0640"
+  loop: "{{ ctl_base_private_files }}"
+  become: false
+  diff: false
+  tags: private-files
+
+# not a password, see ctl_base_vault_pass_dummy
+- name: Dummy vault password file
+  ansible.builtin.copy:
+    content: "dummy\n"
+    dest: "{{ ctl_base_repo_dir }}/{{ ctl_base_vault_pass_dummy }}"
+    mode: "0640"
+    force: false
+  become: false
+  tags: private-files
+
+# by gid, so it works before deploy-app.yml creates the group
+- name: Svc group may pass the home dir
+  ansible.posix.acl:
+    path: "{{ ctl_base_repo_dir | dirname }}"
+    etype: group
+    entity: "{{ ctl_base_repo_gid }}"
+    permissions: x
+    state: present
+
+# default acl covers what later pulls check out. copy moves a temp file in, so the private files need the explicit pass too
+- name: Svc group may read the repo
+  ansible.posix.acl:
+    path: "{{ ctl_base_repo_dir }}"
+    etype: group
+    entity: "{{ ctl_base_repo_gid }}"
+    permissions: rX
+    default: "{{ item }}"
+    recursive: true
+    state: present
+  loop: [false, true]
+  tags: private-files
