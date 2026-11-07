@@ -37,7 +37,7 @@ What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/docker-{1,2,
 
 | Host | Databases |
 |---|---|
-| docker-1 | Authentik (Postgres), Gitea, Vaultwarden, Home Assistant recorder (SQLite) |
+| docker-1 | Authentik (Postgres), Gitea, Vaultwarden (SQLite) |
 | docker-2 | Grafana, Gatus (SQLite) |
 | docker-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin + library (SQLite) |
 

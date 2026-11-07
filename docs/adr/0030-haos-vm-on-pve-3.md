@@ -26,7 +26,9 @@ Status: Accepted
 
 - Easier: add-ons and HA's own updates, pve-1 has room for edge
 - Harder: HA's config isn't in git, a rebuild means a restore
+- Backup: one vzdump snapshot job for VM 210 to PBS, set up by hand in the PVE UI (Datacenter, Backup). The guest agent freezes the fs, HA's own backups aren't used
+- Harder: that job isn't in code, a rebuilt cluster needs it set up again by hand
 - Harder: the trusted proxies change by hand when Traefik moves (edge)
 - Accepted: HA and its automations are off while pve-3 is off
 
-- Related: [0028](0028-iot-gateway-lxc.md) (the MQTT broker HA uses), [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu), [0013](0013-pbs-file-level-backups.md) (backups), [0028](0028-iot-gateway-lxc.md) (the MQTT broker HA uses)

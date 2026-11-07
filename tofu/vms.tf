@@ -187,7 +187,7 @@ resource "proxmox_virtual_environment_vm" "haos" {
     ignore_changes = [disk[0].import_from]
   }
 
-  # haos ships the guest agent, pbs snapshots freeze the fs through it
+  # haos ships the guest agent: clean shutdown, ip in the pve ui, fs freeze if a snapshot/vzdump ever runs
   agent { enabled = true }
 
   # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down

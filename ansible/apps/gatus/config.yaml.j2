@@ -7,6 +7,8 @@ storage:
 ui:
   dark-mode: true
 
+{# empty ntfy_url = alerts off. gatus would only drop the topic-less provider with a warning #}
+{% if ntfy_url %}
 alerting:
   ntfy:
     url: "{{ ntfy_url | regex_replace('/[^/]+$', '') }}"
@@ -17,6 +19,7 @@ alerting:
     default-alert:
       failure-threshold: {{ gatus_failure_threshold }}
       send-on-resolved: true
+{% endif %}
 
 endpoints:
 {# the user's view: route through traefik, tls included #}
@@ -35,8 +38,10 @@ endpoints:
     conditions:
       - "{{ '[STATUS] == 302' if behind_auth else '[STATUS] < 400' }}"
       - "[CERTIFICATE_EXPIRATION] > {{ gatus_cert_min_validity }}"
+{% if ntfy_url %}
     alerts:
       - type: ntfy
+{% endif %}
 {# behind sso the route only proves the login, so check the app on its port too. gatus' own vm: host.containers.internal #}
 {% if behind_auth and (r.port | default(app.port | default(none))) is not none %}
   - name: "{{ name }}{{ ' ' ~ r.path if r.path is defined else '' }} backend"
@@ -44,8 +49,10 @@ endpoints:
     url: "http://{{ 'host.containers.internal' if app.host == apps[podman_app_name].host else hostvars[app.host].ansible_host }}:{{ r.port | default(app.port) }}{{ r.path | default('') }}"
     interval: {{ gatus_interval }}
     conditions: ["[STATUS] < 400"]
+{% if ntfy_url %}
     alerts:
       - type: ntfy
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -55,8 +62,10 @@ endpoints:
     url: "tcp://{{ app_sources.edge }}:443"
     interval: {{ gatus_interval }}
     conditions: ["[CONNECTED] == true"]
+{% if ntfy_url %}
     alerts:
       - type: ntfy
+{% endif %}
 {% for g in gatus_ping_groups %}
 {% for h in groups[g] %}
   - name: {{ h }}
@@ -64,8 +73,10 @@ endpoints:
     url: "icmp://{{ hostvars[h].ansible_host }}"
     interval: {{ gatus_interval }}
     conditions: ["[CONNECTED] == true"]
+{% if ntfy_url %}
     alerts:
       - type: ntfy
+{% endif %}
 {% endfor %}
 {% endfor %}
 {% for h in groups['proxmox'] %}
@@ -74,16 +85,20 @@ endpoints:
     url: "tcp://{{ hostvars[h].ansible_host }}:{{ pve_ui_port }}"
     interval: {{ gatus_interval }}
     conditions: ["[CONNECTED] == true"]
+{% if ntfy_url %}
     alerts:
       - type: ntfy
+{% endif %}
 {% endfor %}
   - name: pbs
     group: proxmox
     url: "tcp://{{ pve3_ip }}:{{ pbs_port }}"
     interval: {{ gatus_interval }}
     conditions: ["[CONNECTED] == true"]
+{% if ntfy_url %}
     alerts:
       - type: ntfy
+{% endif %}
 {# cloudflare-ddns has no port: check the record it keeps alive, from outside #}
   - name: cloudflare-ddns
     group: external
@@ -93,5 +108,7 @@ endpoints:
       query-type: A
     interval: {{ gatus_interval }}
     conditions: ["[DNS_RCODE] == NOERROR"]
+{% if ntfy_url %}
     alerts:
       - type: ntfy
+{% endif %}

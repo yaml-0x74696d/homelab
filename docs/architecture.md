@@ -279,7 +279,7 @@ The sensors talk MQTT, their readings end up in Home Assistant and Prometheus. H
 - A broken broker only exposes the broker, not docker-1's vault and SSO
 - Home Assistant's broker address is set in its MQTT integration (UI), not in the repo
 - Prometheus keeps 15 days; the long-term sensor history is Home Assistant's (long-term statistics, hourly)
-- Home Assistant runs on docker-1
+- Home Assistant runs as the HAOS VM on pve-3
 - The sensors run ESPHome (YAML, compiled in the ESPHome add-on) or my own C code, and only talk MQTT: readings out, commands in, Home Assistant through MQTT discovery, no ESPHome API
 - Firmware updates are pulled: I copy the `.bin` to `/srv/firmware` on the gateway, a "Flash from gateway" button in Home Assistant tells the device over MQTT, the device downloads it from `iot_ip:80` and reboots. Nothing connects into the IoT net
 

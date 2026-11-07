@@ -5,34 +5,60 @@
     state: present
     update_cache: true
 
-# mosquitto_passwd salts every hash, so it only runs when the clear copy changes or no hash exists yet
-- name: Mqtt credentials (clear, root only)
-  ansible.builtin.copy:
-    dest: "{{ mosquitto_passwd_file }}.clear"
-    content: "{{ mosquitto_user }}:{{ mosquitto_password }}\n"
-    owner: root
-    group: root
-    mode: "0600"
+# mosquitto_passwd salts every hash, so a salted checksum of the creds decides when to rehash
+- name: Mqtt credential checksum
+  ansible.builtin.set_fact:
+    mosquitto_creds_sum: "{{ (mosquitto_passwd_salt ~ mosquitto_user ~ ':' ~ mosquitto_password) | hash('sha512') }}"
   no_log: true
-  register: mosquitto_clear
-  ignore_errors: "{{ ansible_check_mode }}"   # no /etc/mosquitto before the package
+
+- name: Stored checksum
+  ansible.builtin.slurp:
+    src: "{{ mosquitto_passwd_sum_file }}"
+  register: mosquitto_sum_old
+  failed_when: false
+  no_log: true
 
 - name: Hashed password file there?
   ansible.builtin.stat:
     path: "{{ mosquitto_passwd_file }}"
   register: mosquitto_passwd_stat
 
-# hash a copy, then swap it in. owner mosquitto: 2.0 warns on anything else
+# creds via stdin into a root-only temp file, hashed, swapped in. owner mosquitto: 2.0 warns on anything else
 - name: Hash mqtt password
   ansible.builtin.shell: |
     set -e
-    cp {{ mosquitto_passwd_file }}.clear {{ mosquitto_passwd_file }}.new
-    mosquitto_passwd -U {{ mosquitto_passwd_file }}.new
-    install -m 0600 -o mosquitto -g mosquitto {{ mosquitto_passwd_file }}.new {{ mosquitto_passwd_file }}
-    rm {{ mosquitto_passwd_file }}.new
-  when: mosquitto_clear.changed or not mosquitto_passwd_stat.stat.exists
+    umask 077
+    tmp=$(mktemp)
+    trap 'rm -f "$tmp"' EXIT
+    cat > "$tmp"
+    mosquitto_passwd -U "$tmp"
+    install -m 0600 -o mosquitto -g mosquitto "$tmp" {{ mosquitto_passwd_file }}
+  args:
+    stdin: "{{ mosquitto_user }}:{{ mosquitto_password }}"
+  when: >-
+    not mosquitto_passwd_stat.stat.exists
+    or (mosquitto_sum_old.content | default('') | b64decode | trim) != mosquitto_creds_sum
   changed_when: true
+  no_log: true
   notify: Restart mosquitto
+
+# after the hash, so a failed hash retries next run
+- name: Store checksum
+  ansible.builtin.copy:
+    dest: "{{ mosquitto_passwd_sum_file }}"
+    content: "{{ mosquitto_creds_sum }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
+  ignore_errors: "{{ ansible_check_mode }}"   # no /etc/mosquitto before the package
+
+# left by older runs
+- name: Remove clear credentials
+  ansible.builtin.file:
+    path: "{{ mosquitto_passwd_file }}.clear"
+    state: absent
 
 - name: Broker config
   ansible.builtin.template:

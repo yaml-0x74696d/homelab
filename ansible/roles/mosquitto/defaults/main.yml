@@ -5,3 +5,5 @@ mosquitto_user: "{{ mqtt_user }}"
 mosquitto_password: "{{ mqtt_password }}"   # vault
 
 mosquitto_passwd_file: /etc/mosquitto/passwd
+mosquitto_passwd_sum_file: /etc/mosquitto/passwd.sum   # rehash trigger, no clear creds on disk
+mosquitto_passwd_salt: "{{ mqtt_passwd_salt }}"   # vault, so the checksum can't be guessed offline. change it to force a rehash

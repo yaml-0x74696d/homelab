@@ -61,6 +61,8 @@ semaphore_oidc_secret: "CHANGE_ME"
 # the one mqtt user every sensor and consumer logs in with (mqtt_user in app_settings.yml).
 # one line; roles/mqtt_exporter escapes backslash, quote, backtick, dollar for systemd. it's also in the firmware
 mqtt_password: "CHANGE_ME"
+# salt for the change-detection checksum of mqtt_password (roles/mosquitto), any random string
+mqtt_passwd_salt: "CHANGE_ME"
 
 wifi_ssid: "your-ssid"
 wifi_pass: "CHANGE_ME"

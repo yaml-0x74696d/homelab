@@ -16,6 +16,7 @@ Status: Accepted
   - A VM in the cluster (why not: one more guest to run, and it goes down with the cluster it manages)
   - Semaphore on the Pi (chosen)
   - Keep running everything by hand (why not: nothing runs while ctl-0 is off)
+  - Authentik forward-auth in front of the route (why not: Semaphore logs in through OIDC itself, a second login on top, and API tokens and webhooks can't follow the redirect)
 - Why Semaphore: open source, one Go binary with SQLite, an ARM64 image, schedules and run history in a web UI
 
 ## Decision
