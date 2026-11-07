@@ -1,6 +1,5 @@
 ---
 # app dirs on the docker hosts (compose, rendered config, bind-mounted data); pbs backs it up.
-# the live dir from before the public repo, kept until docker leaves with each rebuild
 apps_root: /opt/stacks
 pbs_staging_dir: /var/backups/pbs      # db dumps land here, wiped each run. must stay under /var/backups
 

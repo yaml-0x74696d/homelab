@@ -79,7 +79,7 @@ tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-i
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   group_vars/<group>.yml  login per group (user, become)
-  inventory.yml    hosts only: docker_hosts, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent
+  inventory.yml    hosts only: docker_hosts, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent, appliances (haos)
   roles/           aide, chrony, cronie, ctl_base, docker_app, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, rsyslog, samba, update, vm_base
   apps/<name>/     Compose file + templates per app (25)
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
@@ -133,13 +133,13 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 ## Decisions
 
-- [docs/adr/](docs/adr/README.md): 30 records
+- [docs/adr/](docs/adr/README.md): 31 records
 - 0001 OpenTofu + cloud-init · 0002 generic app role · 0003 NetBird · 0004 mergerfs · 0005 prevent_destroy
 - 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 Pi-hole service IP
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
-- 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets (proposed)
+- 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
 - 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
-- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi
 
 ## Future plans
 

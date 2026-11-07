@@ -5,7 +5,7 @@
 
   roles:
     - vm_base
-    - podman_base   # next to docker while the apps move over
+    - podman_base   # next to docker
 
   tasks:
     - name: Install ufw

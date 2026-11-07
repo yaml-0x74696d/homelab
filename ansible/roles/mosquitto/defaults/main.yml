@@ -1,5 +1,5 @@
 ---
-# one shared user, no tls, plain listener (accepted risk, see docs/architecture.md)
+# one shared user, no tls, plain listener (accepted risk, ADR 0028)
 mosquitto_port: "{{ mqtt_port }}"
 mosquitto_user: "{{ mqtt_user }}"
 mosquitto_password: "{{ mqtt_password }}"   # vault

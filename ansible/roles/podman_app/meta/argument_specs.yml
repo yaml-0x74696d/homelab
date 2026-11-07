@@ -31,7 +31,7 @@ argument_specs:
             type: str
             choices: [present, absent, purged]
             default: present
-            description: absent removes the app but keeps its data dir, purged deletes that too
+            description: only present is built, the role refuses absent and purged
           uid:
             type: int
             required: true
@@ -39,7 +39,7 @@ argument_specs:
           container_uid:
             type: int
             default: 0
-            description: uid the app's main process runs as inside the container. not 0 = UserNS=keep-id onto svc-<name>
+            description: uid the app's main process runs as inside the container. only 0 is built (no keep-id), the role refuses anything else
           port:
             type: int
             description: Main published port. routes default to it, allow_from opens it
@@ -96,7 +96,7 @@ argument_specs:
             type: list
             elements: dict
             default: []
-            description: Pool shares, mounted with uid=svc-<name> and x-systemd.automount
+            description: Pool shares. not built, the role refuses a non-empty list
             options:
               share: {type: str, required: true}
               user: {type: str, required: true, description: "Samba user, its password is smb_passwords[user]"}
@@ -119,11 +119,11 @@ argument_specs:
             type: list
             elements: dict
             default: []
-            description: Read by edge's flake, not by this role
+            description: "Traefik's routers are written by hand in apps/proxy/traefik/dynamic/, check_wiring.py keeps them in line. gatus and homepage read it"
             options:
               host: {type: str, required: true, description: "Subdomain: <host>.<domain>"}
               path: {type: str, description: PathPrefix}
-              middlewares: {type: list, elements: str, default: [], description: Names defined in the edge flake}
+              middlewares: {type: list, elements: str, default: [], description: Names defined in apps/proxy/traefik/dynamic/}
               port: {type: int, description: "Backend port, default the app's port"}
       podman_app_private_dir:
         type: str

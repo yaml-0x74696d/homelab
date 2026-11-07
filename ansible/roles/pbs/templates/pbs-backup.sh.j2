@@ -6,7 +6,7 @@ umask 077                 # dumps hold vault/sso secrets — keep them root-only
 
 STAGING="{{ pbs_staging_dir }}"
 APPS="{{ apps_root }}"
-PODMAN_APPS="{{ podman_apps_root }}"   # podman apps, once the first one moved
+PODMAN_APPS="{{ podman_apps_root }}"   # podman apps, skipped if the dir is missing
 
 log()    { logger -t pbs-backup "$*"; echo "$*"; }
 notify() {

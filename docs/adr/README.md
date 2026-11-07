@@ -22,7 +22,7 @@ Format: status, context, decision, consequences.
 - [18. Filter published container ports in DOCKER-USER](0018-docker-user-port-filtering.md)
 - [19. ntfy.sh as the single alert channel](0019-ntfy-single-alert-channel.md)
 - [20. Same checks locally and in CI](0020-same-checks-locally-and-in-ci.md)
-- [21. Podman quadlets instead of Docker](0021-podman-quadlets.md) (proposed)
+- [21. Podman quadlets instead of Docker](0021-podman-quadlets.md)
 - [22. Central logging with rsyslog over RELP](0022-central-logging-relp.md)
 - [23. chrony with NTS for time sync](0023-chrony-with-nts.md)
 - [24. OS updates through one Ansible run](0024-ansible-run-os-updates.md)

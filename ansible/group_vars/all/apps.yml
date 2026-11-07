@@ -154,7 +154,7 @@ apps:
     routes:
       - host: paperless
 
-  # docker-1: no published port yet (traefik reaches them on proxy-net), ports come in phase 2
+  # docker-1: no published port (traefik reaches them on proxy-net)
   authentik:
     host: docker-1
     runtime: compose

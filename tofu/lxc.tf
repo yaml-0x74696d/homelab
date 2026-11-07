@@ -127,7 +127,7 @@ resource "proxmox_virtual_environment_container" "log" {
   }
 }
 
-# iot gateway: mqtt broker, the only guest on the iot bridge. lan leg for the consumers (ha, prometheus)
+# iot gateway: mqtt broker + the iot wifi card (ADR 0029). lan leg for the consumers (ha, prometheus)
 resource "proxmox_virtual_environment_container" "iot" {
   node_name     = local.lxcs.iot.node
   vm_id         = local.lxcs.iot.vmid

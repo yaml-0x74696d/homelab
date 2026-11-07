@@ -4,6 +4,7 @@ Status: Accepted
 
 ## Context
 
+- Scope: the compose apps (`runtime: compose` in `group_vars/all/apps.yml`). The podman apps update themselves ([0021](0021-podman-quadlets.md))
 - 25 apps with 37 images, run by one person, so there's no time to follow every upstream release
 - Pulling and recreating everything at once restarts too many containers together, fills the thin pool and can take a Docker VM down
 
@@ -48,6 +49,6 @@ How an update happens:
 - Accepted: a bad release shows up on the next manual pull, not at 3am
 
 - Rollback: pin the previous tag in the compose file, or restore from PBS
-- Later: Podman `AutoUpdate=registry` with rollback replaces this ([0021](0021-podman-quadlets.md))
+- The podman apps use `AutoUpdate=registry` with rollback instead ([0021](0021-podman-quadlets.md)), this ADR covers the compose apps until their cutover
 
-- Related: [0002](0002-generic-docker-app-role.md) (`docker_app` role), `roles/pbs` (rollback path)
+- Related: [0002](0002-generic-docker-app-role.md) (`docker_app` role), [0021](0021-podman-quadlets.md) (Podman auto-update), `roles/pbs` (rollback path)
