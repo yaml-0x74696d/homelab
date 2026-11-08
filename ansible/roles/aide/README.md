@@ -7,6 +7,7 @@
 ## Runs on
 
 - docker_hosts, podman_hosts, proxmox, lxc_containers (`playbooks/aide.yml`)
+- Only the hosts `roles/reach` found up in its first play. Hosts in `reach_optional_hosts` (the part-time nodes and their guests) may be off, the run still exits 0. Any other host that's down fails it
 - The NetBird VM does the same as a Nix module: `nixos/netbird/aide.nix` + `nixos/aide-accept.sh`
 
 ## How it works
@@ -43,7 +44,8 @@
 
 - The SHA256 of the accepted database lives on the controller, not on the host
 - `aide.yml` and every accept check that the local database matches the recorded hash, so an attacker with root can't quietly swap it
-- A mismatch stops the run. Treat it as an incident and compare with the last PBS snapshot
+- A mismatch (or a missing `<host>.sha256`) pushes "AIDE db mismatch on <host>" to ntfy, then stops the run. Treat it as an incident and compare with the last PBS snapshot
+- The push comes from `tasks/verify.yml`, so `aide.yml`, `aide-accept.yml` and `update.yml` all send it. In `update.yml` the run-stopped alert follows
 - The check script is mode `0700`, because it holds the ntfy token
 - The `<host>.sha256` files are specific to each host, so they're gitignored and live in the offsite-synced private folder
 

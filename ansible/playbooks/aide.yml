@@ -1,7 +1,13 @@
 ---
 # aide on every ansible host: install, excludes, baseline (first run only), daily check.
 # re-running it also verifies each db against aide/<host>.sha256. netbird: nixos/aide-accept.sh
-- name: AIDE file integrity
+# hosts in reach_optional_hosts may be off
+- name: Reach
   hosts: docker_hosts:podman_hosts:proxmox:lxc_containers
+  gather_facts: false
+  roles: [reach]
+
+- name: AIDE file integrity
+  hosts: docker_hosts:podman_hosts:proxmox:lxc_containers:&reachable
   roles:
     - aide

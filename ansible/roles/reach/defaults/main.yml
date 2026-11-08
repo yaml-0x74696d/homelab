@@ -1,0 +1,6 @@
+---
+# seconds to keep retrying a host before it counts as down
+reach_timeout: 30
+
+# hosts that may be off without failing the run. group_vars/all/hosts.yml sets the real list
+reach_optional_hosts: []

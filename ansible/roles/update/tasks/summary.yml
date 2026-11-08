@@ -6,6 +6,9 @@
     update_done: >-
       {{ update_summary_hosts | map('extract', hostvars) | selectattr('update_result', 'defined')
          | map(attribute='update_result') | list }}
+    # from roles/reach, so -l only lists the limited hosts
+    update_skipped: "{{ groups['reach_skipped'] | default([]) }}"
+    update_down: "{{ groups['reach_down'] | default([]) }}"
 
 - name: Details per host
   ansible.builtin.debug:
@@ -27,7 +30,14 @@
       {{- ', %d stale' % (r.stale | length) if r.stale }}
       {{- ', %d new conffiles' % (r.conffiles | length) if r.conffiles }}, aide {{ r.aide }}
       {% endfor %}
-  when: update_done | length > 0   # nobody finished: the failure alert says it all
+      {% for h in update_down %}
+      {{ h }}: DOWN, not updated
+      {% endfor %}
+      {% for h in update_skipped %}
+      {{ h }}: off, skipped
+      {% endfor %}
+  # nothing to say: the failure alert says it all
+  when: (update_done + update_down + update_skipped) | length > 0
   block:
     - name: Print summary
       ansible.builtin.debug:

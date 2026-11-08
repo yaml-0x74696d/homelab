@@ -64,7 +64,7 @@ resource "proxmox_virtual_environment_container" "storage" {
   }
 }
 
-# central rsyslog (relp), on pve-3 because it's always on
+# central rsyslog (relp). pve-3 gets switched off now and then, roles/reach lets it be down
 resource "proxmox_virtual_environment_container" "log" {
   node_name     = local.lxcs.log.node
   vm_id         = local.lxcs.log.vmid

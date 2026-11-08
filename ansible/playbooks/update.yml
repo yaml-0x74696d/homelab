@@ -1,21 +1,26 @@
 ---
 # os updates on every apt host, one at a time: lxcs, vms, then the pve nodes.
 # never reboots, the summary says where one is due. the nixos vm updates on its own.
-# a failed host stops the run and pushes an alert
+# a failed host stops the run and pushes an alert. hosts in reach_optional_hosts may be off
+- name: Reach
+  hosts: lxc_containers:docker_hosts:podman_hosts:proxmox
+  gather_facts: false
+  roles: [reach]
+
 - name: Update lxcs
-  hosts: lxc_containers
+  hosts: lxc_containers:&reachable
   serial: 1
   vars:
     update_check_kernel: false
   roles: [update]
 
 - name: Update vms
-  hosts: docker_hosts:podman_hosts
+  hosts: docker_hosts:podman_hosts:&reachable
   serial: 1
   roles: [update]
 
 - name: Update pve nodes
-  hosts: proxmox
+  hosts: proxmox:&reachable
   serial: 1   # never two nodes at once
   vars:
     update_check_quorum: true

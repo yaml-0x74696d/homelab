@@ -6,8 +6,8 @@ Where things are kept in `tofu/`, where its values come from, and how a change i
 
 | To change | File |
 |---|---|
-| a guest's cores, RAM, disk, node | `vms` / `lxcs` map in `locals.tf` |
-| an IP, a VMID, the IoT node | `ansible/group_vars/all/network.yml` |
+| a guest's cores, RAM, disk | `vms` / `lxcs` map in `locals.tf` |
+| an IP, a VMID, a guest's node (`guest_nodes`) | `ansible/group_vars/all/network.yml` |
 | a MAC | `ansible/group_vars/all/private/private.yml` |
 | the admin user, the SSH key path | `ansible/group_vars/all/hosts.yml` |
 | a pool path, a bind mount | `ansible/group_vars/all/storage.yml` |
@@ -36,7 +36,7 @@ tofu/
 ## Where the values come from
 
 - `locals.tf` reads `network`, `ports`, `hosts`, `storage` and `private/private.yml` with `yamldecode(file(...))`. The same files are read by Ansible and NixOS ([ADR 0007](adr/0007-group-vars-single-source-of-truth.md))
-- Only what OpenTofu alone needs is kept here: sizes and nodes in the maps, credentials in tfvars
+- Only what OpenTofu alone needs is kept here: sizes in the maps, credentials in tfvars. Nodes come from `guest_nodes`, `roles/reach` reads them too
 - One resource per kind, `for_each` over a map: a guest is added by adding a map entry (`docker` VMs, the image per node). netbird and the LXCs differ too much and are written out
 
 ## Which value is used

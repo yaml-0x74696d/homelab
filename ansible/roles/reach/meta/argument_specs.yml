@@ -1,0 +1,12 @@
+---
+argument_specs:
+  main:
+    short_description: Sort the play's hosts into reachable and down, part-time hosts may be off
+    options:
+      reach_timeout:
+        type: int
+        description: Seconds to keep retrying a host before it counts as down
+      reach_optional_hosts:
+        type: list
+        elements: str
+        description: Hosts that may be off without failing the run

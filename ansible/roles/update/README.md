@@ -7,7 +7,8 @@
 
 ## Runs on
 
-- `playbooks/update.yml`: lxc_containers, then docker_hosts, then proxmox
+- `playbooks/update.yml`: lxc_containers, then docker_hosts and podman_hosts, then proxmox
+- Only the hosts `roles/reach` found up in the first play (`<group>:&reachable`)
 - Not the NetBird VM (NixOS, `system.autoUpgrade` + `nixos/update.sh`)
 
 ## How it works
@@ -20,7 +21,7 @@
 6. `needrestart -r a` restarts the services on old libraries, then a second run lists what's left. pve nodes: quorum is checked again after the restarts
 7. Looks for `*.dpkg-dist`, `*.dpkg-new` and `*.ucf-dist` in `/etc`
 8. AIDE: if the check in step 3 was clean and packages changed, `aide --update` and the new database is accepted (`roles/aide`, `tasks/accept.yml`)
-9. Records the result per host. The last play prints it and pushes it to ntfy
+9. Records the result per host. The last play prints it and pushes it to ntfy, plus a line per host that was down (`reach_down`, `reach_skipped` from `roles/reach`)
 
 ## Settings
 
@@ -49,5 +50,6 @@
 - Two full AIDE scans per host: a full run takes about 2 hours, most of it on the pve nodes (up to 25 min per scan)
 - Ctrl-C skips the step that restarts the `aide-check` timer: `systemctl start aide-check.timer` on that host
 - A failed host stops the run and pushes an alert plus the summary of the hosts done so far. The hosts after it aren't touched
+- A host that's down at the start doesn't stop the run. In `reach_optional_hosts` (the part-time nodes and their guests) it's `off, skipped` and the run exits 0. Any other is `DOWN, not updated` and the run exits non-zero
 - ntfy only gets counts. Service names and paths stay in the terminal (ntfy.sh is a public relay)
 - `needrestart -r a` on the docker hosts restarts `docker.service`, and with it every container. The docker-ce upgrade does that anyway

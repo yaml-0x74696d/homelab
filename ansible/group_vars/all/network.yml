@@ -20,12 +20,24 @@ ctl1_ip: 192.168.178.100       # raspberry pi 3 b+, semaphore. bare metal, stati
 lan_bridge: vmbr0             # proxmox bridge (tofu)
 iot_cidr: 192.168.50.0/24      # sensor wifi: static .2-.49, dhcp iot_dhcp_range (dnsmasq in CT 302)
 iot_ip: 192.168.50.10          # CT 302 on its wifi card (wlan0), the only address in the iot net besides the sensors
-iot_node: pve-1                # node with the wifi card, CT 302 runs here
+iot_node: "{{ guest_nodes.iot }}"   # node with the wifi card, CT 302 runs here
 iot_wifi_nic: wlp0s12f0        # the card's name on iot_node, moved into CT 302 as wlan0
 iot_wifi_country: DE           # regulatory domain, set on iot_node (the ct isn't allowed to)
 iot_dhcp_range: [192.168.50.50, 192.168.50.200]
 dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (docker-2)
 mqtt_broker_ip: "{{ iot_lan_ip }}"   # lan consumers (ha); sensors use iot_ip
+
+# proxmox node of each guest: tofu places them there, roles/reach lets the guests of part_time_nodes be off
+guest_nodes:
+  docker-1: pve-1
+  docker-2: pve-2
+  docker-3: pve-3
+  netbird: pve-2
+  haos: pve-3
+  storage: pve-3
+  log: pve-3
+  iot: pve-1                   # the node with the wifi card
+part_time_nodes: [pve-3]       # switched off now and then
 
 # proxmox guest ids (tofu creates them with the same ids)
 vmids: { docker1: 201, docker2: 202, docker3: 203, haos: 210, netbird: 250, storage: 300, log: 301, iot: 302 }
