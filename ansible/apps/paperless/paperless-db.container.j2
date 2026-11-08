@@ -1,0 +1,10 @@
+# image, pod, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=paperless db
+
+[Container]
+Volume={{ podman_app_dir }}/database:/var/lib/postgresql/data:Z
+Secret=paperless-db-pass,type=env,target=POSTGRES_PASSWORD
+Environment=POSTGRES_USER=paperless
+Environment=POSTGRES_DB=paperless
+HealthCmd=pg_isready -d paperless -U paperless

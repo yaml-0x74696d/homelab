@@ -59,7 +59,9 @@
 - name: Deploy jellyfin
   import_playbook: deploy-jellyfin.yml
 - name: Deploy paperless
-  import_playbook: deploy-paperless.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: paperless
 # backup clients: needs the apps present + pve-3 (datastore) on
 - name: Deploy pbs backup client
   import_playbook: deploy-pbs.yml

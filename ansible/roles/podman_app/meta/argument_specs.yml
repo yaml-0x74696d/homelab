@@ -101,7 +101,7 @@ argument_specs:
             type: list
             elements: dict
             default: []
-            description: Pool shares. not built, the role refuses a non-empty list
+            description: "Pool shares, mounted on the host by fstab automount, owned by svc-<name>"
             options:
               share: {type: str, required: true}
               user: {type: str, required: true, description: "Samba user, its password is smb_passwords[user]"}

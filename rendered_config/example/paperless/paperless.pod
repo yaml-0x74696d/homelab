@@ -1,0 +1,5 @@
+# name + keep-id: drop-in from roles/podman_app. one netns, the helpers are on 127.0.0.1
+[Pod]
+PublishPort=8083:8000
+# token exchange goes straight to traefik, container dns can't resolve auth.<domain>
+AddHost=auth.example.org:192.168.178.201

@@ -1,0 +1,33 @@
+# image, pod, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=paperless
+After=paperless-gotenberg.service paperless-tika.service
+Wants=paperless-gotenberg.service paperless-tika.service
+
+[Container]
+Volume={{ podman_app_dir }}/data:/usr/src/paperless/data:Z
+# archive + samba drop folder on the pool
+Volume={{ cifs_mount_root }}/documents/media:/usr/src/paperless/media
+Volume={{ cifs_mount_root }}/documents/consume:/usr/src/paperless/consume
+Secret=paperless-db-pass,type=env,target=PAPERLESS_DBPASS
+Secret=paperless-secret-key,type=env,target=PAPERLESS_SECRET_KEY
+Secret=paperless-admin-pass,type=env,target=PAPERLESS_ADMIN_PASSWORD
+Secret=paperless-oidc,type=env,target=PAPERLESS_SOCIALACCOUNT_PROVIDERS
+Environment=USERMAP_UID={{ podman_app_entry.container_uid }}
+Environment=USERMAP_GID={{ podman_app_entry.container_uid }}
+Environment=PAPERLESS_REDIS=redis://127.0.0.1:6379
+Environment=PAPERLESS_DBHOST=127.0.0.1
+Environment=PAPERLESS_DBNAME=paperless
+Environment=PAPERLESS_DBUSER=paperless
+Environment=PAPERLESS_URL=https://paperless.{{ domain }}
+Environment=PAPERLESS_ADMIN_USER={{ admin_user }}
+Environment=PAPERLESS_TIME_ZONE={{ timezone }}
+Environment=PAPERLESS_OCR_LANGUAGE={{ paperless_ocr_language }}
+Environment=PAPERLESS_TIKA_ENABLED=1
+Environment=PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://127.0.0.1:3000
+Environment=PAPERLESS_TIKA_ENDPOINT=http://127.0.0.1:9998
+# oidc via authentik (django-allauth), local login stays as break-glass
+Environment=PAPERLESS_APPS=allauth.socialaccount.providers.openid_connect
+HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000
+# first start runs the migrations before it listens
+HealthStartPeriod=3min

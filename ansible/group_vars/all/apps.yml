@@ -148,8 +148,52 @@ apps:
 
   paperless:
     host: docker-3
-    runtime: compose
+    uid: 2100
     port: 8083
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: paperless-db-pass
+        vault: paperless_db_pass
+      - name: paperless-secret-key
+        vault: paperless_secret_key
+      - name: paperless-admin-pass
+        vault: paperless_admin_pass
+      - name: paperless-oidc
+        template: socialaccount.json.j2
+    container_uid: 1000   # the image drops to 1000, keep-id puts it on svc-paperless
+    dirs:
+      - path: data
+      - path: database
+        owner: 70   # postgres in the alpine image
+    cifs:
+      - {share: documents, user: paperless, path: documents}
+    # keep-id makes 1000 every container's default user, so each one names its own
+    containers:
+      - name: paperless
+        image: ghcr.io/paperless-ngx/paperless-ngx
+        tag: latest
+        user: "0:0"   # s6 starts as root, then drops to USERMAP_UID
+        after: [paperless-db, paperless-redis]
+        cifs: [documents]
+      - name: paperless-db
+        image: docker.io/library/postgres
+        tag: 16-alpine
+        user: "70:70"
+        auto_update: false
+      - name: paperless-redis
+        image: docker.io/library/redis
+        tag: alpine
+        user: "999:1000"
+        auto_update: false
+      - name: paperless-gotenberg
+        image: docker.io/gotenberg/gotenberg
+        tag: "8"
+        user: "1001:1001"
+      - name: paperless-tika
+        image: docker.io/apache/tika
+        tag: latest
+        user: "35002:35002"
+        healthcheck: false   # no curl or wget in the image
     homepage: {group: Homecloud, icon: paperless-ngx}
     routes:
       - host: paperless

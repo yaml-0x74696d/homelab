@@ -15,6 +15,7 @@ authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12",
                    "2025.6", "2025.8", "2025.10", "2025.12", "2026.2", "2026.5", "2026.8"]
 
 prometheus_scrape_interval: 15s   # apps/prometheus
+paperless_ocr_language: eng+deu   # apps/paperless, tesseract codes joined by +
 
 mqtt_user: iot                    # shared by sensors, ha and the exporter; password: mqtt_password (vault)
 

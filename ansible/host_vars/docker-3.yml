@@ -4,7 +4,7 @@
 pbs_jobs:
   - { name: nextcloud, type: postgres, container: nextcloud-db, data_dir: nextcloud/database }
   - { name: immich, type: postgres, container: immich_postgres, data_dir: immich/postgres }
-  - { name: paperless, type: postgres, container: paperless-db, data_dir: paperless/database }
+  - { name: paperless, type: postgres, container: paperless-db, data_dir: paperless/database, podman: true, app: paperless }
   # jellyfin has no dump tool; .backup the two main dbs, skip-if-absent handles version drift
   - { name: jellyfin, type: sqlite, path: jellyfin/config/data/jellyfin.db }
   - { name: jellyfin-library, type: sqlite, path: jellyfin/config/data/library.db }

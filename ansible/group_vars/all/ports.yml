@@ -47,5 +47,4 @@ docker_published_allow:
   - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.jellyfin }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.paperless }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.pihole }}", src: "{{ docker_backend_callers }}" }
