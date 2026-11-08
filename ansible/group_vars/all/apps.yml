@@ -216,13 +216,13 @@ apps:
     routes:
       - host: ha
 
-# traefik routes that aren't apps. phase 2 adds what edge needs (scheme, tls)
+# traefik routes that aren't apps
 infra_routes:
   - host: pve-1
   - host: pve-2
   - host: pve-3
   - host: pbs
-  - host: dns     # pi-hole ui, goes with pi-hole in phase 2
+  - host: dns     # pi-hole ui
     homepage: {group: Admin, icon: /images/pihole.png, label: Pi-hole, path: /admin/login}
   - host: proxy   # traefik's own dashboard
     homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}
