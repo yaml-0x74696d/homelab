@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: iot_ap
+  author: tim
+  description: the iot wifi inside the gateway lxc, hostapd + dhcp from dnsmasq
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

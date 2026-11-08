@@ -1,0 +1,126 @@
+---
+# no reload: the address would move under the running play. takes over at the next boot
+- name: Static address
+  ansible.builtin.template:
+    src: lan.nmconnection.j2
+    dest: "/etc/NetworkManager/system-connections/{{ ctl_base_connection }}.nmconnection"
+    mode: "0600"
+
+- name: Install ufw, git and rsync
+  ansible.builtin.apt:
+    name: [ufw, git, rsync]
+    state: present
+
+- name: Default ufw policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+
+# app ports come from roles/podman_app
+- name: Ssh + node-exporter
+  community.general.ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: tcp
+    src: "{{ item.src }}"
+    direction: in
+  loop:
+    - { rule: limit, port: "{{ ssh_port }}", src: "{{ lan_cidr }}" }
+    - { rule: allow, port: "{{ node_exporter_port }}", src: "{{ prometheus_ip }}" }
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+
+# first clone only, updates come from repo-pull.yml
+- name: Clone the repo
+  ansible.builtin.git:
+    repo: "{{ ctl_base_repo_url }}"
+    dest: "{{ ctl_base_repo_dir }}"
+    version: "{{ ctl_base_repo_version }}"
+    update: false
+  become: false
+  vars:
+    ansible_become: false   # podman_hosts' inventory become beats the keyword
+
+# 0640: group bits are the acl mask, 0600 would hide svc-semaphore's entry
+- name: Private files
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../{{ item }}"
+    dest: "{{ ctl_base_repo_dir }}/{{ item }}"
+    mode: "0640"
+  loop: "{{ ctl_base_private_files }}"
+  become: false
+  vars:
+    ansible_become: false
+  diff: false
+  tags: private-files
+
+# even without a source: semaphore's quadlet mounts it
+- name: Private dir
+  ansible.builtin.file:
+    path: "{{ ctl_base_private_dir }}"
+    state: directory
+    mode: "0750"
+  become: false
+  vars:
+    ansible_become: false
+  tags: private-files
+
+# mirror, so a file deleted on ctl-0 goes here too. no perms: new files take the default acl below
+- name: Sync the private overlays
+  ansible.posix.synchronize:
+    src: "{{ ctl_base_private_src }}/"
+    dest: "{{ ctl_base_private_dir }}/apps/"
+    archive: false
+    recursive: true
+    links: true
+    times: true
+    delete: true
+    rsync_opts: "{{ ctl_base_private_excludes | map('regex_replace', '^', '--exclude=') | list }}"
+  become: false
+  vars:
+    ansible_become: false
+  diff: false
+  when: ctl_base_private_src and ctl_base_private_src is directory
+  tags: private-files
+
+# not a password, see ctl_base_vault_pass_dummy
+- name: Dummy vault password file
+  ansible.builtin.copy:
+    content: "dummy\n"
+    dest: "{{ ctl_base_repo_dir }}/{{ ctl_base_vault_pass_dummy }}"
+    mode: "0640"
+    force: false
+  become: false
+  vars:
+    ansible_become: false
+  tags: private-files
+
+# by gid, so it works before deploy-app.yml creates the group
+- name: Svc group may pass the home dir
+  ansible.posix.acl:
+    path: "{{ item }}"
+    etype: group
+    entity: "{{ ctl_base_repo_gid }}"
+    permissions: x
+    state: present
+  loop: "{{ [ctl_base_repo_dir, ctl_base_private_dir] | map('dirname') | unique }}"
+
+# default acl covers what later pulls check out. copy and rsync move temp files in and reset the mask,
+# so the private files need the explicit pass too
+- name: Svc group may read the repo and the private dir
+  ansible.posix.acl:
+    path: "{{ item.0 }}"
+    etype: group
+    entity: "{{ ctl_base_repo_gid }}"
+    permissions: rX
+    default: "{{ item.1 }}"
+    recursive: true
+    state: present
+  loop: "{{ [ctl_base_repo_dir, ctl_base_private_dir] | product([false, true]) | list }}"
+  ignore_errors: "{{ ansible_check_mode }}"   # check mode doesn't create the private dir on a first run
+  tags: private-files

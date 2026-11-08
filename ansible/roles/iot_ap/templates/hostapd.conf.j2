@@ -1,0 +1,14 @@
+# managed by ansible (roles/iot_ap). no country_code: the ct may not set the regulatory domain,
+# iot_node does (deploy-iot.yml)
+interface={{ iot_ap_interface }}
+driver=nl80211
+ssid={{ iot_ap_ssid }}
+hw_mode=g
+channel={{ iot_ap_channel }}
+wmm_enabled=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase={{ iot_ap_passphrase }}
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP

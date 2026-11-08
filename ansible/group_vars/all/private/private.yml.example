@@ -4,20 +4,28 @@
 # gets this dir as its `private` input. nothing secret here, secrets go in vault.yml.
 domain: example.org
 admin_user: admin              # login user on every host + app admin accounts
+# outside the repo: apps/<name>/config/ in here lays over the public config (nginx site, own images). unset = none
+private_dir: ~/homelab-private
 
 # admin key on the nixos boxes (ansible hosts + tofu use admin_ssh_pubkey_file instead)
 admin_ssh_pubkeys:
   - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA_CHANGE_ME admin@controller"
 
+# admin_ssh_pubkey_file's content, for push-keys.yml run from semaphore (no ~/.ssh there). empty = read the file
+admin_ssh_pubkey: ""
+# semaphore's own key (its key store on ctl-1), push-keys.yml adds it next to the admin key. empty = none yet
+semaphore_ssh_pubkey: ""
+
 # nic macs, they pin the dhcp leases. samples = proxmox prefix BC:24:11 + the vmid.
-# iot = second nic on the iot bridge
 macs:
-  docker-1: { lan: "BC:24:11:00:02:01", iot: "BC:24:11:00:12:01" }
+  docker-1: { lan: "BC:24:11:00:02:01" }
   docker-2: { lan: "BC:24:11:00:02:02" }
   docker-3: { lan: "BC:24:11:00:02:03" }
   netbird: { lan: "BC:24:11:00:02:50" }   # nixos matches the nic by it
+  haos: { lan: "BC:24:11:00:02:10" }   # the fritz!box pins haos_ip to it
   storage: { lan: "BC:24:11:00:03:00" }
   log: { lan: "BC:24:11:00:03:01" }
+  iot: { lan: "BC:24:11:00:03:02" }
 
 # ext4 disks unioned into the pool (blkid on pve-3)
 storage_disks:
@@ -34,3 +42,8 @@ admin_hosts:
   - { ip: 192.168.178.2, c: controller }
 # extra devices for the pve ui only (no ssh)
 admin_ui_hosts: []
+
+# homepage weather widget: where you live
+homepage_weather_label: Home
+homepage_weather_latitude: 52.52
+homepage_weather_longitude: 13.40

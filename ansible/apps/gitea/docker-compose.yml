@@ -8,6 +8,7 @@ services:
       - ./data:/data
       - /etc/localtime:/etc/localtime:ro
     ports:
+      - "${PORT}:3000"   # web, edge routes it
       - "${GITEA_SSH_PORT}:22"
     networks:
       - proxy-net

@@ -1,0 +1,17 @@
+# managed by ansible (roles/mqtt_exporter). user + password come from /etc/default
+mqtt:
+  server: {{ mqtt_exporter_broker }}
+  topic_path: "{{ mqtt_exporter_topic_path }}"
+  device_id_regex: "{{ mqtt_exporter_device_regex }}"
+  qos: 0
+  metric_per_topic_config:
+    metric_name_regex: "{{ mqtt_exporter_metric_regex }}"
+cache:
+  timeout: {{ mqtt_exporter_cache_timeout }}
+metrics:
+{% for m in mqtt_exporter_metrics %}
+  - prom_name: {{ m.prom_name }}
+    mqtt_name: {{ m.mqtt_name }}
+    help: "{{ m.help }}"
+    type: gauge
+{% endfor %}

@@ -15,18 +15,18 @@ The network is split into four zones.
 | Zone | Network | What's in it |
 |---|---|---|
 | LAN | `192.168.178.0/24`, bridge `vmbr0` on every node | All nodes and guests, FRITZ!Box as gateway (`.1`) |
-| IoT | `192.168.50.0/24`, bridge `vmbr1` on pve-1 only | ESP32 sensors with static IPs, WiFi from hostapd on pve-1's onboard card |
+| IoT | `192.168.50.0/24`, pve-1's onboard WiFi card, moved into the IoT gateway LXC | ESP32 sensors with static IPs and the gateway (`.10`), which runs the WiFi (hostapd) and DHCP (dnsmasq). Static .2 to .49, DHCP .50 to .200. No Proxmox bridge, no node in the zone |
 | DMZ | Inside the LAN, fenced by the PVE firewall | The NetBird VM (`.250`) with its own guest rules |
 | WAN | Internet | The FRITZ!Box forwards only to `.250`: 443/tcp, 3478/udp, 49160–49200/udp |
 
-- docker-1 has a second network card in the IoT zone, so the sensors can reach the MQTT broker
+- Only the IoT gateway LXC is in the IoT zone, no VM and no node ([ADR 0029](adr/0029-wifi-card-in-the-gateway.md))
 
 ## Nodes
 
 Three Proxmox nodes, each with one Docker VM.
 
 **pve-1**: Dell Wyse 5070, 8 GB RAM
-- Runs docker-1 and the IoT WiFi (hostapd)
+- Runs docker-1 and the IoT gateway LXC, which holds pve-1's WiFi card
 
 ![](img/pve1.png)
 
@@ -37,7 +37,8 @@ Three Proxmox nodes, each with one Docker VM.
 ![](img/pve2.png)
 
 **pve-3**: custom build, 16 GB RAM, 1 SSD + 4 HDDs
-- Runs docker-3, the storage LXC and the log LXC
+- Runs docker-3, the HAOS VM, the storage LXC and the log LXC
+- Gets turned off now and then, so only what may be down runs here
 - Has the mergerfs pool
 - PBS is installed directly on the host
 
@@ -51,9 +52,8 @@ Ansible also sets up a couple of services on the hosts themselves:
 | pve_firewall | All nodes |
 | AIDE | All nodes |
 | mergerfs | pve-3 |
-| hostapd | pve-1 |
 
-- `update-all.yml` updates one node at a time (`serial: 1`) and reports pending reboots
+- `update.yml` updates every apt host one at a time (LXCs, VMs, then the nodes), restarts stale services, re-baselines AIDE and reports pending reboots ([0024](adr/0024-ansible-run-os-updates.md))
 
 ## Compute
 
@@ -61,29 +61,35 @@ Each node runs one Docker VM, grouped by what the apps need.
 
 | VM | Node | Purpose | Apps |
 |---|---|---|---|
-| docker-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, Home Assistant, MQTT, ESPHome, SearXNG, pdfcraft, DDNS |
-| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, InfluxDB, Uptime Kuma, Homelable, nginx |
+| docker-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
+| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, Gatus, nginx |
 | docker-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
 - All three also run Diun, docker-socket-proxy, the PBS client and AIDE
+- Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
 - docker-3 gets to run the heavy services, because pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)
 
 How a VM is built:
 - OpenTofu creates it from the Debian genericcloud image
 - cloud-init sets the IP, the admin user and the SSH key
-- `vm-preparation.yml` hardens it and installs Docker
+- `vm-preparation.yml` hardens it (`roles/vm_base`) and installs Docker
 - Every VM has `prevent_destroy`, because the databases live on the VM disk ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md))
 
 Memory:
 - Guests start with their full RAM
 - The host can take memory back through ballooning, but never below a floor that covers real usage
-- Guests have no swap
+- The VMs have no disk swap (the NetBird VM has zram), the LXCs get a small swap
+
+How an LXC is built:
+- OpenTofu creates it unprivileged from the Debian 13 template, Proxmox writes the IP, root's SSH key and the hostname (no cloud-init)
+- `base.yml` adds `roles/lxc_base`: SSH key-only, fail2ban, unattended security updates, node_exporter
+- The firewall depends on the LXC: ufw in storage, the PVE firewall in front of log, both in front of iot's LAN leg, ufw alone on its WiFi
 
 How an app is deployed:
 - Each app is a folder `ansible/apps/<name>/` plus a playbook `deploy-<name>.yml`
-- All apps use the same `docker_app` role ([ADR 0002](adr/0002-generic-docker-app-role.md))
-- App data lives under `/opt/apps/<name>` on the VM
+- All compose apps use the same `docker_app` role ([ADR 0002](adr/0002-generic-docker-app-role.md))
+- App data lives under `/opt/stacks/<name>` (`apps_root`) on the VM
 
 ## Storage
 
@@ -104,7 +110,7 @@ The sharing:
 - The storage LXC (CT 300, unprivileged) gets the pool as a bind mount at `/srv/storage`
 - Samba (SMB3) in the LXC shares it out
 - Shares: backups, iso, media, nextcloud, documents, photos, homelab and timemachine (capped at 1 TB)
-- Every share has its own service user, the group IDs count up from a base number
+- Every share except homelab and timemachine (admin only) has its own service user, the group IDs count up from a base number
 - docker-3 mounts the shares it needs over CIFS under `/srv/<share>`, with the app's UID/GID
 - Databases never go on CIFS, they stay on the VM disk
 
@@ -135,11 +141,11 @@ How a request from a browser reaches an app.
 4. Traefik passes the request on to the app
 
 - Plain HTTP on port 80 only redirects to HTTPS on 443
-- Apps on docker-1 are found through their container labels
-- Apps on docker-2/3 and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 15 routes)
-- The apps on docker-2/3 publish their ports, but the `DOCKER-USER` firewall chain only lets a few callers in:
-  - Traefik, Homepage and Home Assistant from docker-1
-  - Prometheus, Grafana and Uptime Kuma from docker-2
+- Apps on docker-1 are found through their container labels. They also publish their port from `apps.yml`, filtered like the others, so the edge VM can route them directly
+- Apps on docker-2/3, Home Assistant on the HAOS VM and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 16 routes)
+- Published app ports go through the `DOCKER-USER` firewall chain, which only lets a few callers in (Gitea's ssh port: the LAN):
+  - Traefik and Homepage from docker-1
+  - Prometheus, Grafana and Gatus from docker-2
 
 ## Certificates
 
@@ -161,9 +167,9 @@ Authentik is the single login for the apps.
 - Authentik runs on docker-1 (server, worker and Postgres)
 - Its version is pinned and updated one release at a time (`authentik_tag` / `authentik_series`, checked in `deploy-authentik.yml`)
 - Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, NetBird
-- Each of those apps keeps a local admin as a break-glass account
-- Apps without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, Prometheus, ESPHome, the Vaultwarden admin page
-- Containers can't resolve internal names, so the apps reach `auth.<domain>` through an `extra_hosts` entry pointing at docker-1
+- Each of those apps keeps a local admin as a break-glass account, except Vaultwarden (SSO only)
+- Apps without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, Prometheus, the Vaultwarden admin page
+- Containers can't resolve internal names: apps on docker-1 reach `auth.<domain>` through a network alias on Traefik, apps on docker-2/3 through an `extra_hosts` entry pointing at docker-1
 
 ## Remote access
 
@@ -182,7 +188,7 @@ The control plane:
 
 The routing:
 - docker-2 is the routing peer (`netbird_agent` role) and forwards traffic into the LAN
-- docker-1 used to be the routing peer, until NetBird's DNS took port 53 away from Pi-hole there ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
+- NetBird's DNS management is off for docker-2's group, so Pi-hole keeps port 53 ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
 - Peers talk to each other directly over WireGuard, the TURN relay is only a fallback
 
 The fallback:
@@ -203,9 +209,9 @@ Where backups go:
 How a backup runs:
 - Every Docker VM has the PBS client (`roles/pbs`), started by a timer every evening at 20:00
 - A random delay keeps the hosts from starting at the same time
-- First the databases are dumped (Postgres, SQLite `.backup`, Influx)
-- Then `/opt/apps` goes up as one archive
-- The result is pushed to ntfy
+- First the databases are dumped (Postgres, SQLite `.backup`)
+- Then `/opt/stacks` (`apps_root`) goes up as one archive, and `/srv/apps` (`podman_apps_root`) as a second one once the host runs a Podman app
+- A failed run is pushed to ntfy
 - The client's token can only write backups, not delete them
 
 What's in and out:
@@ -222,12 +228,11 @@ Prometheus for metrics, ntfy for alerts.
 
 - Prometheus on docker-2 collects metrics from:
   - the PVE hosts
-  - node-exporter and the Docker engine on every VM
+  - node-exporter and the Docker engine on every VM, node-exporter on every LXC
   - the ESP32 sensors, through mqtt-exporter
-- InfluxDB keeps the sensor data long-term
-- Grafana shows dashboards on top of both
-- Uptime Kuma checks if the apps are up and has a status page
-- Homepage is the start page, with live tiles from Docker (through the socket proxy) and the Proxmox API
+- Grafana shows dashboards on top of it
+- Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
+- Homepage is the start page: Gatus' summary on top, Proxmox stats for nodes, VMs and LXCs, and a tile per app generated from the apps map (`homepage:` block), with an up badge where the map has the app's port
 
 Alerts:
 - Diun checks every running image once a day and reports new versions, it never pulls them ([ADR 0006](adr/0006-latest-images-notify-only.md))
@@ -250,17 +255,33 @@ Time:
 - The LXCs use the host's clock
 
 Cron:
-- cronie runs the host cron jobs on every guest
+- cronie runs the host cron jobs on the Docker VMs and the LXCs
 
 ## Home automation
 
-The sensors talk MQTT, their data ends up in Prometheus and InfluxDB.
+The sensors talk MQTT, their readings end up in Home Assistant and Prometheus. How to add a sensor or rebuild the gateway: [iot.md](iot.md).
 
 ![](img/automation.png)
 
-- Data flow: ESP32 → Mosquitto (docker-1) → mqtt-exporter → Prometheus/Grafana + InfluxDB
-- Home Assistant and ESPHome also run on docker-1
-- The sensors send over MQTT, not over the ESPHome API
+![](img/sensor-reading.png)
+
+![](img/firmware-update.png)
+
+- Data flow: ESP32 → Mosquitto → mqtt-exporter → Prometheus/Grafana, Home Assistant subscribes too
+- Mosquitto, mqtt-exporter and the OTA server (nginx) run in the IoT gateway LXC (`iot`, CT 302), with a second leg on the LAN for the consumers ([ADR 0028](adr/0028-iot-gateway-lxc.md))
+- The IoT WiFi runs in the same LXC: pve-1's WiFi card is moved into it (raw `lxc.net` lines from `deploy-iot.yml`), hostapd and dnsmasq run there (`roles/iot_ap`). pve-1 only keeps the regulatory domain ([ADR 0029](adr/0029-wifi-card-in-the-gateway.md))
+- Both come from Debian's repo (`roles/mosquitto`, `roles/mqtt_exporter`, `deploy-iot.yml`): one shared MQTT user (password in the vault), no TLS, plain 1883. Accepted risk: anyone on the IoT WiFi with the password can read and fake every sensor
+- The exporter turns `home/<device>/temperature` and `humidity` into `iot_temperature_celsius` and `iot_humidity_percent`
+- LAN leg: two firewall layers with the same inbound rules, the PVE guest firewall (`iot.fw`) and ufw inside (ufw additionally answers ping): 1883 from Home Assistant's host, the exporter port and node_exporter from Prometheus' host, SSH
+- WiFi: ufw alone, only `on wlan0`: 1883 and 80 (firmware downloads) from the IoT net, 67/udp for DHCP. The card isn't a Proxmox NIC, so the PVE firewall never sees this traffic
+- Outbound on the LAN leg only DNS to the router, RELP to the log LXC and HTTP/HTTPS to the internet (`iot.fw`), the rest of the LAN is dropped
+- The IoT side has no gateway and no router option in DHCP, the LXC doesn't forward, nothing routes through it
+- A broken broker only exposes the broker, not docker-1's vault and SSO
+- Home Assistant's broker address is set in its MQTT integration (UI), not in the repo
+- Prometheus keeps 15 days; the long-term sensor history is Home Assistant's (long-term statistics, hourly)
+- Home Assistant runs as the HAOS VM on pve-3
+- The sensors run ESPHome (YAML, compiled in the ESPHome add-on) or my own C code, and only talk MQTT: readings out, commands in, Home Assistant through MQTT discovery, no ESPHome API
+- Firmware updates are pulled: I copy the `.bin` to `/srv/firmware` on the gateway, a "Flash from gateway" button in Home Assistant tells the device over MQTT, the device downloads it from `iot_ip:80` and reboots. Nothing connects into the IoT net
 
 ## Delivery
 
@@ -272,10 +293,11 @@ Deploying, from the controller:
 - `tofu apply` for the VMs and the LXCs
 - `ansible-playbook` for the hosts and the apps
 - `nixos/update.sh` for the NetBird VM
+- Semaphore on ctl-1 (a Raspberry Pi outside the cluster) runs scheduled playbooks from a checkout copied over by hand
 
 Checking:
-- `just check` runs the same 18 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
-- They cover yamllint, ansible-lint (production profile), shellcheck, tofu fmt/validate, nix flake check, LikeC4 validate and gitleaks
+- `just check` runs the same 22 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
+- They cover yamllint, ansible-lint (production profile), shellcheck, actionlint, zizmor, tofu fmt/validate, nix flake check, LikeC4 validate and gitleaks
 - Plus small checks for whitespace, private keys and file sizes
-- CI has two workflows: `ci.yml` runs the checks on every push and PR, `pages.yml` publishes the LikeC4 site from main
+- CI has two workflows: `ci.yml` runs the checks on pushes to main and testing and on every PR, `pages.yml` publishes the LikeC4 site when `architecture/` changes on main
 - All GitHub Actions are pinned to a commit SHA

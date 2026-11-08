@@ -10,10 +10,6 @@ deployment {
         instanceOf apps.searxng
         instanceOf apps.homepage
         instanceOf apps.pdfcraft
-        instanceOf automation.homeassistant
-        instanceOf automation.mosquitto
-        instanceOf automation.esphome
-        instanceOf automation.mqtt-exporter
         instanceOf edge.ddns
         instanceOf ops.docker-proxy
         instanceOf ops.diun
@@ -22,9 +18,15 @@ deployment {
         instanceOf observability.rsyslog
         instanceOf ops.chrony
       }
-      hostapd = host "hostapd" {
+      gateway = lxc "iot" {
         #iot
+        description "IoT gateway: LAN leg + the node's wifi card"
         instanceOf automation.ap
+        instanceOf automation.mosquitto
+        instanceOf automation.mqtt-exporter
+        instanceOf automation.ota
+        instanceOf observability.node-exporter
+        instanceOf observability.rsyslog
       }
       iot = zone "IoT wifi" {
         #iot
@@ -38,9 +40,8 @@ deployment {
         instanceOf edge.pihole
         instanceOf observability.prometheus
         instanceOf observability.grafana
-        instanceOf observability.influxdb
-        instanceOf observability.uptime-kuma
-        instanceOf apps.homelable
+        instanceOf observability.gatus
+        instanceOf edge.ddns
         instanceOf ops.docker-proxy
         instanceOf ops.diun
         instanceOf storage.pbs-client
@@ -61,7 +62,7 @@ deployment {
     }
 
     pve3 = node "pve-3" {
-      description "Storage node, always on, 6c / 15.5G"
+      description "Storage and cloud node, turned off now and then, 6c / 15.5G"
       docker3 = vm "docker-3" {
         instanceOf media.nextcloud
         instanceOf media.immich
@@ -74,16 +75,30 @@ deployment {
         instanceOf observability.rsyslog
         instanceOf ops.chrony
       }
+      haos = vm "haos" {
+        description "Home Assistant OS, appliance"
+        instanceOf automation.homeassistant
+      }
       storage = lxc "storage" {
         instanceOf storage.samba
+        instanceOf observability.node-exporter
         instanceOf observability.rsyslog
       }
       log = lxc "log" {
         instanceOf observability.log-server
+        instanceOf observability.node-exporter
       }
       pbs = host "PBS" {
         instanceOf storage.pbs
       }
+    }
+
+    ctl1 = host "ctl-1" {
+      description "Raspberry Pi 3 B+, Pi OS Lite, bare metal outside the cluster, 4c / 1G"
+      instanceOf ops.semaphore
+      instanceOf observability.node-exporter
+      instanceOf observability.rsyslog
+      instanceOf ops.chrony
     }
   }
 }

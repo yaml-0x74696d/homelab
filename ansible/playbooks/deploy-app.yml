@@ -1,0 +1,34 @@
+---
+# one podman app from group_vars/all/apps.yml:
+#   ansible-playbook playbooks/deploy-app.yml -e app=gatus
+# hosts: can't read group_vars, so the play spans every app host and drops the others before facts,
+# an unreachable host that isn't the app's doesn't fail the run
+- name: Deploy one podman app
+  hosts: docker_hosts:podman_hosts
+  become: true
+  gather_facts: false
+
+  pre_tasks:
+    - name: Check the app is a podman app
+      ansible.builtin.assert:
+        that:
+          - app is defined
+          - app in apps
+          - apps[app].runtime | default('podman') == 'podman'
+          - apps[app].hosts | default([apps[app].host]) | difference(groups['docker_hosts'] + groups['podman_hosts'] | default([])) | length == 0
+        fail_msg: "{{ app | default('-e app=<name> missing') }}: not in apps.yml, still runtime: compose, or its host isn't a docker/podman host"
+        quiet: true
+      run_once: true
+
+    - name: Only the app's hosts
+      ansible.builtin.meta: end_host
+      when: inventory_hostname not in apps[app].hosts | default([apps[app].host])
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  roles:
+    - role: podman_app
+      vars:
+        podman_app_name: "{{ app }}"
+        podman_app_entry: "{{ apps[app] }}"

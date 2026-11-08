@@ -1,0 +1,22 @@
+---
+# sorts the play's hosts into reachable / reach_skipped / reach_down for the plays after it
+- name: Reach {{ inventory_hostname }}
+  block:
+    - name: Wait for {{ inventory_hostname }}
+      ansible.builtin.wait_for_connection:
+        timeout: "{{ reach_timeout }}"
+      check_mode: false   # skips itself in --check otherwise, every host would look up
+
+    - name: Up, {{ inventory_hostname }}
+      ansible.builtin.group_by:
+        key: reachable
+
+  rescue:
+    - name: Down, {{ inventory_hostname }}
+      ansible.builtin.group_by:
+        key: "{{ 'reach_skipped' if inventory_hostname in reach_optional_hosts else 'reach_down' }}"
+
+    - name: Fail on required {{ inventory_hostname }}
+      ansible.builtin.fail:
+        msg: "{{ inventory_hostname }} is down and not in reach_optional_hosts"
+      when: inventory_hostname not in reach_optional_hosts

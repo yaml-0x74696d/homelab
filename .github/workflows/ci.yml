@@ -22,6 +22,7 @@ env:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 30   # default is 6h
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -42,6 +43,12 @@ jobs:
 
       - run: pip install "pre-commit==${PRE_COMMIT_VERSION}"
 
+      # hook envs (ansible-lint, likec4, ...) only rebuild when the config changes
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
       # tofu + ansible read it; the example is enough for the checks
       - run: cp ansible/group_vars/all/private/private.yml.example ansible/group_vars/all/private/private.yml
 
@@ -51,4 +58,10 @@ jobs:
       # tofu validate reads admin_ssh_pubkey_file (hosts.yml); throwaway key
       - run: mkdir -p ~/.ssh && ssh-keygen -q -t ed25519 -N '' -f ~/.ssh/id_ed25519
 
-      - run: pre-commit run --all-files --hook-stage manual --show-diff-on-failure
+      - env:
+          SKIP: zizmor   # runs below, the only step with the token
+        run: pre-commit run --all-files --hook-stage manual --show-diff-on-failure
+
+      - env:
+          GH_TOKEN: ${{ github.token }}   # zizmor online audits (pinned shas, advisories)
+        run: pre-commit run zizmor --all-files

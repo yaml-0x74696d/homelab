@@ -1,0 +1,33 @@
+---
+- name: Install prometheus-mqtt-exporter
+  ansible.builtin.apt:
+    name: prometheus-mqtt-exporter
+    state: present
+    update_cache: true
+
+# systemd reads it as root before dropping to the prometheus user
+- name: Exporter env (args, mqtt login)
+  ansible.builtin.template:
+    src: default.j2
+    dest: /etc/default/prometheus-mqtt-exporter
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: Restart mqtt exporter
+  ignore_errors: "{{ ansible_check_mode }}"   # --check doesn't install the package
+
+- name: Exporter config
+  ansible.builtin.template:
+    src: mqtt-exporter.yaml.j2
+    dest: /etc/prometheus/mqtt-exporter.yaml
+    mode: "0644"
+  notify: Restart mqtt exporter
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Enable mqtt exporter
+  ansible.builtin.systemd:
+    name: prometheus-mqtt-exporter
+    state: started
+    enabled: true
+  ignore_errors: "{{ ansible_check_mode }}"

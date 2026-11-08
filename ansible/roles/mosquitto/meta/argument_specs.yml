@@ -1,0 +1,24 @@
+---
+argument_specs:
+  main:
+    short_description: Mosquitto broker from Debian, one shared user
+    options:
+      mosquitto_port:
+        type: int
+        description: Listener
+      mosquitto_user:
+        type: str
+        description: The shared user
+      mosquitto_password:
+        type: str
+        no_log: true
+        description: Its password (vault)
+      mosquitto_passwd_file:
+        type: path
+        description: Hashed password file
+      mosquitto_passwd_sum_file:
+        type: path
+        description: Salted sha512 of user:password, root only, decides when to rehash
+      mosquitto_passwd_salt:
+        type: str
+        description: Salt for that checksum (vault), change it to force a rehash

@@ -1,0 +1,18 @@
+# managed by ansible (roles/ota_server). firmware files for the iot net, read-only
+server {
+    listen {{ ota_server_listen }}:{{ ota_server_port }};
+    server_name _;
+    server_tokens off;
+
+    root {{ ota_server_root }};
+    autoindex off;
+
+    # into the journal, so rsyslog ships it to the log lxc
+    access_log syslog:server=unix:/dev/log,tag=nginx;
+    error_log syslog:server=unix:/dev/log,tag=nginx;
+
+    location / {
+        limit_except GET { deny all; }   # GET includes HEAD
+        try_files $uri =404;             # files only, no dirs
+    }
+}

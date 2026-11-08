@@ -8,7 +8,7 @@ Status: Accepted
 - The workload is static: fixed apps on fixed hosts, no autoscaling, no rolling deploys at scale
 - RAM is already tight
 - The 8 GB thin clients run at ~7.5 GB used
-- Services are being moved around between nodes right now (Podman migration)
+- A move from compose to Podman quadlets is planned ([0021](0021-podman-quadlets.md), proposed)
 - The lab has to stay usable day to day
 
 - Alternatives:
@@ -27,7 +27,7 @@ Status: Accepted
 
 ## Consequences
 
-- Easier: simpler to debug, one host and one compose / quadlet file per app
+- Easier: simpler to debug, one host and one compose file per app
 
 - Harder: none of K8s's features (scheduling, self-healing, scaling) would get used, but its overhead would (control plane RAM, etcd, networking layer)
 - Harder: there's no room on the 8 GB nodes for a control plane next to the apps
@@ -36,4 +36,4 @@ Status: Accepted
 
 - K8s stays a learning topic outside the lab
 
-- Related: [0002](0002-generic-docker-app-role.md) (app role), [0011](0011-proxmox-as-hypervisor.md) (OpenShift)
+- Related: [0002](0002-generic-docker-app-role.md) (app role), [0011](0011-proxmox-as-hypervisor.md) (OpenShift), [0021](0021-podman-quadlets.md) (quadlets)

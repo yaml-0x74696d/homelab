@@ -1,0 +1,3 @@
+# managed by ansible (roles/iot_ap)
+[Service]
+ExecStartPost=/usr/sbin/iw dev {{ iot_ap_interface }} set txpower fixed {{ iot_ap_txpower }}

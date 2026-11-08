@@ -1,0 +1,8 @@
+[Unit]
+Description=nginx
+
+[Container]
+Volume=/srv/apps/nginx/config/html:/usr/share/nginx/html:ro
+Volume=/srv/apps/nginx/config/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+PublishPort=8087:80
+HealthCmd=wget -qO /dev/null http://127.0.0.1/

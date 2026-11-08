@@ -12,7 +12,8 @@
 
 1. Installs `chrony`
 2. Renders `/etc/chrony/chrony.conf` with one `server … iburst nts` line per server
-3. Restarts chrony when the config changes
+3. Enables and starts chrony
+4. Restarts chrony when the config changes
 
 ## Settings
 

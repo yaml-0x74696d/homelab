@@ -1,0 +1,7 @@
+---
+# restart, not reload: moving from *:80 to iot_ip:80 can't bind on a reload
+- name: Restart nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: restarted
+  ignore_errors: "{{ ansible_check_mode }}"

@@ -4,13 +4,14 @@ Status: Accepted
 
 ## Context
 
-- 26 apps with 37 images, run by one person, so there's no time to follow every upstream release
-- An earlier playbook (`update-images.yml`) pulled and recreated everything at once. It restarted too many containers together, filled the thin pool and took docker-1 down. Since then automatic updates are out
+- Scope: the compose apps (`runtime: compose` in `group_vars/all/apps.yml`). The podman apps update themselves ([0021](0021-podman-quadlets.md))
+- 25 apps with 37 images, run by one person, so there's no time to follow every upstream release
+- Pulling and recreating everything at once restarts too many containers together, fills the thin pool and can take a Docker VM down
 
 - Alternatives:
   - Pinned tags + Renovate (why not: a PR for every image update, too much for one person)
   - Watchtower auto-pull (why not: auto-pull without rollback, same risk as the bulk pull)
-  - The removed bulk-pull playbook (why not: it took docker-1 down, see above)
+  - A bulk-pull playbook (why not: restarts everything at once, see above)
 - Why: `:latest` means an update is just a pull, no tag edits. Auto-update without rollback was too risky after the docker-1 crash
 
 ## Decision
@@ -19,8 +20,8 @@ Which images move and which are pinned:
 - Most app images are on `:latest` (19 of 37) or a moving channel (`stable`, `release`, `alpine`, `apache`)
 - Stateful or picky images are pinned through `<app>_*_tag` variables in the deploy playbooks:
   - Databases: Postgres `16-alpine` (Authentik, Nextcloud, Paperless), Immich's Postgres build with vector support, Redis `6.2-alpine`, Valkey `8-alpine`
-  - Pinned to a major version: InfluxDB `2`, uptime-kuma `1`, Gotenberg `8`
-  - Pinned to an exact version: Vaultwarden `1.37.1`, and Authentik through `authentik_tag` in `group_vars/all/apps.yml` (stepped through release by release)
+  - Pinned to a major version: Gotenberg `8`
+  - Pinned to an exact version: Vaultwarden `1.37.1`, and Authentik through `authentik_tag` in `group_vars/all/app_settings.yml` (stepped through release by release)
 
 How I find out about updates (Diun, on every Docker host, `apps/diun`, `deploy-diun.yml`):
 - Diun watches the local Docker socket and checks the image digests once a day (`diun_schedule: "0 6 * * *"`, `diun_jitter: 30s`)
@@ -39,7 +40,7 @@ How an update happens:
 
 ## Consequences
 
-- Easier: no tag bumps for 19 apps, Diun says when something new is out
+- Easier: no tag bumps for 19 images in 17 apps, Diun says when something new is out
 - Easier: databases never jump a major version by accident, because they're pinned
 
 - Harder: Diun needs the Docker socket (mounted read-only)
@@ -48,6 +49,6 @@ How an update happens:
 - Accepted: a bad release shows up on the next manual pull, not at 3am
 
 - Rollback: pin the previous tag in the compose file, or restore from PBS
-- Later: Podman `AutoUpdate=registry` with rollback replaces this ([0021](0021-podman-quadlets.md))
+- The podman apps use `AutoUpdate=registry` with rollback instead ([0021](0021-podman-quadlets.md)), this ADR covers the compose apps until their cutover
 
-- Related: [0002](0002-generic-docker-app-role.md) (`docker_app` role), `roles/pbs` (rollback path)
+- Related: [0002](0002-generic-docker-app-role.md) (`docker_app` role), [0021](0021-podman-quadlets.md) (Podman auto-update), `roles/pbs` (rollback path)

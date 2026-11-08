@@ -1,21 +1,14 @@
 all:
-  vars:
-    ansible_user: "{{ admin_user }}"
-    ansible_python_interpreter: /usr/bin/python3
   children:
     lxc_containers:
-      vars:
-        ansible_user: root
-        ansible_become: false
       hosts:
         storage:
           ansible_host: "{{ storage_ip }}"
         log:
           ansible_host: "{{ log_ip }}"
+        iot:
+          ansible_host: "{{ iot_lan_ip }}"
     docker_hosts:
-      vars:
-        ansible_become: true
-        ansible_become_password: "{{ sudo_pass }}"
       hosts:
         docker-1:
           ansible_host: "{{ docker1_ip }}"
@@ -24,9 +17,6 @@ all:
         docker-3:
           ansible_host: "{{ docker3_ip }}"
     proxmox:
-      vars:
-        ansible_user: root
-        ansible_become: false
       hosts:
         pve-1:
           ansible_host: "{{ pve1_ip }}"
@@ -41,3 +31,13 @@ all:
       # members stay in their primary group (docker_hosts/proxmox) for connection vars.
       hosts:
         docker-2:   # routing peer
+    podman_hosts:
+      # podman without docker. bare metal, outside tofu
+      hosts:
+        ctl-1:
+          ansible_host: "{{ ctl1_ip }}"
+    appliances:
+      # vms ansible never logs in to (haos): only here so apps.yml can name them as a host
+      hosts:
+        haos:
+          ansible_host: "{{ haos_ip }}"

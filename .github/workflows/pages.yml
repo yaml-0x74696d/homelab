@@ -7,10 +7,8 @@ on:
     paths: [architecture/**]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# each job gets only what it needs
+permissions: {}
 
 concurrency:
   group: pages
@@ -23,6 +21,10 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30   # default is 6h
+    permissions:
+      contents: read
+      pages: read   # configure-pages reads the site settings
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -36,10 +38,12 @@ jobs:
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       # hash history: pages has no spa fallback, deep links would 404
-      - run: >
+      - env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}   # via env, not spliced into the script
+        run: >
           npx -y "likec4@${LIKEC4_VERSION}" build architecture
           --output architecture/dist
-          --base "${{ steps.pages.outputs.base_path }}/"
+          --base "$BASE_PATH/"
           --use-hash-history
           --title Homelab
 
@@ -50,6 +54,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30   # default is 6h
+    permissions:
+      pages: write
+      id-token: write   # deploy-pages proves the run with an oidc token
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

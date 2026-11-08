@@ -5,15 +5,15 @@
 
 ![System landscape](docs/img/index.png)
 
-- Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), all 21 views, clickable (built by `.github/workflows/pages.yml`)
-- More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views)
+- Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), all 23 views, clickable (built by `.github/workflows/pages.yml`)
+- More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views); sensors and the IoT gateway: [docs/iot.md](docs/iot.md); where things go and which value wins: [Ansible](docs/ansible-layout.md), [OpenTofu](docs/tofu-layout.md), [Podman](docs/podman-layout.md), [NixOS](docs/nixos-layout.md)
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 2 LXCs, 26 compose apps, 12 Ansible roles, 40 playbooks, 21 C4 views
+- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 5 Podman apps, 24 Ansible roles, 34 playbooks, 23 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
-- Every check runs the same locally and in CI: 18 pre-commit hooks (`just check`)
+- Every check runs the same locally and in CI: 26 pre-commit hooks (`just check`, the `apps.yml` schema included) and the Podman units through `quadlet -dryrun` (`just quadlet`)
 
 ## Hardware
 
@@ -22,17 +22,19 @@
 | pve-1 | Dell Wyse 5070 | 8 GB | Running the IoT WiFi AP directly |
 | pve-2 | Dell Wyse 5070 | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Old gaming PC (Gigabyte 970A, GT 710) | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
+| ctl-1 | Raspberry Pi 3 B+ (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
 
 ## VM/LXC
 
 | Guest | ID | Node | CPU | RAM (balloon floor) | Disk | IP |
 |---|---|---|---|---|---|---|
-| docker-1 | VM 201 | pve-1 | 4 | 4 GB (3 GB) | 32 GB | .201 (+ IoT IP on `vmbr1`) |
+| docker-1 | VM 201 | pve-1 | 4 | 4 GB (3 GB) | 32 GB | .201 |
 | docker-2 | VM 202 | pve-2 | 4 | 4 GB (2 GB) | 32 GB | .202 (+ DNS service IP .53) |
 | docker-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 32 GB | .203 |
 | netbird | VM 250 | pve-2 | 2 | 2 GB (1 GB) | 20 GB | .250 |
-| storage | CT 300 | pve-3 | 2 | 2 GB + 512 MB swap | 24 GB | .150 |
+| storage | CT 300 | pve-3 | 2 | 1 GB + 512 MB swap | 24 GB | .150 |
 | log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
+| iot | CT 302 | pve-1 | 1 | 512 MB + 256 MB swap | 8 GB | .152 + IoT `.50.10` on its WiFi card |
 
 - Specs can be found in `tofu/locals.tf`; IDs + IPs are in `ansible/group_vars/all/network.yml`
 
@@ -46,29 +48,28 @@
 |---|---|---|---|
 | Ingress | Traefik (`proxy`) | docker-1 | Reverse proxy, TLS via Cloudflare DNS |
 | Ingress | Pi-hole (`dns`) | docker-2 | DNS + ad blocking, split-horizon records |
-| Ingress | cloudflare-ddns (`utilities`) | docker-1 | Keeps the public record current |
+| Ingress | cloudflare-ddns | docker-1, docker-2 | Keeps the public records current, one copy per host |
 | Identity | Authentik | docker-1 | SSO, OIDC + forward-auth |
 | Identity | Vaultwarden | docker-1 | Passwords |
 | Media | Immich | docker-3 | Photos |
 | Media | Jellyfin | docker-3 | Video |
 | Media | Nextcloud | docker-3 | Files |
 | Media | Paperless | docker-3 | Documents |
-| Home | Home Assistant | docker-1 | Home automation |
-| Home | ESPHome | docker-1 | ESP32 sensor firmware |
-| Home | Mosquitto | docker-1 | MQTT broker |
-| Home | mqtt-exporter | docker-1 | MQTT → Prometheus |
-| Home | hostapd | pve-1 | IoT WiFi bridge |
+| Home | Home Assistant | haos (VM on pve-3) | Home automation, HAOS appliance |
+| Home | Mosquitto | iot (CT 302) | MQTT broker, from Debian |
+| Home | mqtt-exporter | iot (CT 302) | MQTT → Prometheus, from Debian |
+| Home | nginx | iot (CT 302) | Firmware downloads for the sensors, from Debian |
+| Home | hostapd + dnsmasq | iot (CT 302) | IoT WiFi + DHCP on pve-1's card, moved into the CT |
 | Monitoring | Prometheus | docker-2 | Metrics |
 | Monitoring | Grafana | docker-2 | Dashboards |
-| Monitoring | InfluxDB | docker-2 | Time series database |
-| Monitoring | Uptime Kuma | docker-2 | Uptime checks |
+| Monitoring | Gatus | docker-2 | Uptime checks, generated from the apps map |
 | Monitoring | Diun | All Docker hosts | Image update notices |
 | Tools | Homepage (`dashboard`) | docker-1 | Landing page |
 | Tools | Gitea | docker-1 | git server |
 | Tools | SearXNG | docker-1 | Search engine |
 | Tools | pdfcraft | docker-1 | PDF tools |
-| Tools | Homelable | docker-2 | Network inventory |
 | Tools | nginx | docker-2 | Website |
+| Tools | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a git clone of `testing` |
 | Tools | docker-socket-proxy (`docker-proxy`) | All Docker hosts | Read-only Docker API for Homepage |
 
 ## File layout
@@ -76,24 +77,26 @@
 ```
 tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-init)
 ansible/
-  group_vars/all/  Variables: network, ports, storage, hosts, apps (+ vault.yml.example, private/private.yml.example)
-  inventory.yml    docker_hosts, proxmox, lxc_containers, netbird_agent
-  roles/           aide, docker_app, login_notify, mergerfs, netbird_agent, pbs, pve_firewall, samba
-  apps/<name>/     Compose file + templates per app (26)
-  playbooks/       deploy-<app>.yml, site.yml, vm-preparation, update-all, aide, push-keys, ...
-nixos/           Flake for the NetBird DMZ VM (+ update.sh, aide-accept.sh)
+  group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
+  group_vars/<group>.yml  login per group (user, become)
+  inventory.yml    hosts only: docker_hosts, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent, appliances (haos)
+  roles/           aide, chrony, cronie, ctl_base, docker_app, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, reach, rsyslog, samba, update, vm_base
+  apps/<name>/     Compose file + templates per app (25)
+  playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
+nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
 architecture/    LikeC4 model: landscape, containers, deployment, 8 flows
 docs/            Architecture, ADRs, exported diagrams
-justfile         setup · lint · check · deploy · c4
+rendered_config/ Podman apps rendered with example values for review (just render, CI keeps it current)
+justfile         setup · lint · check · deploy · deploy-app · render · c4 · diagrams
 ```
 
 ## Single source of truth
 
 - Ansible group_vars get read by OpenTofu (yamldecode) and Nix (facts.nix), so an IP only has to change in one place ([ADR 0007](docs/adr/0007-group-vars-single-source-of-truth.md))
 - `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
-- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps` YAML into JSON with yq-go
+- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps`, `base`, `private/private.yml` YAML into JSON with yq-go
 - `nixos/update.sh` + `aide-accept.sh` read the NetBird IP from the same file
-- Ports: one `app_ports` map → compose, Traefik routes, Homepage tiles, Prometheus targets, firewall
+- Ports: one `app_ports` map → compose, Traefik routes, Prometheus targets, firewall
 - Secrets: one `vault.yml` (Ansible Vault), every app gets them via its `.env.j2` → `${VAR}` in compose
 - No magic numbers: every timeout, schedule, size and port is a named variable (role defaults, playbook `vars:`, Nix `let`)
 
@@ -102,22 +105,26 @@ justfile         setup · lint · check · deploy · c4
 - Copy `vault.yml.example` → `vault.yml`, create `ansible/.vault_pass`
 - Copy `private/private.yml.example` → `private/private.yml` and fill in your domain, macs, disk uuids, keys (gitignored, nothing secret)
 - `just setup` · `just check` · `just deploy <app>` · `just c4`
-- Needs: just, pre-commit, OpenTofu, Nix, Node (the hooks install ansible-lint, yamllint, shellcheck, gitleaks)
+- Needs: just, pre-commit, Ansible, OpenTofu, Nix, Node, d2 (only for `just diagrams`) (the hooks install ansible-lint, yamllint, shellcheck, actionlint, zizmor, gitleaks)
 - OpenTofu: tfvars from the example, `tofu apply`
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
-- Plain `ansible-playbook` is the main path; `ansible-navigator.yml` = optional EE run
+- ctl-1 (the Pi): admin user by hand (`roles/ctl_base/README.md`), then `ctl-preparation.yml`, `base.yml`, `deploy-app.yml -e app=semaphore`
+- Plain `ansible-playbook` is the main path; for an EE run copy `ansible-navigator.yml.example` → `ansible-navigator.yml` and mount the private folder
 - NixOS: nixos-anywhere once, then `nixos/update.sh`. `nix flake check` needs builds (facts.nix), `--no-build` fails
 
 ## Security
 
 - WAN: only the NetBird VM is forwarded (443/tcp, 3478/udp, narrow TURN relay range); apps are LAN / VPN only
-- PVE firewall (`roles/pve_firewall`): cluster policy drop, NetBird DMZ guest fenced (inbound = what NetBird serves, egress to the LAN limited to routing peer + DNS/HTTPS); host lockdown layer written, off by default (lockout risk)
-- Docker VMs (`vm-preparation.yml`): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
+- PVE firewall (`roles/pve_firewall`): cluster policy drop, NetBird VM fenced (inbound = what NetBird serves, egress to the LAN limited to routing peer + DNS/HTTPS + RELP to the log LXC); host lockdown layer written, off by default (lockout risk)
+- Docker VMs (`vm-preparation.yml` = `roles/vm_base` + ufw + Docker): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
+- LXCs (`roles/lxc_base`): SSH key-only (root by key, no passwords), fail2ban, unattended security updates, node_exporter
+- IoT gateway LXC: PVE guest firewall and ufw with the same inbound rules, from the IoT net only 1883 and 80 (firmware downloads), egress limited to DNS, RELP and HTTP/HTTPS; one shared MQTT user, no TLS (accepted risk, [ADR 0028](docs/adr/0028-iot-gateway-lxc.md))
+- HAOS VM: PVE guest firewall, HA only from Traefik and Homepage, admins direct ([ADR 0030](docs/adr/0030-haos-vm-on-pve-3.md))
 - Published container ports bypass ufw → filtered in `DOCKER-USER` by source (only Traefik / Prometheus hosts reach backends)
 - Docker daemon: `no-new-privileges`, `live-restore`, capped JSON logs; Homepage reads Docker only through a read-only socket proxy
 - NetBird VM (NixOS): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
-- Identity: Authentik OIDC for the apps (local admin kept as break-glass), forward-auth for apps without SSO
+- Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden), forward-auth for apps without SSO
 - TLS everywhere via Let's Encrypt DNS-01 (Cloudflare), no port 80 forwarded from the WAN
 - AIDE on every host + the NetBird VM: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
@@ -126,21 +133,22 @@ justfile         setup · lint · check · deploy · c4
 
 ## Decisions
 
-- [docs/adr/](docs/adr/README.md): 21 records
+- [docs/adr/](docs/adr/README.md): 31 records
 - 0001 OpenTofu + cloud-init · 0002 generic app role · 0003 NetBird · 0004 mergerfs · 0005 prevent_destroy
 - 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 Pi-hole service IP
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
-- 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets (proposed)
+- 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
+- 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi
 
 ## Future plans
 
-- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, `RequiresMountsFor=`), restore rehearsal runbook, CI quadlet dry-run
+- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook
 - Phase 2: edge = NixOS VM on pve-1 (1 GB) running Traefik + AdGuard Home natively (replaces the Traefik + Pi-hole containers)
 - Phase 3–4: docker-2 / docker-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
-- Phase 5: Home Assistant moves to HAOS (VM on pve-3)
 - Phase 6: docker-1 → Podman (Authentik, SearXNG)
 - Podman auto-update with rollback replaces `:latest` + Diun (ADR 0006)
-- Later: guest OS Debian → Rocky Linux / RHEL once the hardware allows it (EL10 needs x86-64-v3 / AVX2, which the current CPUs lack; guests run `cpu type = host`); Proxmox hosts stay Debian
+- Later: guest OS Debian → EL10 once the hardware has x86-64-v3 / AVX2 ([ADR 0025](docs/adr/0025-debian-guests-until-x86-64-v3.md)); Proxmox hosts stay Debian
 - From then on: real commits on this repo
 
 ## License

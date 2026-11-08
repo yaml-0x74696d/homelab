@@ -15,20 +15,21 @@ services:
       - PVE3_IP=${PVE3_IP}
       - DOCKER2_IP=${DOCKER2_IP}
       - DOCKER3_IP=${DOCKER3_IP}
+      - HAOS_IP=${HAOS_IP}
+      - CTL1_IP=${CTL1_IP}
       - PVE_UI_PORT=${PVE_UI_PORT}
       - PBS_PORT=${PBS_PORT}
       - GRAFANA_PORT=${GRAFANA_PORT}
-      - UPTIME_KUMA_PORT=${UPTIME_KUMA_PORT}
+      - GATUS_PORT=${GATUS_PORT}
       - NEXTCLOUD_PORT=${NEXTCLOUD_PORT}
       - IMMICH_PORT=${IMMICH_PORT}
       - JELLYFIN_PORT=${JELLYFIN_PORT}
       - PAPERLESS_PORT=${PAPERLESS_PORT}
-      - HOMELABLE_PORT=${HOMELABLE_PORT}
-      - INFLUXDB_PORT=${INFLUXDB_PORT}
       - NGINX_PORT=${NGINX_PORT}
       - PIHOLE_PORT=${PIHOLE_PORT}
       - PROMETHEUS_PORT=${PROMETHEUS_PORT}
-      - MQTT_EXPORTER_PORT=${MQTT_EXPORTER_PORT}
+      - HOMEASSISTANT_PORT=${HOMEASSISTANT_PORT}
+      - SEMAPHORE_PORT=${SEMAPHORE_PORT}
     networks:
       proxy-net:
         # let other apps reach services by their public name without leaving the bridge

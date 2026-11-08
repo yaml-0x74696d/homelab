@@ -1,0 +1,19 @@
+---
+# needs aide.db.new from `aide --update`. used by aide-accept.yml and roles/update
+- name: Activate new db on {{ inventory_hostname }}
+  ansible.builtin.command: mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+  changed_when: true
+
+- name: Hash new db on {{ inventory_hostname }}
+  ansible.builtin.stat:
+    path: /var/lib/aide/aide.db
+    checksum_algorithm: sha256
+  register: aide_new
+
+- name: Write db hash on the controller for {{ inventory_hostname }}
+  ansible.builtin.copy:
+    content: "{{ aide_new.stat.checksum }}\n"
+    dest: "{{ aide_checksum_dir }}/{{ inventory_hostname }}.sha256"
+    mode: '0644'
+  delegate_to: localhost
+  become: false

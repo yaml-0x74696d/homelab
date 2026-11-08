@@ -1,7 +1,7 @@
 # samba
 
 - SMB shares and Time Machine on the pool, firewalled to the LAN with ufw
-- Every share has its own group and its own scoped service user. The admin user is in every group
+- Every share has its own group, and all but homelab and timemachine (admin only) a scoped service user. The admin user is in every group
 
 ## Runs on
 

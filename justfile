@@ -2,6 +2,8 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 likec4 := "npx -y likec4@1.60.0"
 img_dir := "docs/img"
+container_cli := "podman"
+quadlet_image := "debian:trixie"   # same podman as the hosts, matches podman.yml
 
 # list recipes
 default:
@@ -21,10 +23,27 @@ lint:
 check:
     pre-commit run --all-files --hook-stage manual
 
-# deploy one app, e.g. just deploy immich
+# deploy one compose app, e.g. just deploy immich
 deploy app:
     cd ansible && ansible-playbook playbooks/deploy-{{ app }}.yml
+
+# deploy one podman app from apps.yml, e.g. just deploy-app gatus
+deploy-app app:
+    cd ansible && ansible-playbook playbooks/deploy-app.yml -e app={{ app }}
+
+# podman apps rendered with the example values: rendered_config/example
+render:
+    scripts/render_podman.sh example
+
+# rendered units through quadlet -dryrun in debian, like ci (.github/workflows/podman.yml)
+quadlet:
+    {{ container_cli }} run --rm -v "$PWD:/repo:ro" {{ quadlet_image }} bash -c \
+        'apt-get update -qq && apt-get install -y -qq --no-install-recommends podman >/dev/null && bash /repo/scripts/check_quadlet.sh'
 
 # export every view as png for the docs
 c4:
     {{ likec4 }} export png architecture --outdir {{ img_dir }} --flat --seq
+
+# render the d2 diagrams as svg for the docs
+diagrams:
+    for f in docs/diagrams/*.d2; do d2 "$f" {{ img_dir }}/$(basename "$f" .d2).svg; done

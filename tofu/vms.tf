@@ -7,6 +7,11 @@ resource "proxmox_download_file" "debian" {
   url          = var.debian_image_url
   file_name    = basename(var.debian_image_url)
   overwrite    = false
+
+  # pve doesn't keep the source url, so an imported file has none. the url only counts at the download
+  lifecycle {
+    ignore_changes = [url]
+  }
 }
 
 resource "proxmox_virtual_environment_vm" "docker" {
@@ -18,9 +23,14 @@ resource "proxmox_virtual_environment_vm" "docker" {
   on_boot   = true
   started   = true
 
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
   # stateful: docker volumes (dbs) live on the vm disk — never let tofu recreate these
   lifecycle {
     prevent_destroy = true
+    # the image only counts when the disk is created (and imported vms have none)
+    ignore_changes = [disk[0].import_from]
   }
 
   # qemu-guest-agent comes from vm-preparation; flip to true and re-apply after
@@ -78,16 +88,6 @@ resource "proxmox_virtual_environment_vm" "docker" {
     mac_address = each.value.mac0
     firewall    = true
   }
-
-  # second leg on the isolated iot bridge (docker-1 only)
-  dynamic "network_device" {
-    for_each = each.value.mac1 != null ? [1] : []
-    content {
-      bridge      = local.net.iot_bridge
-      mac_address = each.value.mac1
-      firewall    = true
-    }
-  }
 }
 
 # netbird control plane — wan-facing netbird vm. this only builds the VM shell on the debian
@@ -99,9 +99,14 @@ resource "proxmox_virtual_environment_vm" "netbird" {
   on_boot   = true
   started   = true
 
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
   # stateful once nixos lands: the mgmt sqlite db lives on this disk
   lifecycle {
     prevent_destroy = true
+    # image and cloud-init only count for the debian bootstrap, nixos owns disk and network after that
+    ignore_changes = [disk[0].import_from, initialization]
   }
 
   # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)
@@ -160,6 +165,73 @@ resource "proxmox_virtual_environment_vm" "netbird" {
   network_device {
     bridge      = local.net.lan_bridge
     mac_address = local.vms.netbird.mac0
+    firewall    = true
+  }
+}
+
+# home assistant os: an appliance, ha's own updates and config inside, no cloud-init, no ansible
+resource "proxmox_virtual_environment_vm" "haos" {
+  name      = "haos"
+  node_name = local.vms.haos.node
+  vm_id     = local.vms.haos.vmid
+  on_boot   = true
+  started   = true
+
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
+  # stateful: ha's config and history live on this disk
+  lifecycle {
+    prevent_destroy = true
+    # the image only counts when the disk is created
+    ignore_changes = [disk[0].import_from]
+  }
+
+  # haos ships the guest agent: clean shutdown, ip in the pve ui, fs freeze if a snapshot/vzdump ever runs
+  agent { enabled = true }
+
+  # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
+  serial_device { device = "socket" }
+
+  # haos only boots uefi
+  bios    = "ovmf"
+  machine = "q35"
+  efi_disk {
+    datastore_id      = var.vm_datastore
+    type              = "4m"
+    pre_enrolled_keys = false
+  }
+
+  cpu {
+    cores = local.vms.haos.cores
+    type  = "host"
+  }
+
+  memory {
+    dedicated = local.vms.haos.memory
+    floating  = local.vms.haos.balloon
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  scsi_hardware = "virtio-scsi-single"
+
+  disk {
+    datastore_id = var.vm_datastore
+    import_from  = var.haos_image
+    interface    = "scsi0"
+    size         = local.vms.haos.disk
+    iothread     = true
+    discard      = "on"
+    ssd          = true
+  }
+
+  # dhcp, the fritz!box pins haos_ip to this mac
+  network_device {
+    bridge      = local.net.lan_bridge
+    mac_address = local.vms.haos.mac0
     firewall    = true
   }
 }

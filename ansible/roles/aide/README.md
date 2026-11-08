@@ -6,7 +6,8 @@
 
 ## Runs on
 
-- docker_hosts, proxmox, lxc_containers (`playbooks/aide.yml`)
+- docker_hosts, podman_hosts, proxmox, lxc_containers (`playbooks/aide.yml`)
+- Only the hosts `roles/reach` found up in its first play. Hosts in `reach_optional_hosts` (the part-time nodes and their guests) may be off, the run still exits 0. Any other host that's down fails it
 - The NetBird VM does the same as a Nix module: `nixos/netbird/aide.nix` + `nixos/aide-accept.sh`
 
 ## How it works
@@ -32,38 +33,47 @@
 
 - Run `ansible-playbook playbooks/aide-accept.yml -l <host>` (one host at a time, `serial: 1`)
 - It checks the hash, runs `aide --update`, shows the first `aide_report_lines` lines of the diff and asks you to type "yes"
-- Yes: the new database is swapped in, and its SHA256 is written to `ansible/aide/<host>.sha256` on the controller
+- In Semaphore there's no prompt: the survey var `aide_accept=yes` accepts in the same run, the diff stays in the task log
+- Yes: the new database is swapped in, and its SHA256 is written to `aide_checksum_dir/<host>.sha256` on the controller
 - Anything else: the old baseline stays the reference
 - If it's not your change, don't accept. Find out what happened first
+- `playbooks/update.yml` accepts on its own, but only if the check right before the upgrade was clean (`roles/update`)
+- Both use `tasks/accept.yml` for the swap
 
 ## Security
 
 - The SHA256 of the accepted database lives on the controller, not on the host
 - `aide.yml` and every accept check that the local database matches the recorded hash, so an attacker with root can't quietly swap it
-- A mismatch stops the run. Treat it as an incident and compare with the last PBS snapshot
+- A mismatch (or a missing `<host>.sha256`) pushes "AIDE db mismatch on <host>" to ntfy, then stops the run. Treat it as an incident and compare with the last PBS snapshot
+- The push comes from `tasks/verify.yml`, so `aide.yml`, `aide-accept.yml` and `update.yml` all send it. In `update.yml` the run-stopped alert follows
 - The check script is mode `0700`, because it holds the ntfy token
-- The `<host>.sha256` files are specific to each host, so they're gitignored in this repo. The live repo commits them
+- The `<host>.sha256` files are specific to each host, so they're gitignored and live in the offsite-synced private folder
 
 ## Settings
 
 | Variable | Default | What |
 |---|---|---|
 | `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to 30 min | When the check runs (group_vars `hosts.yml`, shared with NixOS) |
+| `aide_excludes_common` | see below | Excludes on every host |
 | `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
-| `aide_content_files` | `/etc/hosts` | Rewritten at boot with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
-| `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids` | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
+| `aide_login_homes` | admin home, `/root` | Homes with history files on the `VarFile` rule (see Notes) |
+| `aide_history_files` | bash, less, vim, python, wget history | Regex of the history file names in those homes |
+| `aide_content_files` | `/etc/hosts`, netbird's `99-netbird.conf` + `state.json` | Rewritten with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
+| `aide_var_dirs` | `/etc/apt/apt.conf.d`, `/etc/ssh/ssh_config.d`, `/var/lib/netbird` | Dirs whose files get replaced: owner and mode watched, times not (`VarDir`). Added and removed files still show |
+| `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids`, dnsmasq leases | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
 | `aide_run_timeout` / `aide_run_poll` | 3600 s / 30 s | Limits for `--init` and `--update` |
 | `aide_check_nice` / `aide_check_io_class` | 19 / idle | Priority of the check |
 | `aide_report_lines` | 150 | Diff lines shown on accept |
-| `aide_checksum_dir` | `ansible/aide` | Where the hashes are stored on the controller. A gitignored symlink into the offsite-synced private folder, real dir so ansible's `copy` doesn't replace a file symlink |
+| `aide_checksum_dir` | `$AIDE_CHECKSUM_DIR`, else `ansible/aide` | Where the hashes are stored on the controller. Semaphore sets the env var to its rw volume on ctl-1, the reference copy. On ctl-0 `ansible/aide` is a gitignored symlink into the offsite-synced private folder, pulled from ctl-1 (`roles/ctl_base`) |
 | `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the check still runs, but nothing is pushed |
 
 ## Excluded paths
 
 - All hosts: `/run` (tmpfs), ansible's temp dirs and payloads, `.cache` in the admin's and root's home, `aide.db.new`, `/var/log` (every line is on the log LXC already, see [ADR 0022](../../../docs/adr/0022-central-logging-relp.md)), `/var/lib/rsyslog`, apt's caches and lists, PackageKit's db, node-exporter's textfiles
-- docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root` and `/opt/stacks` (live apps until the podman migration), the CIFS mount root, the PBS staging folder
-- proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, state pve rebuilds itself (`/var/lib/lxc`, `/var/cache/lxc`, lxcfs, corosync, `/var/lib/proxmox-backup`, `/var/lib/pve-firewall`, replication state, smartmontools, `/etc/issue`), all of `/dev`, and on pve-3 the pool, its disks and the PBS datastore
-- lxc_containers: `/dev/.lxc` (procfs), the pool bind mount
+- docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root` (`/opt/stacks`, the compose apps), `podman_apps_root` (`/srv/apps`, podman app data), the CIFS mount root, the PBS staging folder, cloud-init state (`/var/lib/cloud`, `/var/tmp/cloud-init`), `/dev/disk/by-uuid` (the cloud-init ISO gets a dated UUID)
+- podman_hosts: root and rootless podman storage, `/dev/shm`, the svc users' ansible payloads, `podman_apps_root`, and on ctl-1 the Semaphore checkout (`semaphore_repo_dir`, kept current by `playbooks/repo-pull.yml`) and its `private_dir` copy (`semaphore_private_dir`, synced by `roles/ctl_base`)
+- proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, state pve rebuilds itself (`/var/lib/lxc`, `/var/cache/lxc`, lxcfs, corosync, `/var/lib/proxmox-backup`, `/var/lib/pve-firewall`, replication state, smartmontools, `/etc/issue`, `76pveproxy` from `datacenter.cfg`), all of `/dev`, and on pve-3 the pool, its disks and the PBS datastore
+- lxc_containers: `/dev/.lxc` (procfs), the pool bind mount, `/var/lib/mosquitto` (broker persistence)
 
 ## Notes
 

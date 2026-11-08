@@ -1,9 +1,11 @@
 ---
 # review what changed since the baseline and accept it, one host at a time:
 #   ansible-playbook playbooks/aide-accept.yml -l docker-2
-# the new hash lands in aide/<host>.sha256
+#   ansible-navigator run playbooks/aide-accept.yml -m stdout --pae false -l docker-2   (prompts need stdout, no artifact)
+# semaphore has no terminal for the prompt: survey var aide_accept=yes accepts without asking,
+# the report stays in the task log. the new hash lands in aide_checksum_dir/<host>.sha256
 - name: Accept AIDE changes
-  hosts: docker_hosts:proxmox:lxc_containers
+  hosts: docker_hosts:podman_hosts:proxmox:lxc_containers
   serial: 1
   tasks:
     - name: Verify recorded db hash
@@ -38,25 +40,12 @@
       ansible.builtin.pause:
         prompt: "type yes to make this the new baseline for {{ inventory_hostname }}"
       register: aide_answer
-      when: aide_update.rc != 0
+      when: aide_update.rc != 0 and aide_accept | default('') != 'yes'
 
     - name: Swap in new baseline
-      when: aide_update.rc != 0 and aide_answer.user_input | default('') == 'yes'
-      block:
-        - name: Activate new db
-          ansible.builtin.command: mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
-          changed_when: true
-
-        - name: Hash new db
-          ansible.builtin.stat:
-            path: /var/lib/aide/aide.db
-            checksum_algorithm: sha256
-          register: aide_new
-
-        - name: Write db hash on the controller for {{ inventory_hostname }}
-          ansible.builtin.copy:
-            content: "{{ aide_new.stat.checksum }}\n"
-            dest: "{{ aide_checksum_dir }}/{{ inventory_hostname }}.sha256"
-            mode: '0644'
-          delegate_to: localhost
-          become: false
+      ansible.builtin.include_role:
+        name: aide
+        tasks_from: accept
+      when: >-
+        aide_update.rc != 0
+        and (aide_accept | default('') == 'yes' or aide_answer.user_input | default('') == 'yes')

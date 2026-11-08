@@ -1,0 +1,26 @@
+---
+# every podman entry in apps.yml against podman_app's argument_specs, no host touched (pre-commit hook apps-schema, manual stage).
+# compose and vm entries don't follow the schema yet
+- name: Validate the apps map
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ci_apps_spec_file: "{{ playbook_dir }}/../roles/podman_app/meta/argument_specs.yml"
+
+  tasks:
+    - name: Load the podman_app schema
+      ansible.builtin.include_vars:
+        file: "{{ ci_apps_spec_file }}"
+        name: ci_apps_spec
+
+    - name: Validate the podman entries
+      ansible.builtin.validate_argument_spec:
+        argument_spec: "{{ ci_apps_spec.argument_specs.main.options }}"
+        provided_arguments:
+          podman_app_name: "{{ item.key }}"
+          podman_app_entry: "{{ item.value }}"
+      loop: "{{ apps | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      when: item.value.runtime | default('podman') == 'podman'

@@ -1,0 +1,41 @@
+---
+- name: Install nginx
+  ansible.builtin.apt:
+    name: "{{ ota_server_package }}"
+    state: present
+    update_cache: true
+
+- name: Firmware dir
+  ansible.builtin.file:
+    path: "{{ ota_server_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# debian's default site listens on every address
+- name: Drop the default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Restart nginx
+
+- name: Ota server config
+  ansible.builtin.template:
+    src: ota.conf.j2
+    dest: /etc/nginx/conf.d/ota.conf
+    mode: "0644"
+  notify: Restart nginx
+  ignore_errors: "{{ ansible_check_mode }}"   # --check doesn't install the package, no conf.d
+
+# a broken config fails here, not in the handler
+- name: Check nginx config
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Enable nginx
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true
+  ignore_errors: "{{ ansible_check_mode }}"

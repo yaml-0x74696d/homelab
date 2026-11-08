@@ -1,0 +1,4 @@
+---
+# root over ssh keys, nothing to become
+ansible_user: root
+ansible_become: false

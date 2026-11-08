@@ -1,6 +1,7 @@
 # secrets + per-lab values
 ansible/group_vars/all/vault.yml
 ansible/group_vars/all/private/private.yml
+ansible/ansible-navigator.yml
 .vault_pass
 **/.vault_pass
 .env
@@ -25,6 +26,8 @@ ansible/collections/
 tofu/.terraform/
 *.tfstate
 *.tfstate.*
+# saved plans hold every value unmasked (vm_password)
+*.plan
 
 # nix build output (symlink to the store)
 nixos/result*
@@ -37,3 +40,6 @@ architecture/dist/
 .mcp.json
 .idea/
 .vscode/
+
+# homepage background, personal (belongs in the private overlay, this catches a stray copy)
+ansible/apps/dashboard/homepage/config/images/background.jpg

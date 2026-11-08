@@ -28,12 +28,11 @@ How it works:
 
 Who may call (`docker_backend_callers` in `group_vars/all/ports.yml`):
 - docker-1: Traefik, Homepage, Home Assistant
-- docker-2: Prometheus, Grafana, Uptime Kuma
-- mqtt-exporter only accepts calls from docker-2
+- docker-2: Prometheus, Grafana
 
 What's filtered and what's open:
-- Filtered: docker-socket-proxy and every backend app port (Nextcloud, Immich, Jellyfin, Paperless, Grafana, Prometheus, InfluxDB and more)
-- Open on purpose: 53 (DNS), 80/443 (Traefik), 1883 (MQTT), 2222 (Gitea SSH)
+- Filtered: docker-socket-proxy and every backend app port (Nextcloud, Immich, Jellyfin, Paperless, Grafana, Prometheus and more)
+- Open on purpose: 53 (DNS), 80/443 (Traefik), 2222 (Gitea SSH)
 
 - Enforced by: `vm-preparation.yml` rewrites the block on every run, and the ports come from the same `app_ports` map that compose uses ([0007](0007-group-vars-single-source-of-truth.md))
 
@@ -47,4 +46,4 @@ What's filtered and what's open:
 
 - Accepted: the traffic between Traefik and the backends is plain HTTP inside the LAN
 
-- Related: [0002](0002-generic-docker-app-role.md) (app role), [0007](0007-group-vars-single-source-of-truth.md) (ports map), [0015](0015-tls-via-dns-01.md) (TLS at Traefik)
+- Related: [0002](0002-generic-docker-app-role.md) (app role), [0007](0007-group-vars-single-source-of-truth.md) (ports map), [0015](0015-tls-via-dns-01.md) (TLS at Traefik), [0026](0026-ufw-as-guest-firewall.md) (guest firewall)

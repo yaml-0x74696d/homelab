@@ -1,0 +1,8 @@
+[Unit]
+Description=prometheus
+
+[Container]
+Volume={{ podman_app_dir }}/data:/prometheus
+Volume={{ podman_app_dir }}/config:/etc/prometheus:ro
+PublishPort={{ podman_app_entry.port }}:9090
+HealthCmd=wget -qO /dev/null http://127.0.0.1:9090/-/healthy

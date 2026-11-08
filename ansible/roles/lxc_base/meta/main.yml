@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: lxc_base
+  author: tim
+  description: hardening and housekeeping for the unprivileged lxcs
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

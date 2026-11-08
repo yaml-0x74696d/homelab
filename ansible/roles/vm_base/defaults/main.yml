@@ -1,0 +1,33 @@
+---
+vm_base_packages:
+  - auditd
+  - libpam-pwquality
+  - curl
+  - gnupg
+  - ca-certificates
+  - fail2ban
+  - apparmor
+  - apparmor-utils
+  - unattended-upgrades
+  - needrestart
+
+vm_base_sysctl:
+  net.ipv4.tcp_syncookies: 1
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.all.rp_filter: 1
+  kernel.randomize_va_space: 2
+  fs.suid_dumpable: 0
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv6.conf.all.disable_ipv6: 1
+  net.ipv6.conf.default.disable_ipv6: 1
+  kernel.kptr_restrict: 2
+
+vm_base_services:
+  - auditd
+  - fail2ban
+  - apparmor
+  - prometheus-node-exporter
+
+# off on bare metal (ctl-1): no hypervisor to talk to, no ram for a web console
+vm_base_guest_agent: true
+vm_base_cockpit: true

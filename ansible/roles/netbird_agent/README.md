@@ -34,7 +34,7 @@
 
 ## Notes
 
-- docker-1 left after NetBird's DNS took port 53 from Pi-hole there. Pi-hole now shares docker-2 with the agent ([ADR 0003](../../../docs/adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](../../../docs/adr/0010-pihole-on-a-service-ip.md))
+- Pi-hole shares docker-2 with the agent ([ADR 0003](../../../docs/adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](../../../docs/adr/0010-pihole-on-a-service-ip.md))
 - NetBird's DNS management must be turned off for docker-2's group, or NetBird grabs port 53 there too
 - Don't run NetBird and the FRITZ!Box WireGuard at the same time. Both route the LAN CIDR, the routes collide and NetBird's routing and DNS break
 - The routing peer must resolve `nb.{{ domain }}` to the NetBird VM (local DNS override)

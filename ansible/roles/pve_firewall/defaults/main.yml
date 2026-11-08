@@ -16,8 +16,10 @@ pve_firewall_netbird_dns_https: ["{{ docker1_ip }}", "{{ dns_ip }}"]
 # ssh (22) to the pve hosts — real shells only
 pve_firewall_ssh_hosts: "{{ admin_hosts }}"
 
-# web ui (8006) — admins, ui-only devices + the infra callers (homepage widget, kuma)
-pve_firewall_ui_hosts: "{{ admin_hosts + admin_ui_hosts + [{'ip': docker1_ip, 'c': 'homepage widget'}, {'ip': docker2_ip, 'c': 'uptime-kuma'}] }}"
+# web ui (8006) — admins, ui-only devices + the infra callers (homepage widget, gatus)
+pve_firewall_ui_hosts: >-
+  {{ admin_hosts + admin_ui_hosts + [{'ip': docker1_ip, 'c': 'homepage widget'},
+     {'ip': hostvars[apps['gatus'].host].ansible_host, 'c': 'gatus'}] }}
 
 # cluster mesh (corosync / migration between nodes)
 pve_firewall_node_ips: ["{{ pve1_ip }}", "{{ pve2_ip }}", "{{ pve3_ip }}"]
@@ -31,7 +33,30 @@ pve_firewall_netbird_turn_ports: [3478, 5349]          # stun/turn + turns, tcp+
 pve_firewall_log_vmid: "{{ vmids.log }}"
 pve_firewall_log_ip: "{{ log_ip }}"
 pve_firewall_log_port: "{{ log_relp_port }}"
-pve_firewall_log_sources: ["{{ docker1_ip }}", "{{ docker2_ip }}", "{{ docker3_ip }}", "{{ storage_ip }}", "{{ netbird_ip }}"]
+pve_firewall_log_sources:
+  - "{{ docker1_ip }}"
+  - "{{ docker2_ip }}"
+  - "{{ docker3_ip }}"
+  - "{{ storage_ip }}"
+  - "{{ iot_lan_ip }}"
+  - "{{ netbird_ip }}"
+  - "{{ ctl1_ip }}"
+
+# who scrapes node-exporter (log + iot lxc) and the mqtt exporter (iot lxc)
+pve_firewall_prometheus_ip: "{{ prometheus_ip }}"
+
+# the iot gateway lxc, its lan leg: inbound = its ufw (playbooks/deploy-iot.yml), both from app_settings.yml.
+# the iot leg is its wifi card, no veth, so this firewall never sees it
+pve_firewall_iot_vmid: "{{ vmids.iot }}"
+pve_firewall_iot_mqtt_clients: "{{ mqtt_lan_clients }}"
+
+# the haos vm: ha's port only from its callers (traefik follows app_sources.edge to the edge vm), admins also direct + the observer
+pve_firewall_haos_vmid: "{{ vmids.haos }}"
+pve_firewall_haos_port: "{{ apps['homeassistant'].port }}"
+pve_firewall_haos_callers:   # traefik + homepage's status dot, the same host until edge
+  - { ip: "{{ app_sources.edge }}", c: traefik }
+  - { ip: "{{ hostvars[apps['homepage'].host].ansible_host }}", c: homepage }
+pve_firewall_haos_observer_port: 4357   # haos' supervisor health page
 
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.

@@ -2,6 +2,8 @@ services:
   vaultwarden:
     image: vaultwarden/server:${VAULTWARDEN_TAG}
     container_name: vaultwarden
+    ports:
+      - "${PORT}:80"   # edge routes it
     restart: unless-stopped
     environment:
       - ADMIN_TOKEN=${ADMIN_TOKEN}

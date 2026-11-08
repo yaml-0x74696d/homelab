@@ -50,6 +50,12 @@ variable "debian_image_url" {
 
 variable "lxc_template" {
   type        = string
-  default     = "local:vztmpl/debian-13-standard_13.0-1_amd64.tar.zst"
-  description = "OS template for the storage LXC (pveam download local ...)"
+  default     = "local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst"
+  description = "OS template for the LXCs, on every node that runs one (pveam download local ...)"
+}
+
+variable "haos_image" {
+  type        = string
+  default     = "local:import/haos.qcow2"
+  description = "home assistant os disk image on pve-3, unpacked by hand (upstream ships .qcow2.xz, pve can't unpack xz), see README"
 }

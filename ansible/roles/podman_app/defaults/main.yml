@@ -1,0 +1,36 @@
+---
+# set by playbooks/deploy-app.yml: the app's key in apps.yml and its entry
+podman_app_name: ""
+podman_app_entry: {}
+
+podman_app_user: "{{ podman_svc_prefix }}{{ podman_app_name }}"
+podman_app_home: "/home/{{ podman_app_user }}"
+podman_app_dir: "{{ podman_apps_root }}/{{ podman_app_name }}"
+podman_app_src: "{{ playbook_dir }}/../apps/{{ podman_app_name }}"
+podman_app_quadlet_dir: "{{ podman_app_home }}/.config/containers/systemd"
+# apps/<name>/config/ as filetree items (path relative, src, state, root), empty when the app has none
+podman_app_config_public: "{{ query('community.general.filetree', podman_app_src ~ '/config') if (podman_app_src ~ '/config') is directory else [] }}"
+# private overlay outside the repo, <private_dir>/apps/<name>/config/. plain files only, they win over public ones by path.
+# semaphore sets HOMELAB_PRIVATE_DIR to its mount of ctl-1's copy, its ~ is the container user's home
+podman_app_private_dir: "{{ lookup('ansible.builtin.env', 'HOMELAB_PRIVATE_DIR', default=private_dir | default('')) | expanduser }}"
+podman_app_private_src: "{{ (podman_app_private_dir ~ '/apps/' ~ podman_app_name ~ '/config') if podman_app_private_dir else '' }}"
+podman_app_config_private: "{{ query('community.general.filetree', podman_app_private_src)
+                               if podman_app_private_src and podman_app_private_src is directory else [] }}"
+# the public items the overlay doesn't replace, then everything
+podman_app_config_own: "{{ podman_app_config_public | rejectattr('path', 'in', podman_app_config_private | map(attribute='path') | list) | list }}"
+podman_app_config: "{{ podman_app_config_own + podman_app_config_private }}"
+
+# render.yml only (playbooks/render-podman.yml): one folder per app goes here
+podman_app_render_dir: ""
+
+# subuid range = uid * count, so ranges never overlap while uids stay unique
+podman_app_subid_count: 65536
+
+# defaults for fields an apps.yml entry may leave out
+podman_app_start_timeout: 5min    # covers health start; images are pulled before the start
+podman_app_stop_timeout: 10       # seconds, podman's own default
+
+# retry forever with backoff (mount gate, crash loops), silent
+podman_app_restart_sec: 30s
+podman_app_restart_steps: 5
+podman_app_restart_max_delay: 10min

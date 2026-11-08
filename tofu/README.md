@@ -1,7 +1,8 @@
 # tofu
 
-- OpenTofu builds the Docker VMs, the NetBird VM, the storage LXC and the log LXC with the `bpg/proxmox` provider
-- The guests are created from a Debian cloud image, cloud-init sets the IP, the admin user and the SSH key
+- OpenTofu builds the Docker VMs, the NetBird VM, the Home Assistant OS VM, the storage, log and IoT gateway LXCs with the `bpg/proxmox` provider
+- The Debian guests are created from a Debian cloud image, HAOS from its own image (step 3b)
+- cloud-init sets the IP, the admin user and the SSH key on the Debian guests
 - IPs, VMIDs, the admin user, the SSH key path and the pool paths come from `../ansible/group_vars/all/` (read in `locals.tf`), so OpenTofu and Ansible can't drift apart
 - Guest sizes, nodes and MACs are in the `vms` / `lxcs` maps in `locals.tf`
 
@@ -21,13 +22,26 @@ cp terraform.tfvars.example terraform.tfvars   # then edit
 
 - Set `pve_api_token` and `vm_password` (the same as `sudo_pass` in the vault)
 
-## 3. LXC template (once, on pve-3)
+## 3. LXC template (once per node with an LXC: pve-3 and `iot_node`)
 
 ```bash
-pveam update && pveam download local debian-13-standard
+pveam update && pveam download local debian-13-standard_13.6-1_amd64.tar.zst
 ```
 
 - If the file name differs from the default, change `lxc_template`
+
+## 3b. HAOS image (once, on pve-3)
+
+Upstream ships `.qcow2.xz`, Proxmox can't unpack xz, so it's unpacked by hand into the import dir (`haos_image`):
+
+```bash
+v=<version>   # github.com/home-assistant/operating-system/releases
+wget -qO- https://github.com/home-assistant/operating-system/releases/download/$v/haos_ova-$v.qcow2.xz \
+  | xz -d > /var/lib/vz/import/haos.qcow2
+```
+
+- Only read when the disk is created, HAOS updates itself after that
+- The FRITZ!Box pins `haos_ip` to `macs.haos` (DHCP reservation), HAOS has no cloud-init
 
 ## 4. Apply
 
@@ -40,12 +54,13 @@ tofu init
 tofu apply
 ```
 
-- The Docker VMs and the NetBird VM have `prevent_destroy`, because their databases live on the VM disk
+- The Docker VMs, the NetBird VM and the HAOS VM have `prevent_destroy`, because their databases live on the VM disk
 - Never apply a plan that replaces one of them
 
 ## 5. After the first apply
 
-- Once `vm-preparation.yml` has installed qemu-guest-agent, set `agent { enabled = true }` in `vms.tf` and run `tofu apply` again
+- Docker VMs: once `vm-preparation.yml` has installed qemu-guest-agent, set `agent { enabled = true }` in `vms.tf` and run `tofu apply` again
+- NetBird VM: the same flip in its own resource, after nixos-anywhere (NixOS turns the agent on)
 
 ## Related
 

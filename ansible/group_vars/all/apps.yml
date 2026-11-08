@@ -1,19 +1,228 @@
 ---
-# app dirs on the docker hosts (compose, rendered config, bind-mounted data); pbs backs it up
-apps_root: /opt/apps
-pbs_staging_dir: /var/backups/pbs      # db dumps land here, wiped each run. must stay under /var/backups
+# every app, pure data (edge and ci read it with yq, so no jinja). schema + defaults:
+# roles/podman_app/meta/argument_specs.yml. `runtime: compose` = still on docker:
+# edge routes it, deploy-app.yml refuses it. the line goes at the app's cutover.
+apps:
+  gatus:
+    host: docker-2
+    uid: 2010
+    port: 3001
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: gatus-config
+        template: config.yaml.j2
+    dirs:
+      - path: data
+    containers:
+      - name: gatus
+        image: ghcr.io/twin/gatus
+        tag: stable
+        healthcheck: false   # scratch image, nothing to run a check with
+        add_caps: [NET_RAW]  # runs as root in the container, so pings use raw sockets
+    homepage: {group: Status, icon: gatus, widget: gatus}
+    routes:
+      - host: status
+        middlewares: [authentik]
 
-# ntfy alert target (pbs, login-notify, aide). real values in vault; empty so the var always exists
-ntfy_url: ""
-ntfy_token: ""
-ntfy_timeout: 10   # seconds per push
+  grafana:
+    host: docker-2
+    uid: 2030
+    port: 3000
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: grafana-admin-pass
+        vault: grafana_pass
+      - name: grafana-oidc-secret
+        vault: grafana_oidc_secret
+    dirs:
+      - path: data
+        mode: "0770"   # grafana runs as 472:0 in the container, gid 0 = svc-grafana's group
+    containers:
+      - name: grafana
+        image: docker.io/grafana/grafana-oss
+        tag: latest
+    homepage: {group: Admin, icon: grafana}
+    routes:
+      - host: grafana
 
-# authentik can't skip a release series or downgrade; deploy-authentik.yml enforces both.
-# step through with -e authentik_tag=<next>, then set this to where you landed.
-authentik_tag: "2026.8.3"
-authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12", "2025.2", "2025.4",
-                   "2025.6", "2025.8", "2025.10", "2025.12", "2026.2", "2026.5", "2026.8"]
+  nginx:
+    host: docker-2
+    uid: 2020
+    port: 8087
+    allow_from: [edge, netbird, homepage]
+    secrets: []
+    containers:
+      - name: nginx
+        image: docker.io/library/nginx
+        tag: alpine
+    homepage: {group: Tools, icon: nginx, label: Web}
+    routes:
+      - host: web
 
-# influxdb long-term sensor store (docker-2); secrets in vault
-influxdb_org: homelab
-influxdb_bucket: sensors
+  prometheus:
+    host: docker-2
+    uid: 2040
+    port: 9091
+    allow_from: [edge, netbird, homepage]   # netbird = docker-2's ip, so grafana and gatus are in
+    secrets: []
+    dirs:
+      - path: data
+        owner: 65534   # prom/prometheus runs as nobody, not root
+    containers:
+      - name: prometheus
+        image: docker.io/prom/prometheus
+        tag: latest
+    homepage: {group: Admin, icon: prometheus}
+    routes:
+      - host: prom
+        middlewares: [authentik]   # grafana reaches prom internally, not via this url
+
+  # two copies on two nodes write the same wan ip, one host down doesn't stop the updates
+  cloudflare-ddns:
+    hosts: [docker-1, docker-2]
+    uid: 2050
+    allow_from: []
+    secrets:
+      - name: cloudflare-api-token
+        vault: cf_token
+    containers:
+      - name: cloudflare-ddns
+        image: docker.io/favonia/cloudflare-ddns
+        tag: latest
+        user: "1000:1000"
+        healthcheck: false   # scratch image
+        read_only: true
+        drop_caps: [ALL]
+
+  # runs the playbooks on a schedule, from a git clone (roles/ctl_base)
+  semaphore:
+    host: ctl-1
+    uid: 2060
+    port: 3000
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: semaphore-admin-pass
+        vault: semaphore_admin_pass
+      - name: semaphore-key-encryption
+        vault: semaphore_key_encryption
+      - name: semaphore-oidc
+        template: oidc.json.j2
+    dirs:
+      - path: data
+        owner: 1001   # the image's semaphore user
+      - path: aide    # accepted aide hashes, ctl-0 reads them back
+        owner: 1001
+        mode: "0755"
+    containers:
+      - name: semaphore
+        image: docker.io/semaphoreui/semaphore
+        tag: latest
+    homepage: {group: Admin, icon: semaphore}
+    routes:
+      - host: semaphore
+
+  nextcloud:
+    host: docker-3
+    runtime: compose
+    port: 8080
+    homepage: {group: Homecloud, icon: nextcloud}
+    routes:
+      - host: cloud
+        middlewares: [nextcloud-dav]
+
+  immich:
+    host: docker-3
+    runtime: compose
+    port: 8081
+    homepage: {group: Homecloud, icon: /images/immich.png}
+    routes:
+      - host: photo
+
+  jellyfin:
+    host: docker-3
+    runtime: compose
+    port: 8082
+    homepage: {group: Homecloud, icon: jellyfin}
+    routes:
+      - host: media
+
+  paperless:
+    host: docker-3
+    runtime: compose
+    port: 8083
+    homepage: {group: Homecloud, icon: paperless-ngx}
+    routes:
+      - host: paperless
+
+  # docker-1: no published port (traefik reaches them on proxy-net)
+  authentik:
+    host: docker-1
+    runtime: compose
+    port: 9000
+    homepage: {group: Admin, icon: authentik}
+    routes:
+      - host: auth
+
+  vaultwarden:
+    host: docker-1
+    runtime: compose
+    port: 8084
+    homepage: {group: Homecloud, icon: /images/vaultwarden.png}
+    routes:
+      - host: vault
+      - host: vault
+        path: /admin
+        middlewares: [authentik]
+
+  gitea:
+    host: docker-1
+    runtime: compose
+    port: 3002
+    extra_ports:
+      - {port: 2222, allow_from: [lan, netbird]}   # git over ssh
+    homepage: {group: Tools, icon: gitea}
+    routes:
+      - host: git
+
+  searxng:
+    host: docker-1
+    runtime: compose
+    port: 8085
+    homepage: {group: Tools, icon: searxng, label: SearXNG}
+    routes:
+      - host: search
+
+  homepage:
+    host: docker-1
+    runtime: compose
+    port: 3003
+    routes:
+      - host: home
+
+  pdfcraft:
+    host: docker-1
+    runtime: compose
+    port: 8086
+    homepage: {group: Tools, icon: /images/pdfcraft.png, label: PDFcraft}
+    routes:
+      - host: pdf
+
+  # haos vm, home assistant updates and configures itself inside, ansible never deploys it
+  homeassistant:
+    host: haos
+    runtime: vm
+    port: 80   # haos core serves on 80, 8123 only redirects there
+    homepage: {group: Home, icon: /images/homeassistant.png, label: Home Assistant}
+    routes:
+      - host: ha
+
+# traefik routes that aren't apps
+infra_routes:
+  - host: pve-1
+  - host: pve-2
+  - host: pve-3
+  - host: pbs
+  - host: dns     # pi-hole ui
+    homepage: {group: Admin, icon: /images/pihole.png, label: Pi-hole, path: /admin/login}
+  - host: proxy   # traefik's own dashboard
+    homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}

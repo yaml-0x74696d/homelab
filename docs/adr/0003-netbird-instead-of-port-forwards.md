@@ -28,7 +28,7 @@ The control plane:
 What the WAN sees:
 - The router forwards only to `.250`: 443/tcp and 3478/udp
 - Optional: the other TURN ports and the relay range 49160–49200/udp
-- 443 moved from Traefik to NetBird, so the web apps are now LAN + VPN only
+- 443 goes to NetBird, not Traefik, so the web apps are LAN + VPN only
 
 The routing:
 - docker-2 is the routing peer (`netbird_agent` group, `roles/netbird_agent`)
@@ -38,7 +38,7 @@ The routing:
 
 The DMZ firewall (`roles/pve_firewall`, `netbird.fw.j2`):
 - In: 443, TURN, the relay range, and SSH/ICMP from the LAN only
-- Out: everything to the routing peers, DNS + HTTPS to Pi-hole/Traefik, DNS to the gateway
+- Out: everything to the routing peers, DNS + HTTPS to Pi-hole/Traefik, DNS to the gateway, RELP to the log LXC
 - The rest of the LAN is dropped, the internet is open
 
 The fallback:
@@ -49,12 +49,12 @@ The fallback:
 
 ## Consequences
 
-- Easier: only one box faces the WAN instead of every app, and that box is hardened and checked by AIDE ([0009](0009-aide-with-manual-accept.md))
+- Easier: only the NetBird VM faces the WAN instead of every app, and it is hardened and checked by AIDE ([0009](0009-aide-with-manual-accept.md))
 - Easier: FRITZ!Box WireGuard stays as an independent way in
 
 - Harder: NetBird and FRITZ!Box WireGuard must never run at the same time. Both route the LAN, the routes collide and break NetBird's routing and DNS
 - Harder: the nameserver has to be a peer's overlay IP, not a LAN IP behind a route, or the macOS/iOS resolvers fail
-- Harder: docker-1 left NetBird after NetBird's DNS and nftables pushed Pi-hole off port `:53` there. Pi-hole now runs on docker-2, with NetBird's DNS management turned off for that group ([0010](0010-pihole-on-a-service-ip.md))
+- Harder: NetBird's DNS and nftables take port `:53` from Pi-hole on a peer. docker-1 is not a peer, and Pi-hole on docker-2 needs NetBird's DNS management turned off for that group ([0010](0010-pihole-on-a-service-ip.md))
 
 - Accepted: coturn has no `external-ip` because the WAN IP keeps changing, so the TURN relay is unreliable by design. Direct P2P + STUN cover normal use
 - Accepted: user and group sync from the IdP is turned off (Authentik's machine auth answered 405). Users still log in through OIDC

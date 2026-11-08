@@ -1,0 +1,50 @@
+---
+argument_specs:
+  main:
+    short_description: Sensor topics from the local broker as Prometheus metrics
+    options:
+      mqtt_exporter_broker:
+        type: str
+        description: The broker
+      mqtt_exporter_listen:
+        type: str
+        description: Listen address, LAN only
+      mqtt_exporter_port:
+        type: int
+        description: Listen port (ports.yml), Prometheus scrapes it
+      mqtt_exporter_user:
+        type: str
+        description: MQTT login
+      mqtt_exporter_password:
+        type: str
+        no_log: true
+        description: Its password (vault)
+      mqtt_exporter_topic_path:
+        type: str
+        description: Subscription
+      mqtt_exporter_device_regex:
+        type: str
+        description: Device from the topic, named group deviceid
+      mqtt_exporter_metric_regex:
+        type: str
+        description: Metric from the topic, named group metricname
+      mqtt_exporter_cache_timeout:
+        type: str
+        description: A sensor silent this long drops out of /metrics
+      mqtt_exporter_metrics:
+        type: list
+        elements: dict
+        description: Topic part -> metric
+        options:
+          prom_name:
+            type: str
+            required: true
+            description: Metric name
+          mqtt_name:
+            type: str
+            required: true
+            description: Last topic part
+          help:
+            type: str
+            required: true
+            description: HELP text

@@ -4,7 +4,7 @@
   become: true
   vars:
     gitea_uid: 1000                      # image user
-    gitea_ssh_port: 2222                 # git over ssh, published by the container
+    gitea_ssh_port: "{{ apps['gitea'].extra_ports[0].port }}"   # git over ssh, published by the container
     gitea_admin_retries: 10              # gitea needs a moment before the cli works
     gitea_admin_delay: 5
   roles:

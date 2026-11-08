@@ -1,0 +1,76 @@
+---
+- name: Install mosquitto
+  ansible.builtin.apt:
+    name: [mosquitto, mosquitto-clients]
+    state: present
+    update_cache: true
+
+# mosquitto_passwd salts every hash, so a salted checksum of the creds decides when to rehash
+- name: Mqtt credential checksum
+  ansible.builtin.set_fact:
+    mosquitto_creds_sum: "{{ (mosquitto_passwd_salt ~ mosquitto_user ~ ':' ~ mosquitto_password) | hash('sha512') }}"
+  no_log: true
+
+- name: Stored checksum
+  ansible.builtin.slurp:
+    src: "{{ mosquitto_passwd_sum_file }}"
+  register: mosquitto_sum_old
+  failed_when: false
+  no_log: true
+
+- name: Hashed password file there?
+  ansible.builtin.stat:
+    path: "{{ mosquitto_passwd_file }}"
+  register: mosquitto_passwd_stat
+
+# creds via stdin into a root-only temp file, hashed, swapped in. owner mosquitto: 2.0 warns on anything else
+- name: Hash mqtt password
+  ansible.builtin.shell: |
+    set -e
+    umask 077
+    tmp=$(mktemp)
+    trap 'rm -f "$tmp"' EXIT
+    cat > "$tmp"
+    mosquitto_passwd -U "$tmp"
+    install -m 0600 -o mosquitto -g mosquitto "$tmp" {{ mosquitto_passwd_file }}
+  args:
+    stdin: "{{ mosquitto_user }}:{{ mosquitto_password }}"
+  when: >-
+    not mosquitto_passwd_stat.stat.exists
+    or (mosquitto_sum_old.content | default('') | b64decode | trim) != mosquitto_creds_sum
+  changed_when: true
+  no_log: true
+  notify: Restart mosquitto
+
+# after the hash, so a failed hash retries next run
+- name: Store checksum
+  ansible.builtin.copy:
+    dest: "{{ mosquitto_passwd_sum_file }}"
+    content: "{{ mosquitto_creds_sum }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
+  ignore_errors: "{{ ansible_check_mode }}"   # no /etc/mosquitto before the package
+
+# left by older runs
+- name: Remove clear credentials
+  ansible.builtin.file:
+    path: "{{ mosquitto_passwd_file }}.clear"
+    state: absent
+
+- name: Broker config
+  ansible.builtin.template:
+    src: homelab.conf.j2
+    dest: /etc/mosquitto/conf.d/homelab.conf
+    mode: "0644"
+  notify: Restart mosquitto
+  ignore_errors: "{{ ansible_check_mode }}"   # --check doesn't install the package, no conf.d
+
+- name: Enable mosquitto
+  ansible.builtin.systemd:
+    name: mosquitto
+    state: started
+    enabled: true
+  ignore_errors: "{{ ansible_check_mode }}"

@@ -1,0 +1,19 @@
+# image, auto-update, house rules: drop-ins from roles/podman_app
+{% set uid, gid = item.user.split(':') %}
+{% set nb6 = '{hostid6=mac(' ~ macs.netbird.lan | replace(':', '-') ~ ')}' %}
+{% macro fqdn(r) %}{{ domain if r.host == '@' else r.host ~ '.' ~ domain }}{% endmacro %}
+[Unit]
+Description=cloudflare-ddns
+
+[Container]
+Secret=cloudflare-api-token,type=mount,target=/run/secrets/cloudflare-api-token,uid={{ uid }},gid={{ gid }},mode=0400
+Environment=CLOUDFLARE_API_TOKEN_FILE=/run/secrets/cloudflare-api-token
+# names: cloudflare_ddns_records in app_settings.yml
+Environment=IP4_DOMAINS={% for r in cloudflare_ddns_records %}{{ fqdn(r) }}{{ ',' if not loop.last }}{% endfor %}
+
+# no nat on ipv6: detected prefix + the netbird vm's eui-64, the fritz!box only opens its firewall for it
+Environment=IP6_DOMAINS={% for r in cloudflare_ddns_records | selectattr('ip6') %}{{ fqdn(r) }}{{ nb6 }}{{ ',' if not loop.last }}{% endfor %}
+
+Environment="PROXIED={% for r in cloudflare_ddns_records | selectattr('proxied') %}is({{ fqdn(r) }}){{ ' || ' if not loop.last }}{% endfor %}"
+# the other copy keeps running, so a stop must never delete the records
+Environment=DELETE_ON_STOP=false

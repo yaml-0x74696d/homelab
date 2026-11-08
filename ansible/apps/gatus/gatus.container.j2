@@ -1,0 +1,19 @@
+# image, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=gatus
+
+[Container]
+Volume={{ podman_app_dir }}/data:{{ gatus_data }}:Z
+Secret=gatus-config,type=mount,target=/config/config.yaml,mode=0400
+Environment=GATUS_CONFIG_PATH=/config/config.yaml
+PublishPort={{ podman_app_entry.port }}:8080
+# every route straight to traefik: checks must not depend on dns
+{% set hosts = [] %}
+{% for app in apps.values() if app.state | default('present') == 'present' %}
+{% for r in app.routes | default([]) %}
+{% set _ = hosts.append(r.host) %}
+{% endfor %}
+{% endfor %}
+{% for h in hosts | unique | sort %}
+AddHost={{ h }}.{{ domain }}:{{ app_sources.edge }}
+{% endfor %}

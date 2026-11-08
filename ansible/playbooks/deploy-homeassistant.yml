@@ -1,9 +1,0 @@
----
-- name: Deploy home assistant
-  hosts: docker-1
-  become: true
-  roles:
-    - role: docker_app
-      vars:
-        docker_app_name: homeassistant
-        docker_app_restart: [homeassistant]   # picks up configuration.yaml + themes

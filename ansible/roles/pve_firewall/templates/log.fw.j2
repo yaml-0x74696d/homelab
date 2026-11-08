@@ -10,5 +10,6 @@ policy_out: ACCEPT
 {% for ip in pve_firewall_log_sources %}
 IN ACCEPT -source {{ ip }} -p tcp -dport {{ pve_firewall_log_port }} -log nolog
 {% endfor %}
-IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p tcp -dport 22 -log nolog
+IN ACCEPT -source {{ pve_firewall_prometheus_ip }} -p tcp -dport {{ node_exporter_port }} -log nolog
+IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p tcp -dport {{ ssh_port }} -log nolog
 IN ACCEPT -source {{ pve_firewall_lan_cidr }} -p icmp -log nolog

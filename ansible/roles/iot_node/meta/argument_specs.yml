@@ -1,0 +1,30 @@
+---
+argument_specs:
+  main:
+    short_description: Moves the node's WiFi card into the IoT gateway CT, hands it back at stop
+    options:
+      iot_node_ct:
+        type: raw
+        description: The gateway CT
+      iot_node_nic:
+        type: str
+        description: The card's name on the node
+      iot_node_country:
+        type: str
+        description: Regulatory domain
+      iot_node_ct_address:
+        type: str
+        description: The CT's address on the card, with prefix
+      iot_node_ct_start_timeout:
+        type: int
+        description: Seconds until SSH answers after a restart
+      iot_node_ct_stop_timeout:
+        type: int
+        description: Seconds pct shutdown waits
+      iot_node_hook_wait:
+        type: int
+        description: Seconds the pre-start hook waits for the card to come back
+      iot_node_ct_lines:
+        type: list
+        elements: str
+        description: "Raw lines in /etc/pve/lxc/<ct>.conf, '<key>: <value>', the key finds the line to replace"

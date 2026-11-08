@@ -1,11 +1,29 @@
 ---
 - name: Push ssh keys to cluster
-  hosts: all
+  hosts: all:!appliances
   become: false
+  # admin_ssh_pubkey for controllers without the key file (semaphore), the file lookup only runs without it
+  vars:
+    push_keys: "{{ [admin_ssh_pubkey | default('', true) or lookup('file', admin_ssh_pubkey_file | expanduser),
+      semaphore_ssh_pubkey | default('')] | select | list }}"
 
   tasks:
-    - name: Add public key to authorized_keys
+    - name: Add keys to authorized_keys
       ansible.posix.authorized_key:
         user: "{{ ansible_user }}"
         state: present
-        key: "{{ lookup('file', admin_ssh_pubkey_file | expanduser) }}"
+        key: "{{ item }}"
+      loop: "{{ push_keys }}"
+      when: "'proxmox' not in group_names"
+
+    # pve root's authorized_keys links into /etc/pve/priv, one file for the whole cluster.
+    # pmxcfs refuses chmod/chown, so plain append, once
+    - name: Add keys to the pve cluster file
+      ansible.builtin.shell: >-
+        grep -qxF {{ item | quote }} /etc/pve/priv/authorized_keys
+        || { echo {{ item | quote }} >> /etc/pve/priv/authorized_keys; echo added; }
+      loop: "{{ push_keys }}"
+      register: pve_key
+      changed_when: "'added' in pve_key.stdout"
+      delegate_to: "{{ groups['proxmox'][0] }}"
+      run_once: true

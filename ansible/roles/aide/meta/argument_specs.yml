@@ -1,0 +1,64 @@
+---
+argument_specs:
+  main:
+    short_description: Daily AIDE check with ntfy alerts, baseline hash kept on the controller
+    options:
+      aide_check_time:
+        type: str
+        description: systemd OnCalendar of the check (group_vars hosts.yml, shared with nixos)
+      aide_check_delay:
+        type: str
+        description: Random delay on top of it
+      aide_check_nice:
+        type: int
+        description: Nice of the check
+      aide_check_io_class:
+        type: str
+        description: IOSchedulingClass of the check
+      aide_run_timeout:
+        type: int
+        description: Seconds --init may take
+      aide_run_poll:
+        type: int
+        description: Seconds between async polls
+      aide_checksum_dir:
+        type: path
+        description: Controller dir with the accepted db hashes, one <host>.sha256 each
+      aide_excludes_common:
+        type: list
+        elements: str
+        description: Excludes on every host
+      aide_excludes_by_group:
+        type: dict
+        description: Excludes per inventory group, group name -> list of paths
+      aide_login_homes:
+        type: list
+        elements: str
+        description: Homes with history files on the VarFile rule
+      aide_history_files:
+        type: str
+        description: Regex of the history file names in those homes
+      aide_var_files:
+        type: list
+        elements: str
+        description: Files rewritten by design, VarFile
+      aide_content_files:
+        type: list
+        elements: str
+        description: Rewritten with the same content, ContentFile
+      aide_var_dirs:
+        type: list
+        elements: str
+        description: Dirs whose files get replaced, VarDir
+  verify:
+    short_description: Fail if the local db doesn't match the recorded hash (aide-accept.yml, roles/update)
+    options:
+      aide_checksum_dir:
+        type: path
+        description: Controller dir with the accepted db hashes
+  accept:
+    short_description: Swap in aide.db.new and record its hash (aide-accept.yml, roles/update)
+    options:
+      aide_checksum_dir:
+        type: path
+        description: Controller dir with the accepted db hashes

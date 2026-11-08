@@ -5,19 +5,21 @@
 
 ## Runs on
 
-- Every `deploy-<app>.yml` (26 apps), the host is picked by the playbook's `hosts:`
+- Every `deploy-<app>.yml` (25 apps), the host is picked by the playbook's `hosts:`
 - `site.yml` imports them all
 
 ## How it works
 
-1. Creates `<apps_root>/<app>/` on the host (`/opt/apps/<app>`)
+![Deploying one app](../../../docs/img/deploy-app.svg)
+
+1. Creates `<apps_root>/<app>/` on the host (`/opt/stacks/<app>`)
 2. Creates extra folders with owner and mode (`docker_app_dirs`), e.g. data folders a container writes to as a fixed UID
 3. Makes sure the Docker networks exist on the host (`proxy-net` by default, the compose file declares it `external`)
 4. Creates empty files once if they're missing (`docker_app_touch`, e.g. `acme.json` with mode `0600`). They're never overwritten
 5. Adds ufw allow rules (`docker_app_ufw`)
 6. Mirrors the subfolders, then copies every file that isn't `.j2` (mode `u=rwX,g=rX,o=rX`, so only files that are executable in the source stay executable)
 7. Finds every `*.j2` on the controller (including hidden ones like `.env.j2`) and renders it next to its source, without the `.j2`
-8. Rendered `.env` files get mode `0600`, other templates `0644`
+8. Rendered `.env` files get mode `0600`, other templates `0644`. `.env` and the `docker_app_secret_templates` are rendered without `--diff`
 9. CIFS: installs `cifs-utils`, writes the credentials to `/etc/cifs/<share>.creds` (mode `0600`, `no_log`) and adds an fstab mount with `nofail,_netdev`
 10. Starts the app with `docker_compose_v2` (`pull: policy`, so it only pulls images that are missing)
 11. A handler restarts the containers in `docker_app_restart` when a file or template changed
@@ -36,6 +38,8 @@
 |---|---|---|
 | `docker_app_name` | | The app, required |
 | `docker_app_src` | `apps/<name>` | Source folder on the controller |
+| `docker_app_private_dir` | `$HOMELAB_PRIVATE_DIR`, else `private_dir` | Root of the private overlay. Semaphore sets the env var to its mount of ctl-1's copy (`roles/ctl_base`) |
+| `docker_app_private_src` | `<docker_app_private_dir>/apps/<name>` | Private files laid over the app dir, outside the repo, never in `--diff`. Empty without `private_dir`, a set `private_dir` without `apps/` fails the deploy |
 | `docker_app_root` | `apps_root` | Parent folder on the host |
 | `docker_app_dirs` | `[]` | Extra folders, e.g. `[{path: data, owner: '472'}]` |
 | `docker_app_networks` | `[proxy-net]` | Docker networks to create on the host |
@@ -44,6 +48,7 @@
 | `docker_app_cifs` | `[]` | Pool mounts: `{share, user, path, uid, gid, file_mode?, dir_mode?, extra_opts?}`, the password comes from the vault (`smb_passwords[user]`) |
 | `docker_app_cifs_vers` | `3.1.1` | SMB version for the mounts |
 | `docker_app_restart` | `[]` | Containers to restart when the config changes |
+| `docker_app_secret_templates` | `[]` | Templates besides `.env` that hold secrets, relative to the app dir (`homepage/config/secrets.yaml.j2`): never shown in `--diff` |
 | `docker_app_compose_state` | `present` | Passed to `docker_compose_v2` |
 | `docker_app_compose_pull` | `policy` | Passed to `docker_compose_v2` |
 | `docker_app_compose_remove_orphans` | `false` | Passed to `docker_compose_v2` |

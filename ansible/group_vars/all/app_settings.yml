@@ -1,0 +1,74 @@
+---
+# app dirs on the docker hosts (compose, rendered config, bind-mounted data); pbs backs it up.
+apps_root: /opt/stacks
+pbs_staging_dir: /var/backups/pbs      # db dumps land here, wiped each run. must stay under /var/backups
+
+# ntfy alert target (pbs, login-notify, aide). real values in vault; empty so the var always exists
+ntfy_url: ""
+ntfy_token: ""
+ntfy_timeout: 10   # seconds per push
+
+# authentik can't skip a release series or downgrade; deploy-authentik.yml enforces both.
+# step through with -e authentik_tag=<next>, then set this to where you landed.
+authentik_tag: "2026.8.3"
+authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12", "2025.2", "2025.4",
+                   "2025.6", "2025.8", "2025.10", "2025.12", "2026.2", "2026.5", "2026.8"]
+
+prometheus_scrape_interval: 15s   # apps/prometheus
+
+mqtt_user: iot                    # shared by sensors, ha and the exporter; password: mqtt_password (vault)
+
+# lan callers of the iot gateway, one list for both firewall layers (ufw in deploy-iot.yml, iot.fw)
+# and the node-exporter rules (lxc_base, log.fw)
+prometheus_ip: "{{ hostvars[apps['prometheus'].host].ansible_host }}"
+mqtt_lan_clients:
+  - { ip: "{{ hostvars[apps['homeassistant'].host].ansible_host }}", c: home assistant }   # the haos vm
+
+# what the iot net may open on the gateway, only on its wifi card (ufw on wlan0): the broker + firmware downloads
+iot_net_ports: ["{{ mqtt_port }}", "{{ ota_port }}"]
+
+# gatus (apps/gatus): every check is generated from apps.yml + the inventory
+gatus_interval: 60s
+gatus_failure_threshold: 3        # failed checks in a row before ntfy
+gatus_cert_min_validity: 168h     # warn a week before a route's cert runs out
+gatus_dns_resolver: 1.1.1.1       # outside view for the domain's A record (ddns)
+gatus_ping_groups: [docker_hosts, podman_hosts, lxc_containers]
+gatus_auth_middlewares: [authentik]   # routes behind these get a backend check too
+gatus_data: /data                 # data dir inside the container
+gatus_db_file: data.db
+# scheduled semaphore templates: gatus alerts when a template's last run failed. ids from the ui's urls
+gatus_semaphore_templates:
+  - { name: repo-pull, id: 30 }
+  - { name: aide, id: 3 }
+  - { name: update, id: 32 }
+gatus_semaphore_interval: 10m
+
+# semaphore on ctl-1 (apps/semaphore, roles/ctl_base): a git clone, playbooks/repo-pull.yml updates it
+semaphore_repo_dir: "/home/{{ admin_user }}/homelab"
+semaphore_repo_url: https://github.com/yaml-0x74696d/homelab.git
+semaphore_repo_version: testing
+# ctl-1's copy of the controller's private_dir, mounted at the same path (HOMELAB_PRIVATE_DIR)
+semaphore_private_dir: "/home/{{ admin_user }}/homelab-private"
+semaphore_aide_dir: /aide   # in the container, the aide hashes (AIDE_CHECKSUM_DIR)
+semaphore_admin_user: admin   # local break-glass next to authentik
+semaphore_project_id: 1       # the ui's only project
+
+# public names cloudflare-ddns points at the wan ip, @ = the domain itself. not traefik routes,
+# so not in apps.yml. ip6: the netbird vm's address too, proxied: through cloudflare
+cloudflare_ddns_records:
+  - { host: "@", ip6: true, proxied: true }
+  - { host: www, ip6: true, proxied: true }
+  - { host: vpn, ip6: false, proxied: false }   # the fritz!box itself, its wan ipv6 isn't in the lan prefix
+  - { host: nb, ip6: true, proxied: false }     # netbird's own proxy
+
+
+# podman apps (roles/podman_base, podman_app): data under <root>/<app>, owned by <prefix><app>; pbs backs it up
+podman_apps_root: /srv/apps
+podman_svc_prefix: svc-        # one user per app: svc-<app>
+podman_svc_group: svc-apps     # every svc user, may read the ntfy env file
+
+# what an allow_from name in apps.yml resolves to. an app name resolves to its host's ip
+app_sources:
+  lan: "{{ lan_cidr }}"
+  edge: "{{ docker1_ip }}"      # traefik runs on docker-1 until the edge vm exists
+  netbird: "{{ docker2_ip }}"   # routing peer, remote traffic arrives masqueraded from it

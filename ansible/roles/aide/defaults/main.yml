@@ -8,8 +8,9 @@ aide_run_timeout: 3600
 aide_run_poll: 30
 aide_report_lines: 150   # diff lines shown by aide-accept.yml
 
-# accepted db hashes, one <host>.sha256 each. ansible/aide is a symlink into the offsite-synced private folder
-aide_checksum_dir: "{{ playbook_dir }}/../aide"
+# accepted db hashes, one <host>.sha256 each. semaphore sets AIDE_CHECKSUM_DIR (its rw volume),
+# on ctl-0 ansible/aide is a copy of that in the offsite-synced private folder
+aide_checksum_dir: "{{ lookup('ansible.builtin.env', 'AIDE_CHECKSUM_DIR', default=playbook_dir ~ '/../aide') }}"
 
 # churn on every host. /var/log: every line is on the log lxc already, that copy is the tamper protection
 aide_excludes_common:
@@ -36,20 +37,35 @@ aide_history_files: '\\.(bash_history|lesshst|viminfo|python_history|wget-hsts)'
 # rewritten by design (timer runs, apt's daily stamps, dhcp renewals): VarFile like debian's own rules
 aide_var_files:
   - '/var/lib/systemd/timers/stamp-[^/]+\\.timer'
+  - '/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/systemd/timers/stamp-[^/]+\\.timer'
   - '/var/lib/apt/periodic/[^/]+'
   - '/var/lib/NetworkManager/[^/]+\\.lease'
   - '/var/lib/NetworkManager/seen-bssids'
+  - '/var/lib/misc/dnsmasq\\.leases'
 
-# rewritten at boot with the same content (cloud-init's /etc/hosts): owner, mode + checksum, no times
-aide_content_files: [/etc/hosts]
+# rewritten with the same content (cloud-init's /etc/hosts at boot, netbird on restart): owner, mode + checksum, no times
+aide_content_files:
+  - /etc/hosts
+  - /etc/ssh/ssh_config.d/99-netbird\\.conf
+  - /var/lib/netbird/state\\.json
+
+# dirs whose files get replaced (new mtime), owner + mode stay watched
+aide_var_dirs:
+  - /etc/apt/apt.conf.d
+  - /etc/ssh/ssh_config.d
+  - /var/lib/netbird
 
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:
   docker_hosts:
     - /var/lib/docker
     - /var/lib/containerd
+    - /var/lib/containers       # root podman storage
+    - /dev/shm                  # podman lock files, tmpfs
     - "{{ apps_root }}"
-    - /opt/stacks               # live docker apps until the podman migration
+    - "{{ podman_apps_root }}"   # podman app data
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"   # rootless podman images + containers, per app user
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"   # module payloads when ansible runs as the svc user
     - "{{ cifs_mount_root }}"   # pool shares
     - "{{ pbs_staging_dir }}"
     - /var/lib/cloud            # cloud-init state, rewritten every boot
@@ -69,10 +85,20 @@ aide_excludes_by_group:
     - /var/lib/pve-manager           # replication state + lock, appliance index
     - /var/lib/smartmontools
     - /etc/issue                    # pvebanner rewrites it at boot
+    - /etc/apt/apt.conf.d/76pveproxy   # generated from datacenter.cfg, comes and goes
     - /dev                          # vm disks, isos, usb, corosync shm
     - "{{ storage_pool_host }}"                          # pve-3: mergerfs pool
     - "{{ storage_disks | map(attribute='path') | list }}"   # pve-3: its disks
     - "{{ pbs_datastore_path }}"
+  podman_hosts:
+    - /var/lib/containers
+    - /dev/shm
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"
+    - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"
+    - "{{ podman_apps_root }}"
+    - "{{ semaphore_repo_dir }}"   # ctl-1: git checkout, playbooks/repo-pull.yml keeps it current
+    - "{{ semaphore_private_dir }}"   # ctl-1: private_dir copy, roles/ctl_base syncs it
   lxc_containers:
     - "{{ storage_root }}"   # pool bind mount
     - /dev/.lxc              # procfs from lxc, pids change every run
+    - /var/lib/mosquitto     # iot lxc: broker state, saved every half hour

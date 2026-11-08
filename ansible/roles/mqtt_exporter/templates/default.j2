@@ -1,0 +1,4 @@
+# managed by ansible (roles/mqtt_exporter). root only: holds the mqtt password
+ARGS="-listen-address {{ mqtt_exporter_listen }} -listen-port {{ mqtt_exporter_port }}"
+MQTT2PROM_MQTT_USER="{{ mqtt_exporter_user }}"
+MQTT2PROM_MQTT_PASSWORD="{{ mqtt_exporter_password | regex_replace('([\\\\"`$])', '\\\\\\1') }}"

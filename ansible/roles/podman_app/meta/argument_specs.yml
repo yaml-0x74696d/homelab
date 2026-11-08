@@ -1,0 +1,130 @@
+---
+# the apps.yml schema, checked at every deploy
+argument_specs:
+  main:
+    short_description: Deploy one rootless podman app from its apps.yml entry
+    options:
+      podman_app_name:
+        type: str
+        required: true
+        description: The app's key in apps.yml, also the name of apps/<name>/ and svc-<name>
+      podman_app_entry:
+        type: dict
+        required: true
+        description: The app's entry in apps.yml
+        mutually_exclusive: [[host, hosts]]
+        required_one_of: [[host, hosts]]
+        options:
+          host:
+            type: str
+            description: Inventory host the app runs on
+          hosts:
+            type: list
+            elements: str
+            description: "Several hosts, one copy each. Only for apps nothing reaches: no port, routes, homepage or allow_from"
+          runtime:
+            type: str
+            choices: [podman, compose, vm]
+            default: podman
+            description: "compose = still on docker, vm = an appliance vm (haos). both routed by edge, never deployed by this role"
+          state:
+            type: str
+            choices: [present, absent, purged]
+            default: present
+            description: only present is built, the role refuses absent and purged
+          uid:
+            type: int
+            required: true
+            description: Fixed uid of svc-<name>, stable across rebuilds. subuid range = uid * podman_app_subid_count
+          container_uid:
+            type: int
+            default: 0
+            description: uid the app's main process runs as inside the container. only 0 is built (no keep-id), the role refuses anything else
+          port:
+            type: int
+            description: Main published port. routes default to it, allow_from opens it
+          extra_ports:
+            type: list
+            elements: dict
+            default: []
+            description: More published ports, each with its own sources
+            options:
+              port: {type: int, required: true}
+              proto: {type: str, choices: [tcp, udp], default: tcp}
+              allow_from: {type: list, elements: str, required: true}
+          allow_from:
+            type: list
+            elements: str
+            required: true
+            description: Who may reach port. names from app_sources (lan, edge, netbird) or another app's name
+          secrets:
+            type: list
+            elements: dict
+            required: true
+            description: Podman secrets to create. how a container uses one is in its unit template (Secret=)
+            options:
+              name: {type: str, required: true, description: Podman secret name}
+              vault: {type: str, description: Vault variable holding the value}
+              template: {type: str, description: "File secret: template in apps/<name>/ rendered into the secret"}
+          containers:
+            type: list
+            elements: dict
+            required: true
+            description: Every container, also for single-container apps. apps/<name>/<container>.container.j2 holds the rest
+            options:
+              name: {type: str, required: true, description: Container + unit name}
+              image: {type: str, required: true, description: Fully qualified image without tag}
+              tag: {type: str, required: true}
+              user: {type: str, description: "User= in the container. required in pods (keep-id)"}
+              auto_update: {type: bool, default: true, description: "false for dbs: changes only on a tag bump + deploy"}
+              stop_timeout: {type: int, description: Seconds before the stop turns into a kill}
+              healthcheck: {type: bool, default: true, description: "false: image can't run a HealthCmd (scratch), started once running"}
+              no_new_privileges: {type: bool, default: true}
+              read_only: {type: bool, default: false}
+              drop_caps: {type: list, elements: str, default: []}
+              add_caps: {type: list, elements: str, default: []}
+          dirs:
+            type: list
+            elements: dict
+            default: []
+            description: Dirs under the app's data dir, owned by svc-<name> (= root in the container) unless owner is set
+            options:
+              path: {type: str, required: true}
+              mode: {type: str, default: "0750"}
+              owner: {type: int, description: "uid:gid inside the container that owns the dir, for apps not running as root"}
+          cifs:
+            type: list
+            elements: dict
+            default: []
+            description: Pool shares. not built, the role refuses a non-empty list
+            options:
+              share: {type: str, required: true}
+              user: {type: str, required: true, description: "Samba user, its password is smb_passwords[user]"}
+              path: {type: str, required: true}
+              file_mode: {type: str, default: "0660"}
+              dir_mode: {type: str, default: "0770"}
+          start_timeout:
+            type: str
+            description: TimeoutStartSec, default podman_app_start_timeout
+          homepage:
+            type: dict
+            description: Read by homepage's template, not by this role. no block = no tile
+            options:
+              group: {type: str, required: true, description: "Status, Homecloud, Home, Tools or Admin"}
+              icon: {type: str, required: true, description: "Homepage icon name or /images/<file>"}
+              label: {type: str, description: "Tile name, default the app's name capitalized"}
+              path: {type: str, description: Appended to the route in the tile's link}
+              widget: {type: str, description: "Homepage widget type that only needs the app's url (gatus)"}
+          routes:
+            type: list
+            elements: dict
+            default: []
+            description: "Traefik's routers are written by hand in apps/proxy/traefik/dynamic/, check_wiring.py keeps them in line. gatus and homepage read it"
+            options:
+              host: {type: str, required: true, description: "Subdomain: <host>.<domain>"}
+              path: {type: str, description: PathPrefix}
+              middlewares: {type: list, elements: str, default: [], description: Names defined in apps/proxy/traefik/dynamic/}
+              port: {type: int, description: "Backend port, default the app's port"}
+      podman_app_private_dir:
+        type: str
+        description: Root of the private overlay, $HOMELAB_PRIVATE_DIR (semaphore) else private_dir. empty = none

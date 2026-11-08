@@ -6,14 +6,37 @@
     checksum_algorithm: sha256
   register: aide_db
 
-- name: Compare with recorded hash for {{ inventory_hostname }}
-  vars:
-    aide_recorded: "{{ lookup('ansible.builtin.file', aide_checksum_dir ~ '/' ~ inventory_hostname ~ '.sha256', errors='ignore') | trim }}"
-  ansible.builtin.assert:
-    that: aide_db.stat.checksum == aide_recorded
-    fail_msg: >-
-      aide db on {{ inventory_hostname }} ({{ aide_db.stat.checksum }}) doesn't match
-      {{ aide_checksum_dir }}/{{ inventory_hostname }}.sha256 ({{ aide_recorded | default('missing', true) }}).
-      don't accept anything until you know why.
-    quiet: true
+- name: Check recorded hash for {{ inventory_hostname }}
   when: aide_db.stat.exists
+  block:
+    - name: Compare with recorded hash for {{ inventory_hostname }}
+      vars:
+        aide_recorded: "{{ lookup('ansible.builtin.file', aide_checksum_dir ~ '/' ~ inventory_hostname ~ '.sha256', errors='ignore') | trim }}"
+      ansible.builtin.assert:
+        that: aide_db.stat.checksum == aide_recorded
+        fail_msg: >-
+          aide db on {{ inventory_hostname }} ({{ aide_db.stat.checksum }}) doesn't match
+          {{ aide_checksum_dir }}/{{ inventory_hostname }}.sha256 ({{ aide_recorded | default('missing', true) }}).
+          don't accept anything until you know why.
+        quiet: true
+
+  # a swapped db is an incident, not just a red run
+  rescue:
+    - name: Alert on hash mismatch for {{ inventory_hostname }}
+      ansible.builtin.uri:
+        url: "{{ ntfy_url }}"
+        method: POST
+        body: "{{ inventory_hostname }}: aide db doesn't match the recorded hash. don't accept, compare with the last pbs snapshot"
+        headers: >-
+          {{ {'Title': 'AIDE db mismatch on ' ~ inventory_hostname, 'Priority': 'high', 'Tags': 'rotating_light'}
+             | combine({'Authorization': 'Bearer ' ~ ntfy_token} if ntfy_token | default('') | length > 0 else {}) }}
+        timeout: "{{ ntfy_timeout }}"
+      delegate_to: localhost
+      become: false
+      failed_when: false   # the re-fail below matters more than the push
+      no_log: true   # bearer token in the headers
+      when: ntfy_url | default('') | length > 0
+
+    - name: Stop on hash mismatch for {{ inventory_hostname }}
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg }}"

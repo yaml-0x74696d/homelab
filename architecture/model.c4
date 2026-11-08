@@ -23,6 +23,10 @@ model {
   nts = external "NTS time servers" {
     description "PTB (stratum 1) and Cloudflare"
   }
+  github = external "GitHub" {
+    description "Public homelab repo"
+    style { icon tech:github }
+  }
   fritzbox = external "FritzBox" {
     description "Router, DHCP, WAN port forwards, backup WireGuard"
   }
@@ -87,7 +91,6 @@ model {
     }
     homepage = ui "Homepage" { technology "dashboard" }
     pdfcraft = ui "PDFCraft" { technology "pdf tools, wasm" }
-    homelable = ui "Homelable" { technology "network inventory" }
   }
 
   media = system "Home cloud" {
@@ -125,33 +128,37 @@ model {
   }
 
   automation = system "Home automation" {
-    technology "Home Assistant, Mosquitto, ESPHome"
+    technology "Home Assistant, Mosquitto"
     description "Home Assistant and the sensor network"
-    homeassistant = container "Home Assistant"
-    mosquitto = container "Mosquitto" { #parked; technology "MQTT broker" }
-    esphome = ui "ESPHome" { #parked }
-    mqtt-exporter = container "mqtt-exporter" { #parked }
+    homeassistant = container "Home Assistant" { technology "HAOS" }
+    mosquitto = container "Mosquitto" { technology "MQTT broker" }
+    mqtt-exporter = container "mqtt-exporter"
+    ota = container "nginx" {
+      technology "firmware downloads"
+      description "Serves the sensors' .bin files, IoT leg only"
+    }
+    esphome = container "ESPHome" {
+      #parked
+      technology "firmware builder"
+      description "Home Assistant add-on, compiles the device yamls"
+    }
     sensor = device "ESP32 sensor" {
       #iot
-      description "Temperature/humidity on the isolated IoT wifi"
+      description "ESPHome or own C, temperature/humidity on the isolated IoT wifi"
     }
     ap = container "IoT access point" {
       #iot
-      technology "hostapd"
-      description "Isolated wifi for the sensors"
+      technology "hostapd, dnsmasq"
+      description "Isolated wifi + DHCP for the sensors, on the node's wifi card moved into the gateway"
     }
   }
 
   observability = system "Observability" {
-    technology "Prometheus, Grafana, InfluxDB, Uptime Kuma"
+    technology "Prometheus, Grafana, Gatus"
     description "Metrics, dashboards and uptime checks"
     prometheus = container "Prometheus" { style { icon tech:prometheus } }
     grafana = ui "Grafana" { style { icon tech:grafana } }
-    influxdb = db "InfluxDB" {
-      technology "time series"
-      style { icon tech:influxdb }
-    }
-    uptime-kuma = ui "Uptime Kuma"
+    gatus = ui "Gatus" { description "Checks generated from the apps map" }
     node-exporter = container "node-exporter" { #ops; description "Per host" }
     log-server = store "Log server" {
       technology "rsyslog, RELP"
@@ -192,8 +199,13 @@ model {
     hosts = container "Container hosts" {
       #ops
       technology "Debian 13, docker"
-      description "docker-1/2/3, apps deployed by ansible"
+      description "docker-1/2/3 and ctl-1, apps deployed by ansible"
       style { icon tech:debian }
+    }
+    semaphore = ui "Semaphore" {
+      #ops
+      technology "ansible runner, sqlite"
+      description "Always-on twin of the controller, schedules + run history"
     }
     docker-proxy = container "docker-socket-proxy" { #ops; description "Read-only docker API, per host" }
     diun = container "Diun" { #ops; description "Image update notifier, per host" }
@@ -210,10 +222,16 @@ model {
 
   // delivery
   admin -> apps.gitea "pushes the repo"
+  admin -> github "pushes the repo"
   admin -> ops.controller "runs playbooks + tofu"
   ops.controller -> apps.gitea "pulls the repo"
   ops.controller -> ops.proxmox "tofu: VMs + LXC"
   ops.controller -> ops.hosts "ansible: apps over ssh"
+  admin -[https]-> ops.semaphore "runs + schedules playbooks"
+  ops.semaphore -> github "pulls the repo (testing)"
+  ops.semaphore -> ops.proxmox "ansible: pve nodes over ssh"
+  ops.semaphore -> ops.hosts "ansible: apps over ssh"
+  ops.controller -> ops.semaphore "copies vault, private.yml + overlays"
 
   // ingress
   edge.traefik -[https]-> identity.authentik.server "forward-auth"
@@ -222,15 +240,15 @@ model {
   edge.traefik -[https]-> apps.searxng.web "routes"
   edge.traefik -[https]-> apps.homepage "routes"
   edge.traefik -[https]-> apps.pdfcraft "routes"
-  edge.traefik -[https]-> apps.homelable "routes"
   edge.traefik -[https]-> media.nextcloud.web "routes"
   edge.traefik -[https]-> media.immich.server "routes"
   edge.traefik -[https]-> media.jellyfin "routes"
   edge.traefik -[https]-> media.paperless.web "routes"
   edge.traefik -[https]-> observability.grafana "routes"
-  edge.traefik -[https]-> observability.uptime-kuma "routes"
+  edge.traefik -[https]-> observability.gatus "routes"
   edge.traefik -[https]-> observability.prometheus "routes"
   edge.traefik -[https]-> automation.homeassistant "routes"
+  edge.traefik -[https]-> ops.semaphore "routes"
   edge.traefik -> cloudflare "ACME DNS-01 TXT records"
   edge.traefik -> letsencrypt "orders certificates"
   edge.ddns -> cloudflare "keeps A records current"
@@ -249,6 +267,7 @@ model {
   media.immich.server -[oidc]-> identity.authentik.server "login"
   media.jellyfin -[oidc]-> identity.authentik.server "login"
   media.paperless.web -[oidc]-> identity.authentik.server "login"
+  ops.semaphore -[oidc]-> identity.authentik.server "login"
 
   // storage
   media.nextcloud.web -[cifs]-> storage.samba "user files"
@@ -260,19 +279,20 @@ model {
   storage.pbs -> ntfy "job alerts"
 
   // home automation
-  automation.sensor -[mqtt]-> automation.mosquitto "publishes readings"
+  automation.sensor -[mqtt]-> automation.mosquitto "publishes readings, gets commands"
   automation.sensor -> automation.ap "wifi"
-  automation.homeassistant -[mqtt]-> automation.mosquitto "subscribes"
-  automation.homeassistant -> observability.influxdb "long-term history"
+  automation.sensor -> automation.ota "pulls firmware" { technology "HTTP" }
+  automation.homeassistant -[mqtt]-> automation.mosquitto "subscribes, sends commands"
+  admin -> automation.esphome "compiles firmware"
+  admin -> automation.ota "uploads firmware (scp)"
   automation.mqtt-exporter -[mqtt]-> automation.mosquitto "subscribes"
-  automation.esphome -> automation.sensor "flashes firmware"
 
   // observability
   observability.prometheus -[scrape]-> observability.node-exporter "host metrics"
   observability.prometheus -[scrape]-> automation.mqtt-exporter "sensor metrics"
   observability.grafana -> observability.prometheus "queries"
-  observability.grafana -> observability.influxdb "queries"
-  observability.uptime-kuma -[https]-> edge.traefik "probes every route"
+  observability.gatus -[https]-> edge.traefik "probes every route"
+  observability.gatus -> ntfy "down alerts"
   observability.rsyslog -[relp]-> observability.log-server "forwards every log line"
 
   // operations

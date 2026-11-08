@@ -16,6 +16,7 @@
     src: rsyslog.conf.j2
     dest: /etc/rsyslog.conf
     mode: "0644"
+    validate: /usr/sbin/rsyslogd -N1 -f %s
   notify: Restart rsyslog
 
 - name: Rotate local files

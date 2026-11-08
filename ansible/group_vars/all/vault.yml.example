@@ -29,11 +29,6 @@ grafana_pass: "CHANGE_ME"
 grafana_oidc_id: "CHANGE_ME"
 grafana_oidc_secret: "CHANGE_ME"
 
-influxdb_admin_pass: "CHANGE_ME"
-influxdb_admin_token: "CHANGE_ME"
-
-homelable_key: "CHANGE_ME"
-homelable_hash: "CHANGE_ME"
 
 searxng_secret: "CHANGE_ME"
 
@@ -56,6 +51,20 @@ pbs_token_secret: "CHANGE_ME"
 pbs_fingerprint: "CHANGE_ME"
 
 vault_netbird_setup_key: "CHANGE_ME"
+
+# semaphore on ctl-1 (apps/semaphore). key: head -c32 /dev/urandom | base64, losing it locks the key store
+semaphore_admin_pass: "CHANGE_ME"
+semaphore_key_encryption: "CHANGE_ME"
+semaphore_oidc_id: "CHANGE_ME"
+semaphore_oidc_secret: "CHANGE_ME"
+# api token of the guest-role semaphore user gatus reads the last runs with
+semaphore_gatus_token: "CHANGE_ME"
+
+# the one mqtt user every sensor and consumer logs in with (mqtt_user in app_settings.yml).
+# one line; roles/mqtt_exporter escapes backslash, quote, backtick, dollar for systemd. it's also in the firmware
+mqtt_password: "CHANGE_ME"
+# salt for the change-detection checksum of mqtt_password (roles/mosquitto), any random string
+mqtt_passwd_salt: "CHANGE_ME"
 
 wifi_ssid: "your-ssid"
 wifi_pass: "CHANGE_ME"

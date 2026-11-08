@@ -3,15 +3,13 @@
 - name: Base tools (time, cron, logs)
   import_playbook: base.yml
 - name: Deploy docker-proxy
-  import_playbook: deploy-dockerproxy.yml
+  import_playbook: deploy-docker-proxy.yml
 - name: Deploy traefik
   import_playbook: deploy-proxy.yml
 - name: Deploy pihole
   import_playbook: deploy-dns.yml
 - name: Deploy homepage
   import_playbook: deploy-dashboard.yml
-- name: Deploy cloudflare-ddns
-  import_playbook: deploy-utilities.yml
 - name: Deploy authentik
   import_playbook: deploy-authentik.yml
 - name: Deploy vaultwarden
@@ -22,30 +20,34 @@
   import_playbook: deploy-pdfcraft.yml
 - name: Deploy searxng
   import_playbook: deploy-searxng.yml
-- name: Deploy mosquitto
-  import_playbook: deploy-mosquitto.yml
-- name: Deploy mqtt-exporter
-  import_playbook: deploy-mqtt-exporter.yml
-- name: Deploy esphome
-  import_playbook: deploy-esphome.yml
-- name: Deploy home assistant
-  import_playbook: deploy-homeassistant.yml
-- name: Deploy homelable
-  import_playbook: deploy-homelable.yml
 - name: Deploy prometheus
-  import_playbook: deploy-prometheus.yml
-- name: Deploy influxdb
-  import_playbook: deploy-influxdb.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: prometheus
 - name: Deploy grafana
-  import_playbook: deploy-grafana.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: grafana
 - name: Deploy nginx
-  import_playbook: deploy-nginx.yml
-- name: Deploy uptime-kuma
-  import_playbook: deploy-uptime-kuma.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: nginx
+- name: Deploy cloudflare-ddns
+  import_playbook: deploy-app.yml
+  vars:
+    app: cloudflare-ddns
+- name: Deploy gatus
+  import_playbook: deploy-app.yml
+  vars:
+    app: gatus
+- name: Deploy semaphore
+  import_playbook: deploy-app.yml
+  vars:
+    app: semaphore
 - name: Deploy diun
   import_playbook: deploy-diun.yml
-- name: Deploy hostapd
-  import_playbook: deploy-hostapd.yml
+- name: Deploy iot gateway (lxc)
+  import_playbook: deploy-iot.yml
 # needs pve-3 powered on
 - name: Deploy storage (mergerfs + samba)
   import_playbook: deploy-storage.yml
