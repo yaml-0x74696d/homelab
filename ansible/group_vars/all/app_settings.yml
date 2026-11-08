@@ -36,6 +36,12 @@ gatus_ping_groups: [docker_hosts, podman_hosts, lxc_containers]
 gatus_auth_middlewares: [authentik]   # routes behind these get a backend check too
 gatus_data: /data                 # data dir inside the container
 gatus_db_file: data.db
+# scheduled semaphore templates: gatus alerts when a template's last run failed. ids from the ui's urls
+gatus_semaphore_templates:
+  - { name: repo-pull, id: 30 }
+  - { name: aide, id: 3 }
+  - { name: update, id: 32 }
+gatus_semaphore_interval: 10m
 
 # semaphore on ctl-1 (apps/semaphore, roles/ctl_base): a git clone, playbooks/repo-pull.yml updates it
 semaphore_repo_dir: "/home/{{ admin_user }}/homelab"
@@ -45,6 +51,7 @@ semaphore_repo_version: testing
 semaphore_private_dir: "/home/{{ admin_user }}/homelab-private"
 semaphore_aide_dir: /aide   # in the container, the aide hashes (AIDE_CHECKSUM_DIR)
 semaphore_admin_user: admin   # local break-glass next to authentik
+semaphore_project_id: 1       # the ui's only project
 
 # public names cloudflare-ddns points at the wan ip, @ = the domain itself. not traefik routes,
 # so not in apps.yml. ip6: the netbird vm's address too, proxied: through cloudflare

@@ -57,6 +57,8 @@ semaphore_admin_pass: "CHANGE_ME"
 semaphore_key_encryption: "CHANGE_ME"
 semaphore_oidc_id: "CHANGE_ME"
 semaphore_oidc_secret: "CHANGE_ME"
+# api token of the guest-role semaphore user gatus reads the last runs with
+semaphore_gatus_token: "CHANGE_ME"
 
 # the one mqtt user every sensor and consumer logs in with (mqtt_user in app_settings.yml).
 # one line; roles/mqtt_exporter escapes backslash, quote, backtick, dollar for systemd. it's also in the firmware

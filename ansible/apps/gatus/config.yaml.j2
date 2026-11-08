@@ -56,6 +56,22 @@ endpoints:
 {% endif %}
 {% endfor %}
 {% endfor %}
+{# scheduled semaphore runs: red while a template's last run failed #}
+{% for t in gatus_semaphore_templates %}
+  - name: "semaphore {{ t.name }}"
+    group: {{ apps.semaphore.host }}
+    url: "https://{{ apps.semaphore.routes[0].host }}.{{ domain }}/api/project/{{ semaphore_project_id }}/templates/{{ t.id }}"
+    interval: {{ gatus_semaphore_interval }}
+    headers:
+      Authorization: "Bearer {{ semaphore_gatus_token }}"
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].last_task.status != error"
+{% if ntfy_url %}
+    alerts:
+      - type: ntfy
+{% endif %}
+{% endfor %}
 {# traefik itself, so 'traefik down' isn't just every route at once #}
   - name: traefik
     group: edge

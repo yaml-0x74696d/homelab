@@ -21,7 +21,7 @@ Status: Accepted
 ## Decision
 
 The setup:
-- `playbooks/update.yml` with `roles/update`, run by hand from the controller
+- `playbooks/update.yml` with `roles/update`, scheduled in Semaphore every Saturday 14:00 without ctl-1 ([0031](0031-semaphore-on-a-pi.md)), by hand from the controller when needed. ctl-1 itself updates from the controller
 - Three plays, one host at a time (`serial: 1`): `lxc_containers`, then `docker_hosts` and `podman_hosts`, then `proxmox`. Guests first, so a bad package shows up before a node gets it
 - Explicit groups, not `all`: the NetBird VM updates through Nix ([0008](0008-nixos-for-the-dmz-box.md))
 - Before the plays, `roles/reach` checks every host. The part-time nodes and their guests (`part_time_nodes`, `guest_nodes` in `network.yml`) may be off: skipped, the run exits 0. Any other host that's down is skipped too, listed as DOWN, the run exits non-zero
@@ -48,7 +48,6 @@ How I hear about it:
 - Easier: no false reboot flags, and stale services get restarted instead of running on until the next reboot
 - Easier: an upgrade no longer means one AIDE accept per host
 
-- Harder: still only runs when I run it
 - Harder: `needrestart -r a` restarts `docker.service` on the docker VMs, and with it every container. The docker-ce upgrade did that already
 - Harder: needrestart restarts pve services on the nodes too (pveproxy, pvedaemon, the HA services)
 
@@ -56,6 +55,7 @@ How I hear about it:
 - Accepted: two full AIDE scans per host (check before, update after), so a full run takes about 2 hours, mostly on the pve nodes
 - Accepted: kept configs drift from the package defaults until I merge the listed conffiles by hand
 - Accepted: a host that's down at the start doesn't stop the run, the others still get updated. A failure during an update still stops it
+- Accepted: the weekly run is unattended. Its summary comes through ntfy, a failed run turns its Gatus check red ([0027](0027-gatus-generated-from-apps-map.md))
 
 - Later: the podman hosts update their images with `podman auto-update` ([0021](0021-podman-quadlets.md)). This run only covers the OS
-- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS updates), [0009](0009-aide-with-manual-accept.md) (AIDE), [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (image updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian guests), [0031](0031-semaphore-on-a-pi.md) (scheduled runs)
+- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS updates), [0009](0009-aide-with-manual-accept.md) (AIDE), [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (image updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian guests), [0027](0027-gatus-generated-from-apps-map.md) (failed runs), [0031](0031-semaphore-on-a-pi.md) (scheduled runs)

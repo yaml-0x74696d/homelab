@@ -38,6 +38,10 @@ The code it runs:
 - `ansible.cfg` needs a `.vault_pass`, so the clone gets a dummy one, the real password comes from the key store
 - Semaphore's public key goes to every host through `push-keys.yml`
 
+Schedules (set in the UI, Semaphore's own database):
+- `repo-pull` daily 11:45, `aide` daily 13:15, `update` Saturday 14:00 with `--limit 'all:!ctl-1'` ([0024](0024-ansible-run-os-updates.md))
+- Gatus reads each one's last run through the API (`gatus_semaphore_templates`, a guest-role user's token) and alerts when it failed
+
 AIDE hashes:
 - Semaphore keeps the accepted hashes in its own rw dir (`/srv/apps/semaphore/aide`, `AIDE_CHECKSUM_DIR`). That copy is the reference for every Debian host, ctl-1 included
 - `aide-accept.yml` accepts in Semaphore through the survey var `aide_accept=yes`, the diff stays in the task log
@@ -58,4 +62,4 @@ AIDE hashes:
 - Accepted: no backup of the Pi. Projects and templates are quick to redo, the run history is lost with the card
 - Accepted: the SD card wears, so the journal is volatile and goes to the log LXC ([0022](0022-central-logging-relp.md))
 
-- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0012](0012-no-kubernetes.md), [0014](0014-authentik-as-idp.md), [0016](0016-ansible-vault-for-secrets.md) (vault), [0021](0021-podman-quadlets.md), [0022](0022-central-logging-relp.md), [0024](0024-ansible-run-os-updates.md) (updates), [0026](0026-ufw-as-guest-firewall.md)
+- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0012](0012-no-kubernetes.md), [0014](0014-authentik-as-idp.md), [0016](0016-ansible-vault-for-secrets.md) (vault), [0021](0021-podman-quadlets.md), [0022](0022-central-logging-relp.md), [0024](0024-ansible-run-os-updates.md) (updates), [0026](0026-ufw-as-guest-firewall.md), [0027](0027-gatus-generated-from-apps-map.md) (failed runs)

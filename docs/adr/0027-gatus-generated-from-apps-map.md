@@ -14,7 +14,7 @@ Status: Accepted
 ## Decision
 
 - Gatus runs on docker-2 as a rootless Podman app in Kuma's slot (port 3001, `status.<domain>`)
-- `apps/gatus/config.yaml.j2` generates every check: each route in `apps.yml` (status and certificate expiry), Traefik, a ping for every guest in the inventory, the PVE and PBS ports, and the domain's A record
+- `apps/gatus/config.yaml.j2` generates every check: each route in `apps.yml` (status and certificate expiry), Traefik, a ping for every guest in the inventory, the PVE and PBS ports, the domain's A record, and the last run of each scheduled Semaphore template
 - Alerts go to ntfy, with server and topic split from the one `ntfy_url` ([0019](0019-ntfy-single-alert-channel.md))
 - A route behind authentik only proves the login (`[STATUS] == 302`), so an app with a port in the map gets a second check on its backend
 - The status page itself sits behind authentik: it shows the topology and internal IPs
@@ -31,4 +31,4 @@ Status: Accepted
 
 - Accepted: Gatus itself has no health check (its image is `scratch`, `healthcheck: false`)
 
-- Related: [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (Podman), [0026](0026-ufw-as-guest-firewall.md) (ufw)
+- Related: [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (Podman), [0026](0026-ufw-as-guest-firewall.md) (ufw), [0031](0031-semaphore-on-a-pi.md) (scheduled runs)
