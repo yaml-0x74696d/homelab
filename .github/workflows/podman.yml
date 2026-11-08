@@ -1,0 +1,32 @@
+---
+# the quadlet dry-run needs a debian container, so it runs here and not in ci.yml's pre-commit job (local: just quadlet)
+name: podman
+
+on:
+  push:
+    branches: [main, testing]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # rendered_config/example is kept fresh by ci.yml's render-podman hook
+  quadlet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container: debian:trixie   # same podman as the hosts
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - run: apt-get update && apt-get install -y --no-install-recommends podman
+
+      # bash: no git in the container, checkout falls back to a tarball
+      - run: bash scripts/check_quadlet.sh

@@ -21,6 +21,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30   # default is 6h
     permissions:
       contents: read
       pages: read   # configure-pages reads the site settings
@@ -53,6 +54,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30   # default is 6h
     permissions:
       pages: write
       id-token: write   # deploy-pages proves the run with an oidc token

@@ -35,6 +35,7 @@ How to run them (`justfile`):
 CI (`.github/workflows/`):
 - `ci.yml` has one job: `pre-commit run --all-files --hook-stage manual`, with the hook envs cached by the hash of `.pre-commit-config.yaml`
 - It checks out with `fetch-depth: 0`, so gitleaks sees the whole history
+- `podman.yml` runs what pre-commit can't: every rendered Podman app through `quadlet -dryrun -user` in a Debian container, locally `just quadlet`. The `apps.yml` schema play (`playbooks/ci-validate-apps.yml`) is a manual-stage hook
 - `pages.yml` builds the LikeC4 site on pushes to main that touch `architecture/**` (its own trigger, so its own file)
 - Actions are pinned by commit SHA, with the tag as a comment
 - `main` only changes through a PR with a green `checks` job, no bypass, no force-push or delete (ruleset). `testing` takes direct pushes, but no force-push or delete

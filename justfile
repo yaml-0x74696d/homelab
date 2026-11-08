@@ -2,6 +2,8 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 likec4 := "npx -y likec4@1.60.0"
 img_dir := "docs/img"
+container_cli := "podman"
+quadlet_image := "debian:trixie"   # same podman as the hosts, matches podman.yml
 
 # list recipes
 default:
@@ -32,6 +34,11 @@ deploy-app app:
 # podman apps rendered with the example values: rendered_config/example
 render:
     scripts/render_podman.sh example
+
+# rendered units through quadlet -dryrun in debian, like ci (.github/workflows/podman.yml)
+quadlet:
+    {{ container_cli }} run --rm -v "$PWD:/repo:ro" {{ quadlet_image }} bash -c \
+        'apt-get update -qq && apt-get install -y -qq --no-install-recommends podman >/dev/null && bash /repo/scripts/check_quadlet.sh'
 
 # export every view as png for the docs
 c4:

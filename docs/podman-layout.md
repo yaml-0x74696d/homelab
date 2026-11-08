@@ -82,6 +82,8 @@ git diff rendered_config/
 
 - Every app is rendered with the example values into `rendered_config/example/`, vault values show as `<vault:name>`
 - CI fails when the folder is stale
+- `just quadlet` (CI: `.github/workflows/podman.yml`) runs every rendered app through `quadlet -dryrun -user` in Debian trixie (`scripts/check_quadlet.sh`). The `apps-schema` hook (`just check`) runs every Podman entry in `apps.yml` through `validate_argument_spec` against `roles/podman_app/meta/argument_specs.yml` (`playbooks/ci-validate-apps.yml`)
+- Ports unique per host and >= 1024, uids unique and <= 65534, routes unique, images fully qualified: `scripts/check_wiring.py` (pre-commit)
 
 ## Conventions
 

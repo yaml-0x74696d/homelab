@@ -10,10 +10,10 @@
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 5 Podman apps, 24 Ansible roles, 33 playbooks, 23 C4 views
+- 3 Proxmox nodes, 4 VMs + 3 LXCs, 16 compose apps + 5 Podman apps, 24 Ansible roles, 34 playbooks, 23 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
-- Every check runs the same locally and in CI: 22 pre-commit hooks (`just check`)
+- Every check runs the same locally and in CI: 26 pre-commit hooks (`just check`, the `apps.yml` schema included) and the Podman units through `quadlet -dryrun` (`just quadlet`)
 
 ## Hardware
 
@@ -143,7 +143,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 ## Future plans
 
-- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook, CI quadlet dry-run
+- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook
 - Phase 2: edge = NixOS VM on pve-1 (1 GB) running Traefik + AdGuard Home natively (replaces the Traefik + Pi-hole containers)
 - Phase 3–4: docker-2 / docker-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
 - Phase 6: docker-1 → Podman (Authentik, SearXNG)

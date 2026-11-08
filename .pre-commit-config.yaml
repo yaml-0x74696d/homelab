@@ -2,7 +2,7 @@
 # commit runs the fast hooks; `--hook-stage manual` runs all of them (ci, just check)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: check-added-large-files
         exclude: ^docs/img/
@@ -24,17 +24,17 @@ repos:
         args: [--markdown-linebreak-ext=md]
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.38.0
+    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530  # frozen: v1.38.0
     hooks:
       - id: yamllint
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: 745eface02aef23e168a8afb6b5737818efbea95  # frozen: v0.11.0.1
     hooks:
       - id: shellcheck
 
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.30.1
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e  # frozen: v8.30.1
     hooks:
       - id: gitleaks
       # staged changes only on commit, so also scan every commit (not the dir: caches live there)
@@ -46,17 +46,17 @@ repos:
 
   # the workflows themselves: actionlint for syntax + expressions, zizmor for security
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.12
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca  # frozen: v1.7.12
     hooks:
       - id: actionlint
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.31.1
+    rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f  # frozen: v1.31.1
     hooks:
       - id: zizmor
 
   - repo: https://github.com/tofuutils/pre-commit-opentofu
-    rev: v2.4.2
+    rev: c43835bd4b4962a2121e6dcdceaaf1440d68885d  # frozen: v2.4.2
     hooks:
       - id: tofu_fmt
       - id: tofu_validate
@@ -79,6 +79,15 @@ repos:
         files: ^(ansible/(group_vars|host_vars|apps|inventory)|scripts/check_wiring)
         pass_filenames: false
 
+      # templates aren't executable, so the shellcheck hook skips them
+      - id: shellcheck-templates
+        name: shellcheck *.sh.j2 (rendered with dummy vars)
+        language: python
+        additional_dependencies: [jinja2==3.1.6, shellcheck-py==0.11.0.1]
+        entry: python3 scripts/shellcheck_templates.py
+        files: (\.sh\.j2$|^scripts/shellcheck_templates)
+        pass_filenames: false
+
       # ansible-lint brings ansible-core along
       - id: render-podman
         name: rendered_config/example up to date
@@ -86,6 +95,16 @@ repos:
         additional_dependencies: [ansible-lint==26.10.1]
         entry: scripts/render_podman.sh check
         files: ^(ansible/|scripts/render_podman|rendered_config/)
+        pass_filenames: false
+        stages: [manual]
+
+      # every podman entry in apps.yml against podman_app's argument_specs
+      - id: apps-schema
+        name: apps.yml against the podman_app schema
+        language: python
+        additional_dependencies: [ansible-lint==26.10.1]
+        entry: bash -c 'cd ansible && ansible-playbook playbooks/ci-validate-apps.yml'
+        files: ^ansible/(group_vars/all/apps\.yml|roles/podman_app/meta/|playbooks/ci-validate-apps)
         pass_filenames: false
         stages: [manual]
 
@@ -106,3 +125,19 @@ repos:
         files: ^architecture/
         pass_filenames: false
         stages: [manual]
+
+      - id: check-c4
+        name: c4 house style
+        language: node
+        additional_dependencies: [likec4@1.60.0]
+        entry: python3 scripts/check_c4.py
+        files: ^(architecture/|scripts/check_c4)
+        pass_filenames: false
+        stages: [manual]
+
+      - id: check-adr
+        name: adr house style
+        language: python
+        entry: python3 scripts/check_adr.py
+        files: ^(docs/adr/|scripts/check_adr)
+        pass_filenames: false

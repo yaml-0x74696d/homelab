@@ -22,6 +22,7 @@ env:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 30   # default is 6h
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -57,4 +58,10 @@ jobs:
       # tofu validate reads admin_ssh_pubkey_file (hosts.yml); throwaway key
       - run: mkdir -p ~/.ssh && ssh-keygen -q -t ed25519 -N '' -f ~/.ssh/id_ed25519
 
-      - run: pre-commit run --all-files --hook-stage manual --show-diff-on-failure
+      - env:
+          SKIP: zizmor   # runs below, the only step with the token
+        run: pre-commit run --all-files --hook-stage manual --show-diff-on-failure
+
+      - env:
+          GH_TOKEN: ${{ github.token }}   # zizmor online audits (pinned shas, advisories)
+        run: pre-commit run zizmor --all-files
