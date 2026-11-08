@@ -128,7 +128,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - TLS everywhere via Let's Encrypt DNS-01 (Cloudflare), no port 80 forwarded from the WAN
 - AIDE on every host + the NetBird VM: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
-- Backups: PBS, scoped token that can only write, DB dumps before each run
+- Backups: PBS, scoped token that can only write, DB dumps before each run; a restore is rehearsed before each rebuild ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
 - Secrets: Ansible Vault; gitleaks on every commit and over the full history in CI
 
 ## Decisions

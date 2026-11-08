@@ -146,6 +146,7 @@
     - name: AIDE file integrity
       ansible.builtin.include_role:
         name: aide
+      tags: [aide]
 
   handlers:
     - name: Restart docker

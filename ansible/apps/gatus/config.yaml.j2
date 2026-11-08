@@ -106,11 +106,14 @@ endpoints:
       - type: ntfy
 {% endif %}
 {% endfor %}
+{# a bare tcp connect makes pbs log a failed tls handshake every run. self-signed cert #}
   - name: pbs
     group: proxmox
-    url: "tcp://{{ pve3_ip }}:{{ pbs_port }}"
+    url: "https://{{ pve3_ip }}:{{ pbs_port }}"
     interval: {{ gatus_interval }}
-    conditions: ["[CONNECTED] == true"]
+    client:
+      insecure: true
+    conditions: ["[STATUS] == 200"]
 {% if ntfy_url %}
     alerts:
       - type: ntfy
