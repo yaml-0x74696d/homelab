@@ -14,7 +14,8 @@
 
 - Adds the `pbs-client` apt repo (deb822, Proxmox release key) and installs `proxmox-backup-client` and `sqlite3`
 - `/etc/pbs.env` (mode `0600`) holds the repository, the token secret and the server fingerprint
-- Installs `/usr/local/sbin/pbs-backup`, `pbs-backup.service` (`Requires=docker.service`) and a `.timer`
+- Checks that each Podman postgres job names a Podman app (`app`), whose svc user it dumps as
+- Installs `/usr/local/sbin/pbs-backup`, `pbs-backup.service` and a `.timer`. The unit has `Requires=docker.service` only while a postgres job still runs on Docker
 - Each run:
   1. Takes a lock
   2. Creates a fresh staging folder
@@ -30,7 +31,7 @@
 
 | Type | How |
 |---|---|
-| `postgres` | `pg_dump --clean --if-exists` inside the container, user and database from the container's own env |
+| `postgres` | `pg_dump --clean --if-exists` inside the container, user and database from the container's own env. Docker: `docker exec`. Podman (`podman: true`): `podman exec` as `svc-<app>` through `runuser` with its `XDG_RUNTIME_DIR` |
 | `sqlite` | Online `.backup`, which is safe while the app is writing (unlike `cp`). A missing file is skipped, not an error |
 
 - Every dump is checked to be non-empty, or the run fails
@@ -61,7 +62,7 @@
 |---|---|---|
 | `pbs_on_calendar` | `*-*-* 20:00:00` | When the backup runs (systemd OnCalendar) |
 | `pbs_randomized_delay` | `20m` | Random delay, so the three hosts don't start at once |
-| `pbs_jobs` | `[]` | Databases to dump: `{name, type: postgres\|sqlite, container?, path?, data_dir?, podman?}`, set in `host_vars`. `podman: true` = `path` is under `podman_apps_root` |
+| `pbs_jobs` | `[]` | Databases to dump: `{name, type: postgres\|sqlite, container?, path?, data_dir?, podman?, app?}`, set in `host_vars`. `podman: true` = `path` is under `podman_apps_root`, postgres runs `podman exec` as `svc-<app>` |
 | `pbs_exclude` | `[]` | Extra excludes for `apps.pxar` and `podman-apps.pxar`, set in `host_vars` |
 | `pbs_datastore` | `homelab` | Datastore on the PBS server |
 | `pbs_token_id` | `backup@pbs!client` | API token |
@@ -71,6 +72,7 @@
 | `pbs_token_secret`, `pbs_fingerprint` | vault | Token secret and server fingerprint |
 | `pbs_ntfy_url`, `pbs_ntfy_token` | `ntfy_url`, `ntfy_token` | Where failure alerts go, empty = off |
 | `pbs_staging_dir`, `apps_root`, `ntfy_timeout` | group_vars | Shared with other roles |
+| `podman_apps_root`, `podman_svc_prefix` | group_vars | Shared with `roles/podman_app` |
 
 ## Server side (by hand, not in this role)
 

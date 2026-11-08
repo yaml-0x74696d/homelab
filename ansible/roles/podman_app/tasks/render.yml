@@ -13,6 +13,7 @@
         state: directory
         mode: "0755"
       loop: "{{ ['container.d', 'config', 'secrets']
+                + ([podman_app_name + '.pod.d'] if podman_app_pod else [])
                 + podman_app_entry.containers | map(attribute='name') | map('regex_replace', '$', '.container.d') | list
                 + podman_app_config | selectattr('state', 'eq', 'directory') | map(attribute='path') | map('regex_replace', '^', 'config/') | list }}"
 
@@ -39,6 +40,20 @@
       loop: "{{ podman_app_entry.containers }}"
       loop_control:
         label: "{{ item.name }}"
+
+    - name: Pod map settings for {{ podman_app_name }}
+      ansible.builtin.template:
+        src: 50-pod.conf.j2
+        dest: "{{ podman_app_render_app }}/{{ podman_app_name }}.pod.d/50-map.conf"
+        mode: "0644"
+      when: podman_app_pod
+
+    - name: Pod file for {{ podman_app_name }}
+      ansible.builtin.template:
+        src: "{{ podman_app_src }}/{{ podman_app_name }}.pod.j2"
+        dest: "{{ podman_app_render_app }}/{{ podman_app_name }}.pod"
+        mode: "0644"
+      when: podman_app_pod
 
     - name: Config files of {{ podman_app_name }}
       ansible.builtin.copy:

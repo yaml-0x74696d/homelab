@@ -31,15 +31,37 @@
     quiet: true
   when: podman_app_entry.hosts is defined
 
-# cifs, keep-id and pods land with the paperless pr
-- name: Check built features for {{ podman_app_name }}
+# still not built: per-app .network, init containers. absent/purged are refused above
+- name: Check the containers of {{ podman_app_name }}
   ansible.builtin.assert:
     that:
-      - podman_app_entry.cifs | default([]) | length == 0
-      - podman_app_entry.container_uid | default(0) == 0
-      - podman_app_entry.containers | length == 1
-    fail_msg: "{{ podman_app_name }}: cifs, keep-id and pods aren't in podman_app yet"
+      - podman_app_entry.containers | map(attribute='name') | unique | length == podman_app_entry.containers | length
+      - podman_app_name in podman_app_entry.containers | map(attribute='name')
+      - item.name == podman_app_name or item.name is match(podman_app_name ~ '-')
+      - item.after | default([]) | difference(podman_app_entry.containers | map(attribute='name')) | length == 0
+      - item.name not in item.after | default([])
+      - item.cifs | default([]) | difference(podman_app_entry.cifs | default([]) | map(attribute='path')) | length == 0
+      - podman_app_entry.container_uid | default(0) == 0 or item.user is defined
+    fail_msg: "{{ podman_app_name }}/{{ item.name }}: duplicate name, no container named like the app, not <app>-<role>, after/cifs naming
+      something the entry doesn't have, or keep-id without user"
     quiet: true
+  loop: "{{ podman_app_entry.containers }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Check the cifs shares of {{ podman_app_name }}
+  ansible.builtin.assert:
+    that:
+      - item.user in smb_passwords | default({})
+      - podman_app_entry.cifs | map(attribute='path') | select('eq', item.path) | list | length == 1
+      - item.path is not search('^/|\\.\\.')
+      - (cifs_mount_root ~ '/' ~ item.path) is not match(podman_apps_root ~ '(/|$)')
+    fail_msg: "{{ podman_app_name }}: cifs {{ item.path }} has no smb_passwords[{{ item.user }}], is listed twice,
+      isn't a plain relative path or lands in {{ podman_apps_root }}"
+    quiet: true
+  loop: "{{ podman_app_entry.cifs | default([]) }}"
+  loop_control:
+    label: "{{ item.path }}"
 
 - name: Check the secret sources of {{ podman_app_name }}
   ansible.builtin.assert:
@@ -60,6 +82,16 @@
   become: false
   register: podman_app_tpl_stat
   failed_when: not podman_app_tpl_stat.stat.exists
+
+# ports, AddHost= and the network belong to the pod, podman refuses them on a pod's container
+- name: Check the pod template for {{ podman_app_name }}
+  ansible.builtin.stat:
+    path: "{{ podman_app_src }}/{{ podman_app_name }}.pod.j2"
+  delegate_to: localhost
+  become: false
+  register: podman_app_pod_stat
+  failed_when: not podman_app_pod_stat.stat.exists
+  when: podman_app_pod
 
 - name: Check the allow_from names of {{ podman_app_name }}
   ansible.builtin.assert:
@@ -98,6 +130,14 @@
   loop: [subuid, subgid]
   register: podman_app_subid
 
+# rootless gets a device only through the svc user's groups (render for /dev/dri)
+- name: Find the device groups of {{ podman_app_name }}
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ podman_app_entry.containers | map(attribute='devices', default=[]) | flatten | unique }}"
+  register: podman_app_devices
+  failed_when: not podman_app_devices.stat.exists
+
 - name: Create group {{ podman_app_user }}
   ansible.builtin.group:
     name: "{{ podman_app_user }}"
@@ -108,7 +148,7 @@
     name: "{{ podman_app_user }}"
     uid: "{{ podman_app_entry.uid }}"
     group: "{{ podman_app_user }}"
-    groups: "{{ podman_svc_group }}"
+    groups: "{{ [podman_svc_group] + podman_app_devices.results | default([]) | map(attribute='stat.gr_name') | unique }}"
     append: true
     home: "{{ podman_app_home }}"
     shell: /usr/sbin/nologin
@@ -154,19 +194,101 @@
     mode: '0755'
 
 # owner = a uid inside the container, mapped to the host id of the svc user's range. the app dir is then
-# passable (0711) so that uid gets through it to its own dir without listing it
+# passable (0711) so that uid gets through it to its own dir without listing it.
+# keep-id puts container_uid on svc-<name> and shifts the uids above it down by one
 - name: Ensure data dirs for {{ podman_app_name }}
   ansible.builtin.file:
     path: "{{ podman_app_dir }}{{ ('/' + item.path) if item.path else '' }}"
     state: directory
-    owner: "{{ podman_app_user if item.owner | default(0) == 0 else podman_app_entry.uid * podman_app_subid_count + item.owner - 1 }}"
-    group: "{{ podman_app_user if item.owner | default(0) == 0 else podman_app_entry.uid * podman_app_subid_count + item.owner - 1 }}"
+    owner: "{{ podman_app_dir_owner }}"
+    group: "{{ podman_app_dir_owner }}"
     mode: "{{ item.mode | default('0750') }}"
+  vars:
+    podman_app_cuid: "{{ podman_app_entry.container_uid | default(0) }}"
+    podman_app_dir_uid: "{{ item.owner | default(podman_app_cuid) | int }}"
+    podman_app_dir_owner: "{{ podman_app_user if podman_app_dir_uid | int == podman_app_cuid | int
+                              else podman_app_entry.uid * podman_app_subid_count + podman_app_dir_uid | int
+                                   - (1 if podman_app_dir_uid | int > podman_app_cuid | int else 0) }}"
   loop: "{{ [{'path': '', 'mode': '0711' if podman_app_entry.dirs | default([]) | selectattr('owner', 'defined') | list | length > 0 else '0750'}]
             + podman_app_entry.dirs | default([]) }}"
   loop_control:
     label: "{{ item.path or '.' }}"
   when: not (ansible_check_mode and podman_app_user_new)
+
+# host mounts, not podman cifs volumes: rootless can't mount cifs. the creds file stays on the host for fstab
+- name: Install cifs-utils for {{ podman_app_name }}
+  ansible.builtin.apt:
+    name: cifs-utils
+    state: present
+  when: podman_app_entry.cifs | default([]) | length > 0
+
+- name: Ensure the cifs credentials dir
+  ansible.builtin.file:
+    path: "{{ podman_app_cifs_creds_dir }}"
+    state: directory
+    mode: '0700'
+  when: podman_app_entry.cifs | default([]) | length > 0
+
+- name: Write the cifs credentials of {{ podman_app_name }}
+  ansible.builtin.copy:
+    dest: "{{ podman_app_cifs_creds_dir }}/{{ item.share }}.creds"
+    mode: '0600'
+    content: |
+      username={{ item.user }}
+      password={{ smb_passwords[item.user] }}
+  loop: "{{ podman_app_entry.cifs | default([]) }}"
+  loop_control:
+    label: "{{ item.share }}"
+  no_log: true
+  diff: false
+
+# uid/gid = svc-<name>: root in the container, or container_uid with keep-id.
+# present, not mounted: x-systemd.automount mounts it on first access, and again after a drop
+- name: Pool shares in fstab for {{ podman_app_name }}
+  ansible.posix.mount:
+    path: "{{ cifs_mount_root }}/{{ item.path }}"
+    src: "//{{ storage_ip }}/{{ item.share }}"
+    fstype: cifs
+    opts: "{{ (['credentials=' ~ podman_app_cifs_creds_dir ~ '/' ~ item.share ~ '.creds',
+                'uid=' ~ podman_app_entry.uid, 'gid=' ~ podman_app_entry.uid,
+                'file_mode=' ~ item.file_mode | default('0660'), 'dir_mode=' ~ item.dir_mode | default('0770'),
+                'vers=' ~ podman_app_cifs_vers, 'mfsymlinks', 'nofail', '_netdev', 'x-systemd.automount']
+               + item.opts | default([])) | join(',') }}"
+    state: present
+  loop: "{{ podman_app_entry.cifs | default([]) }}"
+  loop_control:
+    label: "{{ item.path }}"
+  register: podman_app_fstab
+  notify: Restart app
+
+# fails while something still holds it (the docker app before its cutover)
+- name: Unmount changed pool shares of {{ podman_app_name }}
+  ansible.posix.mount:
+    path: "{{ cifs_mount_root }}/{{ item.item.path }}"
+    state: unmounted
+  loop: "{{ podman_app_fstab.results | default([]) | selectattr('changed') }}"
+  loop_control:
+    label: "{{ item.item.path }}"
+
+- name: Name the cifs automount units of {{ podman_app_name }}
+  ansible.builtin.command: "systemd-escape --path --suffix=automount {{ cifs_mount_root }}/{{ item.path }}"
+  loop: "{{ podman_app_entry.cifs | default([]) }}"
+  loop_control:
+    label: "{{ item.path }}"
+  register: podman_app_automounts
+  changed_when: false
+  check_mode: false
+
+- name: Start the cifs automounts of {{ podman_app_name }}
+  ansible.builtin.systemd_service:
+    name: "{{ item.stdout }}"
+    state: started
+    daemon_reload: "{{ podman_app_fstab is changed }}"   # the fstab generator makes the units
+  loop: "{{ podman_app_automounts.results | default([]) }}"
+  loop_control:
+    label: "{{ item.stdout }}"
+  # a fresh fstab line has no unit yet in --check
+  when: not (ansible_check_mode and podman_app_fstab is changed)
 
 - name: Ensure quadlet dirs for {{ podman_app_name }}
   ansible.builtin.file:
@@ -177,6 +299,7 @@
     mode: '0750'
   loop: "{{ [podman_app_home + '/.config', podman_app_home + '/.config/containers', podman_app_quadlet_dir,
             podman_app_quadlet_dir + '/container.d']
+            + ([podman_app_quadlet_dir + '/' + podman_app_name + '.pod.d'] if podman_app_pod else [])
             + podman_app_entry.containers | map(attribute='name') | map('regex_replace', '^(.*)$', podman_app_quadlet_dir + '/\\1.container.d') }}"
   when: not (ansible_check_mode and podman_app_user_new)
 
@@ -215,6 +338,26 @@
     label: "{{ item.name }}"
   notify: [Reload user units, Restart app]
   when: not (ansible_check_mode and podman_app_user_new)
+
+- name: Pod map settings for {{ podman_app_name }}
+  ansible.builtin.template:
+    src: 50-pod.conf.j2
+    dest: "{{ podman_app_quadlet_dir }}/{{ podman_app_name }}.pod.d/50-map.conf"
+    owner: "{{ podman_app_user }}"
+    group: "{{ podman_app_user }}"
+    mode: '0640'
+  notify: [Reload user units, Restart app]
+  when: podman_app_pod and not (ansible_check_mode and podman_app_user_new)
+
+- name: Pod file for {{ podman_app_name }}
+  ansible.builtin.template:
+    src: "{{ podman_app_src }}/{{ podman_app_name }}.pod.j2"
+    dest: "{{ podman_app_quadlet_dir }}/{{ podman_app_name }}.pod"
+    owner: "{{ podman_app_user }}"
+    group: "{{ podman_app_user }}"
+    mode: '0640'
+  notify: [Reload user units, Restart app]
+  when: podman_app_pod and not (ansible_check_mode and podman_app_user_new)
 
 # apps/<name>/config/ mirrors <app dir>/config/. root-owned so the app can't rewrite it, world-readable
 # because workers often run as a non-root uid (lands on a subuid = "other"). secrets go into podman secrets

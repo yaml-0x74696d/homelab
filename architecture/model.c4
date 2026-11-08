@@ -209,6 +209,7 @@ model {
     }
     docker-proxy = container "docker-socket-proxy" { #ops; description "Read-only docker API, per host" }
     diun = container "Diun" { #ops; description "Image update notifier, per host" }
+    podman-updates = container "podman auto-update" { #ops; description "Auto-update with rollback + newer-tag check, per host" }
     chrony = container "chrony" { #ops; description "Time sync, per VM" }
   }
 
@@ -299,5 +300,6 @@ model {
   apps.homepage -> ops.docker-proxy "container status"
   ops.diun -> ops.docker-proxy "watches images"
   ops.diun -> ntfy "update alerts"
+  ops.podman-updates -> ntfy "update alerts"
   ops.chrony -[nts]-> nts "authenticated time"
 }

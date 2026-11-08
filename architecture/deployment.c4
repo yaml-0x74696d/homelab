@@ -13,6 +13,7 @@ deployment {
         instanceOf edge.ddns
         instanceOf ops.docker-proxy
         instanceOf ops.diun
+        instanceOf ops.podman-updates
         instanceOf storage.pbs-client
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
@@ -44,6 +45,7 @@ deployment {
         instanceOf edge.ddns
         instanceOf ops.docker-proxy
         instanceOf ops.diun
+        instanceOf ops.podman-updates
         instanceOf storage.pbs-client
         instanceOf remote.router-peer
         instanceOf observability.node-exporter
@@ -70,6 +72,7 @@ deployment {
         instanceOf media.paperless
         instanceOf ops.docker-proxy
         instanceOf ops.diun
+        instanceOf ops.podman-updates
         instanceOf storage.pbs-client
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
@@ -96,6 +99,7 @@ deployment {
     ctl1 = host "ctl-1" {
       description "Raspberry Pi 3 B+, Pi OS Lite, bare metal outside the cluster, 4c / 1G"
       instanceOf ops.semaphore
+      instanceOf ops.podman-updates
       instanceOf observability.node-exporter
       instanceOf observability.rsyslog
       instanceOf ops.chrony

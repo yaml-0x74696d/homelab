@@ -23,8 +23,8 @@ Rootless, one user per app:
 - The UIDs are fixed in the apps map
 
 Apps as quadlets:
-- A new `podman_app` role renders quadlet units from Jinja templates (`*.container.j2`, `*.pod.j2`, `*.network.j2`)
-- Apps with more than one container get one `.pod`
+- A new `podman_app` role renders quadlet units from Jinja templates (`*.container.j2`, `*.pod.j2`)
+- Apps with more than one container get one `.pod`: its containers talk over 127.0.0.1, the main one is named like the app, the rest `<app>-<role>`
 - One central apps map in `group_vars/all/apps.yml` describes each app: host, uid, units, secrets, dirs, cifs, `allow_from`, routes
 - The playbooks stay thin
 
@@ -32,6 +32,7 @@ Updates:
 - `AutoUpdate=registry` with a `podman-auto-update.timer` per user, weekly (Sunday 13:00, `podman_base_auto_update_time`) with a random delay
 - Every container has a `HealthCmd` and `Notify=healthy`, so an image that starts but doesn't work is rolled back. An image that can't run a check (`scratch`) is marked `healthcheck: false` in the map
 - A wrapper around `podman auto-update` (`roles/podman_base`) pushes updated, rolled back and failed units to ntfy. App down/up is Gatus' job, so there is no `OnFailure=`
+- A pinned tag (databases, Authentik) only gets rebuilds of that tag. A weekly check (`podman-new-tags`, `roles/podman_base`) lists each image's tags with `skopeo` and pushes newer ones to ntfy
 
 Secrets and access:
 - Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), as a value or rendered into a config file, so no `.env` file sits on disk
@@ -41,7 +42,7 @@ Secrets and access:
 Storage:
 - CIFS mounts use `x-systemd.automount`, so a dropped share is remounted on the next access
 - Services that use CIFS paths wait for the share: `ExecStartPre=/usr/bin/ls <path>` (the access triggers the automount), then `ExecStartPre=/usr/bin/findmnt -t cifs <path>`, + `Restart=on-failure` with backoff (an assert never triggers `Restart=`, and autofs alone counts as a mountpoint)
-- `UserNS=keep-id` maps the container's UID onto `svc-<app>`
+- `UserNS=keep-id` maps the container's UID onto `svc-<app>` (gid = uid, on the pod for a pod), and every container then sets `User=`
 
 Rollout:
 - The host OS stays Debian 13
@@ -57,7 +58,7 @@ Rollout:
 - Easier: systemd owns the start order, the restarts and the mount dependencies
 
 - Harder: rootless apps can't share a container network. App-to-app traffic goes over `<host ip>:<port>`, with a firewall rule for each caller
-- Harder: more files per app (one unit per container, pod and network) instead of one compose file
+- Harder: more files per app (one unit per container and pod) instead of one compose file
 
 - Accepted: an update can still break a service between two weekly runs. Health checks and rollback limit the damage, and ntfy reports it
 

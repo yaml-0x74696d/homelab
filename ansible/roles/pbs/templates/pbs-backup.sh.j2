@@ -9,6 +9,8 @@ APPS="{{ apps_root }}"
 PODMAN_APPS="{{ podman_apps_root }}"   # podman apps, skipped if the dir is missing
 
 log()    { logger -t pbs-backup "$*"; echo "$*"; }
+# podman apps are rootless, one svc user each. runuser: root only, no sudo log line per dump
+as()     { local u=$1; shift; runuser -u "$u" -- env XDG_RUNTIME_DIR="/run/user/$(id -u "$u")" "$@"; }
 notify() {
 {% if pbs_ntfy_url and pbs_ntfy_token %}
   curl -fsS -m {{ ntfy_timeout }} -H "Authorization: Bearer {{ pbs_ntfy_token }}" -H "Title: pbs backup" -d "$1" "{{ pbs_ntfy_url }}" || true
@@ -34,8 +36,14 @@ rm -rf "$STAGING"; install -d -m 0700 "$STAGING"
 {% for j in pbs_jobs %}
 {% if j.type == 'postgres' %}
 log "dump postgres {{ j.name }}"
+{% if j.podman | default(false) %}
+as "{{ podman_svc_prefix }}{{ j.app }}" podman exec {{ j.container }} \
+  sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' \
+  > "$STAGING/{{ j.name }}.sql" || fail "pg_dump {{ j.name }}"
+{% else %}
 docker exec {{ j.container }} sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' \
   > "$STAGING/{{ j.name }}.sql" || fail "pg_dump {{ j.name }}"
+{% endif %}
 [ -s "$STAGING/{{ j.name }}.sql" ] || fail "pg_dump {{ j.name }} wrote an empty file"
 {% elif j.type == 'sqlite' %}
 {% set base = '$PODMAN_APPS' if j.podman | default(false) else '$APPS' %}

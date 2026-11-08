@@ -11,10 +11,15 @@ podman_base_packages:
   - acl
   - jq
   - bsdextrautils   # column, for `apps ps`
+  - skopeo          # tag lists for podman-new-tags
 
 podman_base_ntfy_env: /etc/podman-ntfy.env
 podman_base_wrapper: /usr/local/bin/podman-auto-update-ntfy
 podman_base_apps_helper: /usr/local/bin/apps   # `apps ps` = every svc user's containers
+podman_base_new_tags: /usr/local/bin/podman-new-tags
 
 # one time for every svc user's podman-auto-update.timer, upstream adds RandomizedDelaySec=900
 podman_base_auto_update_time: "Sun *-*-* 13:00:00"   # midday, someone is around to fix it
+
+# newer tags of pinned images, weekly, an hour before auto-update
+podman_base_new_tags_time: "Sun *-*-* 12:00:00"

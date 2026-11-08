@@ -1,9 +1,16 @@
 # managed by ansible (roles/podman_app), from apps.yml: {{ podman_app_name }} / {{ item.name }}
+{% set cu = podman_app_entry.container_uid | default(0) %}
 [Container]
 ContainerName={{ item.name }}
 Image={{ item.image }}:{{ item.tag }}
 {% if item.auto_update | default(true) %}
 AutoUpdate=registry
+{% endif %}
+{% if podman_app_pod %}
+Pod={{ podman_app_name }}.pod
+{% elif cu != 0 %}
+{# gid = uid, true for every image so far #}
+UserNS=keep-id:uid={{ cu }},gid={{ cu }}
 {% endif %}
 {% if item.user is defined %}
 User={{ item.user }}
@@ -23,3 +30,27 @@ DropCapability={{ cap }}
 {% for cap in item.add_caps | default([]) %}
 AddCapability={{ cap }}
 {% endfor %}
+{% for dev in item.devices | default([]) %}
+AddDevice={{ dev }}
+{% endfor %}
+{% if item.devices | default([]) | length > 0 %}
+{# svc user's own groups (the device's) into the container, needs crun #}
+GroupAdd=keep-groups
+{% endif %}
+{% if item.after | default([]) | length > 0 %}
+
+[Unit]
+{% for dep in item.after %}
+Requires={{ dep }}.service
+After={{ dep }}.service
+{% endfor %}
+{% endif %}
+{% if item.cifs | default([]) | length > 0 %}
+
+[Service]
+{# ls triggers the automount, findmnt fails on a bare autofs or empty dir; Restart= retries #}
+{% for p in item.cifs %}
+ExecStartPre=/usr/bin/ls {{ cifs_mount_root }}/{{ p }}
+ExecStartPre=/usr/bin/findmnt -t cifs {{ cifs_mount_root }}/{{ p }}
+{% endfor %}
+{% endif %}

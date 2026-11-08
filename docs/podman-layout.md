@@ -8,6 +8,8 @@ Where a Podman app is described in the repo, where its files land on the host, a
 |---|---|
 | host (or `hosts:` for one copy per host), uid, port, image + tag, secrets, dirs, who may reach it | `group_vars/all/apps.yml` |
 | what a container mounts, publishes, checks | `apps/<app>/<container>.container.j2` |
+| a pod's ports and hosts (more than one container) | `apps/<app>/<app>.pod.j2` |
+| pool shares, start order, keep-id, devices | `group_vars/all/apps.yml` (`cifs`, `after`, `container_uid`, `devices`) |
 | an app's config files | `apps/<app>/config/` (`*.j2` rendered, the rest copied) |
 | a config file that isn't public | `<private_dir>/apps/<app>/config/` |
 | a secret's value | `group_vars/all/vault.yml` or a template in `apps/<app>/` |
@@ -23,6 +25,7 @@ ansible/
 ├── group_vars/all/apps.yml      the map: one entry per app
 ├── apps/<app>/
 │   ├── <container>.container.j2 one per container
+│   ├── <app>.pod.j2             only with more than one container
 │   ├── <secret>.j2              a secret built from a template
 │   └── config/                  mirrored to the host
 ├── roles/podman_base/           once per VM: podman, auto-update, the apps helper
@@ -37,10 +40,14 @@ rendered_config/example/<app>/   what the role writes, with example values
 /home/svc-<app>/.config/containers/systemd/
 ├── <container>.container              from apps/<app>/<container>.container.j2
 ├── container.d/10-homelab.conf        house rules, every container of the app
-└── <container>.container.d/50-map.conf  from the apps.yml entry
+├── <container>.container.d/50-map.conf  from the apps.yml entry
+├── <app>.pod                          a pod, from apps/<app>/<app>.pod.j2
+└── <app>.pod.d/50-map.conf            PodName=, keep-id
 /srv/apps/<app>/
 ├── config/                            root-owned, mounted :ro
 └── <dirs>                             data, owned by svc-<app>
+/srv/<path>                            pool share (cifs), automount, owned by svc-<app>
+/etc/cifs/<share>.creds                its samba login, root 0600
 /etc/subuid, /etc/subgid               svc-<app>:<uid*65536>:65536
 ```
 

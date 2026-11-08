@@ -1,4 +1,17 @@
 ---
+# the dump runs as svc-<app>
+- name: Check the podman postgres jobs
+  ansible.builtin.assert:
+    that:
+      - item.app is defined
+      - item.app in apps
+      - apps[item.app].runtime | default('podman') == 'podman'
+    fail_msg: "pbs job {{ item.name }}: podman postgres needs app, a podman app from apps.yml"
+    quiet: true
+  loop: "{{ pbs_jobs | selectattr('type', 'eq', 'postgres') | selectattr('podman', 'defined') | selectattr('podman') }}"
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Keyrings dir
   ansible.builtin.file:
     path: /etc/apt/keyrings

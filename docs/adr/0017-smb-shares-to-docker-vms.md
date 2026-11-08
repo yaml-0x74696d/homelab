@@ -36,10 +36,10 @@ The server (`roles/samba`):
 - Security settings: `server min protocol = SMB3`, `smb encrypt = desired`, `map to guest = never`
 - ufw only allows 445/139 from the LAN
 
-The clients (`docker_app_cifs` in `roles/docker_app`):
+The clients (`docker_app_cifs` in `roles/docker_app`, `cifs` in `roles/podman_app`):
 - Credentials in `/etc/cifs/<share>.creds` (mode `0600`)
 - An fstab `cifs` entry with `vers=3.1.1` and `mfsymlinks,nofail,_netdev`
-- `uid`/`gid` on the mount are set to the container's user
+- `uid`/`gid` on the mount are set to the container's user (Podman: `svc-<app>`, mapped by keep-id), Podman mounts add `x-systemd.automount`
 - Mounted under `cifs_mount_root` (`/srv/<share>`, Nextcloud's extra shares as `/srv/nc-<share>`), while the databases stay on the VM disk
 - Extra options per app:
   - Nextcloud uses `nobrl` (no SMB byte-range locks)
@@ -56,6 +56,6 @@ The clients (`docker_app_cifs` in `roles/docker_app`):
 - Harder: `samba_shares` can only be added to at the end, because the position in the list sets the GID
 
 - Accepted: Immich doesn't officially support its library on CIFS (atomic moves, permissions). Its database stays local, and NFS is the fallback (open issue)
-- Accepted: because of `nofail`, a host still boots when the storage CT is down. But then an app can start on an empty mount point (the Podman plan adds a `findmnt` start gate for that, [0021](0021-podman-quadlets.md))
+- Accepted: because of `nofail`, a host still boots when the storage CT is down. But then an app can start on an empty mount point (Podman apps wait for a `findmnt` start gate, [0021](0021-podman-quadlets.md))
 
 - Related: [0002](0002-generic-docker-app-role.md) (`docker_app_cifs`), [0004](0004-mergerfs-instead-of-zfs.md) (pool), [0005](0005-prevent-destroy-on-stateful-vms.md) (DBs stay local), [0021](0021-podman-quadlets.md) (mount gate)

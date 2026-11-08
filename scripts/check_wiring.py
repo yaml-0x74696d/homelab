@@ -83,7 +83,7 @@ def main():
     hosts = inventory_hosts(load(repo, INVENTORY).get("all", {}))
 
     # --- the map itself
-    uids, routes_map, ports_by_host = {}, {}, {}
+    uids, routes_map, ports_by_host, cifs_by_host = {}, {}, {}, {}
     for name, a in apps.items():
         podman = a.get("runtime", "podman") == "podman"
         if not isinstance(a, dict):
@@ -122,19 +122,42 @@ def main():
         for src in a.get("allow_from", []) + [s for p in a.get("extra_ports", []) for s in p.get("allow_from", [])]:
             if src not in sources and src not in apps:
                 errors.append(f"{name}: allow_from '{src}' is neither in app_sources nor an app")
+        # more than one container = a pod, which owns ports, hosts and the network
+        pod = len(a.get("containers", [])) > 1
+        units = []
+        if pod:
+            unit = repo / APPS_DIR / name / f"{name}.pod.j2"
+            if unit.exists():
+                units.append(unit)
+            else:
+                errors.append(f"{name}: {unit.relative_to(repo)} missing (more than one container = a pod)")
         for c in a.get("containers", []):
             if "name" not in c:
                 errors.append(f"{name}: container without name")
                 continue
+            if c["name"] != name and not c["name"].startswith(f"{name}-"):
+                errors.append(f"{name}/{c['name']}: name it {name}-<role>")
             if "." not in c.get("image", "").split("/")[0]:
                 errors.append(f"{name}/{c.get('name')}: image '{c.get('image')}' isn't fully qualified")
             unit = repo / APPS_DIR / name / f"{c['name']}.container.j2"
             if not unit.exists():
                 errors.append(f"{name}/{c['name']}: {unit.relative_to(repo)} missing")
                 continue
+            units.append(unit)
+            if pod:
+                for n, line in enumerate(unit.read_text().splitlines(), 1):
+                    if re.match(r"^(PublishPort|AddHost|Network)=", line):
+                        errors.append(f"{unit.relative_to(repo)}:{n}: {line.split('=')[0]} goes in {name}.pod.j2, podman refuses it in a pod")
+        for unit in units:
             for n, line in enumerate(unit.read_text().splitlines(), 1):
                 if re.match(r"^[A-Za-z]+=.*\s#", line):
                     errors.append(f"{unit.relative_to(repo)}:{n}: comment at the end of a line, systemd reads it as part of the value")
+        # one fstab line per mount point and host
+        for m in a.get("cifs", []):
+            other = cifs_by_host.setdefault(a.get("host"), {}).get(m.get("path"))
+            if other:
+                errors.append(f"{name}: cifs path {m.get('path')} on {a['host']} also used by {other}")
+            cifs_by_host[a.get("host")][m.get("path")] = name
         for s in a.get("secrets", []):
             if "template" in s and not (repo / APPS_DIR / name / s["template"]).exists():
                 errors.append(f"{name}: secret template {s['template']} missing")
@@ -160,12 +183,18 @@ def main():
         if name in apps and "port" in apps[name] and f"apps['{name}'].port" not in str(val):
             errors.append(f"app_ports.{key}: literal {val}, take it from apps['{name}'].port")
 
-    # --- pbs: a podman app's sqlite lives under podman_apps_root
+    # --- pbs: a podman app's sqlite lives under podman_apps_root, its postgres is dumped as svc-<app>
     for hv in (repo / HOST_VARS).glob("*.yml"):
         for j in (yaml.safe_load(hv.read_text()) or {}).get("pbs_jobs", []):
-            if j.get("type") != "sqlite":
+            if j.get("type") == "sqlite":
+                name = j["path"].split("/")[0]
+            elif j.get("podman"):
+                name = j.get("app")
+                if name not in apps:
+                    errors.append(f"{hv.name}: pbs job {j['name']} on podman needs app, an app from apps.yml")
+                    continue
+            else:
                 continue
-            name = j["path"].split("/")[0]
             if name in apps and (apps[name].get("runtime", "podman") == "podman") != bool(j.get("podman")):
                 errors.append(f"{hv.name}: pbs job {j['name']} needs podman: {apps[name].get('runtime', 'podman') == 'podman'}")
 

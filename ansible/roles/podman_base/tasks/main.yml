@@ -66,3 +66,56 @@
       EnvironmentFile={{ podman_base_ntfy_env }}
       ExecStart=
       ExecStart={{ podman_base_wrapper }}
+
+# auto-update keeps a tag fresh, this says when a pinned tag has a newer version
+- name: Install the new-tags check
+  ansible.builtin.template:
+    src: podman-new-tags.sh.j2
+    dest: "{{ podman_base_new_tags }}"
+    mode: '0755'
+
+- name: Install the new-tags units
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}"
+    mode: '0644'
+    content: "{{ item.content }}"
+  loop:
+    - name: podman-new-tags.service
+      content: |
+        [Unit]
+        Description=Newer tags of the podman app images
+        Wants=network-online.target
+        After=network-online.target
+
+        [Service]
+        Type=oneshot
+        EnvironmentFile={{ podman_base_ntfy_env }}
+        ExecStart={{ podman_base_new_tags }}
+        ProtectSystem=full
+        ProtectHome=read-only
+        PrivateTmp=true
+        NoNewPrivileges=true
+    - name: podman-new-tags.timer
+      content: |
+        [Unit]
+        Description=Weekly check for newer podman app image tags
+
+        [Timer]
+        OnCalendar={{ podman_base_new_tags_time }}
+        RandomizedDelaySec=15min
+        Persistent=true
+
+        [Install]
+        WantedBy=timers.target
+  loop_control:
+    label: "{{ item.name }}"
+  register: podman_base_new_tags_units
+
+- name: Enable the new-tags timer
+  ansible.builtin.systemd_service:
+    name: podman-new-tags.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ podman_base_new_tags_units is changed }}"
+  # a fresh unit file doesn't exist yet in --check
+  when: not (ansible_check_mode and podman_base_new_tags_units is changed)
