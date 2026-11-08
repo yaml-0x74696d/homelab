@@ -57,7 +57,9 @@
 - name: Deploy immich
   import_playbook: deploy-immich.yml
 - name: Deploy jellyfin
-  import_playbook: deploy-jellyfin.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: jellyfin
 - name: Deploy paperless
   import_playbook: deploy-app.yml
   vars:

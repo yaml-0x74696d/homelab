@@ -140,8 +140,20 @@ apps:
 
   jellyfin:
     host: docker-3
-    runtime: compose
+    uid: 2090
     port: 8082
+    allow_from: [edge, netbird, homepage]
+    secrets: []
+    dirs:
+      - path: config
+      - path: cache
+    cifs:
+      - {share: media, user: media, path: media, opts: [ro]}
+    containers:
+      - name: jellyfin
+        image: docker.io/jellyfin/jellyfin
+        tag: latest
+        cifs: [media]
     homepage: {group: Homecloud, icon: jellyfin}
     routes:
       - host: media
