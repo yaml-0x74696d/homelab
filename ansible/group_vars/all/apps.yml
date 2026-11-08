@@ -165,6 +165,7 @@ apps:
       - path: data
       - path: database
         owner: 70   # postgres in the alpine image
+        mode: "0700"   # initdb sets it, 0750 would flip back each run
     cifs:
       - {share: documents, user: paperless, path: documents}
     # keep-id makes 1000 every container's default user, so each one names its own
