@@ -59,6 +59,7 @@ Rollout:
 
 - Harder: rootless apps can't share a container network. App-to-app traffic goes over `<host ip>:<port>`, with a firewall rule for each caller
 - Harder: more files per app (one unit per container and pod) instead of one compose file
+- Harder: keep-id needs a re-owned copy of every image it runs, so those images take twice the disk (paperless: about 7 GB more)
 
 - Accepted: an update can still break a service between two weekly runs. Health checks and rollback limit the damage, and ntfy reports it
 
