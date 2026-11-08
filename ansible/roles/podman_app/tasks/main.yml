@@ -365,6 +365,21 @@
   notify: Restart app
   no_log: true
 
+# command is skipped in check mode, so --check would never show a secret change
+- name: Secrets that would change for {{ podman_app_name }}
+  ansible.builtin.debug:
+    msg: "{{ item.item.name }} would be replaced"
+  loop: "{{ podman_app_secret_current.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name | default('') }}"
+  when:
+    - ansible_check_mode
+    - item.rc is defined
+    - item.rc != 0 or item.stdout | trim != podman_app_secret_data[item.item.name] | trim
+  changed_when: true
+  notify: Restart app
+  no_log: true
+
 # so the image pull doesn't eat TimeoutStartSec
 - name: Pull images for {{ podman_app_name }}
   ansible.builtin.shell: "podman image exists {{ item.image }}:{{ item.tag }} || podman pull -q {{ item.image }}:{{ item.tag }}"
