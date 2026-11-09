@@ -4,7 +4,7 @@
 # edge routes it, deploy-app.yml refuses it. the line goes at the app's cutover.
 apps:
   gatus:
-    host: docker-2
+    host: pod-2
     uid: 2010
     port: 3001
     allow_from: [edge, netbird, homepage]
@@ -25,7 +25,7 @@ apps:
         middlewares: [authentik]
 
   grafana:
-    host: docker-2
+    host: pod-2
     uid: 2030
     port: 3000
     allow_from: [edge, netbird, homepage]
@@ -46,7 +46,7 @@ apps:
       - host: grafana
 
   nginx:
-    host: docker-2
+    host: pod-2
     uid: 2020
     port: 8087
     allow_from: [edge, netbird, homepage]
@@ -60,10 +60,10 @@ apps:
       - host: web
 
   prometheus:
-    host: docker-2
+    host: pod-2
     uid: 2040
     port: 9091
-    allow_from: [edge, netbird, homepage]   # netbird = docker-2's ip, so grafana and gatus are in
+    allow_from: [edge, netbird, homepage]   # netbird = pod-2's ip, so grafana and gatus are in
     secrets: []
     dirs:
       - path: data
@@ -79,7 +79,7 @@ apps:
 
   # two copies on two nodes write the same wan ip, one host down doesn't stop the updates
   cloudflare-ddns:
-    hosts: [docker-1, docker-2]
+    hosts: [pod-1, pod-2]
     uid: 2050
     allow_from: []
     secrets:
@@ -122,7 +122,7 @@ apps:
       - host: semaphore
 
   nextcloud:
-    host: docker-3
+    host: pod-3
     uid: 2070
     port: 8080
     allow_from: [edge, netbird, homepage]
@@ -168,7 +168,7 @@ apps:
         middlewares: [nextcloud-dav]
 
   immich:
-    host: docker-3
+    host: pod-3
     uid: 2080
     port: 8081
     allow_from: [edge, netbird, homepage]
@@ -200,7 +200,7 @@ apps:
       - host: photo
 
   jellyfin:
-    host: docker-3
+    host: pod-3
     uid: 2090
     port: 8082
     allow_from: [edge, netbird, homepage]
@@ -220,7 +220,7 @@ apps:
       - host: media
 
   paperless:
-    host: docker-3
+    host: pod-3
     uid: 2100
     port: 8083
     allow_from: [edge, netbird, homepage]
@@ -272,9 +272,9 @@ apps:
     routes:
       - host: paperless
 
-  # docker-1: no published port (traefik reaches them on proxy-net)
+  # pod-1: no published port (traefik reaches them on proxy-net)
   authentik:
-    host: docker-1
+    host: pod-1
     runtime: compose
     port: 9000
     homepage: {group: Admin, icon: authentik}
@@ -282,7 +282,7 @@ apps:
       - host: auth
 
   vaultwarden:
-    host: docker-1
+    host: pod-1
     runtime: compose
     port: 8084
     homepage: {group: Homecloud, icon: /images/vaultwarden.png}
@@ -293,7 +293,7 @@ apps:
         middlewares: [authentik]
 
   gitea:
-    host: docker-1
+    host: pod-1
     runtime: compose
     port: 3002
     extra_ports:
@@ -303,7 +303,7 @@ apps:
       - host: git
 
   searxng:
-    host: docker-1
+    host: pod-1
     runtime: compose
     port: 8085
     homepage: {group: Tools, icon: searxng, label: SearXNG}
@@ -311,14 +311,14 @@ apps:
       - host: search
 
   homepage:
-    host: docker-1
+    host: pod-1
     runtime: compose
     port: 3003
     routes:
       - host: home
 
   pdfcraft:
-    host: docker-1
+    host: pod-1
     runtime: compose
     port: 8086
     homepage: {group: Tools, icon: /images/pdfcraft.png, label: PDFcraft}

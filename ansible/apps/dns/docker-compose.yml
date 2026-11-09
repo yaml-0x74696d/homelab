@@ -6,7 +6,7 @@ services:
     ports:
       - "53:53/tcp"
       - "53:53/udp"
-      - "${PORT}:80"   # ui, traefik on docker-1 routes dns. here
+      - "${PORT}:80"   # ui, traefik on pod-1 routes dns. here
     environment:
       - TZ=${TZ}
       - WEBPASSWORD=${PIHOLE_PASSWORD}

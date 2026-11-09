@@ -24,17 +24,17 @@ views {
 views "Deployment" {
   deployment view pve1 {
     title "pve-1: what runs where"
-    include home.pve1, home.pve1.*, home.pve1.docker1.*, home.pve1.gateway.*, home.pve1.iot.*
+    include home.pve1, home.pve1.*, home.pve1.pod1.*, home.pve1.gateway.*, home.pve1.iot.*
     style home.pve1.iot { color amber }
   }
   deployment view pve2 {
     title "pve-2: what runs where"
-    include home.pve2, home.pve2.*, home.pve2.docker2.*, home.pve2.dmz.*, home.pve2.dmz.netbird.*
+    include home.pve2, home.pve2.*, home.pve2.pod2.*, home.pve2.dmz.*, home.pve2.dmz.netbird.*
     style home.pve2.dmz { color red }
   }
   deployment view pve3 {
     title "pve-3: what runs where"
-    include home.pve3, home.pve3.*, home.pve3.docker3.*, home.pve3.haos.*, home.pve3.storage.*, home.pve3.log.*, home.pve3.pbs.*
+    include home.pve3, home.pve3.*, home.pve3.pod3.*, home.pve3.haos.*, home.pve3.storage.*, home.pve3.log.*, home.pve3.pbs.*
   }
 }
 

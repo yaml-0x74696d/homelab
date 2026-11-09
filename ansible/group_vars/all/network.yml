@@ -8,9 +8,9 @@ timezone: Europe/Berlin
 pve1_ip: 192.168.178.101
 pve2_ip: 192.168.178.102
 pve3_ip: 192.168.178.103
-docker1_ip: 192.168.178.201
-docker2_ip: 192.168.178.202
-docker3_ip: 192.168.178.203
+pod1_ip: 192.168.178.201
+pod2_ip: 192.168.178.202
+pod3_ip: 192.168.178.203
 storage_ip: 192.168.178.150    # CT 300 on pve-3
 log_ip: 192.168.178.151        # CT 301 on pve-3, central rsyslog
 iot_lan_ip: 192.168.178.152    # CT 302, iot gateway (mqtt broker + exporter), lan leg
@@ -24,14 +24,14 @@ iot_node: "{{ guest_nodes.iot }}"   # node with the wifi card, CT 302 runs here
 iot_wifi_nic: wlp0s12f0        # the card's name on iot_node, moved into CT 302 as wlan0
 iot_wifi_country: DE           # regulatory domain, set on iot_node (the ct isn't allowed to)
 iot_dhcp_range: [192.168.50.50, 192.168.50.200]
-dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (docker-2)
+dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (pod-2)
 mqtt_broker_ip: "{{ iot_lan_ip }}"   # lan consumers (ha); sensors use iot_ip
 
 # proxmox node of each guest: tofu places them there, roles/reach lets the guests of part_time_nodes be off
 guest_nodes:
-  docker-1: pve-1
-  docker-2: pve-2
-  docker-3: pve-3
+  pod-1: pve-1
+  pod-2: pve-2
+  pod-3: pve-3
   netbird: pve-2
   haos: pve-3
   storage: pve-3
@@ -40,4 +40,4 @@ guest_nodes:
 part_time_nodes: [pve-3]       # switched off now and then
 
 # proxmox guest ids (tofu creates them with the same ids)
-vmids: { docker1: 201, docker2: 202, docker3: 203, haos: 210, netbird: 250, storage: 300, log: 301, iot: 302 }
+vmids: { pod1: 201, pod2: 202, pod3: 203, haos: 210, netbird: 250, storage: 300, log: 301, iot: 302 }

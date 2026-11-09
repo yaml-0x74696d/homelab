@@ -1,6 +1,6 @@
 ---
 - name: Deploy pdfcraft
-  hosts: docker-1
+  hosts: pod-1
   become: true
   roles:
     - role: docker_app

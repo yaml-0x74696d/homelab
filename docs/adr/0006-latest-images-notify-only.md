@@ -12,7 +12,7 @@ Status: Accepted
   - Pinned tags + Renovate (why not: a PR for every image update, too much for one person)
   - Watchtower auto-pull (why not: auto-pull without rollback, same risk as the bulk pull)
   - A bulk-pull playbook (why not: restarts everything at once, see above)
-- Why: `:latest` means an update is just a pull, no tag edits. Auto-update without rollback was too risky after the docker-1 crash
+- Why: `:latest` means an update is just a pull, no tag edits. Auto-update without rollback was too risky after the pod-1 crash
 
 ## Decision
 
@@ -34,7 +34,7 @@ How I find out about updates (Diun, on every Docker host, `apps/diun`, `deploy-d
 How an update happens:
 - A normal redeploy never pulls a newer image (`docker_app_compose_pull: policy`)
 - Updates are done by hand, one app at a time: `docker compose pull && up -d`, check that `ps` shows it healthy, then the next one
-- docker-1 is busy, so its apps are updated off-peak
+- pod-1 is busy, so its apps are updated off-peak
 
 - Enforced by: `docker_app_compose_pull: policy` (a redeploy never pulls), and Diun can only notify
 

@@ -1,6 +1,6 @@
 ---
 - name: Deploy vaultwarden
-  hosts: docker-1
+  hosts: pod-1
   become: true
   vars:
     vaultwarden_tag: "1.37.1"

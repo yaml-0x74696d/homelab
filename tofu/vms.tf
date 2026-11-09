@@ -14,8 +14,8 @@ resource "proxmox_download_file" "debian" {
   }
 }
 
-resource "proxmox_virtual_environment_vm" "docker" {
-  for_each = local.docker_vms
+resource "proxmox_virtual_environment_vm" "pod" {
+  for_each = local.pod_vms
 
   name      = each.key
   node_name = each.value.node
@@ -26,7 +26,7 @@ resource "proxmox_virtual_environment_vm" "docker" {
   # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
   reboot_after_update = false
 
-  # stateful: docker volumes (dbs) live on the vm disk — never let tofu recreate these
+  # stateful: app data and dbs live on the vm disk, never let tofu recreate these
   lifecycle {
     prevent_destroy = true
     # the image only counts when the disk is created (and imported vms have none)
@@ -234,4 +234,18 @@ resource "proxmox_virtual_environment_vm" "haos" {
     mac_address = local.vms.haos.mac0
     firewall    = true
   }
+}
+
+# the vms were docker-N before, renamed in place
+moved {
+  from = proxmox_virtual_environment_vm.docker["docker-1"]
+  to   = proxmox_virtual_environment_vm.pod["pod-1"]
+}
+moved {
+  from = proxmox_virtual_environment_vm.docker["docker-2"]
+  to   = proxmox_virtual_environment_vm.pod["pod-2"]
+}
+moved {
+  from = proxmox_virtual_environment_vm.docker["docker-3"]
+  to   = proxmox_virtual_environment_vm.pod["pod-3"]
 }

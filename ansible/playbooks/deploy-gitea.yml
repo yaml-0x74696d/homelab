@@ -1,6 +1,6 @@
 ---
 - name: Deploy gitea
-  hosts: docker-1
+  hosts: pod-1
   become: true
   vars:
     gitea_uid: 1000                      # image user

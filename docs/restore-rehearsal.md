@@ -6,12 +6,12 @@ How a backup is proven to restore: take a fresh PBS snapshot, restore one Podman
 
 | | Podman | Compose |
 |---|---|---|
-| App | Grafana (docker-2) | Immich (docker-3) |
+| App | Grafana (pod-2) | Immich (pod-3) |
 | Database | SQLite, `.backup` dump | Postgres with vector indexes, `pg_dump --clean --if-exists` |
 | Archives | `podman-apps.pxar` + `dumps.pxar` | `apps.pxar` + `dumps.pxar` |
 | Tests | subuid ownership, quadlet deploy, SQLite swap | Postgres import into a fresh db, compose from the restored folder alone |
 
-- Grafana: docker-2 is the next rebuild, and it's the only Podman app whose data dir belongs to a uid inside the container (`472:0`), so a wrong owner shows right away
+- Grafana: pod-2 is the next rebuild, and it's the only Podman app whose data dir belongs to a uid inside the container (`472:0`), so a wrong owner shows right away
 - Immich: the Postgres app with the most rows and the hardest import (vector extension). Paperless has no documents, so it would prove little
 - Other apps work the same way. The table under [Results](#results) says which ones were rehearsed
 
@@ -22,10 +22,10 @@ VMID=299                    # free id, not in network.yml
 IP=192.168.178.199          # free lan ip, outside the fritz!box dhcp range
 NODE=pve-3                  # next to PBS, the restore reads locally
 MEM=3072                    # MB
-DISK=32G                    # docker-3's apps.pxar is restored whole
+DISK=32G                    # pod-3's apps.pxar is restored whole
 ```
 
-- pve-3 has about 3 GB free on a normal day and already swaps, so docker-3 goes off for the rehearsal, see [Make room](#make-room)
+- pve-3 has about 3 GB free on a normal day and already swaps, so pod-3 goes off for the rehearsal, see [Make room](#make-room)
 - Commands marked "controller" run from `ansible/` on ctl-0 (fish), the rest on the node or the throwaway (bash)
 
 ## 1. Fresh backup
@@ -33,14 +33,14 @@ DISK=32G                    # docker-3's apps.pxar is restored whole
 Controller:
 
 ```bash
-ansible docker-2,docker-3 -b -a 'systemctl start pbs-backup.service'
-ansible docker-2,docker-3 -b -a 'journalctl -u pbs-backup -n 3 --no-pager'
-ansible docker-2,docker-3 -b -m shell -a 'set -a; . /etc/pbs.env; set +a; proxmox-backup-client snapshot list host/{{ inventory_hostname }} | tail -n 3'
+ansible pod-2,pod-3 -b -a 'systemctl start pbs-backup.service'
+ansible pod-2,pod-3 -b -a 'journalctl -u pbs-backup -n 3 --no-pager'
+ansible pod-2,pod-3 -b -m shell -a 'set -a; . /etc/pbs.env; set +a; proxmox-backup-client snapshot list host/{{ inventory_hostname }} | tail -n 3'
 ```
 
 - The service is a oneshot, `systemctl start` returns when the push is done. "Deactivated successfully" = the script reached `backup ok`
-- Note each snapshot's time (`host/docker-2/2026-11-08T18:33:27Z`), the restore pins it so the log has the real backup age
-- `catalog dump host/<host>/<time>` lists the files. `dumps.pxar` has to hold `grafana.db` (docker-2) and `immich.sql` (docker-3)
+- Note each snapshot's time (`host/pod-2/2026-11-08T18:33:27Z`), the restore pins it so the log has the real backup age
+- `catalog dump host/<host>/<time>` lists the files. `dumps.pxar` has to hold `grafana.db` (pod-2) and `immich.sql` (pod-3)
 
 Then the prod counts from [step 6](#6-verify), while the snapshot is still fresh.
 
@@ -50,7 +50,7 @@ Built by hand with `qm` from the cloud image tofu already downloaded to every VM
 
 ### Make room
 
-docker-3 goes off: frees ~7 GB on pve-3, and the restore can't lean on the source. Nextcloud, Immich, Jellyfin and Paperless are down until step 7, Gatus alerts on them are expected.
+pod-3 goes off: frees ~7 GB on pve-3, and the restore can't lean on the source. Nextcloud, Immich, Jellyfin and Paperless are down until step 7, Gatus alerts on them are expected.
 
 ```bash
 qm shutdown 203 --timeout 180    # clean guest shutdown, docker stops the stacks
@@ -120,7 +120,7 @@ Same ports, uids and paths as prod are fine on a separate VM. What still has to 
 | ntfy (pbs, aide, podman auto-update) | `ntfy_url` / `ntfy_token` from the vault, public ntfy goes over 443 | `-e @restore-vars.yml` blanks both |
 | PBS pushes | `deploy-pbs.yml` installs the nightly timer | never run it here, the client is installed by hand |
 | AIDE hash | `vm-preparation.yml` writes `<host>.sha256` on the controller | `--skip-tags aide` |
-| DDNS | `cloudflare-ddns` (Podman on docker-1/2) | never deployed here, no `site.yml` |
+| DDNS | `cloudflare-ddns` (Podman on pod-1/2) | never deployed here, no `site.yml` |
 | Logs, metrics, uptime checks | `base.yml` (rsyslog), the main inventory | not run, VM isn't in `inventory.yml` |
 | NetBird | `deploy-netbird-agent.yml` | not run |
 | OIDC | Authentik callbacks point at the prod names | log in with the local admin (break-glass) |
@@ -130,7 +130,7 @@ Same ports, uids and paths as prod are fine on a separate VM. What still has to 
 
 ### Base provisioning
 
-Controller, an inventory next to `inventory.yml` (group_vars only load from there). The throwaway is `restore` in `docker_hosts`, so it gets the same group_vars as docker-2:
+Controller, an inventory next to `inventory.yml` (group_vars only load from there). The throwaway is `restore` in `docker_hosts`, so it gets the same group_vars as pod-2:
 
 ```yaml
 # ansible/inventory-restore.yml, listed in .git/info/exclude so it's never committed
@@ -167,15 +167,15 @@ printf '%s\n' 'Types: deb' 'URIs: http://download.proxmox.com/debian/pbs-client'
 sudo apt-get update -q && sudo apt-get install -yq proxmox-backup-client sqlite3
 ```
 
-The credentials from the real docker-2, then onto the throwaway. Controller:
+The credentials from the real pod-2, then onto the throwaway. Controller:
 
 ```bash
-ansible docker-2 -b -m ansible.builtin.fetch -a "src=/etc/pbs.env dest=/tmp/pbs.env flat=true"
+ansible pod-2 -b -m ansible.builtin.fetch -a "src=/etc/pbs.env dest=/tmp/pbs.env flat=true"
 ansible -i inventory-restore.yml restore -b -m ansible.builtin.copy -a "src=/tmp/pbs.env dest=/etc/pbs.env mode=0600"
 rm /tmp/pbs.env
 ```
 
-- All hosts push with the same token (`backup@pbs!client`), so it can restore docker-3's groups too. It can't delete
+- All hosts push with the same token (`backup@pbs!client`), so it can restore pod-3's groups too. It can't delete
 - The VM has no timer and no script, so it never pushes anything
 
 ## 3. Restore the archives
@@ -185,11 +185,11 @@ On the throwaway:
 ```bash
 pbc() { sudo bash -c 'set -a; . /etc/pbs.env; set +a; exec proxmox-backup-client "$@"' pbc "$@"; }
 R=/var/tmp/restore
-sudo mkdir -p $R/docker-2 $R/docker-3
-time pbc restore host/docker-2/<time> dumps.pxar $R/docker-2/dumps
-time pbc restore host/docker-2/<time> podman-apps.pxar $R/docker-2/podman-apps
-time pbc restore host/docker-3/<time> dumps.pxar $R/docker-3/dumps
-time pbc restore host/docker-3/<time> apps.pxar $R/docker-3/apps
+sudo mkdir -p $R/pod-2 $R/pod-3
+time pbc restore host/pod-2/<time> dumps.pxar $R/pod-2/dumps
+time pbc restore host/pod-2/<time> podman-apps.pxar $R/pod-2/podman-apps
+time pbc restore host/pod-3/<time> dumps.pxar $R/pod-3/dumps
+time pbc restore host/pod-3/<time> apps.pxar $R/pod-3/apps
 ```
 
 - Restored as root, so numeric owners, modes and ACLs come back as they were
@@ -225,7 +225,7 @@ ansible-playbook -i inventory-restore.yml -e @/tmp/restore-vars.yml /tmp/restore
 On the throwaway, owners first. Restored and fresh files must show the same subuid (Grafana's 472 inside = svc-grafana's base subuid + 471):
 
 ```bash
-sudo ls -ln $R/docker-2/podman-apps/grafana/data /srv/apps/grafana/data
+sudo ls -ln $R/pod-2/podman-apps/grafana/data /srv/apps/grafana/data
 ```
 
 Then the swap:
@@ -236,8 +236,8 @@ u="systemctl --user -M svc-grafana@"
 sudo $u stop grafana
 sudo mv $d/grafana.db $d/grafana.db.fresh
 sudo rm -f $d/grafana.db-wal $d/grafana.db-shm
-sudo cp -a $R/docker-2/podman-apps/grafana/data/. $d/
-sudo cp $R/docker-2/dumps/grafana.db $d/grafana.db
+sudo cp -a $R/pod-2/podman-apps/grafana/data/. $d/
+sudo cp $R/pod-2/dumps/grafana.db $d/grafana.db
 sudo chown --reference=$d/grafana.db.fresh $d/grafana.db
 sudo chmod --reference=$d/grafana.db.fresh $d/grafana.db
 printf '%s\n' '[Container]' 'Environment=GF_UNIFIED_ALERTING_EXECUTE_ALERTS=false' \
@@ -276,14 +276,14 @@ Started straight from the restored folder: compose file, rendered `.env` and con
 
 ```bash
 sudo mkdir -p /opt/stacks
-sudo mv $R/docker-3/apps/immich /opt/stacks/immich
+sudo mv $R/pod-3/apps/immich /opt/stacks/immich
 cd /opt/stacks/immich
 U=$(sudo grep '^UPLOAD_LOCATION=' .env | cut -d= -f2)
 for s in library upload thumbs encoded-video profile backups; do sudo mkdir -p $U/$s; sudo touch $U/$s/.immich; done
 sudo docker network create proxy-net
 sudo docker compose up -d --wait database
 sudo sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/" \
-  $R/docker-3/dumps/immich.sql \
+  $R/pod-3/dumps/immich.sql \
   | sudo docker exec -i immich_postgres sh -c 'psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1'
 sudo docker compose up -d --wait
 ```
@@ -341,7 +341,7 @@ ssh-keygen -R 192.168.178.199
 
 - The VM held the restored `.env` files and dumps (vault and SSO secrets), so it goes the same day
 - Nothing was pushed to PBS from it, the datastore needs no cleanup
-- Gatus goes green for docker-3's apps within a few minutes
+- Gatus goes green for pod-3's apps within a few minutes
 
 ## Results
 
@@ -349,7 +349,7 @@ One line per rehearsal. Backup age = start of the restore minus the snapshot tim
 
 | Date | App | Runtime | Snapshot | Backup age | Restore time | Data check | Issues |
 |---|---|---|---|---|---|---|---|
-| 2026-11-08 | grafana | podman | host/docker-2/2026-11-08T18:33:27Z | ~50 min | 1 s (podman-apps + dumps, 51 MB) | 2/2 users, 2/2 dashboards, 1/1 datasource | none from the backup |
+| 2026-11-08 | grafana | podman | host/pod-2/2026-11-08T18:33:27Z | ~50 min | 1 s (podman-apps + dumps, 51 MB) | 2/2 users, 2/2 dashboards, 1/1 datasource | none from the backup |
 | 2026-11-08 | immich | compose | host/docker-3/2026-11-08T18:33:28Z | ~50 min | 13 s (apps + dumps, 988 MB), import 32 s | 15334/15334 assets, 193/193 memories | needs empty `.immich` markers |
 
 ## Related

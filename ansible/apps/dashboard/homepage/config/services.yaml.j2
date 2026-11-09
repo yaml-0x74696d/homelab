@@ -1,5 +1,5 @@
 {# app tiles come from apps.yml (homepage: block) and infra_routes. badge = siteMonitor on the app's
-   port, so only for apps with a port in the map (docker-1's come with edge). stats only for servers + vms #}
+   port, so only for apps with a port in the map (pod-1's come with edge). stats only for servers + vms #}
 {% macro tiles(group) %}
 {% for name, a in apps.items() if a.homepage is defined and a.homepage.group == group and a.state | default('present') == 'present' %}
 {% set url = 'http://' ~ hostvars[a.host].ansible_host ~ ':' ~ a.port if a.port is defined else none %}
@@ -70,26 +70,26 @@
                 fields: ["datastore_usage", "failed_tasks_24h"]
 
 - VMs:
-            - docker-1:
+            - pod-1:
                 icon: /images/debian.png
                 proxmoxNode: pve-1
-                proxmoxVMID: {{ vmids.docker1 }}
+                proxmoxVMID: {{ vmids.pod1 }}
                 showStats: true
-                href: https://{{ docker1_ip }}:{{ cockpit_port }}/
+                href: https://{{ pod1_ip }}:{{ cockpit_port }}/
                 fields: ["cpu", "mem"]
-            - docker-2:
+            - pod-2:
                 icon: /images/debian.png
                 proxmoxNode: pve-2
-                proxmoxVMID: {{ vmids.docker2 }}
+                proxmoxVMID: {{ vmids.pod2 }}
                 showStats: true
-                href: https://{{ docker2_ip }}:{{ cockpit_port }}/
+                href: https://{{ pod2_ip }}:{{ cockpit_port }}/
                 fields: ["cpu", "mem"]
-            - docker-3:
+            - pod-3:
                 icon: /images/debian.png
                 proxmoxNode: pve-3
-                proxmoxVMID: {{ vmids.docker3 }}
+                proxmoxVMID: {{ vmids.pod3 }}
                 showStats: true
-                href: https://{{ docker3_ip }}:{{ cockpit_port }}/
+                href: https://{{ pod3_ip }}:{{ cockpit_port }}/
                 fields: ["cpu", "mem"]
             - netbird:
                 icon: nixos

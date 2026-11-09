@@ -1,5 +1,5 @@
 ---
-# what pbs backs up on docker-3 (see roles/pbs). bulk data (photos/media/docs/files)
+# what pbs backs up on pod-3 (see roles/pbs). bulk data (photos/media/docs/files)
 # lives on the cifs pool (cifs_mount_root), outside apps_root — not covered here by design.
 pbs_jobs:
   - { name: nextcloud, type: postgres, container: nextcloud-db, data_dir: nextcloud/database, podman: true, app: nextcloud }

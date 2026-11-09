@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - I wanted to know when files on a server change outside of a deploy
-- Every server is in scope: docker-1/2/3, pve-1/2/3, the storage, log and IoT LXCs and the NetBird VM
+- Every server is in scope: pod-1/2/3, pve-1/2/3, the storage, log and IoT LXCs and the NetBird VM
 - Alerts go to ntfy.sh, a public service, so they must not leak paths
 
 - Alternatives:

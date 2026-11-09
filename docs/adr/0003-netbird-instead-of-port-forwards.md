@@ -31,7 +31,7 @@ What the WAN sees:
 - 443 goes to NetBird, not Traefik, so the web apps are LAN + VPN only
 
 The routing:
-- docker-2 is the routing peer (`netbird_agent` group, `roles/netbird_agent`)
+- pod-2 is the routing peer (`netbird_agent` group, `roles/netbird_agent`)
 - The role adds the apt repo, turns on IP forwarding and enrolls the peer with a setup key
 - The network route `192.168.178.0/24` with masquerade is set in the dashboard
 - NetBird's nameserver for the lab domain is Pi-hole, so `*.<domain>` resolves to LAN IPs through the tunnel
@@ -54,10 +54,10 @@ The fallback:
 
 - Harder: NetBird and FRITZ!Box WireGuard must never run at the same time. Both route the LAN, the routes collide and break NetBird's routing and DNS
 - Harder: the nameserver has to be a peer's overlay IP, not a LAN IP behind a route, or the macOS/iOS resolvers fail
-- Harder: NetBird's DNS and nftables take port `:53` from Pi-hole on a peer. docker-1 is not a peer, and Pi-hole on docker-2 needs NetBird's DNS management turned off for that group ([0010](0010-pihole-on-a-service-ip.md))
+- Harder: NetBird's DNS and nftables take port `:53` from Pi-hole on a peer. pod-1 is not a peer, and Pi-hole on pod-2 needs NetBird's DNS management turned off for that group ([0010](0010-pihole-on-a-service-ip.md))
 
 - Accepted: coturn has no `external-ip` because the WAN IP keeps changing, so the TURN relay is unreliable by design. Direct P2P + STUN cover normal use
 - Accepted: user and group sync from the IdP is turned off (Authentik's machine auth answered 405). Users still log in through OIDC
 - Accepted: the server secrets were put on the VM by hand and are not in git. agenix/sops is planned
 
-- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0010](0010-pihole-on-a-service-ip.md) (Pi-hole on docker-2)
+- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0010](0010-pihole-on-a-service-ip.md) (Pi-hole on pod-2)

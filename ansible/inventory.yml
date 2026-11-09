@@ -10,12 +10,12 @@ all:
           ansible_host: "{{ iot_lan_ip }}"
     docker_hosts:
       hosts:
-        docker-1:
-          ansible_host: "{{ docker1_ip }}"
-        docker-2:
-          ansible_host: "{{ docker2_ip }}"
-        docker-3:
-          ansible_host: "{{ docker3_ip }}"
+        pod-1:
+          ansible_host: "{{ pod1_ip }}"
+        pod-2:
+          ansible_host: "{{ pod2_ip }}"
+        pod-3:
+          ansible_host: "{{ pod3_ip }}"
     proxmox:
       hosts:
         pve-1:
@@ -26,11 +26,11 @@ all:
           ansible_host: "{{ pve3_ip }}"
     netbird_agent:
       # always-on lan box that routes the lan for netbird peers.
-      # docker-1 left after netbird's dns grabbed :53 from pihole there; pihole now
-      # runs on docker-2 with netbird dns management off for that group.
+      # pod-1 left after netbird's dns grabbed :53 from pihole there; pihole now
+      # runs on pod-2 with netbird dns management off for that group.
       # members stay in their primary group (docker_hosts/proxmox) for connection vars.
       hosts:
-        docker-2:   # routing peer
+        pod-2:   # routing peer
     podman_hosts:
       # podman without docker. bare metal, outside tofu
       hosts:

@@ -61,7 +61,7 @@ def main():
         d = text(e.get("description"))
         if d.rstrip().endswith("."):
             err(eid, "description ends with a period")
-        # hostnames like docker-1/2/3 may lead lowercase
+        # hostnames like pod-1/2/3 may lead lowercase
         if d and d[0].islower() and not re.match(r"^\S*[-0-9/]", d):
             err(eid, "description should start uppercase")
 

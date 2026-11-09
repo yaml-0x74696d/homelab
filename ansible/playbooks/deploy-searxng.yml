@@ -1,6 +1,6 @@
 ---
 - name: Deploy searxng
-  hosts: docker-1
+  hosts: pod-1
   become: true
   vars:
     searxng_valkey_tag: 8-alpine

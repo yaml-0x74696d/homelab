@@ -38,7 +38,7 @@ Full schema with defaults: `meta/argument_specs.yml`.
 ```yaml
 apps:
   gatus:
-    host: docker-2
+    host: pod-2
     uid: 2010                     # svc-gatus, subuid range 2010*65536
     port: 3001
     allow_from: [edge, netbird]   # names from app_sources, or another app
@@ -61,7 +61,7 @@ An app with more than one container runs as one pod:
 
 ```yaml
   paperless:
-    host: docker-3
+    host: pod-3
     uid: 2110
     container_uid: 1000           # keep-id: uid 1000 in the pod = svc-paperless on the host
     port: 8083

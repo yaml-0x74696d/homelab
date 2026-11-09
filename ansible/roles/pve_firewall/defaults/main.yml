@@ -11,14 +11,14 @@ pve_firewall_gateway_ip: "{{ gateway_ip }}"
 pve_firewall_routing_peers: "{{ groups['netbird_agent'] | map('extract', hostvars, 'ansible_host') | list }}"
 
 # lan hosts the netbird vm only needs dns + https on: traefik (authentik, gitea) + the pihole service ip
-pve_firewall_netbird_dns_https: ["{{ docker1_ip }}", "{{ dns_ip }}"]
+pve_firewall_netbird_dns_https: ["{{ pod1_ip }}", "{{ dns_ip }}"]
 
 # ssh (22) to the pve hosts — real shells only
 pve_firewall_ssh_hosts: "{{ admin_hosts }}"
 
 # web ui (8006) — admins, ui-only devices + the infra callers (homepage widget, gatus)
 pve_firewall_ui_hosts: >-
-  {{ admin_hosts + admin_ui_hosts + [{'ip': docker1_ip, 'c': 'homepage widget'},
+  {{ admin_hosts + admin_ui_hosts + [{'ip': pod1_ip, 'c': 'homepage widget'},
      {'ip': hostvars[apps['gatus'].host].ansible_host, 'c': 'gatus'}] }}
 
 # cluster mesh (corosync / migration between nodes)
@@ -34,9 +34,9 @@ pve_firewall_log_vmid: "{{ vmids.log }}"
 pve_firewall_log_ip: "{{ log_ip }}"
 pve_firewall_log_port: "{{ log_relp_port }}"
 pve_firewall_log_sources:
-  - "{{ docker1_ip }}"
-  - "{{ docker2_ip }}"
-  - "{{ docker3_ip }}"
+  - "{{ pod1_ip }}"
+  - "{{ pod2_ip }}"
+  - "{{ pod3_ip }}"
   - "{{ storage_ip }}"
   - "{{ iot_lan_ip }}"
   - "{{ netbird_ip }}"
@@ -61,4 +61,4 @@ pve_firewall_haos_observer_port: 4357   # haos' supervisor health page
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.
 # PRE-FLIGHT: add every other vmid that shows firewall=1 or it breaks.
-pve_firewall_open_guests: ["{{ vmids.docker1 }}", "{{ vmids.docker2 }}", "{{ vmids.docker3 }}", "{{ vmids.storage }}"]
+pve_firewall_open_guests: ["{{ vmids.pod1 }}", "{{ vmids.pod2 }}", "{{ vmids.pod3 }}", "{{ vmids.storage }}"]

@@ -18,7 +18,7 @@ Status: Accepted
 ## Decision
 
 The setup:
-- Authentik on docker-1 (`apps/authentik`, `deploy-authentik.yml`): server, worker and Postgres (`authentik_pg_tag`)
+- Authentik on pod-1 (`apps/authentik`, `deploy-authentik.yml`): server, worker and Postgres (`authentik_pg_tag`)
 - MFA is enforced in Authentik
 - Every app keeps a local admin as a break-glass account, except Vaultwarden (`SSO_ONLY=true`)
 - The version is pinned in `group_vars/all/app_settings.yml` (`authentik_tag` + `authentik_series`)
@@ -33,10 +33,10 @@ Two ways apps use it:
   - Used by the Traefik dashboard, Prometheus and the Vaultwarden admin page
 
 Connecting apps:
-- Containers can't resolve internal names, so apps on docker-2/3 reach `auth.<domain>` through an `extra_hosts` entry pointing at docker-1
+- Containers can't resolve internal names, so apps on pod-2/3 reach `auth.<domain>` through an `extra_hosts` entry pointing at pod-1
 - Each app's client ID and secret is entered once, through its CLI or as env from the vault (`.env.j2`)
 
-- Enforced by: the pre-tasks in `deploy-authentik.yml` refuse downgrades, skipped release series, and pulls while docker-1's thin pool is above `authentik_pool_max_pct` (85 %)
+- Enforced by: the pre-tasks in `deploy-authentik.yml` refuse downgrades, skipped release series, and pulls while pod-1's thin pool is above `authentik_pool_max_pct` (85 %)
 
 ## Consequences
 

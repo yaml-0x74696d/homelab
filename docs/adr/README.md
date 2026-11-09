@@ -11,7 +11,7 @@ Format: status, context, decision, consequences.
 - [7. group_vars as the single source of truth](0007-group-vars-single-source-of-truth.md)
 - [8. NixOS for the NetBird VM only](0008-nixos-for-the-dmz-box.md)
 - [9. AIDE with manual accept](0009-aide-with-manual-accept.md)
-- [10. Pi-hole on docker-2 behind a service IP](0010-pihole-on-a-service-ip.md)
+- [10. Pi-hole on pod-2 behind a service IP](0010-pihole-on-a-service-ip.md)
 - [11. Proxmox as the hypervisor](0011-proxmox-as-hypervisor.md)
 - [12. No Kubernetes](0012-no-kubernetes.md)
 - [13. PBS file-level backups, VMs are cattle](0013-pbs-file-level-backups.md)

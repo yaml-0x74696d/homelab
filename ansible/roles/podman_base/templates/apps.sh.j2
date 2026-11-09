@@ -15,9 +15,12 @@ as() { local u=$1; shift; sudo -u "$u" XDG_RUNTIME_DIR="/run/user/$(id -u "$u")"
 
 case "${1:-ps}" in
   ps)
-    for u in $(users); do
-      as "$u" podman ps --format "$u{% raw %}\t{{.Names}}\t{{.Status}}\t{{.Ports}}{% endraw %}"
-    done | column -t -s $'\t'
+    {
+      printf 'USER\tCONTAINER\tSTATUS\tPORTS\n'
+      for u in $(users); do
+        as "$u" podman ps --format "$u{% raw %}\t{{.Names}}\t{{.Status}}\t{{.Ports}}{% endraw %}"
+      done
+    } | column -t -s $'\t'
     ;;
   logs)
     app=${2:?usage: apps logs <app> [podman logs args]}

@@ -13,8 +13,8 @@ services:
       - PVE1_IP=${PVE1_IP}
       - PVE2_IP=${PVE2_IP}
       - PVE3_IP=${PVE3_IP}
-      - DOCKER2_IP=${DOCKER2_IP}
-      - DOCKER3_IP=${DOCKER3_IP}
+      - POD2_IP=${POD2_IP}
+      - POD3_IP=${POD3_IP}
       - HAOS_IP=${HAOS_IP}
       - CTL1_IP=${CTL1_IP}
       - PVE_UI_PORT=${PVE_UI_PORT}

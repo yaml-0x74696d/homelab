@@ -68,18 +68,18 @@
 | `pve_firewall_host_enabled` | `false` | Host management lockdown, the layer that can lock you out |
 | `pve_firewall_lan_cidr` | `lan_cidr` | The LAN |
 | `pve_firewall_gateway_ip` | `gateway_ip` | The router, DNS fallback for the NetBird VM |
-| `pve_firewall_open_guests` | docker-1/2/3, storage | VMIDs that stay unfiltered |
+| `pve_firewall_open_guests` | pod-1/2/3, storage | VMIDs that stay unfiltered |
 | `pve_firewall_routing_peers` | the `netbird_agent` group | Hosts the NetBird VM may reach fully |
-| `pve_firewall_netbird_dns_https` | docker-1, `dns_ip` | Hosts the NetBird VM may reach on DNS + HTTPS (Traefik, Pi-hole) |
+| `pve_firewall_netbird_dns_https` | pod-1, `dns_ip` | Hosts the NetBird VM may reach on DNS + HTTPS (Traefik, Pi-hole) |
 | `pve_firewall_ssh_hosts` | `admin_hosts` | Who may SSH into the nodes |
-| `pve_firewall_ui_hosts` | `admin_hosts` + `admin_ui_hosts` + docker-1 + docker-2 | Who may open the web UI (8006) |
+| `pve_firewall_ui_hosts` | `admin_hosts` + `admin_ui_hosts` + pod-1 + pod-2 | Who may open the web UI (8006) |
 | `pve_firewall_node_ips` | pve-1/2/3 | The cluster nodes |
 | `pve_firewall_netbird_vmid` | `vmids.netbird` | The NetBird VM |
 | `pve_firewall_netbird_relay_range` | from `netbird_relay_ports` | TURN relay ports |
 | `pve_firewall_netbird_turn_ports` | `[3478, 5349]` | STUN/TURN and TURN over TLS |
 | `pve_firewall_log_vmid` | `vmids.log` | The log LXC |
 | `pve_firewall_log_ip` | `log_ip` | The log LXC, target of the NetBird VM's RELP rule |
-| `pve_firewall_log_sources` | docker-1/2/3, storage, iot, netbird | Hosts that may send RELP to the log LXC |
+| `pve_firewall_log_sources` | pod-1/2/3, storage, iot, netbird | Hosts that may send RELP to the log LXC |
 | `pve_firewall_log_port` | `log_relp_port` | The RELP port |
 | `pve_firewall_prometheus_ip` | `prometheus_ip` (`app_settings.yml`) | May scrape the log and IoT LXCs |
 | `pve_firewall_iot_vmid` | `vmids.iot` | The IoT gateway LXC |

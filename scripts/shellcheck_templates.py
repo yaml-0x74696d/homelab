@@ -23,7 +23,7 @@ DUMMY_VARS = {
     "pbs_ntfy_url": "https://ntfy.example/backup",
     "pbs_ntfy_token": "tk_dummy",
     "pbs_staging_dir": "/var/backups/pbs-staging",
-    "pbs_id": "docker-1",
+    "pbs_id": "pod-1",
     "pbs_exclude": ["cache"],
     "pbs_jobs": [
         {"name": "pg", "type": "postgres", "container": "pg-db", "data_dir": "pg/data"},

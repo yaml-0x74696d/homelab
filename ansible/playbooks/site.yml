@@ -51,7 +51,7 @@
 # needs pve-3 powered on
 - name: Deploy storage (mergerfs + samba)
   import_playbook: deploy-storage.yml
-# home cloud (docker-3) — cifs-mounts pool shares, so runs after storage
+# home cloud (pod-3) — cifs-mounts pool shares, so runs after storage
 - name: Deploy nextcloud
   import_playbook: deploy-app.yml
   vars:

@@ -17,7 +17,7 @@
 4. Login banner in `/etc/issue` + `/etc/issue.net`
 5. sshd: no root login, no passwords, no X11, `MaxAuthTries` + keepalive from group_vars
 6. auditd watches shadow, passwd, sudoers and sshd_config
-7. Timezone, then enables `vm_base_services`
+7. Timezone, hostname = inventory name (also `127.0.1.1` in `/etc/hosts`), then enables `vm_base_services`
 
 ## Settings
 

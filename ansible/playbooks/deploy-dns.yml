@@ -1,6 +1,6 @@
 ---
 - name: Deploy dns
-  hosts: docker-2
+  hosts: pod-2
   become: true
 
   pre_tasks:

@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- The `netbird_agent` inventory group: docker-2, the routing peer that's always on
+- The `netbird_agent` inventory group: pod-2, the routing peer that's always on
 - Members stay in their main group (docker_hosts / proxmox) for the connection settings
 
 ## How it works
@@ -34,8 +34,8 @@
 
 ## Notes
 
-- Pi-hole shares docker-2 with the agent ([ADR 0003](../../../docs/adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](../../../docs/adr/0010-pihole-on-a-service-ip.md))
-- NetBird's DNS management must be turned off for docker-2's group, or NetBird grabs port 53 there too
+- Pi-hole shares pod-2 with the agent ([ADR 0003](../../../docs/adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](../../../docs/adr/0010-pihole-on-a-service-ip.md))
+- NetBird's DNS management must be turned off for pod-2's group, or NetBird grabs port 53 there too
 - Don't run NetBird and the FRITZ!Box WireGuard at the same time. Both route the LAN CIDR, the routes collide and NetBird's routing and DNS break
 - The routing peer must resolve `nb.{{ domain }}` to the NetBird VM (local DNS override)
 

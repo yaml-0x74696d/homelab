@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - The bulk data (media, Nextcloud files, documents, photos) lives on the mergerfs pool on pve-3 ([0004](0004-mergerfs-instead-of-zfs.md))
-- The apps run on the Docker VMs, mostly docker-3
+- The apps run on the Docker VMs, mostly pod-3
 - The pool already had Samba shares and scoped users for the LAN (Time Machine, ISO images, admin access)
 - Databases must not live on a network share ([0005](0005-prevent-destroy-on-stateful-vms.md))
 

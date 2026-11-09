@@ -75,7 +75,7 @@ model {
     }
     router-peer = container "Routing peer" {
       technology "netbird agent"
-      description "Advertises the LAN route, on docker-2 only"
+      description "Advertises the LAN route, on pod-2 only"
     }
   }
 
@@ -199,7 +199,7 @@ model {
     hosts = container "Container hosts" {
       #ops
       technology "Debian 13, docker"
-      description "docker-1/2/3 and ctl-1, apps deployed by ansible"
+      description "pod-1/2/3 and ctl-1, apps deployed by ansible"
       style { icon tech:debian }
     }
     semaphore = ui "Semaphore" {

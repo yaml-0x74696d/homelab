@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- Home Assistant ran as a container on docker-1, so no add-ons (ESPHome compiles the device firmware there) and no Supervisor
+- Home Assistant ran as a container on pod-1, so no add-ons (ESPHome compiles the device firmware there) and no Supervisor
 - pve-1 and pve-2 carry the vital services and have about 1 GB of RAM left, pve-3 has the RAM
 
 - Alternatives:

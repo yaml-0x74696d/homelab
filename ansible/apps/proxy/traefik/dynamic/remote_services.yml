@@ -134,27 +134,27 @@ http:
     pihole-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "PIHOLE_PORT" }}"
+          - url: "http://{{ env "POD2_IP" }}:{{ env "PIHOLE_PORT" }}"
 
     prometheus-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "PROMETHEUS_PORT" }}"
+          - url: "http://{{ env "POD2_IP" }}:{{ env "PROMETHEUS_PORT" }}"
 
     grafana-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "GRAFANA_PORT" }}"
+          - url: "http://{{ env "POD2_IP" }}:{{ env "GRAFANA_PORT" }}"
 
     nginx-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "NGINX_PORT" }}"
+          - url: "http://{{ env "POD2_IP" }}:{{ env "NGINX_PORT" }}"
 
     gatus-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER2_IP" }}:{{ env "GATUS_PORT" }}"
+          - url: "http://{{ env "POD2_IP" }}:{{ env "GATUS_PORT" }}"
 
     semaphore-service:
       loadBalancer:
@@ -164,22 +164,22 @@ http:
     nextcloud-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER3_IP" }}:{{ env "NEXTCLOUD_PORT" }}"
+          - url: "http://{{ env "POD3_IP" }}:{{ env "NEXTCLOUD_PORT" }}"
 
     immich-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER3_IP" }}:{{ env "IMMICH_PORT" }}"
+          - url: "http://{{ env "POD3_IP" }}:{{ env "IMMICH_PORT" }}"
 
     jellyfin-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER3_IP" }}:{{ env "JELLYFIN_PORT" }}"
+          - url: "http://{{ env "POD3_IP" }}:{{ env "JELLYFIN_PORT" }}"
 
     paperless-service:
       loadBalancer:
         servers:
-          - url: "http://{{ env "DOCKER3_IP" }}:{{ env "PAPERLESS_PORT" }}"
+          - url: "http://{{ env "POD3_IP" }}:{{ env "PAPERLESS_PORT" }}"
 
     ha-service:
       loadBalancer:

@@ -33,8 +33,8 @@ app_ports:
   prometheus: "{{ apps['prometheus'].port }}"
 
 # published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.
-# backends only answer traefik (docker-1) and prometheus/gatus (docker-2)
-docker_backend_callers: ["{{ docker1_ip }}", "{{ docker2_ip }}"]
+# backends only answer traefik (pod-1) and prometheus/gatus (pod-2)
+docker_backend_callers: ["{{ pod1_ip }}", "{{ pod2_ip }}"]
 docker_published_allow:
   - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage
   - { port: "{{ app_ports.authentik }}", src: "{{ docker_backend_callers }}" }

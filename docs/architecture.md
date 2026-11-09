@@ -26,18 +26,18 @@ The network is split into four zones.
 Three Proxmox nodes, each with one Docker VM.
 
 **pve-1**: Dell Wyse 5070, 8 GB RAM
-- Runs docker-1 and the IoT gateway LXC, which holds pve-1's WiFi card
+- Runs pod-1 and the IoT gateway LXC, which holds pve-1's WiFi card
 
 ![](img/pve1.png)
 
 **pve-2**: Dell Wyse 5070, 8 GB RAM
-- Runs docker-2 and the NetBird VM
+- Runs pod-2 and the NetBird VM
 - Hosts the WAN-facing NetBird VM, so it is kept separate from the data services
 
 ![](img/pve2.png)
 
 **pve-3**: custom build, 16 GB RAM, 1 SSD + 4 HDDs
-- Runs docker-3, the HAOS VM, the storage LXC and the log LXC
+- Runs pod-3, the HAOS VM, the storage LXC and the log LXC
 - Gets turned off now and then, so only what may be down runs here
 - Has the mergerfs pool
 - PBS is installed directly on the host
@@ -61,13 +61,13 @@ Each node runs one Docker VM, grouped by what the apps need.
 
 | VM | Node | Purpose | Apps |
 |---|---|---|---|
-| docker-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
-| docker-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, Gatus, nginx |
-| docker-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
+| pod-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
+| pod-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, Gatus, nginx |
+| pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
 - All three also run Diun, docker-socket-proxy, the PBS client and AIDE
 - Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
-- docker-3 gets to run the heavy services, because pve-3 has the most RAM
+- pod-3 gets to run the heavy services, because pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)
 
 How a VM is built:
@@ -111,7 +111,7 @@ The sharing:
 - Samba (SMB3) in the LXC shares it out
 - Shares: backups, iso, media, nextcloud, documents, photos, homelab and timemachine (capped at 1 TB)
 - Every share except homelab and timemachine (admin only) has its own service user, the group IDs count up from a base number
-- docker-3 mounts the shares it needs over CIFS under `/srv/<share>`, with the app's UID/GID
+- pod-3 mounts the shares it needs over CIFS under `/srv/<share>`, with the app's UID/GID
 - Databases never go on CIFS, they stay on the VM disk
 
 ## DNS
@@ -121,7 +121,7 @@ All name resolution goes through Pi-hole on a fixed service IP.
 ![](img/name-resolution.png)
 
 - The FRITZ!Box hands out `.53` as the only IPv4 DNS server
-- `.53` is a second IP on docker-2 (`dns-ip.service`), not the VM's own address
+- `.53` is a second IP on pod-2 (`dns-ip.service`), not the VM's own address
 - Pi-hole blocks ads and answers the internal names (split horizon)
 - One wildcard record points every app name at Traefik (`.201`), so new apps need no DNS record
 - The one exception is the NetBird hostname, which points straight at `.250`
@@ -136,16 +136,16 @@ How a request from a browser reaches an app.
 ![](img/login.png)
 
 1. The client asks Pi-hole for the app's name and gets Traefik's IP
-2. Traefik (on docker-1) picks the app by its hostname (`Host()` rule)
+2. Traefik (on pod-1) picks the app by its hostname (`Host()` rule)
 3. If the app needs a login, Authentik checks it first, either through OIDC or forward-auth
 4. Traefik passes the request on to the app
 
 - Plain HTTP on port 80 only redirects to HTTPS on 443
-- Apps on docker-1 are found through their container labels. They also publish their port from `apps.yml`, filtered like the others, so the edge VM can route them directly
-- Apps on docker-2/3, Home Assistant on the HAOS VM and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 16 routes)
+- Apps on pod-1 are found through their container labels. They also publish their port from `apps.yml`, filtered like the others, so the edge VM can route them directly
+- Apps on pod-2/3, Home Assistant on the HAOS VM and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 16 routes)
 - Published app ports go through the `DOCKER-USER` firewall chain, which only lets a few callers in (Gitea's ssh port: the LAN):
-  - Traefik and Homepage from docker-1
-  - Prometheus, Grafana and Gatus from docker-2
+  - Traefik and Homepage from pod-1
+  - Prometheus, Grafana and Gatus from pod-2
 
 ## Certificates
 
@@ -164,12 +164,12 @@ Authentik is the single login for the apps.
 
 ![](img/identity.png)
 
-- Authentik runs on docker-1 (server, worker and Postgres)
+- Authentik runs on pod-1 (server, worker and Postgres)
 - Its version is pinned and updated one release at a time (`authentik_tag` / `authentik_series`, checked in `deploy-authentik.yml`)
 - Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, NetBird
 - Each of those apps keeps a local admin as a break-glass account, except Vaultwarden (SSO only)
 - Apps without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, Prometheus, the Vaultwarden admin page
-- Containers can't resolve internal names: apps on docker-1 reach `auth.<domain>` through a network alias on Traefik, apps on docker-2/3 through an `extra_hosts` entry pointing at docker-1
+- Containers can't resolve internal names: apps on pod-1 reach `auth.<domain>` through a network alias on Traefik, apps on pod-2/3 through an `extra_hosts` entry pointing at pod-1
 
 ## Remote access
 
@@ -187,8 +187,8 @@ The control plane:
 - Logging in to NetBird goes through Authentik (OIDC)
 
 The routing:
-- docker-2 is the routing peer (`netbird_agent` role) and forwards traffic into the LAN
-- NetBird's DNS management is off for docker-2's group, so Pi-hole keeps port 53 ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
+- pod-2 is the routing peer (`netbird_agent` role) and forwards traffic into the LAN
+- NetBird's DNS management is off for pod-2's group, so Pi-hole keeps port 53 ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
 - Peers talk to each other directly over WireGuard, the TURN relay is only a fallback
 
 The fallback:
@@ -226,7 +226,7 @@ Prometheus for metrics, ntfy for alerts.
 
 ![](img/observability.png)
 
-- Prometheus on docker-2 collects metrics from:
+- Prometheus on pod-2 collects metrics from:
   - the PVE hosts
   - node-exporter and the Docker engine on every VM, node-exporter on every LXC
   - the ESP32 sensors, through mqtt-exporter
@@ -276,7 +276,7 @@ The sensors talk MQTT, their readings end up in Home Assistant and Prometheus. H
 - WiFi: ufw alone, only `on wlan0`: 1883 and 80 (firmware downloads) from the IoT net, 67/udp for DHCP. The card isn't a Proxmox NIC, so the PVE firewall never sees this traffic
 - Outbound on the LAN leg only DNS to the router, RELP to the log LXC and HTTP/HTTPS to the internet (`iot.fw`), the rest of the LAN is dropped
 - The IoT side has no gateway and no router option in DHCP, the LXC doesn't forward, nothing routes through it
-- A broken broker only exposes the broker, not docker-1's vault and SSO
+- A broken broker only exposes the broker, not pod-1's vault and SSO
 - Home Assistant's broker address is set in its MQTT integration (UI), not in the repo
 - Prometheus keeps 15 days; the long-term sensor history is Home Assistant's (long-term statistics, hourly)
 - Home Assistant runs as the HAOS VM on pve-3

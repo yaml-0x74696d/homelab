@@ -28,9 +28,9 @@
 
 | Guest | ID | Node | CPU | RAM (balloon floor) | Disk | IP |
 |---|---|---|---|---|---|---|
-| docker-1 | VM 201 | pve-1 | 4 | 4 GB (3 GB) | 32 GB | .201 |
-| docker-2 | VM 202 | pve-2 | 4 | 4 GB (2 GB) | 32 GB | .202 (+ DNS service IP .53) |
-| docker-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 32 GB | .203 |
+| pod-1 | VM 201 | pve-1 | 4 | 4 GB (3 GB) | 32 GB | .201 |
+| pod-2 | VM 202 | pve-2 | 4 | 4 GB (2 GB) | 32 GB | .202 (+ DNS service IP .53) |
+| pod-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 32 GB | .203 |
 | netbird | VM 250 | pve-2 | 2 | 2 GB (1 GB) | 20 GB | .250 |
 | storage | CT 300 | pve-3 | 2 | 1 GB + 512 MB swap | 24 GB | .150 |
 | log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
@@ -46,29 +46,29 @@
 
 | Group | App | Host | Purpose |
 |---|---|---|---|
-| Ingress | Traefik (`proxy`) | docker-1 | Reverse proxy, TLS via Cloudflare DNS |
-| Ingress | Pi-hole (`dns`) | docker-2 | DNS + ad blocking, split-horizon records |
-| Ingress | cloudflare-ddns | docker-1, docker-2 | Keeps the public records current, one copy per host |
-| Identity | Authentik | docker-1 | SSO, OIDC + forward-auth |
-| Identity | Vaultwarden | docker-1 | Passwords |
-| Media | Immich | docker-3 | Photos |
-| Media | Jellyfin | docker-3 | Video |
-| Media | Nextcloud | docker-3 | Files |
-| Media | Paperless | docker-3 | Documents |
+| Ingress | Traefik (`proxy`) | pod-1 | Reverse proxy, TLS via Cloudflare DNS |
+| Ingress | Pi-hole (`dns`) | pod-2 | DNS + ad blocking, split-horizon records |
+| Ingress | cloudflare-ddns | pod-1, pod-2 | Keeps the public records current, one copy per host |
+| Identity | Authentik | pod-1 | SSO, OIDC + forward-auth |
+| Identity | Vaultwarden | pod-1 | Passwords |
+| Media | Immich | pod-3 | Photos |
+| Media | Jellyfin | pod-3 | Video |
+| Media | Nextcloud | pod-3 | Files |
+| Media | Paperless | pod-3 | Documents |
 | Home | Home Assistant | haos (VM on pve-3) | Home automation, HAOS appliance |
 | Home | Mosquitto | iot (CT 302) | MQTT broker, from Debian |
 | Home | mqtt-exporter | iot (CT 302) | MQTT → Prometheus, from Debian |
 | Home | nginx | iot (CT 302) | Firmware downloads for the sensors, from Debian |
 | Home | hostapd + dnsmasq | iot (CT 302) | IoT WiFi + DHCP on pve-1's card, moved into the CT |
-| Monitoring | Prometheus | docker-2 | Metrics |
-| Monitoring | Grafana | docker-2 | Dashboards |
-| Monitoring | Gatus | docker-2 | Uptime checks, generated from the apps map |
+| Monitoring | Prometheus | pod-2 | Metrics |
+| Monitoring | Grafana | pod-2 | Dashboards |
+| Monitoring | Gatus | pod-2 | Uptime checks, generated from the apps map |
 | Monitoring | Diun | All Docker hosts | Image update notices |
-| Tools | Homepage (`dashboard`) | docker-1 | Landing page |
-| Tools | Gitea | docker-1 | git server |
-| Tools | SearXNG | docker-1 | Search engine |
-| Tools | pdfcraft | docker-1 | PDF tools |
-| Tools | nginx | docker-2 | Website |
+| Tools | Homepage (`dashboard`) | pod-1 | Landing page |
+| Tools | Gitea | pod-1 | git server |
+| Tools | SearXNG | pod-1 | Search engine |
+| Tools | pdfcraft | pod-1 | PDF tools |
+| Tools | nginx | pod-2 | Website |
 | Tools | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a git clone of `testing` |
 | Tools | docker-socket-proxy (`docker-proxy`) | All Docker hosts | Read-only Docker API for Homepage |
 
@@ -145,8 +145,8 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 - Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook
 - Phase 2: edge = NixOS VM on pve-1 (1 GB) running Traefik + AdGuard Home natively (replaces the Traefik + Pi-hole containers)
-- Phase 3–4: docker-2 / docker-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
-- Phase 6: docker-1 → Podman (Authentik, SearXNG)
+- Phase 3–4: pod-2 / pod-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
+- Phase 6: pod-1 → Podman (Authentik, SearXNG)
 - Podman auto-update with rollback replaces `:latest` + Diun (ADR 0006)
 - Later: guest OS Debian → EL10 once the hardware has x86-64-v3 / AVX2 ([ADR 0025](docs/adr/0025-debian-guests-until-x86-64-v3.md)); Proxmox hosts stay Debian
 - From then on: real commits on this repo

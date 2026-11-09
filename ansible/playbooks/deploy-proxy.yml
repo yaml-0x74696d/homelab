@@ -1,6 +1,6 @@
 ---
 - name: Deploy proxy
-  hosts: docker-1
+  hosts: pod-1
   become: true
   vars:
     traefik_log_level: DEBUG

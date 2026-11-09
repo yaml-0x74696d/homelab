@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- docker-1/2/3 can be rebuilt from OpenTofu + Ansible, and the app configs live in git
+- pod-1/2/3 can be rebuilt from OpenTofu + Ansible, and the app configs live in git
 - The only state that can't be replaced: the app data volumes and the databases (plus the vault)
 - There's no room for full VM images:
   - The PBS datastore is a 100 GB thin LV on pve-3's SSD
@@ -37,9 +37,9 @@ What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/docker-{1,2,
 
 | Host | Databases |
 |---|---|
-| docker-1 | Authentik (Postgres), Gitea, Vaultwarden (SQLite) |
-| docker-2 | Grafana, Gatus (SQLite) |
-| docker-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin + library (SQLite) |
+| pod-1 | Authentik (Postgres), Gitea, Vaultwarden (SQLite) |
+| pod-2 | Grafana, Gatus (SQLite) |
+| pod-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin (SQLite) |
 
 - Enforced by: the timer runs on its own, and a failed run or an empty dump sends an ntfy alert (`ERR` trap)
 

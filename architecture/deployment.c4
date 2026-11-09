@@ -2,7 +2,7 @@ deployment {
   site home "Home" {
     pve1 = node "pve-1" {
       description "Gateway node, 4c / 7.5G"
-      docker1 = vm "docker-1" {
+      pod1 = vm "pod-1" {
         instanceOf edge.traefik
         instanceOf identity.authentik
         instanceOf apps.vaultwarden
@@ -37,7 +37,7 @@ deployment {
 
     pve2 = node "pve-2" {
       description "Monitoring node, 4c / 7.5G"
-      docker2 = vm "docker-2" {
+      pod2 = vm "pod-2" {
         instanceOf edge.pihole
         instanceOf observability.prometheus
         instanceOf observability.grafana
@@ -65,7 +65,7 @@ deployment {
 
     pve3 = node "pve-3" {
       description "Storage and cloud node, turned off now and then, 6c / 15.5G"
-      docker3 = vm "docker-3" {
+      pod3 = vm "pod-3" {
         instanceOf media.nextcloud
         instanceOf media.immich
         instanceOf media.jellyfin
