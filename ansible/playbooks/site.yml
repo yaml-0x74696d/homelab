@@ -55,7 +55,9 @@
 - name: Deploy nextcloud
   import_playbook: deploy-nextcloud.yml
 - name: Deploy immich
-  import_playbook: deploy-immich.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: immich
 - name: Deploy jellyfin
   import_playbook: deploy-app.yml
   vars:

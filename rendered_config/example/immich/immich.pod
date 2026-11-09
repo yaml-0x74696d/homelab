@@ -1,0 +1,5 @@
+# name: drop-in from roles/podman_app. one netns, db and cache are on 127.0.0.1
+[Pod]
+PublishPort=8081:2283
+# token exchange goes straight to traefik, container dns can't resolve auth.<domain>
+AddHost=auth.example.org:192.168.178.201

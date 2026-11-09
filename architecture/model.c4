@@ -109,9 +109,9 @@ model {
         technology "vectorchord"
         style { icon tech:postgresql }
       }
-      redis = cache "Immich Redis" { style { icon tech:redis } }
+      valkey = cache "Immich Valkey"
       server -> pg "metadata"
-      server -> redis
+      server -> valkey
     }
     jellyfin = container "Jellyfin" { technology "media server" }
     paperless = app "Paperless-ngx" {

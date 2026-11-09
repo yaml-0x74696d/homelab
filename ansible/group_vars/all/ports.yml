@@ -45,5 +45,4 @@ docker_published_allow:
   - { port: "{{ app_ports.pdfcraft }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ apps['gitea'].extra_ports[0].port }}", src: ["{{ lan_cidr }}"] }   # git over ssh, netbird arrives from the lan
   - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.pihole }}", src: "{{ docker_backend_callers }}" }

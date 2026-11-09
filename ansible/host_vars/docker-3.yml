@@ -3,7 +3,7 @@
 # lives on the cifs pool (cifs_mount_root), outside apps_root — not covered here by design.
 pbs_jobs:
   - { name: nextcloud, type: postgres, container: nextcloud-db, data_dir: nextcloud/database }
-  - { name: immich, type: postgres, container: immich_postgres, data_dir: immich/postgres }
+  - { name: immich, type: postgres, container: immich-db, data_dir: immich/postgres, podman: true, app: immich }
   - { name: paperless, type: postgres, container: paperless-db, data_dir: paperless/database, podman: true, app: paperless }
   # jellyfin has no dump tool; .backup its db (everything is in jellyfin.db since 10.11)
   - { name: jellyfin, type: sqlite, path: jellyfin/config/data/jellyfin.db, podman: true }

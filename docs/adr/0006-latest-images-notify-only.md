@@ -19,7 +19,7 @@ Status: Accepted
 Which images move and which are pinned:
 - Most app images are on `:latest` (19 of 37) or a moving channel (`stable`, `release`, `alpine`, `apache`)
 - Stateful or picky images are pinned through `<app>_*_tag` variables in the deploy playbooks:
-  - Databases: Postgres `16-alpine` (Authentik, Nextcloud, Paperless), Immich's Postgres build with vector support, Redis `6.2-alpine`, Valkey `8-alpine`
+  - Databases: Postgres `16-alpine` (Authentik, Nextcloud, Paperless), Immich's Postgres build with vector support, Valkey `9` (Immich) and `8-alpine` (SearXNG)
   - Pinned to a major version: Gotenberg `8`
   - Pinned to an exact version: Vaultwarden `1.37.1`, and Authentik through `authentik_tag` in `group_vars/all/app_settings.yml` (stepped through release by release)
 

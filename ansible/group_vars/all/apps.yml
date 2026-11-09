@@ -132,8 +132,32 @@ apps:
 
   immich:
     host: docker-3
-    runtime: compose
+    uid: 2080
     port: 8081
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: immich-db-pass
+        vault: immich_db_pass
+    dirs:
+      - path: postgres   # local, the db must not live on a network share
+        owner: 999   # postgres in the debian-based image
+        mode: "0700"   # initdb sets it, 0750 would flip back each run
+    cifs:
+      - {share: photos, user: immich, path: photos}
+    containers:
+      - name: immich
+        image: ghcr.io/immich-app/immich-server
+        tag: release
+        after: [immich-db, immich-redis]
+        cifs: [photos]
+      - name: immich-db
+        image: ghcr.io/immich-app/postgres
+        tag: 14-vectorchord0.4.3-pgvectors0.2.0   # vector-enabled build, never plain postgres
+        auto_update: false
+      - name: immich-redis
+        image: docker.io/valkey/valkey
+        tag: "9"
+        auto_update: false
     homepage: {group: Homecloud, icon: /images/immich.png}
     routes:
       - host: photo

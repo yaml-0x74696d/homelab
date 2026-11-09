@@ -1,0 +1,18 @@
+# image, pod, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=immich
+
+[Container]
+# photo library on the pool
+Volume={{ cifs_mount_root }}/photos:/data
+Secret=immich-db-pass,type=env,target=DB_PASSWORD
+Environment=DB_HOSTNAME=127.0.0.1
+Environment=DB_USERNAME=immich
+Environment=DB_DATABASE_NAME=immich
+Environment=REDIS_HOSTNAME=127.0.0.1
+Environment=TZ={{ timezone }}
+# ml off by choice: no smart search or face recognition, no model downloads
+Environment=IMMICH_MACHINE_LEARNING_ENABLED=false
+HealthCmd=immich-healthcheck
+# a version bump migrates the db before it answers
+HealthStartPeriod=3m
