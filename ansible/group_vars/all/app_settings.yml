@@ -49,7 +49,7 @@ gatus_semaphore_interval: 10m
 # semaphore on ctl-1 (apps/semaphore, roles/ctl_base): a git clone, playbooks/repo-pull.yml updates it
 semaphore_repo_dir: "/home/{{ admin_user }}/homelab"
 semaphore_repo_url: https://github.com/yaml-0x74696d/homelab.git
-semaphore_repo_version: testing
+semaphore_repo_version: podman-migration   # main once the migration is merged
 # ctl-1's copy of the controller's private_dir, mounted at the same path (HOMELAB_PRIVATE_DIR)
 semaphore_private_dir: "/home/{{ admin_user }}/homelab-private"
 semaphore_aide_dir: /aide   # in the container, the aide hashes (AIDE_CHECKSUM_DIR)

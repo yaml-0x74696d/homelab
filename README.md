@@ -69,7 +69,7 @@
 | Tools | SearXNG | pod-1 | Search engine |
 | Tools | pdfcraft | pod-1 | PDF tools |
 | Tools | nginx | pod-2 | Website |
-| Tools | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a git clone of `testing` |
+| Tools | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a git clone of `semaphore_repo_version` |
 | Tools | docker-socket-proxy (`docker-proxy`) | All Docker hosts | Read-only Docker API for Homepage |
 
 ## File layout
