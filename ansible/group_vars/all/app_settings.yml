@@ -16,6 +16,8 @@ authentik_series: ["2024.2", "2024.4", "2024.6", "2024.8", "2024.10", "2024.12",
 
 prometheus_scrape_interval: 15s   # apps/prometheus
 paperless_ocr_language: eng+deu   # apps/paperless, tesseract codes joined by +
+nextcloud_php_memory_limit: 1G     # apps/nextcloud
+nextcloud_php_upload_limit: 10G
 
 mqtt_user: iot                    # shared by sensors, ha and the exporter; password: mqtt_password (vault)
 

@@ -1,0 +1,10 @@
+# image, pod, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=nextcloud db
+
+[Container]
+Volume=/srv/apps/nextcloud/database:/var/lib/postgresql/data:Z
+Secret=nextcloud-db-pass,type=env,target=POSTGRES_PASSWORD
+Environment=POSTGRES_USER=nextcloud
+Environment=POSTGRES_DB=nextcloud
+HealthCmd=pg_isready -d nextcloud -U nextcloud

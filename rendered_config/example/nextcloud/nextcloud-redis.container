@@ -1,0 +1,6 @@
+# image, pod, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=nextcloud redis
+
+[Container]
+HealthCmd=sh -c 'redis-cli ping | grep -q PONG'

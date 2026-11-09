@@ -53,7 +53,9 @@
   import_playbook: deploy-storage.yml
 # home cloud (docker-3) — cifs-mounts pool shares, so runs after storage
 - name: Deploy nextcloud
-  import_playbook: deploy-nextcloud.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: nextcloud
 - name: Deploy immich
   import_playbook: deploy-app.yml
   vars:

@@ -123,8 +123,45 @@ apps:
 
   nextcloud:
     host: docker-3
-    runtime: compose
+    uid: 2070
     port: 8080
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: nextcloud-db-pass
+        vault: nextcloud_db_pass
+      - name: nextcloud-admin-pass
+        vault: nextcloud_admin_pass
+    container_uid: 33   # apache drops to www-data, keep-id puts it on svc-nextcloud
+    start_timeout: 15min   # occ upgrade runs on start after an image bump
+    dirs:
+      - path: html
+      - path: database
+        owner: 70   # postgres in the alpine image
+        mode: "0700"   # initdb sets it, 0750 would flip back each run
+    cifs:
+      - {share: nextcloud, user: nextcloud, path: nextcloud, opts: [nobrl]}   # smb locking
+      # other apps' shares, external storage inside nextcloud
+      - {share: media, user: media, path: nc-media}
+      - {share: documents, user: paperless, path: nc-documents}
+      - {share: photos, user: immich, path: nc-photos, opts: [ro]}   # immich owns that library
+    # keep-id makes 33 every container's default user, so each one names its own
+    containers:
+      - name: nextcloud
+        image: docker.io/library/nextcloud
+        tag: 35-apache   # nextcloud can't skip a major, bump by hand one at a time
+        user: "0:0"   # apache starts as root, then drops to www-data
+        after: [nextcloud-db, nextcloud-redis]
+        cifs: [nextcloud, nc-media, nc-documents, nc-photos]
+      - name: nextcloud-db
+        image: docker.io/library/postgres
+        tag: 16-alpine
+        user: "70:70"
+        auto_update: false
+      - name: nextcloud-redis
+        image: docker.io/library/redis
+        tag: alpine
+        user: "999:1000"
+        auto_update: false
     homepage: {group: Homecloud, icon: nextcloud}
     routes:
       - host: cloud
