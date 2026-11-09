@@ -60,7 +60,8 @@ Updates:
 - Accepted: changes made in the AdGuard UI are gone at the next restart, the UI is for looking
 - Accepted: a wildcard certificate covers every name under the domain, a stolen key would too
 
-- Later: at the cutover, `app_sources.edge` and the callers of the pod-1 ports move to `edge_ip`, `dns_ip_host` flips to `edge`, Traefik on pod-1 and Pi-hole on pod-2 stop
+- Before the cutover both Traefiks run in parallel: `ingress_extra_sources` (`app_settings.yml`) lets edge through the backend firewalls as well, so every route can be tested on edge while the LAN still uses pod-1
+- Later: at the cutover, `app_sources.edge` and the callers of the pod-1 ports move to `edge_ip`, `ingress_extra_sources` goes back to `[]`, `dns_ip_host` flips to `edge`, Traefik on pod-1 and Pi-hole on pod-2 stop
 - Later: rollback for a week after the cutover: Traefik on pod-1 and Pi-hole on pod-2 are only stopped, not removed. If edge fails, starting them again and `dns_ip_host` back to `pod-2` restores ingress and DNS within minutes
 
 - Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0005](0005-prevent-destroy-on-stateful-vms.md) (prevent_destroy), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0009](0009-aide-with-manual-accept.md) (AIDE), [0010](0010-pihole-on-a-service-ip.md) (service IP), [0014](0014-authentik-as-idp.md) (forward-auth), [0015](0015-tls-via-dns-01.md) (DNS-01), [0022](0022-central-logging-relp.md) (logging), [0027](0027-gatus-generated-from-apps-map.md) (apps map)
