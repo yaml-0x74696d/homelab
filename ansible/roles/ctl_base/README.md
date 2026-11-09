@@ -1,7 +1,7 @@
 # ctl_base
 
 - What ctl-1 needs on top of `vm_base` + `podman_base`: static address, ufw, the git clone Semaphore runs from and a copy of the private overlay dir
-- ctl-1 is a Raspberry Pi 3 B+ on Raspberry Pi OS Lite (trixie, 64-bit) outside the cluster, always on, running the Semaphore app (`apps/semaphore`)
+- ctl-1 is a Raspberry Pi 3 on Raspberry Pi OS Lite (trixie, 64-bit) outside the cluster, always on, running the Semaphore app (`apps/semaphore`)
 
 ## Runs on
 

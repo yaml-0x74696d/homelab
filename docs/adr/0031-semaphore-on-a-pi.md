@@ -6,7 +6,7 @@ Status: Accepted
 
 - Every playbook ran by hand from ctl-0, my desktop, which is only on when I use it
 - Updates, AIDE checks and deploys should also run on a schedule, with a run history
-- I didn't want another VM in the cluster for it, and an unused Raspberry Pi 3 B+ was lying around
+- I didn't want another VM in the cluster for it, and an unused Raspberry Pi 3 was lying around
 - The Pi has 1 GB RAM, a 16 GB SD card and an ARM CPU, so the PBS client (amd64 only) doesn't run there
 
 - Alternatives:

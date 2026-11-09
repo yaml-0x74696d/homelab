@@ -33,7 +33,7 @@ When and how it runs:
   - `apps.pxar`: everything in `apps_root`, except the live database files, caches and query logs
   - `podman-apps.pxar`: the same for `podman_apps_root`, once a host runs a Podman app
 
-What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/docker-{1,2,3}.yml`):
+What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/pod-{1,2,3}.yml`):
 
 | Host | Databases |
 |---|---|

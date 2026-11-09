@@ -23,20 +23,20 @@ The network is split into four zones.
 
 ## Nodes
 
-Three Proxmox nodes, each with one Docker VM.
+Three Proxmox nodes, each with one pod VM.
 
-**pve-1**: Dell Wyse 5070, 8 GB RAM
+**pve-1**: small form factor PC, 8 GB RAM
 - Runs pod-1 and the IoT gateway LXC, which holds pve-1's WiFi card
 
 ![](img/pve1.png)
 
-**pve-2**: Dell Wyse 5070, 8 GB RAM
+**pve-2**: small form factor PC, 8 GB RAM
 - Runs pod-2 and the NetBird VM
 - Hosts the WAN-facing NetBird VM, so it is kept separate from the data services
 
 ![](img/pve2.png)
 
-**pve-3**: custom build, 16 GB RAM, 1 SSD + 4 HDDs
+**pve-3**: desktop PC, 16 GB RAM, 1 SSD + 4 HDDs
 - Runs pod-3, the HAOS VM, the storage LXC and the log LXC
 - Gets turned off now and then, so only what may be down runs here
 - Has the mergerfs pool

@@ -19,10 +19,10 @@
 
 | Node | Box | RAM | Role |
 |---|---|---|---|
-| pve-1 | Dell Wyse 5070 | 8 GB | Running the IoT WiFi AP directly |
-| pve-2 | Dell Wyse 5070 | 8 GB | Running the NetBird VM and routing peer |
-| pve-3 | Old gaming PC (Gigabyte 970A, GT 710) | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
-| ctl-1 | Raspberry Pi 3 B+ (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
+| pve-1 | Small form factor PC | 8 GB | Running the IoT WiFi AP directly |
+| pve-2 | Small form factor PC | 8 GB | Running the NetBird VM and routing peer |
+| pve-3 | Desktop PC, 1 SSD + 4 HDDs | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
+| ctl-1 | Raspberry Pi 3 (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
 
 ## VM/LXC
 
@@ -106,6 +106,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - Copy `private/private.yml.example` → `private/private.yml` and fill in your domain, macs, disk uuids, keys (gitignored, nothing secret)
 - `just setup` · `just check` · `just deploy <app>` · `just c4`
 - Needs: just, pre-commit, Ansible, OpenTofu, Nix, Node, d2 (only for `just diagrams`) (the hooks install ansible-lint, yamllint, shellcheck, actionlint, zizmor, gitleaks)
+- From bare hardware, in order: [docs/bootstrap.md](docs/bootstrap.md)
 - OpenTofu: tfvars from the example, `tofu apply`
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
 - ctl-1 (the Pi): admin user by hand (`roles/ctl_base/README.md`), then `ctl-preparation.yml`, `base.yml`, `deploy-app.yml -e app=semaphore`
