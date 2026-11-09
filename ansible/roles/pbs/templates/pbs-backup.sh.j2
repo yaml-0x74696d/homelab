@@ -5,7 +5,7 @@ set -Eeuo pipefail
 umask 077                 # dumps hold vault/sso secrets — keep them root-only
 
 STAGING="{{ pbs_staging_dir }}"
-APPS="{{ apps_root }}"
+APPS="{{ apps_root }}"   # compose apps, skipped once docker is gone
 PODMAN_APPS="{{ podman_apps_root }}"   # podman apps, skipped if the dir is missing
 
 log()    { logger -t pbs-backup "$*"; echo "$*"; }
@@ -74,7 +74,8 @@ EXCLUDES=(
 {% endfor %}
 )
 
-ARCHIVES=(dumps.pxar:"$STAGING" apps.pxar:"$APPS")
+ARCHIVES=(dumps.pxar:"$STAGING")
+if [ -d "$APPS" ]; then ARCHIVES+=(apps.pxar:"$APPS"); fi
 if [ -d "$PODMAN_APPS" ]; then ARCHIVES+=(podman-apps.pxar:"$PODMAN_APPS"); fi
 
 log "push snapshot"

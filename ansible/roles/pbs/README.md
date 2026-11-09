@@ -6,7 +6,7 @@
 
 ## Runs on
 
-- docker_hosts (`playbooks/deploy-pbs.yml`)
+- docker_hosts and pod_vms (`playbooks/deploy-pbs.yml`)
 - Target: PBS as a host package on pve-3, datastore `homelab` on a 100 GB thin LV (`/mnt/pbs`)
 - pve-3 must be on while the backup runs
 

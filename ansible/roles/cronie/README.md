@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- All guests (`docker_hosts`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
+- All guests (`docker_hosts`, `pod_vms`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
 
 ## How it works
 

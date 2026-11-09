@@ -79,7 +79,7 @@ tofu/            VMs + LXCs on Proxmox (bpg/proxmox, Debian cloud image, cloud-i
 ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   group_vars/<group>.yml  login per group (user, become)
-  inventory.yml    hosts only: docker_hosts, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent, appliances (haos)
+  inventory.yml    hosts only: docker_hosts, pod_vms, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent, appliances (haos)
   roles/           aide, chrony, cronie, ctl_base, docker_app, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, reach, rsyslog, samba, update, vm_base
   apps/<name>/     Compose file + templates per app (25)
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...

@@ -6,7 +6,7 @@
 ## Runs on
 
 - The `netbird_agent` inventory group: pod-2, the routing peer that's always on
-- Members stay in their main group (docker_hosts / proxmox) for the connection settings
+- Members stay in their main group (docker_hosts / pod_vms / proxmox) for the connection settings
 
 ## How it works
 

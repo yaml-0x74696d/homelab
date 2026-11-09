@@ -46,8 +46,9 @@ Storage:
 
 Rollout:
 - The host OS stays Debian 13
-- The VMs are rebuilt in place one at a time, with the same VMID, IP and MAC
-- Each rebuild only happens after a restore rehearsal worked
+- The VMs are called `pod-N` and keep their VMID, IP and MAC
+- A VM moves app by app. Once its last compose app runs on Podman, Docker is purged in place and the VM leaves `docker_hosts` for `pod_vms`
+- A rebuild from tofu stays the disaster path and only happens after a restore rehearsal worked
 
 - Enforced by: `argument_specs` on every deploy, `scripts/check_wiring.py` and ansible-lint in pre-commit (so `just check` and CI)
 
@@ -62,6 +63,7 @@ Rollout:
 - Harder: keep-id needs a re-owned copy of every image it runs, so those images take twice the disk (paperless: about 7 GB more)
 
 - Accepted: an update can still break a service between two weekly runs. Health checks and rollback limit the damage, and ntfy reports it
+- Accepted: an in-place purge keeps the VM's history (old packages, cloud-init state) that a rebuild would clear
 
 - Replaces [0002](0002-generic-docker-app-role.md) (`docker_app` role) and [0006](0006-latest-images-notify-only.md) (`:latest` + Diun) app by app: the podman apps use quadlets + `AutoUpdate`, the compose apps (`runtime: compose` in `group_vars/all/apps.yml`) follow 0002/0006 until their cutover
 

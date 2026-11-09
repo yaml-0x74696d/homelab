@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- The VMs (`docker_hosts`), in `playbooks/base.yml`
+- The VMs (`docker_hosts`, `pod_vms`), in `playbooks/base.yml`
 - Not the LXCs (they use the host's clock) and not the pve nodes (PVE ships its own chrony)
 
 ## How it works

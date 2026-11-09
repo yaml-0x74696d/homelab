@@ -70,8 +70,6 @@ deployment {
         instanceOf media.immich
         instanceOf media.jellyfin
         instanceOf media.paperless
-        instanceOf ops.docker-proxy
-        instanceOf ops.diun
         instanceOf ops.podman-updates
         instanceOf storage.pbs-client
         instanceOf observability.node-exporter

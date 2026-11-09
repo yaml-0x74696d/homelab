@@ -14,8 +14,6 @@ all:
           ansible_host: "{{ pod1_ip }}"
         pod-2:
           ansible_host: "{{ pod2_ip }}"
-        pod-3:
-          ansible_host: "{{ pod3_ip }}"
     proxmox:
       hosts:
         pve-1:
@@ -28,9 +26,14 @@ all:
       # always-on lan box that routes the lan for netbird peers.
       # pod-1 left after netbird's dns grabbed :53 from pihole there; pihole now
       # runs on pod-2 with netbird dns management off for that group.
-      # members stay in their primary group (docker_hosts/proxmox) for connection vars.
+      # members stay in their primary group (docker_hosts/pod_vms/proxmox) for connection vars.
       hosts:
         pod-2:   # routing peer
+    pod_vms:
+      # vms with podman only, docker is gone. same base as docker_hosts
+      hosts:
+        pod-3:
+          ansible_host: "{{ pod3_ip }}"
     podman_hosts:
       # podman without docker. bare metal, outside tofu
       hosts:

@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- All guests (`docker_hosts`, `lxc_containers`), in `playbooks/base.yml`
+- All guests (`docker_hosts`, `pod_vms`, `lxc_containers`), in `playbooks/base.yml`
 - Not the pve nodes: they keep a persistent journal with a size cap (`playbooks/journald.yml`)
 
 ## How it works

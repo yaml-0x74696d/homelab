@@ -1,7 +1,7 @@
 ---
 # pbs backup clients on the docker vms. needs pve-3 (the datastore) powered on.
 - name: Pbs backup client
-  hosts: docker_hosts
+  hosts: docker_hosts:pod_vms
   become: true
   roles:
     - pbs

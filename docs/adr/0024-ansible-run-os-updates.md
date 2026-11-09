@@ -22,7 +22,7 @@ Status: Accepted
 
 The setup:
 - `playbooks/update.yml` with `roles/update`, scheduled in Semaphore every Saturday 14:00 without ctl-1 ([0031](0031-semaphore-on-a-pi.md)), by hand from the controller when needed. ctl-1 itself updates from the controller
-- Three plays, one host at a time (`serial: 1`): `lxc_containers`, then `docker_hosts` and `podman_hosts`, then `proxmox`. Guests first, so a bad package shows up before a node gets it
+- Three plays, one host at a time (`serial: 1`): `lxc_containers`, then `docker_hosts`, `pod_vms` and `podman_hosts`, then `proxmox`. Guests first, so a bad package shows up before a node gets it
 - Explicit groups, not `all`: the NetBird VM updates through Nix ([0008](0008-nixos-for-the-dmz-box.md))
 - Before the plays, `roles/reach` checks every host. The part-time nodes and their guests (`part_time_nodes`, `guest_nodes` in `network.yml`) may be off: skipped, the run exits 0. Any other host that's down is skipped too, listed as DOWN, the run exits non-zero
 

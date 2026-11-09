@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- `docker_hosts`, in `playbooks/vm-preparation.yml`. Not the PVE nodes or the NetBird VM
+- `docker_hosts` and `pod_vms`, in `playbooks/vm-preparation.yml`. Not the PVE nodes or the NetBird VM
 - ctl-1 (bare metal) in `playbooks/ctl-preparation.yml`, without guest agent and cockpit
 - The LXCs get `roles/lxc_base`, which reuses `tasks/unattended_upgrades.yml`
 

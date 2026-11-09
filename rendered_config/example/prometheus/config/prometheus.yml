@@ -30,7 +30,6 @@ scrape_configs:
       - targets:
           - '192.168.178.201:9323'
           - 'host.containers.internal:9323'
-          - '192.168.178.203:9323'
 
   - job_name: 'iot_sensors'
     scrape_interval: 15s

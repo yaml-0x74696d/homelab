@@ -5,7 +5,7 @@
 # semaphore has no terminal for the prompt: survey var aide_accept=yes accepts without asking,
 # the report stays in the task log. the new hash lands in aide_checksum_dir/<host>.sha256
 - name: Accept AIDE changes
-  hosts: docker_hosts:podman_hosts:proxmox:lxc_containers
+  hosts: docker_hosts:pod_vms:podman_hosts:proxmox:lxc_containers
   serial: 1
   tasks:
     - name: Verify recorded db hash

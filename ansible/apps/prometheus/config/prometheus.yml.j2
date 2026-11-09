@@ -31,7 +31,6 @@ scrape_configs:
       - targets:
           - '{{ addr('pod-1', pod1_ip) }}:{{ docker_metrics_port }}'
           - '{{ addr('pod-2', pod2_ip) }}:{{ docker_metrics_port }}'
-          - '{{ addr('pod-3', pod3_ip) }}:{{ docker_metrics_port }}'
 
   - job_name: 'iot_sensors'
     scrape_interval: {{ prometheus_scrape_interval }}
