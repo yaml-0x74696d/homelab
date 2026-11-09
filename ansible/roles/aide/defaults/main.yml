@@ -1,5 +1,5 @@
 ---
-# schedule: aide_check_time / aide_check_delay in group_vars hosts.yml (shared with nixos)
+# schedule: aide_check_time / aide_check_delay in group_vars schedules.yml (shared with nixos)
 aide_check_nice: 19
 aide_check_io_class: idle
 

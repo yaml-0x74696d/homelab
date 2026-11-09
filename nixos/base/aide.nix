@@ -1,4 +1,4 @@
-# file integrity for the wan box. only state an upgrade never touches: autoUpgrade rewrites the
+# file integrity for the nixos vms. only state an upgrade never touches: autoUpgrade rewrites the
 # system links daily, and store paths are checked by nix anyway. accept + hash: nixos/aide-accept.sh
 { config, pkgs, facts, ... }:
 let

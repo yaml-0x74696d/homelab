@@ -1,6 +1,6 @@
-# host hardening for the wan-facing netbird vm. service-specific systemd
-# sandboxing + firewall ports live in netbird.nix (merged into the firewall lists).
-{ facts, ... }:
+# host hardening for every nixos vm. service sandboxing and firewall ports live in the host's module,
+# upgrade time + reboot window in ansible/group_vars/all/schedules.yml.
+{ config, facts, ... }:
 let
   # the controller's public key (deploys + admin login), from private.yml
   adminKeys = facts.admin_ssh_pubkeys;
@@ -9,19 +9,16 @@ let
   f2bMaxRetry = 3;
   f2bBantime = "1h";
 
-  # nightly self-upgrade builds the public repo (set your fork) with the local copy of private.yml
-  upgradeFlake = "github:yaml-0x74696d/homelab?dir=nixos#netbird";
+  # daily self-upgrade builds the public repo (set your fork) with the local copy of private.yml
+  upgradeFlake = "github:yaml-0x74696d/homelab?dir=nixos#${config.networking.hostName}";
   privateDir = "/etc/homelab-private";
-  upgradeAt = "04:00";
-  upgradeJitter = "45min";
-  rebootWindow = { lower = "03:00"; upper = "05:00"; };
   gcDates = "weekly";
   gcKeep = "30d";
 in
 {
   # --- accounts: declarative only, no passwords ---
   users.mutableUsers = false;
-  # deploy key: nixos-rebuild --target-host root@<netbird_ip> (ssh is lan-only, see firewall)
+  # deploy key: nixos-rebuild --target-host root@<host ip> (ssh is lan-only, see firewall)
   users.users.root.openssh.authorizedKeys.keys = adminKeys;
   users.users.${facts.admin_user} = {
     isNormalUser = true;
@@ -50,7 +47,7 @@ in
   };
 
   # --- firewall: default-deny, nftables. ssh restricted to lan; ---
-  # --- netbird.nix opens only the control-plane ports to the world ---
+  # --- each host opens only its own service ports ---
   networking.nftables.enable = true;
   networking.firewall = {
     enable = true;
@@ -103,17 +100,14 @@ in
     bantime-increment.enable = true;
   };
 
-  # --- self-patching: security-critical for a wan box. reboots off-hours ---
+  # --- self-patching. when + reboot window: the host's configuration.nix ---
   # private.yml as a real file (mode = copy, not a store symlink) for the upgrade's --override-input
   environment.etc."homelab-private/private.yml" = { source = facts.private_file; mode = "0644"; };
   system.autoUpgrade = {
     enable = true;
     flake = upgradeFlake;
     flags = [ "--update-input" "nixpkgs" "--override-input" "private" "path:${privateDir}" "--no-write-lock-file" ];
-    dates = upgradeAt;
-    randomizedDelaySec = upgradeJitter;
     allowReboot = true;
-    inherit rebootWindow;
   };
   nix.gc = { automatic = true; dates = gcDates; options = "--delete-older-than ${gcKeep}"; };
   nix.settings = {

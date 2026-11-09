@@ -59,6 +59,7 @@ roles/podman_app/
 | `apps.yml` | the apps map. Pure data without Jinja, read by edge and CI with yq. Gatus checks and Homepage tiles are generated from it |
 | `app_settings.yml` | around the apps: `apps_root`, ntfy, Gatus, MQTT |
 | `hosts.yml` | SSH, Docker logs, journald, AIDE, the admin key |
+| `schedules.yml` | every timer: NixOS upgrade + reboot windows, AIDE, PBS, Podman auto-update, also read by nixos |
 | `base.yml` | time and logging, also read by nixos |
 | `storage.yml` | pool paths, shares |
 | `vault.yml` | secrets, encrypted, not in git. `vault.yml.example` has the keys |

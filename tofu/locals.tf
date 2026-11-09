@@ -17,9 +17,11 @@ locals {
   # balloon = min floor; guest runs at `memory`, host reclaims toward `balloon` only under pressure.
   # floors sit >= real usage: guests have no swap, so squeezing below working set OOMs a container.
   vms = {
-    "pod-1"   = { vmid = local.net.vmids.pod1, node = local.net.guest_nodes["pod-1"], cores = 4, memory = 4096, balloon = 3072, disk = 32, ip = local.net.pod1_ip, mac0 = local.macs["pod-1"].lan }
-    "pod-2"   = { vmid = local.net.vmids.pod2, node = local.net.guest_nodes["pod-2"], cores = 4, memory = 4096, balloon = 2048, disk = 32, ip = local.net.pod2_ip, mac0 = local.macs["pod-2"].lan }
-    "pod-3"   = { vmid = local.net.vmids.pod3, node = local.net.guest_nodes["pod-3"], cores = 4, memory = 12288, balloon = 8192, disk = 64, ip = local.net.pod3_ip, mac0 = local.macs["pod-3"].lan }
+    "pod-1" = { vmid = local.net.vmids.pod1, node = local.net.guest_nodes["pod-1"], cores = 4, memory = 4096, balloon = 3072, disk = 32, ip = local.net.pod1_ip, mac0 = local.macs["pod-1"].lan }
+    "pod-2" = { vmid = local.net.vmids.pod2, node = local.net.guest_nodes["pod-2"], cores = 4, memory = 4096, balloon = 2048, disk = 32, ip = local.net.pod2_ip, mac0 = local.macs["pod-2"].lan }
+    "pod-3" = { vmid = local.net.vmids.pod3, node = local.net.guest_nodes["pod-3"], cores = 4, memory = 12288, balloon = 8192, disk = 64, ip = local.net.pod3_ip, mac0 = local.macs["pod-3"].lan }
+    # edge: no balloon squeeze, lan dns + every route live here and nixos builds its upgrades on the box
+    "edge"    = { vmid = local.net.vmids.edge, node = local.net.guest_nodes["edge"], cores = 1, memory = 1536, balloon = 1536, disk = 16, ip = local.net.edge_ip, mac0 = local.macs.edge.lan }
     "netbird" = { vmid = local.net.vmids.netbird, node = local.net.guest_nodes["netbird"], cores = 2, memory = 2048, balloon = 1024, disk = 20, ip = local.net.netbird_ip, mac0 = local.macs.netbird.lan }
     # haos: no balloon floor, ha keeps its state in ram and the esphome add-on compiles there
     "haos" = { vmid = local.net.vmids.haos, node = local.net.guest_nodes["haos"], cores = 2, memory = 3072, balloon = 0, disk = 32, ip = local.net.haos_ip, mac0 = local.macs.haos.lan }

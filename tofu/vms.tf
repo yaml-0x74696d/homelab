@@ -169,6 +169,83 @@ resource "proxmox_virtual_environment_vm" "netbird" {
   }
 }
 
+# edge: traefik + adguard home on nixos. same bootstrap as netbird: debian shell first,
+# nixos-anywhere then installs the flake in ../nixos (nixosConfigurations.edge).
+resource "proxmox_virtual_environment_vm" "edge" {
+  name      = "edge"
+  node_name = local.vms.edge.node
+  vm_id     = local.vms.edge.vmid
+  on_boot   = true
+  started   = true
+
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
+  # little state (certs, query log), but a recreate takes lan dns and every route down
+  lifecycle {
+    prevent_destroy = true
+    # image and cloud-init only count for the debian bootstrap, nixos owns disk and network after that
+    ignore_changes = [disk[0].import_from, initialization]
+  }
+
+  # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)
+  agent { enabled = false }
+
+  # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
+  serial_device { device = "socket" }
+
+  cpu {
+    cores = local.vms.edge.cores
+    type  = "host"
+  }
+
+  memory {
+    dedicated = local.vms.edge.memory
+    floating  = local.vms.edge.balloon
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  scsi_hardware = "virtio-scsi-single"
+
+  disk {
+    datastore_id = var.vm_datastore
+    import_from  = proxmox_download_file.debian[local.vms.edge.node].id
+    interface    = "scsi0"
+    size         = local.vms.edge.disk
+    iothread     = true
+    discard      = "on"
+    ssd          = true
+  }
+
+  # bootstrap only, nixos sets the static ip itself (see nixos/edge/configuration.nix)
+  initialization {
+    datastore_id = var.vm_datastore
+    ip_config {
+      ipv4 {
+        address = "${local.vms.edge.ip}/${local.lan_prefix}"
+        gateway = local.net.gateway_ip
+      }
+    }
+    dns {
+      servers = [local.net.dns_ip, local.net.gateway_ip]
+    }
+    user_account {
+      username = local.priv.admin_user
+      password = var.vm_password
+      keys     = local.ssh_keys
+    }
+  }
+
+  network_device {
+    bridge      = local.net.lan_bridge
+    mac_address = local.vms.edge.mac0
+    firewall    = true
+  }
+}
+
 # home assistant os: an appliance, ha's own updates and config inside, no cloud-init, no ansible
 resource "proxmox_virtual_environment_vm" "haos" {
   name      = "haos"

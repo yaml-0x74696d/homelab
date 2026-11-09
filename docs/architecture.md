@@ -292,7 +292,7 @@ How a change gets from git to the machines.
 Deploying, from the controller:
 - `tofu apply` for the VMs and the LXCs
 - `ansible-playbook` for the hosts and the apps
-- `nixos/update.sh` for the NetBird VM
+- `nixos/update.sh <netbird|edge>` for the NixOS VMs
 - Semaphore on ctl-1 (a Raspberry Pi outside the cluster) runs scheduled playbooks from a checkout copied over by hand
 
 Checking:

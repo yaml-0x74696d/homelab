@@ -33,3 +33,4 @@ Format: status, context, decision, consequences.
 - [29. The IoT WiFi card moves into the gateway LXC](0029-wifi-card-in-the-gateway.md)
 - [30. Home Assistant as a HAOS VM on pve-3](0030-haos-vm-on-pve-3.md)
 - [31. Semaphore on a Raspberry Pi as the always-on runner](0031-semaphore-on-a-pi.md)
+- [32. Edge VM: Traefik and AdGuard Home on NixOS, routes from the apps map](0032-edge-vm-traefik-adguard-on-nixos.md) (proposed)

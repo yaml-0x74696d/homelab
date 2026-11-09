@@ -19,7 +19,7 @@
 
 | Node | Box | RAM | Role |
 |---|---|---|---|
-| pve-1 | Small form factor PC | 8 GB | Running the IoT WiFi AP directly |
+| pve-1 | Small form factor PC | 8 GB | Running the IoT WiFi AP directly and the edge VM |
 | pve-2 | Small form factor PC | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Desktop PC, 1 SSD + 4 HDDs | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
 | ctl-1 | Raspberry Pi 3 (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
@@ -32,6 +32,7 @@
 | pod-2 | VM 202 | pve-2 | 4 | 4 GB (2 GB) | 32 GB | .202 (+ DNS service IP .53) |
 | pod-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 32 GB | .203 |
 | netbird | VM 250 | pve-2 | 2 | 2 GB (1 GB) | 20 GB | .250 |
+| edge | VM 200 | pve-1 | 1 | 1.5 GB (1.5 GB) | 16 GB | .200 (takes the DNS service IP .53 at the cutover) |
 | storage | CT 300 | pve-3 | 2 | 1 GB + 512 MB swap | 24 GB | .150 |
 | log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
 | iot | CT 302 | pve-1 | 1 | 512 MB + 256 MB swap | 8 GB | .152 + IoT `.50.10` on its WiFi card |
@@ -40,7 +41,7 @@
 
 ## Stack
 
-- Proxmox (3 nodes) · OpenTofu (bpg/proxmox) · Ansible · Docker Compose · NixOS (NetBird VM) · PBS · NetBird · Traefik · Pi-hole · Authentik
+- Proxmox (3 nodes) · OpenTofu (bpg/proxmox) · Ansible · Docker Compose · NixOS (NetBird VM, edge) · PBS · NetBird · Traefik · Pi-hole · Authentik
 
 ## What runs
 
@@ -48,6 +49,7 @@
 |---|---|---|---|
 | Ingress | Traefik (`proxy`) | pod-1 | Reverse proxy, TLS via Cloudflare DNS |
 | Ingress | Pi-hole (`dns`) | pod-2 | DNS + ad blocking, split-horizon records |
+| Ingress | Traefik + AdGuard Home | edge (NixOS) | Routers and DNS rewrites built from `apps.yml`, take over from `proxy` + `dns` at the cutover |
 | Ingress | cloudflare-ddns | pod-1, pod-2 | Keeps the public records current, one copy per host |
 | Identity | Authentik | pod-1 | SSO, OIDC + forward-auth |
 | Identity | Vaultwarden | pod-1 | Passwords |
@@ -83,7 +85,7 @@ ansible/
   roles/           aide, chrony, cronie, ctl_base, docker_app, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, reach, rsyslog, samba, update, vm_base
   apps/<name>/     Compose file + templates per app (25)
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
-nixos/           Flake for the NetBird VM (+ update.sh, aide-accept.sh)
+nixos/           Flake for the NixOS VMs: netbird, edge (+ update.sh, aide-accept.sh)
 architecture/    LikeC4 model: landscape, containers, deployment, 8 flows
 docs/            Architecture, ADRs, exported diagrams
 rendered_config/ Podman apps rendered with example values for review (just render, CI keeps it current)
@@ -95,7 +97,8 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - Ansible group_vars get read by OpenTofu (yamldecode) and Nix (facts.nix), so an IP only has to change in one place ([ADR 0007](docs/adr/0007-group-vars-single-source-of-truth.md))
 - `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
 - `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps`, `base`, `private/private.yml` YAML into JSON with yq-go
-- `nixos/update.sh` + `aide-accept.sh` read the NetBird IP from the same file
+- `nixos/update.sh` + `aide-accept.sh` read the host IP (`netbird_ip`, `edge_ip`) from the same file
+- edge reads `apps.yml` too: every route becomes a Traefik router and an AdGuard rewrite ([nixos-layout](docs/nixos-layout.md#how-edge-builds-its-routes))
 - Ports: one `app_ports` map → compose, Traefik routes, Prometheus targets, firewall
 - Secrets: one `vault.yml` (Ansible Vault), every app gets them via its `.env.j2` → `${VAR}` in compose
 - No magic numbers: every timeout, schedule, size and port is a named variable (role defaults, playbook `vars:`, Nix `let`)
@@ -111,7 +114,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
 - ctl-1 (the Pi): admin user by hand (`roles/ctl_base/README.md`), then `ctl-preparation.yml`, `base.yml`, `deploy-app.yml -e app=semaphore`
 - Plain `ansible-playbook` is the main path; for an EE run copy `ansible-navigator.yml.example` → `ansible-navigator.yml` and mount the private folder
-- NixOS: nixos-anywhere once, then `nixos/update.sh`. `nix flake check` needs builds (facts.nix), `--no-build` fails
+- NixOS: nixos-anywhere once per VM, then `nixos/update.sh <netbird|edge>`. `nix flake check` needs builds (facts.nix), `--no-build` fails
 
 ## Security
 
@@ -123,29 +126,29 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - HAOS VM: PVE guest firewall, HA only from Traefik and Homepage, admins direct ([ADR 0030](docs/adr/0030-haos-vm-on-pve-3.md))
 - Published container ports bypass ufw → filtered in `DOCKER-USER` by source (only Traefik / Prometheus hosts reach backends)
 - Docker daemon: `no-new-privileges`, `live-restore`, capped JSON logs; Homepage reads Docker only through a read-only socket proxy
-- NetBird VM (NixOS): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
+- NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
 - Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden), forward-auth for apps without SSO
 - TLS everywhere via Let's Encrypt DNS-01 (Cloudflare), no port 80 forwarded from the WAN
-- AIDE on every host + the NetBird VM: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
+- AIDE on every host + the NixOS VMs: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
 - Backups: PBS, scoped token that can only write, DB dumps before each run; a restore is rehearsed before each rebuild ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
 - Secrets: Ansible Vault; gitleaks on every commit and over the full history in CI
 
 ## Decisions
 
-- [docs/adr/](docs/adr/README.md): 31 records
+- [docs/adr/](docs/adr/README.md): 32 records
 - 0001 OpenTofu + cloud-init · 0002 generic app role · 0003 NetBird · 0004 mergerfs · 0005 prevent_destroy
 - 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 Pi-hole service IP
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
 - 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
-- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM (proposed)
 
 ## Future plans
 
-- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook
-- Phase 2: edge = NixOS VM on pve-1 (1 GB) running Traefik + AdGuard Home natively (replaces the Traefik + Pi-hole containers)
+- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook, CI quadlet dry-run
+- Phase 2: edge = NixOS VM on pve-1 (1.5 GB) running Traefik + AdGuard Home natively, code in `nixos/edge/`; the cutover replaces the Traefik + Pi-hole containers ([ADR 0032](docs/adr/0032-edge-vm-traefik-adguard-on-nixos.md))
 - Phase 3–4: pod-2 / pod-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
 - Phase 6: pod-1 → Podman (Authentik, SearXNG)
 - Podman auto-update with rollback replaces `:latest` + Diun (ADR 0006)

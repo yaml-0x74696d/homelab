@@ -44,6 +44,11 @@ model {
       description "Local records for *.domain, upstream resolver"
     }
     ddns = container "cloudflare-ddns" { description "Keeps the public A records current" }
+    adguard = container "AdGuard Home" {
+      #parked
+      technology "DNS + ad blocking"
+      description "Rewrites from apps.yml, replaces Pi-hole at the edge cutover"
+    }
   }
 
   identity = system "Identity" {

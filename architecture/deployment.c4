@@ -19,6 +19,12 @@ deployment {
         instanceOf observability.rsyslog
         instanceOf ops.chrony
       }
+      edge = vm "edge" {
+        description "NixOS, Traefik + AdGuard Home from apps.yml, live at the cutover"
+        instanceOf edge.adguard
+        instanceOf observability.rsyslog
+        instanceOf ops.chrony
+      }
       gateway = lxc "iot" {
         #iot
         description "IoT gateway: LAN leg + the node's wifi card"

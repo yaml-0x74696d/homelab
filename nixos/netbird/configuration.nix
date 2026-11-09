@@ -3,7 +3,14 @@ let
   lanPrefix = lib.last (lib.splitString "/" facts.lan_cidr);
 in
 {
-  imports = [ ../base/time.nix ../base/logging.nix ./hardening.nix ./aide.nix ./netbird.nix ./fastfetch.nix ];
+  imports = [
+    ../base/time.nix
+    ../base/logging.nix
+    ../base/hardening.nix
+    ../base/aide.nix
+    ../base/fastfetch.nix
+    ./netbird.nix
+  ];
 
   boot.loader.grub = { enable = true; efiSupport = false; };   # disko provides the device (EF02 partition)
   boot.loader.timeout = 1;
@@ -23,6 +30,13 @@ in
       Gateway = facts.gateway_ip;
       DNS = [ facts.dns_ip facts.gateway_ip ];   # pihole (dns service ip), gateway fallback
     };
+  };
+
+  # times + reboot window from schedules.yml, the rest of the upgrade is in base/hardening.nix
+  system.autoUpgrade = {
+    dates = facts.netbird_upgrade_time;
+    randomizedDelaySec = facts.netbird_upgrade_delay;
+    rebootWindow = facts.netbird_reboot_window;
   };
 
   zramSwap.enable = true;   # oom cushion, no disk swap

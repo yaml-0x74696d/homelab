@@ -45,7 +45,7 @@ Schedules (set in the UI, Semaphore's own database):
 AIDE hashes:
 - Semaphore keeps the accepted hashes in its own rw dir (`/srv/apps/semaphore/aide`, `AIDE_CHECKSUM_DIR`). That copy is the reference for every Debian host, ctl-1 included
 - `aide-accept.yml` accepts in Semaphore through the survey var `aide_accept=yes`, the diff stays in the task log
-- ctl-0's `ansible/aide` is a copy, pulled back with rsync after accepts. The NetBird VM's hash stays on ctl-0 (`nixos/aide-accept.sh`)
+- ctl-0's `ansible/aide` is a copy, pulled back with rsync after accepts. The NixOS VMs' hashes stay on ctl-0 (`nixos/aide-accept.sh <host>`)
 
 - Enforced by: the read-only repo and private dir mounts, ufw on ctl-1 (port from `allow_from` only, ssh from the LAN), and the hash compare in `roles/aide` before every run and accept
 

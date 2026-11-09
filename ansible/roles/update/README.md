@@ -9,7 +9,7 @@
 
 - `playbooks/update.yml`: lxc_containers, then docker_hosts, pod_vms and podman_hosts, then proxmox
 - Only the hosts `roles/reach` found up in the first play (`<group>:&reachable`)
-- Not the NetBird VM (NixOS, `system.autoUpgrade` + `nixos/update.sh`)
+- Not the NixOS VMs, netbird and edge (`system.autoUpgrade` + `nixos/update.sh <host>`)
 
 ## How it works
 

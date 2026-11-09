@@ -1,5 +1,5 @@
 {
-  description = "netbird control-plane host (dmz, pve-2)";
+  description = "nixos vms: netbird (dmz, pve-2), edge (traefik + adguard home, pve-1)";
 
   inputs = {
     # unstable: the services.netbird.server module + netbird 0.77.x live here.
@@ -21,16 +21,19 @@
     let
       system = "x86_64-linux";
       facts = import ./facts.nix { pkgs = nixpkgs.legacyPackages.${system}; inherit private; };
-    in
-    {
-      nixosConfigurations.netbird = nixpkgs.lib.nixosSystem {
+      # one folder per host, same disk layout everywhere
+      host = name: nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit facts; };
         modules = [
           disko.nixosModules.disko
-          ./netbird/disko.nix
-          ./netbird/configuration.nix
+          ./base/disko.nix
+          (./. + "/${name}/configuration.nix")
         ];
       };
+    in
+    {
+      nixosConfigurations.netbird = host "netbird";
+      nixosConfigurations.edge = host "edge";
     };
 }

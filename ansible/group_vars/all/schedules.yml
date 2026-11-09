@@ -1,0 +1,25 @@
+---
+# every timer in one place, read by the roles (their defaults point here) and by nixos (facts.nix).
+# times are systemd OnCalendar, delays systemd time spans. debian hosts never reboot on their own,
+# reboots there come from update.yml (semaphore's schedule, kept in its ui)
+
+# nixos self-upgrade: build at the time (+ random delay), reboot only inside the window.
+# night, one after the other, so vpn and lan dns are never down together
+netbird_upgrade_time: "03:00"
+netbird_upgrade_delay: 30min      # leaves time to build before the window closes
+netbird_reboot_window: { lower: "03:00", upper: "04:00" }
+edge_upgrade_time: "04:00"
+edge_upgrade_delay: 20min
+edge_reboot_window: { lower: "04:00", upper: "04:45" }
+
+# daily aide check (roles/aide + nixos aide.nix), spread so hosts sharing disks don't scan at once
+aide_check_time: "*-*-* 12:00:00"
+aide_check_delay: 30min
+
+# pbs backup (roles/pbs), the delay keeps the hosts apart on the datastore
+pbs_backup_time: "*-*-* 20:00:00"
+pbs_backup_delay: 20m
+
+# podman (roles/podman_base): newer tags of pinned images first, then auto-update
+podman_new_tags_time: "Sun *-*-* 12:00:00"
+podman_auto_update_time: "Sun *-*-* 13:00:00"   # midday, someone is around to fix it

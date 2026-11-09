@@ -45,4 +45,4 @@ Public DNS:
 - Accepted: whoever gets root on pod-1 or the NetBird VM can edit the whole zone
 - Accepted: every certificate lands in the public certificate transparency logs, so the app hostnames are public (the apps themselves aren't)
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0010](0010-pihole-on-a-service-ip.md) (split-horizon DNS), [0014](0014-authentik-as-idp.md) (SSO)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0010](0010-pihole-on-a-service-ip.md) (split-horizon DNS), [0014](0014-authentik-as-idp.md) (SSO), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (wildcard on edge)

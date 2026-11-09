@@ -14,7 +14,7 @@ Status: Accepted
 
 ## Decision
 
-- The Docker VMs and the NetBird VM have `lifecycle { prevent_destroy = true }` (`tofu/vms.tf`)
+- The pod VMs, the NetBird VM and edge have `lifecycle { prevent_destroy = true }` (`tofu/vms.tf`)
 - The storage LXC has no guard, because its data is on the host pool, not on the CT disk
 - The log LXC has no guard either, its logs are on its own CT disk
 - Disk and hardware settings (discard, ssd, ballooning) are chosen so they can change in place, without a rebuild
@@ -30,4 +30,4 @@ Status: Accepted
 
 - The way back after a loss is PBS: the daily database dumps and archives (`roles/pbs`)
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu), [0004](0004-mergerfs-instead-of-zfs.md) (pool vs local disks)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu), [0004](0004-mergerfs-instead-of-zfs.md) (pool vs local disks), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge)

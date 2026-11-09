@@ -42,4 +42,4 @@ The setup:
 - Other config points at `dns_ip` too: the NetBird VM's resolver in Nix and its OpenTofu bootstrap
 - Later: AdGuard Home on a NixOS edge VM (see "Future plans" in the README)
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (AdGuard Home on edge takes the service IP)

@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - I wanted to know when files on a server change outside of a deploy
-- Every server is in scope: pod-1/2/3, pve-1/2/3, the storage, log and IoT LXCs and the NetBird VM
+- Every server is in scope: pod-1/2/3, pve-1/2/3, the storage, log and IoT LXCs and the NixOS VMs (netbird, edge)
 - Alerts go to ntfy.sh, a public service, so they must not leak paths
 
 - Alternatives:
@@ -20,10 +20,10 @@ Status: Accepted
 
 Where it runs:
 - Debian hosts: `roles/aide` through `playbooks/aide.yml`
-- NetBird VM: `nixos/netbird/aide.nix`
+- NixOS VMs (netbird, edge): `nixos/base/aide.nix`
 
 When it runs:
-- Daily at 12:00, plus a random delay of up to 30 minutes (`aide_check_time` / `aide_check_delay`, shared with Nix)
+- Daily at 12:00, plus a random delay of up to 30 minutes (`aide_check_time` / `aide_check_delay` in `schedules.yml`, shared with Nix)
 - With low priority (`nice 19`) and the idle I/O class, so it doesn't slow the host down
 - Debian's own `dailyaidecheck.timer` is masked and replaced by `aide-check.timer`
 
@@ -35,13 +35,13 @@ What it skips (`aide_excludes_common` on every host, `aide_excludes_by_group` pe
 - Login homes (`aide_login_homes`): history files only keep owner, mode and type watched
 - Files rewritten by design (`aide_var_files`: systemd timer stamps, apt's daily stamps, DHCP leases): the same, owner, mode and type only
 - `/etc/hosts` (`aide_content_files`): cloud-init rewrites it at boot, so content, owner and mode are watched, the times are not
-- NetBird VM: only watches what an upgrade never touches (`/etc` content, SSH keys, `/var/lib/secrets`). autoUpgrade rewrites the system links every day, and Nix checks its store paths anyway
+- NixOS VMs: only watch what an upgrade never touches (`/etc` content, SSH keys, `/var/lib/secrets`). autoUpgrade rewrites the system links every day, and Nix checks its store paths anyway
 
 - Rule for new excludes: watch config and binaries, skip state a service rewrites on its own. The config behind each skipped path (`/etc/corosync`, `/etc/proxmox-backup`) stays watched
 
 Alerts and accepting:
 - The ntfy alert only has counts, the changed paths stay in the host's journal (`journalctl -u aide-check`)
-- Changes are accepted by hand: `aide-accept.yml` (Debian) or `nixos/aide-accept.sh` (NetBird) shows the diff, asks, then activates the new database
+- Changes are accepted by hand: `aide-accept.yml` (Debian) or `nixos/aide-accept.sh` (NixOS VMs) shows the diff, asks, then activates the new database
 - One exception: `update.yml` accepts on its own after an upgrade, but only if `aide --check` was clean right before it. Otherwise the host is left for `aide-accept.yml` ([0024](0024-ansible-run-os-updates.md))
 - The SHA256 of every accepted database is stored on the controller: Semaphore's dir on ctl-1 is the reference, ctl-0's `ansible/aide` (a symlink into the private folder on secure storage) a copy ([0031](0031-semaphore-on-a-pi.md))
 
@@ -59,4 +59,4 @@ Alerts and accepting:
 - Accepted: changes made on a host while `update.yml` upgrades it go into the baseline unreviewed
 - Accepted: `/dev` on the pve nodes is unwatched (VM disks, ISOs, USB and corosync IPC churn there daily), so a payload in `/dev/shm` or a planted device node goes unseen
 
-- Related: `roles/aide`, [0008](0008-nixos-for-the-dmz-box.md), [0024](0024-ansible-run-os-updates.md) (auto-accept after upgrades), [0031](0031-semaphore-on-a-pi.md) (hashes on ctl-1)
+- Related: `roles/aide`, [0008](0008-nixos-for-the-dmz-box.md), [0024](0024-ansible-run-os-updates.md) (auto-accept after upgrades), [0031](0031-semaphore-on-a-pi.md) (hashes on ctl-1), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge)

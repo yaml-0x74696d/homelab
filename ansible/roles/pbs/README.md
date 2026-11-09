@@ -60,8 +60,8 @@
 
 | Variable | Default | What |
 |---|---|---|
-| `pbs_on_calendar` | `*-*-* 20:00:00` | When the backup runs (systemd OnCalendar) |
-| `pbs_randomized_delay` | `20m` | Random delay, so the three hosts don't start at once |
+| `pbs_on_calendar` | `pbs_backup_time` (`*-*-* 20:00:00`) | When the backup runs (systemd OnCalendar), set in `schedules.yml` |
+| `pbs_randomized_delay` | `pbs_backup_delay` (`20m`) | Random delay, so the three hosts don't start at once |
 | `pbs_jobs` | `[]` | Databases to dump: `{name, type: postgres\|sqlite, container?, path?, data_dir?, podman?, app?}`, set in `host_vars`. `podman: true` = `path` is under `podman_apps_root`, postgres runs `podman exec` as `svc-<app>` |
 | `pbs_exclude` | `[]` | Extra excludes for `apps.pxar` and `podman-apps.pxar`, set in `host_vars` |
 | `pbs_datastore` | `homelab` | Datastore on the PBS server |

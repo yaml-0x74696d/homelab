@@ -40,6 +40,7 @@ pve_firewall_log_sources:
   - "{{ storage_ip }}"
   - "{{ iot_lan_ip }}"
   - "{{ netbird_ip }}"
+  - "{{ edge_ip }}"
   - "{{ ctl1_ip }}"
 
 # who scrapes node-exporter (log + iot lxc) and the mqtt exporter (iot lxc)
@@ -61,4 +62,5 @@ pve_firewall_haos_observer_port: 4357   # haos' supervisor health page
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.
 # PRE-FLIGHT: add every other vmid that shows firewall=1 or it breaks.
-pve_firewall_open_guests: ["{{ vmids.pod1 }}", "{{ vmids.pod2 }}", "{{ vmids.pod3 }}", "{{ vmids.storage }}"]
+# edge filters itself (nftables), like the pod vms with ufw
+pve_firewall_open_guests: ["{{ vmids.edge }}", "{{ vmids.pod1 }}", "{{ vmids.pod2 }}", "{{ vmids.pod3 }}", "{{ vmids.storage }}"]

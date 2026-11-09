@@ -334,13 +334,20 @@ apps:
     routes:
       - host: ha
 
-# traefik routes that aren't apps
+# traefik routes that aren't apps. target: an inventory host, or edge for what runs on edge itself.
+# port_var: the key in ports.yml (no jinja here). scheme defaults to http.
+# no target = only pod-1's traefik serves it, the entry goes at the edge cutover
 infra_routes:
-  - host: pve-1
-  - host: pve-2
-  - host: pve-3
-  - host: pbs
-  - host: dns     # pi-hole ui
+  - {host: pve-1, target: pve-1, port_var: pve_ui_port, scheme: https, insecure_tls: true}
+  - {host: pve-2, target: pve-2, port_var: pve_ui_port, scheme: https, insecure_tls: true}
+  - {host: pve-3, target: pve-3, port_var: pve_ui_port, scheme: https, insecure_tls: true}
+  - {host: pbs, target: pve-3, port_var: pbs_port, scheme: https, insecure_tls: true}
+  - host: dns     # pi-hole's ui on pod-1's traefik, adguard home's on edge
+    target: edge
+    middlewares: [authentik]
     homepage: {group: Admin, icon: /images/pihole.png, label: Pi-hole, path: /admin/login}
-  - host: proxy   # traefik's own dashboard
+  - host: proxy   # pod-1 traefik's dashboard
     homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}
+  - host: traefik   # edge traefik's dashboard
+    target: edge
+    middlewares: [authentik]

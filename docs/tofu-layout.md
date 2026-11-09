@@ -24,7 +24,7 @@ tofu/
 ├── providers.tf               provider pin, login (token, SSH for the disk import)
 ├── variables.tf               inputs: credentials, image, template, datastores
 ├── locals.tf                  group_vars read in, the guest maps
-├── vms.tf                     cloud images, pod-1/2/3, netbird, haos
+├── vms.tf                     cloud images, pod-1/2/3, netbird, edge, haos
 ├── lxc.tf                     storage, log, iot
 ├── terraform.tfvars.example   the keys for terraform.tfvars
 └── README.md                  first setup, step by step
@@ -37,7 +37,7 @@ tofu/
 
 - `locals.tf` reads `network`, `ports`, `hosts`, `storage` and `private/private.yml` with `yamldecode(file(...))`. The same files are read by Ansible and NixOS ([ADR 0007](adr/0007-group-vars-single-source-of-truth.md))
 - Only what OpenTofu alone needs is kept here: sizes in the maps, credentials in tfvars. Nodes come from `guest_nodes`, `roles/reach` reads them too
-- One resource per kind, `for_each` over a map: a guest is added by adding a map entry (`docker` VMs, the image per node). netbird and the LXCs differ too much and are written out
+- One resource per kind, `for_each` over a map: a guest is added by adding a map entry (`pod` VMs, the image per node). netbird, edge and the LXCs differ too much and are written out
 
 ## Which value is used
 
@@ -57,10 +57,10 @@ Weak to strong:
 
 | Setting | Where | Why |
 |---|---|---|
-| `prevent_destroy = true` | docker VMs, netbird | the databases are on the VM disk ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md)) |
+| `prevent_destroy = true` | pod VMs, netbird, edge | the databases are on the VM disk (edge: a recreate takes LAN DNS and every route down) ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md)) |
 | `ignore_changes = [url]` | cloud images | Proxmox doesn't keep the source URL, imported files have none |
 | `ignore_changes = [disk[0].import_from]` | VMs | the image only counts when the disk is created |
-| `ignore_changes = [initialization]` | netbird | NixOS owns disk and network after the bootstrap |
+| `ignore_changes = [initialization]` | netbird, edge | NixOS owns disk and network after the bootstrap |
 | `ignore_changes = [template_file_id, user_account]` | LXCs | only counted at creation |
 | `reboot_after_update = false` | VMs | a change that needs a reboot waits for a planned one |
 

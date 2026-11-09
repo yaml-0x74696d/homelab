@@ -31,4 +31,4 @@ Status: Accepted
 
 - Accepted: Gatus itself has no health check (its image is `scratch`, `healthcheck: false`)
 
-- Related: [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (Podman), [0026](0026-ufw-as-guest-firewall.md) (ufw), [0031](0031-semaphore-on-a-pi.md) (scheduled runs)
+- Related: [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (Podman), [0026](0026-ufw-as-guest-firewall.md) (ufw), [0031](0031-semaphore-on-a-pi.md) (scheduled runs), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge reads the same map)

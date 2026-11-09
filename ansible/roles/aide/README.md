@@ -8,7 +8,7 @@
 
 - docker_hosts, pod_vms, podman_hosts, proxmox, lxc_containers (`playbooks/aide.yml`)
 - Only the hosts `roles/reach` found up in its first play. Hosts in `reach_optional_hosts` (the part-time nodes and their guests) may be off, the run still exits 0. Any other host that's down fails it
-- The NetBird VM does the same as a Nix module: `nixos/netbird/aide.nix` + `nixos/aide-accept.sh`
+- The NixOS VMs (netbird, edge) do the same as a Nix module: `nixos/base/aide.nix` + `nixos/aide-accept.sh <host>`
 
 ## How it works
 
@@ -53,7 +53,7 @@
 
 | Variable | Default | What |
 |---|---|---|
-| `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to 30 min | When the check runs (group_vars `hosts.yml`, shared with NixOS) |
+| `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to 30 min | When the check runs (group_vars `schedules.yml`, shared with NixOS) |
 | `aide_excludes_common` | see below | Excludes on every host |
 | `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
 | `aide_login_homes` | admin home, `/root` | Homes with history files on the `VarFile` rule (see Notes) |
@@ -86,4 +86,4 @@
 ## Related
 
 - [ADR 0009: AIDE with manual accept](../../../docs/adr/0009-aide-with-manual-accept.md)
-- `nixos/netbird/aide.nix` (NetBird VM)
+- `nixos/base/aide.nix` (NixOS VMs)
