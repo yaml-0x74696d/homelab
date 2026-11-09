@@ -27,7 +27,7 @@ model {
     description "Public homelab repo"
     style { icon tech:github }
   }
-  fritzbox = external "FritzBox" {
+  router = external "Router" {
     description "Router, DHCP, WAN port forwards, backup WireGuard"
   }
 
@@ -258,7 +258,7 @@ model {
   remote.netbird.mgmt -[oidc]-> identity.authentik.server "login"
   remote.netbird -> cloudflare "ACME DNS-01"
   remote.router-peer -[wg]-> remote.netbird.signal "registers"
-  fritzbox -> remote.netbird "forwards 443 + STUN"
+  router -> remote.netbird "forwards 443 + STUN"
 
   // sso
   apps.vaultwarden -[oidc]-> identity.authentik.server "login"

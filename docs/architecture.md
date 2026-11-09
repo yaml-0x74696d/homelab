@@ -14,10 +14,10 @@ The network is split into four zones.
 
 | Zone | Network | What's in it |
 |---|---|---|
-| LAN | `192.168.178.0/24`, bridge `vmbr0` on every node | All nodes and guests, FRITZ!Box as gateway (`.1`) |
+| LAN | `192.168.178.0/24`, bridge `vmbr0` on every node | All nodes and guests, router as gateway (`.1`) |
 | IoT | `192.168.50.0/24`, pve-1's onboard WiFi card, moved into the IoT gateway LXC | ESP32 sensors with static IPs and the gateway (`.10`), which runs the WiFi (hostapd) and DHCP (dnsmasq). Static .2 to .49, DHCP .50 to .200. No Proxmox bridge, no node in the zone |
 | DMZ | Inside the LAN, fenced by the PVE firewall | The NetBird VM (`.250`) with its own guest rules |
-| WAN | Internet | The FRITZ!Box forwards only to `.250`: 443/tcp, 3478/udp, 49160–49200/udp |
+| WAN | Internet | The router forwards only to `.250`: 443/tcp, 3478/udp, 49160–49200/udp |
 
 - Only the IoT gateway LXC is in the IoT zone, no VM and no node ([ADR 0029](adr/0029-wifi-card-in-the-gateway.md))
 
@@ -120,7 +120,7 @@ All name resolution goes through Pi-hole on a fixed service IP.
 
 ![](img/name-resolution.png)
 
-- The FRITZ!Box hands out `.53` as the only IPv4 DNS server
+- The router hands out `.53` as the only IPv4 DNS server
 - `.53` is a second IP on pod-2 (`dns-ip.service`), not the VM's own address
 - Pi-hole blocks ads and answers the internal names (split horizon)
 - One wildcard record points every app name at Traefik (`.201`), so new apps need no DNS record
@@ -192,7 +192,7 @@ The routing:
 - Peers talk to each other directly over WireGuard, the TURN relay is only a fallback
 
 The fallback:
-- The FRITZ!Box has its own WireGuard server, independent of the cluster
+- The router has its own WireGuard server, independent of the cluster
 - Never use both tunnels at once, both route the LAN and break each other
 
 ## Backups

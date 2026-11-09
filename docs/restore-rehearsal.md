@@ -19,7 +19,7 @@ How a backup is proven to restore: take a fresh PBS snapshot, restore one Podman
 
 ```bash
 VMID=299                    # free id, not in network.yml
-IP=192.168.178.199          # free lan ip, outside the fritz!box dhcp range
+IP=192.168.178.199          # free lan ip, outside the router's dhcp range
 NODE=pve-3                  # next to PBS, the restore reads locally
 MEM=3072                    # MB
 DISK=32G                    # pod-3's apps.pxar is restored whole

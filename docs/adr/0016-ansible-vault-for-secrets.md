@@ -37,13 +37,13 @@ The NetBird VM (NixOS):
 
 - Easier: one tool that's already in the stack, no extra key management
 - Easier: compose files and templates stay readable, secrets only show up as `${VAR}`
-- Easier: the vault, `.vault_pass`, `private.yml`, tfvars, tofu state and AIDE hashes live in one Tresorit-synced folder on the controller (symlinked into the repo), so the offsite copy is always current
+- Easier: the vault, `.vault_pass`, `private.yml`, tfvars, tofu state and AIDE hashes live in one encrypted, offsite-synced folder on secure storage, symlinked into the repo, so the offsite copy is always current
 
 - Harder: vault values must not contain `$`, compose interpolation eats it (bcrypt hashes need `$$`)
 - Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NetBird VM
 
 - Accepted: one password unlocks every secret
 - Accepted: agenix/sops for the NetBird VM is still open
-- Accepted: whoever gets into the Tresorit account has the vault and its password together
+- Accepted: whoever gets into the secure storage has the vault and its password together
 
 - Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0008](0008-nixos-for-the-dmz-box.md) (NetBird secrets)

@@ -1,52 +1,94 @@
 # Bootstrap
 
-The whole lab from bare hardware, in order. Each step needs the one before it. Steps done by hand are marked **(hand)**, everything else is in the repo.
+The whole lab from bare hardware, in order. Each step needs the one before it. Steps done by hand are marked **(hand)**, everything else is in the repo. `<...>` is a value from `network.yml`, `private.yml` or the vault.
 
 - With backups: the apps come back with their data (step 7), SSO included, since Authentik's database holds every OIDC client
 - Without backups: the same steps, the apps start empty and OIDC is set up per app by hand ([ADR 0014](adr/0014-authentik-as-idp.md))
 
 ## 0. Controller (ctl-0)
 
-- Clone the repo, `just setup` (pre-commit, the Ansible collections)
-- **(hand)** The private files come from Tresorit (`~/Tresorit/Sync/homelab`, symlinked into the repo): `ansible/group_vars/all/vault.yml`, `ansible/group_vars/all/private/private.yml`, `ansible/.vault_pass`, the SSH keys
-- `just check` passes before anything is deployed
+The private files live in one folder on secure storage (encrypted, synced offsite), symlinked into the repo ([ADR 0016](adr/0016-ansible-vault-for-secrets.md)):
 
-## 1. Proxmox nodes (hand)
+```bash
+git clone https://github.com/yaml-0x74696d/homelab.git ~/homelab && cd ~/homelab
+P=<secure storage>/homelab
+ln -s $P/vault.yml       ansible/group_vars/all/vault.yml
+ln -s $P/private.yml     ansible/group_vars/all/private/private.yml
+ln -s $P/.vault_pass     ansible/.vault_pass
+ln -s $P/aide            ansible/aide
+ln -s $P/terraform.tfvars tofu/terraform.tfvars
+ln -s $P/terraform.tfstate tofu/terraform.tfstate   # only with an existing lab
+just setup    # pre-commit hooks, ansible collections
+just check    # must pass before anything is deployed
+ssh-add <admin key>
+```
 
-- Install PVE from the ISO on pve-1/2/3, IPs from `group_vars/all/network.yml`
-- Join the three into one cluster
-- Root API token, exempt from 2FA, for OpenTofu ([tofu/README.md](../tofu/README.md), step 1)
-- `local` datastore: turn on the **import** content type
-- pve-3: PBS as a host package, datastore `homelab` at `/mnt/pbs`, token `backup@pbs!client` with `DatastoreBackup` on `/datastore/homelab` only, retention in the PBS UI ([ADR 0013](adr/0013-pbs-file-level-backups.md))
-- PVE storage `pbs` pointing at that datastore (used by the HAOS vzdump job)
+## 1. Proxmox nodes
 
-Then from ctl-0:
+**(hand)** Install PVE from the ISO on pve-1/2/3, each on its IP from `network.yml`. Then:
+
+```bash
+# pve-1
+pvecm create homelab
+# pve-2, pve-3
+pvecm add <pve1_ip>
+
+# any node: the token for OpenTofu, its secret goes into terraform.tfvars
+pveum user token add root@pam tofu --privsep 0
+pvesm set local --content iso,vztmpl,backup,snippets,import
+```
+
+- The token has to be exempt from 2FA, more in [tofu/README.md](../tofu/README.md), step 1
+
+From ctl-0, keys first, then the pool on pve-3 (the storage CT bind-mounts it):
 
 ```bash
 cd ~/homelab/ansible
 ansible-playbook playbooks/push-keys.yml -l proxmox
-ansible-playbook playbooks/deploy-storage.yml -l pve-3   # mergerfs pool, the storage CT bind-mounts it
+ansible-playbook playbooks/deploy-storage.yml -l pve-3
 ```
+
+PBS on pve-3 as a host package ([ADR 0013](adr/0013-pbs-file-level-backups.md)):
+
+```bash
+apt install proxmox-backup-server
+proxmox-backup-manager datastore create homelab /mnt/pbs
+proxmox-backup-manager user create backup@pbs
+proxmox-backup-manager user generate-token backup@pbs client   # secret into the vault
+proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id 'backup@pbs!client'
+```
+
+- **(hand)** In the PBS UI: retention (keep 7 daily / 4 weekly / 3 monthly) and daily garbage collection
+- **(hand)** In the PVE UI: storage `pbs` pointing at the datastore, used by the HAOS vzdump job
 
 ## 2. Guests (OpenTofu)
 
-- tfvars, LXC template, HAOS image: [tofu/README.md](../tofu/README.md), steps 2–3b
-- Applied guest by guest, the log LXC first (every other host ships its logs there):
+- LXC template and HAOS image: [tofu/README.md](../tofu/README.md), steps 3 and 3b
+- Applied guest by guest, the log LXC first, since every other host ships its logs there:
 
 ```bash
 cd ~/homelab/tofu
 tofu init
-tofu plan -target='proxmox_virtual_environment_container.log' -out=/tmp/g.plan
-tofu apply /tmp/g.plan && rm /tmp/g.plan
-# same for: container.storage, container.iot, vm.pod["pod-1"], vm.pod["pod-2"], vm.pod["pod-3"], netbird, haos
+for t in 'proxmox_virtual_environment_container.log' \
+         'proxmox_virtual_environment_container.storage' \
+         'proxmox_virtual_environment_container.iot' \
+         'proxmox_virtual_environment_vm.pod["pod-1"]' \
+         'proxmox_virtual_environment_vm.pod["pod-2"]' \
+         'proxmox_virtual_environment_vm.pod["pod-3"]' \
+         'proxmox_virtual_environment_vm.netbird' \
+         'proxmox_virtual_environment_vm.haos'; do
+  tofu plan -target="$t" -out=/tmp/g.plan && tofu apply /tmp/g.plan; rm -f /tmp/g.plan
+done
 ```
 
-- **(hand)** FRITZ!Box: DHCP reservation for HAOS on `macs.haos`, port forwards to the NetBird VM only (443/tcp, 3478/udp, the TURN relay range)
+- `tofu apply` asks nothing with a saved plan, so read each plan as it goes by, or run the targets one at a time
+- **(hand)** Router: a DHCP reservation for HAOS on `macs.haos` (HAOS has no cloud-init), and port forwards to the NetBird VM only: 443/tcp, 3478/udp, the TURN relay range
 
 ## 3. Firewall and base
 
 ```bash
 cd ~/homelab/ansible
+ansible-playbook playbooks/push-keys.yml
 ansible-playbook playbooks/deploy-pve-firewall.yml
 ansible-playbook playbooks/deploy-login-notify.yml
 ansible-playbook playbooks/vm-preparation.yml    # pod-N: vm_base, podman_base, ufw, docker on docker_hosts, aide
@@ -56,50 +98,92 @@ ansible-playbook playbooks/deploy-storage.yml -l storage
 
 ## 4. NetBird VM
 
-- nixos-anywhere once onto the empty VM, then `nixos/update.sh` ([docs/nixos-layout.md](nixos-layout.md), [ADR 0008](adr/0008-nixos-for-the-dmz-box.md))
-- `ansible-playbook playbooks/deploy-netbird-agent.yml` (pod-2 is the routing peer)
+Installed once with nixos-anywhere, OpenTofu only made the empty VM ([docs/nixos-layout.md](nixos-layout.md), [ADR 0008](adr/0008-nixos-for-the-dmz-box.md)):
+
+```bash
+cd ~/homelab/nixos
+nix run github:nix-community/nixos-anywhere -- --flake .#netbird root@<netbird_ip>
+./update.sh
+cd ../ansible && ansible-playbook playbooks/deploy-netbird-agent.yml   # pod-2 is the routing peer
+```
 
 ## 5. ctl-1 (Semaphore)
 
-- **(hand)** Admin user on ctl-1 ([roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md))
-- `ctl-preparation.yml -l ctl-1`, `base.yml -l ctl-1`, `deploy-app.yml -e app=semaphore`
-- `push-keys.yml` again, so Semaphore's key lands on every host ([ADR 0031](adr/0031-semaphore-on-a-pi.md))
+**(hand)** Flash Raspberry Pi OS Lite (64-bit): hostname `ctl-1`, user `admin_user` with the vault's `sudo_pass`, ssh on ([roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md)). Then:
+
+```bash
+cd ~/homelab/ansible
+ssh-copy-id <admin_user>@<dhcp ip>
+ansible-playbook playbooks/ctl-preparation.yml -e ansible_host=<dhcp ip>
+# reboot ctl-1, it comes back on ctl1_ip
+ansible-playbook playbooks/base.yml -l ctl-1
+ansible-playbook playbooks/deploy-app.yml -e app=semaphore
+ansible-playbook playbooks/push-keys.yml   # semaphore's key onto every host (ADR 0031)
+```
 
 ## 6. Apps
 
 ```bash
-ansible-playbook site.yml
+cd ~/homelab/ansible
+ansible-playbook playbooks/site.yml
 ```
 
 - `site.yml` holds the order: ingress (Traefik, Pi-hole) and Authentik before the apps that log in through it, storage before the CIFS apps on pod-3, the PBS client last
 - One app on its own: `deploy-app.yml -e app=<name>` (Podman) or `deploy-<app>.yml` (`runtime: compose`)
-- IoT gateway: `deploy-iot.yml` (also in `site.yml`)
 
 ## 7. Restore the data
 
-Per app, after its deploy, so the user, subuid range, units and secrets exist: stop the units, restore from PBS, fix the owners, start ([docs/restore-rehearsal.md](restore-rehearsal.md), steps 3–5).
+Per app, after its deploy, so the user, subuid range, units and secrets exist: stop the units, restore from PBS, start ([docs/restore-rehearsal.md](restore-rehearsal.md) has the full walk-through).
 
 - Authentik first: its database brings back every OIDC provider and the forward-auth outposts
-- Podman apps: `dumps.pxar` + `podman-apps.pxar` from `host/pod-N`, the dump goes into `<app>-db` as the svc user
-- Compose apps: `dumps.pxar` + `apps.pxar`
 - CIFS data (photos, media, documents) lives on the pool, not in PBS
-- **(hand)** HAOS: restore VM 210 from its vzdump in the PVE UI, then the vzdump job again (Datacenter, Backup, first Saturday 15:00, [ADR 0030](adr/0030-haos-vm-on-pve-3.md)). HA's trusted proxies come back with it
+
+On the target host:
+
+```bash
+pbc() { sudo bash -c 'set -a; . /etc/pbs.env; set +a; exec proxmox-backup-client "$@"' pbc "$@"; }
+pbc snapshot list host/<host>                  # pick the newest <time>
+R=/var/tmp/restore
+pbc restore host/<host>/<time> dumps.pxar        $R/dumps
+pbc restore host/<host>/<time> podman-apps.pxar  $R/podman-apps   # podman apps
+pbc restore host/<host>/<time> apps.pxar         $R/apps          # compose apps
+```
+
+Podman app with Postgres, as its svc user:
+
+```bash
+sudo systemctl --user -M svc-<app>@ stop <app>-pod
+sudo rsync -a --delete $R/podman-apps/<app>/ /srv/apps/<app>/   # numeric owners come back with it
+sudo systemctl --user -M svc-<app>@ start <app>-db
+sudo -u svc-<app> XDG_RUNTIME_DIR=/run/user/<uid> podman exec -i <app>-db \
+  sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1' < $R/dumps/<app>.sql
+sudo systemctl --user -M svc-<app>@ start <app>-pod
+```
+
+- A single-container app (no db) only needs the stop, the `rsync` and a start of `<app>`
+- **(hand)** HAOS: restore VM 210 from its vzdump in the PVE UI, then add the vzdump job again (Datacenter, Backup, first Saturday 15:00, [ADR 0030](adr/0030-haos-vm-on-pve-3.md)). HA's trusted proxies come back with it
 
 ## 8. AIDE baselines
 
-- The first run of each host builds its baseline. Once the apps are in place, accept on every host:
+The first run on each host builds its baseline. Once the apps are in place:
 
 ```bash
+cd ~/homelab/ansible
 ansible-playbook playbooks/aide-accept.yml
+rsync -a <admin_user>@<ctl1_ip>:/srv/apps/semaphore/aide/ aide/
 ```
 
-- The hashes live on ctl-1 (`/srv/apps/semaphore/aide`). ctl-0's `ansible/aide` is a copy, rsynced back by hand after an accept
+- The hashes live on ctl-1 (`/srv/apps/semaphore/aide`). ctl-0's `ansible/aide` is a copy, synced back after an accept
 
 ## 9. Verify
 
+```bash
+cd ~/homelab/ansible
+ansible 'pod_vms:docker_hosts' -a 'apps ps'                    # every container healthy
+ansible 'pod_vms:docker_hosts' -b -a 'systemctl start pbs-backup.service'   # one backup now, then check the PBS UI
+```
+
 - Gatus: every check green
-- `apps ps` on each pod-N: every container healthy
-- `deploy-pbs.yml` ran, and the first evening's backup shows up in PBS per host
 - One SSO login per app
 
 ## Guests on EL10: what changes

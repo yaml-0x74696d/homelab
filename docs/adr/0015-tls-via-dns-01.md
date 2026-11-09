@@ -32,7 +32,7 @@ NetBird VM (`nixos/netbird/netbird.nix`):
 Public DNS:
 - cloudflare-ddns (Podman, one copy each on pod-1 and pod-2) keeps the public records pointed at the current WAN IP, with the same token
 
-- Enforced by: the FRITZ!Box forwards no port 80, and nftables on the NetBird VM only opens 443 + TURN
+- Enforced by: the router forwards no port 80, and nftables on the NetBird VM only opens 443 + TURN
 
 ## Consequences
 

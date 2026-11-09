@@ -6,7 +6,7 @@ views {
       color slate
       include edge, identity, remote, apps, media, automation, observability, storage
     }
-    include cloudflare, letsencrypt, ntfy, fritzbox, github
+    include cloudflare, letsencrypt, ntfy, router, github
     autoLayout TopBottom
   }
 

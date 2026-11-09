@@ -228,7 +228,7 @@ resource "proxmox_virtual_environment_vm" "haos" {
     ssd          = true
   }
 
-  # dhcp, the fritz!box pins haos_ip to this mac
+  # dhcp, the router pins haos_ip to this mac
   network_device {
     bridge      = local.net.lan_bridge
     mac_address = local.vms.haos.mac0

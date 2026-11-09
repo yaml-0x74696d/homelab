@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- The NetBird control plane is the only VM that takes inbound WAN traffic (443/tcp, 3478/udp and a small TURN relay range). The FRITZ!Box WireGuard is the only other way in
+- The NetBird control plane is the only VM that takes inbound WAN traffic (443/tcp, 3478/udp and a small TURN relay range). The router's WireGuard is the only other way in
 - It sits on pve-2 as an isolated DMZ VM
 - Its only data is the NetBird SQLite store, so it's cheap to rebuild
 - Everything else runs Debian + Ansible

@@ -57,7 +57,7 @@
 
 - In (`policy_in: DROP`): HA's port from `pve_firewall_haos_callers` (Traefik, Homepage's status dot), HA's port and the Observer (4357) from the admin hosts, ping from the LAN
 - So `ha.<domain>` is the way in, and nothing on the LAN reaches the Supervisor or the add-on ports
-- Out stays open: MQTT to the gateway, the FRITZ!Box integration, updates
+- Out stays open: MQTT to the gateway, the router integration, updates
 - LAN devices that fetch media from HA directly (Cast, TTS) are dropped too, they'd need a rule
 
 ## Settings

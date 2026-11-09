@@ -6,12 +6,12 @@ Status: Accepted
 
 - I want remote access to the LAN-only apps without exposing them to the internet
 - Before: Traefik and the web apps were open on public 443
-- The FRITZ!Box has a built-in WireGuard server, but every device needs its own config, made in the router UI
+- The router has a built-in WireGuard server, but every device needs its own config, made in the router UI
 
 - Alternatives:
   - Headscale: self-hosted Tailscale control plane, used with the Tailscale clients (why not: clients not fully open source)
   - Pangolin: ingress through a WireGuard tunnel, exposes services without port forwards (why not: reverse proxy, not a mesh VPN)
-  - Plain FRITZ!Box WireGuard (why not: no web UI and no zero trust)
+  - Plain WireGuard on the router (why not: no web UI and no zero trust)
   - Keep 443 open (why not: every app on the WAN)
 - NetBird was picked as the "easiest self-hosted UI" (roadmap)
 - Why: I wanted a fully open source, fully self-hosted zero trust mesh VPN
@@ -42,17 +42,17 @@ The DMZ firewall (`roles/pve_firewall`, `netbird.fw.j2`):
 - The rest of the LAN is dropped, the internet is open
 
 The fallback:
-- FRITZ!Box WireGuard (51820/udp) stays as a backup
+- The router's WireGuard (51820/udp) stays as a backup
 - It lives on the router alone, so it still works when the whole cluster is down
 
-- Enforced by: the PVE firewall drops everything else to the DMZ guest (`roles/pve_firewall`), nftables denies by default on the VM itself, and the FRITZ!Box forwards only to `.250`
+- Enforced by: the PVE firewall drops everything else to the DMZ guest (`roles/pve_firewall`), nftables denies by default on the VM itself, and the router forwards only to `.250`
 
 ## Consequences
 
 - Easier: only the NetBird VM faces the WAN instead of every app, and it is hardened and checked by AIDE ([0009](0009-aide-with-manual-accept.md))
-- Easier: FRITZ!Box WireGuard stays as an independent way in
+- Easier: the router's WireGuard stays as an independent way in
 
-- Harder: NetBird and FRITZ!Box WireGuard must never run at the same time. Both route the LAN, the routes collide and break NetBird's routing and DNS
+- Harder: NetBird and the router's WireGuard must never run at the same time. Both route the LAN, the routes collide and break NetBird's routing and DNS
 - Harder: the nameserver has to be a peer's overlay IP, not a LAN IP behind a route, or the macOS/iOS resolvers fail
 - Harder: NetBird's DNS and nftables take port `:53` from Pi-hole on a peer. pod-1 is not a peer, and Pi-hole on pod-2 needs NetBird's DNS management turned off for that group ([0010](0010-pihole-on-a-service-ip.md))
 

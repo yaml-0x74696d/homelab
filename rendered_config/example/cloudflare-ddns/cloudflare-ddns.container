@@ -7,7 +7,7 @@ Secret=cloudflare-api-token,type=mount,target=/run/secrets/cloudflare-api-token,
 Environment=CLOUDFLARE_API_TOKEN_FILE=/run/secrets/cloudflare-api-token
 # names: cloudflare_ddns_records in app_settings.yml
 Environment=IP4_DOMAINS=example.org,www.example.org,vpn.example.org,nb.example.org
-# no nat on ipv6: detected prefix + the netbird vm's eui-64, the fritz!box only opens its firewall for it
+# no nat on ipv6: detected prefix + the netbird vm's eui-64, the router only opens its firewall for it
 Environment=IP6_DOMAINS=example.org{hostid6=mac(BC-24-11-00-02-50)},www.example.org{hostid6=mac(BC-24-11-00-02-50)},nb.example.org{hostid6=mac(BC-24-11-00-02-50)}
 Environment="PROXIED=is(example.org) || is(www.example.org)"
 # the other copy keeps running, so a stop must never delete the records

@@ -41,7 +41,7 @@ wget -qO- https://github.com/home-assistant/operating-system/releases/download/$
 ```
 
 - Only read when the disk is created, HAOS updates itself after that
-- The FRITZ!Box pins `haos_ip` to `macs.haos` (DHCP reservation), HAOS has no cloud-init
+- The router pins `haos_ip` to `macs.haos` (DHCP reservation), HAOS has no cloud-init
 
 ## 4. Apply
 

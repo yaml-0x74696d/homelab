@@ -36,7 +36,7 @@
 
 - Pi-hole shares pod-2 with the agent ([ADR 0003](../../../docs/adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](../../../docs/adr/0010-pihole-on-a-service-ip.md))
 - NetBird's DNS management must be turned off for pod-2's group, or NetBird grabs port 53 there too
-- Don't run NetBird and the FRITZ!Box WireGuard at the same time. Both route the LAN CIDR, the routes collide and NetBird's routing and DNS break
+- Don't run NetBird and the router's WireGuard at the same time. Both route the LAN CIDR, the routes collide and NetBird's routing and DNS break
 - The routing peer must resolve `nb.{{ domain }}` to the NetBird VM (local DNS override)
 
 ## Related
