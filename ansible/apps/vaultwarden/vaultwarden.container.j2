@@ -1,0 +1,23 @@
+# image, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=vaultwarden
+
+[Container]
+PublishPort={{ podman_app_entry.port }}:80
+Volume={{ podman_app_dir }}/data:/data:Z
+# oidc discovery + tokens go to authentik through edge, container dns can't resolve auth.<domain>
+AddHost=auth.{{ domain }}:{{ app_sources.edge }}
+# argon2 phc string
+Secret=vaultwarden-admin-token,type=env,target=ADMIN_TOKEN
+Secret=vaultwarden-sso-secret,type=env,target=SSO_CLIENT_SECRET
+Environment=DOMAIN=https://vault.{{ domain }}
+Environment=SIGNUPS_ALLOWED=false
+Environment=INVITATIONS_ALLOWED=false
+Environment=PASSWORD_HINTS_ALLOWED=false
+Environment=SSO_ENABLED=true
+Environment=SSO_AUTHORITY=https://auth.{{ domain }}/application/o/vaultwarden/
+Environment=SSO_CLIENT_ID={{ vw_sso_id }}
+Environment="SSO_SCOPES=email profile offline_access"
+# vault only via authentik (deliberate; authentik down = no new logins)
+Environment=SSO_ONLY=true
+HealthCmd=/healthcheck.sh

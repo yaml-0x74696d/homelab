@@ -13,7 +13,9 @@
 - name: Deploy authentik
   import_playbook: deploy-authentik.yml
 - name: Deploy vaultwarden
-  import_playbook: deploy-vaultwarden.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: vaultwarden
 - name: Deploy gitea
   import_playbook: deploy-app.yml
   vars:

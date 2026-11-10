@@ -37,5 +37,4 @@ app_ports:
 docker_backend_callers: "{{ [app_sources.edge, pod2_ip, hostvars[apps.homepage.host].ansible_host] + ingress_extra_sources }}"
 docker_published_allow:
   - { port: "{{ app_ports.authentik }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.vaultwarden }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.pihole }}", src: "{{ docker_backend_callers }}" }

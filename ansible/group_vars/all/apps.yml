@@ -291,7 +291,7 @@ apps:
     routes:
       - host: paperless
 
-  # pod-1: no published port (traefik reaches them on proxy-net)
+  # pod-1, still compose
   authentik:
     host: pod-1
     runtime: compose
@@ -302,8 +302,20 @@ apps:
 
   vaultwarden:
     host: pod-1
-    runtime: compose
+    uid: 2160
     port: 8084
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: vaultwarden-admin-token
+        vault: vw_admin
+      - name: vaultwarden-sso-secret
+        vault: vw_sso_secret
+    dirs:
+      - path: data   # sqlite db, attachments, rsa key
+    containers:
+      - name: vaultwarden
+        image: docker.io/vaultwarden/server
+        tag: latest
     homepage: {group: Homecloud, icon: /images/vaultwarden.png}
     routes:
       - host: vault

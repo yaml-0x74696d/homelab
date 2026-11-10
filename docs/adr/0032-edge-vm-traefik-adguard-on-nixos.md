@@ -43,7 +43,7 @@ AdGuard Home (`nixos/edge/adguard.nix`):
 - Break-glass when Authentik is down: `ssh -L 3000:127.0.0.1:3000 <admin_user>@<edge_ip>`, then `http://localhost:3000`. The SSH key is the lock, no AdGuard user (its hash would land in the world-readable nix store)
 
 Apps calling Authentik:
-- The pod VMs resolve through the router, which doesn't know the LAN names. Apps that call `auth.<domain>` themselves (OIDC discovery, tokens) pin it to edge: `AddHost=` in the Podman units, `extra_hosts` in the compose files (Vaultwarden, Gitea), both from `app_sources.edge`
+- The pod VMs resolve through the router, which doesn't know the LAN names. Apps that call `auth.<domain>` themselves (OIDC discovery, tokens) pin it to edge: `AddHost=` in the Podman units, `extra_hosts` in the compose files (Authentik), both from `app_sources.edge`
 
 Updates:
 - autoUpgrade at 04:00 (up to 20 minutes random delay), reboots only between 04:00 and 04:45, right after the NetBird VM (03:00 to 04:00), so the two never reboot at once. Both windows in `schedules.yml`
