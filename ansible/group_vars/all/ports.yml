@@ -32,8 +32,9 @@ app_ports:
   prometheus: "{{ apps['prometheus'].port }}"
 
 # published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.
-# backends only answer the ingress (app_sources.edge, + edge in the parallel run) and prometheus/gatus (pod-2)
-docker_backend_callers: "{{ [app_sources.edge, pod2_ip] + ingress_extra_sources }}"
+# backends only answer the ingress (app_sources.edge, + extras in a parallel run), prometheus/gatus (pod-2)
+# and homepage, which reaches pod-1's own published ports from its rootless netns
+docker_backend_callers: "{{ [app_sources.edge, pod2_ip, hostvars[apps.homepage.host].ansible_host] + ingress_extra_sources }}"
 docker_published_allow:
   - { port: "{{ app_ports.authentik }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.vaultwarden }}", src: "{{ docker_backend_callers }}" }
