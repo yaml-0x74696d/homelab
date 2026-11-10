@@ -37,6 +37,7 @@ Traefik (`nixos/edge/traefik.nix`):
 AdGuard Home (`nixos/edge/adguard.nix`):
 - `mutableSettings = false`, the config comes only from the module
 - Rewrites: every routed host to `edge_ip`, `nb.<domain>` to `netbird_ip`
+- VPN clients: NetBird's nameserver group points at `dns-relay` on pod-2 (the routing peer, overlay IP, port 1053), CoreDNS that forwards to `dns_ip`. Rootless Podman can't bind 53, and a nameserver behind a NetBird route fails on macOS and iOS clients
 - Upstreams Quad9 and Cloudflare over DoT and DoH, one blocklist (AdGuard DNS filter), query log kept 7 days
 - UI on localhost only, served as `dns.<domain>` behind Authentik, no AdGuard login
 - Break-glass when Authentik is down: `ssh -L 3000:127.0.0.1:3000 <admin_user>@<edge_ip>`, then `http://localhost:3000`. The SSH key is the lock, no AdGuard user (its hash would land in the world-readable nix store)

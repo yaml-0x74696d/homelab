@@ -101,11 +101,12 @@ def main():
             if key in routes_map:
                 errors.append(f"{name}: route {r['host']}{r.get('path') or ''} also in {routes_map[key][0]}")
             routes_map[key] = (name, r.get("middlewares", []))
-        ports = ([a["port"]] if "port" in a else []) + [p["port"] for p in a.get("extra_ports", [])]
+        # tcp and udp on the same number are two ports
+        ports = ([(a["port"], "tcp")] if "port" in a else []) + [(p["port"], p.get("proto", "tcp")) for p in a.get("extra_ports", [])]
         for p in ports:
             other = ports_by_host.setdefault(a.get("host"), {}).get(p)
             if other:
-                errors.append(f"{name}: port {p} on {a['host']} also used by {other}")
+                errors.append(f"{name}: port {p[0]}/{p[1]} on {a['host']} also used by {other}")
             ports_by_host[a.get("host")][p] = name
         if not podman:
             continue
@@ -116,7 +117,7 @@ def main():
             errors.append(f"{name}: uid {uid} also used by {uids[uid]}")
         else:
             uids[uid] = name
-        for p in ports:
+        for p, _ in ports:
             if p < PORT_MIN_ROOTLESS:
                 errors.append(f"{name}: port {p} < {PORT_MIN_ROOTLESS}, rootless can't bind it")
         for src in a.get("allow_from", []) + [s for p in a.get("extra_ports", []) for s in p.get("allow_from", [])]:

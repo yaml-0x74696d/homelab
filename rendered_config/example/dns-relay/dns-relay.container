@@ -1,0 +1,8 @@
+[Unit]
+Description=dns relay for vpn clients (coredns)
+
+[Container]
+Volume=/srv/apps/dns-relay/config/Corefile:/etc/coredns/Corefile:ro
+PublishPort=1053:1053/tcp
+PublishPort=1053:1053/udp
+Exec=-conf /etc/coredns/Corefile

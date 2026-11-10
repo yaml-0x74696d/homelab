@@ -44,6 +44,7 @@ deployment {
     pve2 = node "pve-2" {
       description "Monitoring node, 4c / 7.5G"
       pod2 = vm "pod-2" {
+        instanceOf edge.relay
         instanceOf edge.pihole
         instanceOf observability.prometheus
         instanceOf observability.grafana

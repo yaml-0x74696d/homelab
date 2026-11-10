@@ -36,6 +36,10 @@
   import_playbook: deploy-app.yml
   vars:
     app: cloudflare-ddns
+- name: Deploy dns-relay
+  import_playbook: deploy-app.yml
+  vars:
+    app: dns-relay
 - name: Deploy gatus
   import_playbook: deploy-app.yml
   vars:

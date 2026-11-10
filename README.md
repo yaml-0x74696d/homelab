@@ -50,6 +50,7 @@
 | Ingress | Traefik (`proxy`) | pod-1 | Reverse proxy, TLS via Cloudflare DNS |
 | Ingress | Pi-hole (`dns`) | pod-2 | DNS + ad blocking, split-horizon records |
 | Ingress | Traefik + AdGuard Home | edge (NixOS) | Routers and DNS rewrites built from `apps.yml`, take over from `proxy` + `dns` at the cutover |
+| Ingress | dns-relay (CoreDNS) | pod-2 | DNS for VPN clients, forwards to the LAN DNS |
 | Ingress | cloudflare-ddns | pod-1, pod-2 | Keeps the public records current, one copy per host |
 | Identity | Authentik | pod-1 | SSO, OIDC + forward-auth |
 | Identity | Vaultwarden | pod-1 | Passwords |

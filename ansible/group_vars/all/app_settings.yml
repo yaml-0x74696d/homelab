@@ -75,5 +75,6 @@ app_sources:
   lan: "{{ lan_cidr }}"
   edge: "{{ pod1_ip }}"      # the live ingress: traefik on pod-1 until the edge cutover
   netbird: "{{ pod2_ip }}"   # routing peer, remote traffic arrives masqueraded from it
+  vpn: "{{ netbird_overlay_cidr }}"   # peers that talk to pod-2's overlay ip directly (dns-relay)
 # parallel run before the cutover: edge's traefik may reach the backends too (firewall only). [] after it
 ingress_extra_sources: ["{{ edge_ip }}"]

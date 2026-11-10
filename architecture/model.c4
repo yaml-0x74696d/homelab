@@ -44,6 +44,10 @@ model {
       description "Local records for *.domain, upstream resolver"
     }
     ddns = container "cloudflare-ddns" { description "Keeps the public A records current" }
+    relay = container "dns-relay" {
+      technology "CoreDNS"
+      description "DNS for VPN clients on pod-2's overlay ip, forwards to the LAN DNS"
+    }
     adguard = container "AdGuard Home" {
       #parked
       technology "DNS + ad blocking"
@@ -223,7 +227,8 @@ model {
   household -[dns]-> edge.pihole "resolves *.domain"
   phone -[wg]-> remote.netbird.mgmt "joins the mesh"
   phone -[wg]-> remote.router-peer "tunnels to the LAN"
-  phone -[dns]-> edge.pihole "resolves *.domain via overlay ip"
+  phone -[dns]-> edge.relay "resolves *.domain via overlay ip"
+  edge.relay -[dns]-> edge.pihole "forwards to the dns service ip"
   admin -[https]-> remote.netbird.dash "manages peers"
 
   // delivery

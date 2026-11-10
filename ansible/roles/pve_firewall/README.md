@@ -70,7 +70,7 @@
 | `pve_firewall_gateway_ip` | `gateway_ip` | The router, DNS fallback for the NetBird VM |
 | `pve_firewall_open_guests` | edge, pod-1/2/3, storage | VMIDs that stay unfiltered |
 | `pve_firewall_routing_peers` | the `netbird_agent` group | Hosts the NetBird VM may reach fully |
-| `pve_firewall_netbird_dns_https` | pod-1, `dns_ip` | Hosts the NetBird VM may reach on DNS + HTTPS (Traefik, Pi-hole) |
+| `pve_firewall_netbird_dns_https` | `app_sources.edge`, `dns_ip`, `ingress_extra_sources` | Hosts the NetBird VM may reach on DNS + HTTPS (Traefik, the LAN DNS) |
 | `pve_firewall_ssh_hosts` | `admin_hosts` | Who may SSH into the nodes |
 | `pve_firewall_ui_hosts` | `admin_hosts` + `admin_ui_hosts` + pod-1 + pod-2 | Who may open the web UI (8006) |
 | `pve_firewall_node_ips` | pve-1/2/3 | The cluster nodes |

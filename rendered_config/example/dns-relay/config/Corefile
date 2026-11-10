@@ -1,0 +1,5 @@
+# everything to the lan dns service ip, adguard answers (rewrites + blocklist)
+.:1053 {
+    forward . 192.168.178.53
+    errors
+}

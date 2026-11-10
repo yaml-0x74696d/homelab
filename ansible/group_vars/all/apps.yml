@@ -77,6 +77,24 @@ apps:
       - host: prom
         middlewares: [authentik]   # grafana reaches prom internally, not via this url
 
+  # dns for vpn clients: netbird's nameserver group points at pod-2's overlay ip:1053 (pod-2 is the
+  # routing peer), coredns forwards it to the lan dns. 1053, rootless can't bind 53
+  dns-relay:
+    host: pod-2
+    uid: 2110
+    port: 1053
+    allow_from: [vpn]
+    extra_ports:
+      - {port: 1053, proto: udp, allow_from: [vpn]}
+    secrets: []
+    containers:
+      - name: dns-relay
+        image: docker.io/coredns/coredns
+        tag: latest
+        healthcheck: false   # scratch image
+        read_only: true
+        drop_caps: [ALL]
+
   # two copies on two nodes write the same wan ip, one host down doesn't stop the updates
   cloudflare-ddns:
     hosts: [pod-1, pod-2]

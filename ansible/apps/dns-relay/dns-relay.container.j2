@@ -1,0 +1,8 @@
+[Unit]
+Description=dns relay for vpn clients (coredns)
+
+[Container]
+Volume={{ podman_app_dir }}/config/Corefile:/etc/coredns/Corefile:ro
+PublishPort={{ podman_app_entry.port }}:1053/tcp
+PublishPort={{ podman_app_entry.extra_ports[0].port }}:1053/udp
+Exec=-conf /etc/coredns/Corefile

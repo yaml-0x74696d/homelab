@@ -62,7 +62,7 @@ Each node runs one Docker VM, grouped by what the apps need.
 | VM | Node | Purpose | Apps |
 |---|---|---|---|
 | pod-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
-| pod-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, Prometheus, Grafana, Gatus, nginx |
+| pod-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, dns-relay, Prometheus, Grafana, Gatus, nginx |
 | pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
 - All three also run Diun, docker-socket-proxy, the PBS client and AIDE
@@ -125,7 +125,7 @@ All name resolution goes through Pi-hole on a fixed service IP.
 - Pi-hole blocks ads and answers the internal names (split horizon)
 - One wildcard record points every app name at Traefik (`.201`), so new apps need no DNS record
 - The one exception is the NetBird hostname, which points straight at `.250`
-- Remote clients get the same answers through NetBird's nameserver group
+- Remote clients get the same answers through NetBird's nameserver group: it points at `dns-relay` on pod-2's overlay IP (port 1053), CoreDNS that forwards to the service IP
 - If DNS moves to another VM later, only the service IP moves and no client changes ([ADR 0010](adr/0010-pihole-on-a-service-ip.md))
 
 ## Request path
@@ -188,7 +188,7 @@ The control plane:
 
 The routing:
 - pod-2 is the routing peer (`netbird_agent` role) and forwards traffic into the LAN
-- NetBird's DNS management is off for pod-2's group, so Pi-hole keeps port 53 ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
+- NetBird's DNS management is off for pod-2's group, so NetBird never takes port 53 on its routing peer ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
 - Peers talk to each other directly over WireGuard, the TURN relay is only a fallback
 
 The fallback:

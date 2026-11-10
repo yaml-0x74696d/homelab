@@ -10,8 +10,8 @@ pve_firewall_gateway_ip: "{{ gateway_ip }}"
 # arbitrary ports). rest of the lan stays dropped.
 pve_firewall_routing_peers: "{{ groups['netbird_agent'] | map('extract', hostvars, 'ansible_host') | list }}"
 
-# lan hosts the netbird vm only needs dns + https on: traefik (authentik, gitea) + the pihole service ip
-pve_firewall_netbird_dns_https: ["{{ pod1_ip }}", "{{ dns_ip }}"]
+# lan hosts the netbird vm only needs dns + https on: the ingress (authentik, gitea), edge in the parallel run, the dns service ip
+pve_firewall_netbird_dns_https: "{{ [app_sources.edge, dns_ip] + ingress_extra_sources }}"
 
 # ssh (22) to the pve hosts — real shells only
 pve_firewall_ssh_hosts: "{{ admin_hosts }}"
