@@ -16,3 +16,5 @@ Environment=AUTHENTIK_LISTEN__HTTPS=0.0.0.0:9444
 Environment=AUTHENTIK_LISTEN__METRICS=0.0.0.0:9301
 Exec=worker
 HealthCmd=ak healthcheck
+# migrations run before it answers, a fresh db takes minutes
+HealthStartPeriod=10m
