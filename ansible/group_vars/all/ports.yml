@@ -37,6 +37,4 @@ docker_backend_callers: "{{ [app_sources.edge, pod2_ip] + ingress_extra_sources 
 docker_published_allow:
   - { port: "{{ app_ports.authentik }}", src: "{{ docker_backend_callers }}" }
   - { port: "{{ app_ports.vaultwarden }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.gitea }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ apps['gitea'].extra_ports[0].port }}", src: ["{{ lan_cidr }}"] }   # git over ssh, netbird arrives from the lan
   - { port: "{{ app_ports.pihole }}", src: "{{ docker_backend_callers }}" }

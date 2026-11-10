@@ -15,7 +15,9 @@
 - name: Deploy vaultwarden
   import_playbook: deploy-vaultwarden.yml
 - name: Deploy gitea
-  import_playbook: deploy-gitea.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: gitea
 - name: Deploy pdfcraft
   import_playbook: deploy-app.yml
   vars:

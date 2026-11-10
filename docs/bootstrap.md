@@ -139,6 +139,8 @@ ansible-playbook playbooks/site.yml
 
 - `site.yml` holds the order: Authentik before the apps that log in through it (ingress and DNS are already up on edge), storage before the CIFS apps on pod-3, the PBS client last
 - One app on its own: `deploy-app.yml -e app=<name>` (Podman) or `deploy-<app>.yml` (`runtime: compose`)
+- Gitea without a backup has no admin yet, create it once (values from the vault, `gitea_admin_*`):
+  `ssh pod-1 'cd / && sudo -u svc-gitea XDG_RUNTIME_DIR=/run/user/$(id -u svc-gitea) podman exec -u git gitea gitea admin user create --username <user> --email <email> --password <pw> --admin --must-change-password=false'`
 
 ## 7. Restore the data
 

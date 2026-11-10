@@ -313,10 +313,20 @@ apps:
 
   gitea:
     host: pod-1
-    runtime: compose
+    uid: 2150
+    container_uid: 1000   # s6 drops to git (1000), keep-id puts it on svc-gitea
     port: 3002
     extra_ports:
       - {port: 2222, allow_from: [lan, netbird]}   # git over ssh
+    allow_from: [edge, netbird, homepage]
+    secrets: []
+    dirs:
+      - path: data   # repos, sqlite db, app.ini, ssh host keys
+    containers:
+      - name: gitea
+        image: docker.io/gitea/gitea
+        tag: latest
+        user: "0:0"   # s6 starts as root, then drops to git
     homepage: {group: Tools, icon: gitea}
     routes:
       - host: git
