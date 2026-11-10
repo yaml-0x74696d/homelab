@@ -338,8 +338,14 @@ apps:
 
   pdfcraft:
     host: pod-1
-    runtime: compose
+    uid: 2120
     port: 8086
+    allow_from: [edge, netbird, homepage]
+    secrets: []
+    containers:
+      - name: pdfcraft
+        image: ghcr.io/pdfcrafttool/pdfcraft
+        tag: latest
     homepage: {group: Tools, icon: /images/pdfcraft.png, label: PDFcraft}
     routes:
       - host: pdf

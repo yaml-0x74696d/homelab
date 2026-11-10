@@ -125,11 +125,11 @@ argument_specs:
             type: list
             elements: dict
             default: []
-            description: "Traefik's routers are written by hand in apps/proxy/traefik/dynamic/, check_wiring.py keeps them in line. gatus and homepage read it"
+            description: "Edge builds one Traefik router per route from this (nixos/edge/traefik.nix), gatus and homepage read it too"
             options:
               host: {type: str, required: true, description: "Subdomain: <host>.<domain>"}
               path: {type: str, description: PathPrefix}
-              middlewares: {type: list, elements: str, default: [], description: Names defined in apps/proxy/traefik/dynamic/}
+              middlewares: {type: list, elements: str, default: [], description: "Names defined in nixos/edge/traefik.nix, an unknown one fails the build"}
               port: {type: int, description: "Backend port, default the app's port"}
       podman_app_private_dir:
         type: str
