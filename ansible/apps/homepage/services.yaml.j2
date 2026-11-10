@@ -2,7 +2,9 @@
    port, so only for apps with a port in the map (pod-1's come with edge). stats only for servers + vms #}
 {% macro tiles(group) %}
 {% for name, a in apps.items() if a.homepage is defined and a.homepage.group == group and a.state | default('present') == 'present' %}
-{% set url = 'http://' ~ hostvars[a.host].ansible_host ~ ':' ~ a.port if a.port is defined else none %}
+{# pasta gives homepage pod-1's own ip, so its own host's apps go through host.containers.internal (like gatus) #}
+{% set ip = 'host.containers.internal' if a.host == apps.homepage.host else hostvars[a.host].ansible_host %}
+{% set url = 'http://' ~ ip ~ ':' ~ a.port if a.port is defined else none %}
         - {{ a.homepage.label | default(name | capitalize) }}:
             icon: {{ a.homepage.icon }}
             href: https://{{ a.routes[0].host }}.{{ domain }}{{ a.homepage.path | default('') }}
