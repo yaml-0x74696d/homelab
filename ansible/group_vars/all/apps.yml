@@ -94,6 +94,7 @@ apps:
         healthcheck: false   # scratch image
         read_only: true
         drop_caps: [ALL]
+        add_caps: [NET_BIND_SERVICE]   # /coredns carries it as a file cap, exec fails without
 
   # two copies on two nodes write the same wan ip, one host down doesn't stop the updates
   cloudflare-ddns:
