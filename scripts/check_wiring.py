@@ -122,9 +122,10 @@ def main():
             if other:
                 errors.append(f"{name}: cifs path {m.get('path')} on {a['host']} also used by {other}")
             cifs_by_host[a.get("host")][m.get("path")] = name
-        for s in a.get("secrets", []):
-            if "template" in s and not (repo / APPS_DIR / name / s["template"]).exists():
-                errors.append(f"{name}: secret template {s['template']} missing")
+        # templates must exist. no secrets key here, codeql flags it
+        for tpl in (i["template"] for v in a.values() if isinstance(v, list) for i in v if isinstance(i, dict) and "template" in i):
+            if not (repo / APPS_DIR / name / tpl).exists():
+                errors.append(f"{name}: template {tpl} missing in {APPS_DIR}/{name}/")
 
     infra_hosts = {r["host"] for r in infra}
 
