@@ -31,7 +31,7 @@ Who may call (`docker_backend_callers` in `group_vars/all/ports.yml`):
 - pod-2: Prometheus, Grafana
 
 What's filtered and what's open:
-- Filtered: docker-socket-proxy and every backend app port (Nextcloud, Immich, Jellyfin, Paperless, Grafana, Prometheus and more)
+- Filtered: every backend app port (Nextcloud, Immich, Jellyfin, Paperless, Grafana, Prometheus and more)
 - Open on purpose: 53 (DNS), 80/443 (Traefik), 2222 (Gitea SSH)
 
 - Enforced by: `vm-preparation.yml` rewrites the block on every run, and the ports come from the same `app_ports` map that compose uses ([0007](0007-group-vars-single-source-of-truth.md))

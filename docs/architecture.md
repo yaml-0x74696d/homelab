@@ -66,7 +66,7 @@ Each node runs one pod VM, grouped by what the apps need. Ingress and LAN DNS ru
 | edge (VM 200) | pve-1 | Ingress and DNS (NixOS) | Traefik, AdGuard Home |
 | pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
-- pod-1 and pod-2 also run Diun and docker-socket-proxy (until they are podman-only), all three the PBS client and AIDE
+- pod-1 and pod-2 also run Diun (until they are podman-only), all three the PBS client and AIDE
 - Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
 - pod-3 gets to run the heavy services, because pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)

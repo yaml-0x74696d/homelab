@@ -1,8 +1,0 @@
----
-- name: Deploy docker-proxy
-  hosts: docker_hosts
-  become: true
-  roles:
-    - role: docker_app
-      vars:
-        docker_app_name: docker-proxy
