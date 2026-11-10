@@ -21,7 +21,9 @@
   vars:
     app: pdfcraft
 - name: Deploy searxng
-  import_playbook: deploy-searxng.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: searxng
 - name: Deploy prometheus
   import_playbook: deploy-app.yml
   vars:
