@@ -98,6 +98,13 @@
                 showStats: true
                 href: https://nb.{{ domain }}
                 fields: ["cpu", "mem"]
+            - edge:
+                icon: nixos
+                proxmoxNode: pve-1
+                proxmoxVMID: {{ vmids.edge }}
+                showStats: true
+                href: https://traefik.{{ domain }}
+                fields: ["cpu", "mem"]
             - haos:
                 icon: home-assistant
                 proxmoxNode: pve-3
