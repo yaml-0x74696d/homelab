@@ -34,11 +34,11 @@ The routing:
 - pod-2 is the routing peer (`netbird_agent` group, `roles/netbird_agent`)
 - The role adds the apt repo, turns on IP forwarding and enrolls the peer with a setup key
 - The network route `192.168.178.0/24` with masquerade is set in the dashboard
-- NetBird's nameserver for the lab domain is Pi-hole, so `*.<domain>` resolves to LAN IPs through the tunnel
+- NetBird's nameserver for the lab domain is `dns-relay` on pod-2 (port 1053), which forwards to AdGuard Home, so `*.<domain>` resolves to LAN IPs through the tunnel
 
 The DMZ firewall (`roles/pve_firewall`, `netbird.fw.j2`):
 - In: 443, TURN, the relay range, and SSH/ICMP from the LAN only
-- Out: everything to the routing peers, DNS + HTTPS to Pi-hole/Traefik, DNS to the gateway, RELP to the log LXC
+- Out: everything to the routing peers, DNS + HTTPS to edge, DNS to the gateway, RELP to the log LXC
 - The rest of the LAN is dropped, the internet is open
 
 The fallback:
@@ -54,10 +54,10 @@ The fallback:
 
 - Harder: NetBird and the router's WireGuard must never run at the same time. Both route the LAN, the routes collide and break NetBird's routing and DNS
 - Harder: the nameserver has to be a peer's overlay IP, not a LAN IP behind a route, or the macOS/iOS resolvers fail
-- Harder: NetBird's DNS and nftables take port `:53` from Pi-hole on a peer. pod-1 is not a peer, and Pi-hole on pod-2 needs NetBird's DNS management turned off for that group ([0010](0010-lan-dns-on-a-service-ip.md))
+- Harder: NetBird's DNS and nftables take port `:53` on a peer, so the relay on pod-2 listens on 1053 and the nameserver group names that port ([0010](0010-lan-dns-on-a-service-ip.md))
 
 - Accepted: coturn has no `external-ip` because the WAN IP keeps changing, so the TURN relay is unreliable by design. Direct P2P + STUN cover normal use
 - Accepted: user and group sync from the IdP is turned off (Authentik's machine auth answered 405). Users still log in through OIDC
 - Accepted: the server secrets were put on the VM by hand and are not in git. agenix/sops is planned
 
-- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0010](0010-lan-dns-on-a-service-ip.md) (Pi-hole on pod-2)
+- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0010](0010-lan-dns-on-a-service-ip.md) (LAN DNS)

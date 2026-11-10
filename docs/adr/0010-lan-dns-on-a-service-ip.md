@@ -20,7 +20,6 @@ The service IP:
 - Clients use `dns_ip` (`192.168.178.53`), an extra address on the host that runs DNS, the router hands it out as the only IPv4 DNS server
 - `dns_ip_host` in `network.yml` names that host, only that host adds the address. Today edge, through networkd ([0032](0032-edge-vm-traefik-adguard-on-nixos.md))
 - A move: the old host drops the address first, the new one adds it, then a gratuitous ARP (`arping -U`) so the LAN's caches follow at once
-- `deploy-dns.yml` (Pi-hole) refuses to run on a host `dns_ip_host` doesn't name
 
 The server:
 - AdGuard Home on edge, rewrites and blocklist from the flake ([0032](0032-edge-vm-traefik-adguard-on-nixos.md))

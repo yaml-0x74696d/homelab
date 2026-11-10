@@ -105,7 +105,6 @@ An app with more than one container runs as one pod:
 - `devices` adds `AddDevice=` and `GroupAdd=keep-groups`, and puts `svc-<name>` in the device's group on the host
 - `ShmSize=`, `Tmpfs=`, `Exec=` are plain unit keys: they go in the template, not the map. In a pod `ShmSize=` goes in the pod template (one IPC namespace)
 - `hosts: [a, b]` instead of `host:` runs one copy on each host (cloudflare-ddns). Only for apps nothing reaches: no port, routes, homepage or `allow_from`, those resolve the app to one host
-- `runtime: compose` marks an app that still runs on Docker: edge routes it, gatus checks it, `deploy-app.yml` refuses it
 - Config vs secrets: anything secret goes in `secrets:` (a podman secret), plain config and static files in `apps/<name>/config/`
 - A secret's `Secret=` line (env or mount, target) is in the app's unit template, the map only says where the value comes from
 - `allow_from` names resolve through `app_sources` (`group_vars/all/app_settings.yml`), an app name to its host's IP
@@ -127,7 +126,7 @@ An app with more than one container runs as one pod:
 | `podman_app_stop_timeout` | `10` | `StopTimeout=` when a container has no `stop_timeout` |
 | `podman_app_restart_sec` / `_steps` / `_max_delay` | `30s` / `5` / `10min` | Retry forever with backoff |
 | `podman_app_cifs_vers` | `3.1.1` | SMB dialect of the pool mounts |
-| `podman_app_cifs_creds_dir` | `/etc/cifs` | `<share>.creds`, the same files as `docker_app` |
+| `podman_app_cifs_creds_dir` | `/etc/cifs` | `<share>.creds`, root-only |
 | `podman_app_pod` | more than one container | Whether the app runs as a pod |
 | `podman_apps_root` | `/srv/apps` (group_vars) | Data dirs, backed up by `roles/pbs` |
 | `cifs_mount_root`, `storage_ip` | `/srv`, CT 300 (group_vars) | Where the shares are mounted, the Samba server |

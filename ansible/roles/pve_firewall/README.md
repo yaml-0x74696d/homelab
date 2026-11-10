@@ -1,7 +1,7 @@
 # pve_firewall
 
 - Writes the cluster, host and guest firewall rules from the shared variables
-- Scope: the NetBird VM, the log LXC, the IoT gateway LXC, the HAOS VM and the management access to the PVE hosts. The Docker VMs and the storage LXC stay unfiltered
+- Scope: the NetBird VM, the log LXC, the IoT gateway LXC, the HAOS VM and the management access to the PVE hosts. The pod VMs and the storage LXC stay unfiltered
 - Done with Ansible, not OpenTofu, because bpg/proxmox can't manage the host-level firewall options
 
 ## Runs on

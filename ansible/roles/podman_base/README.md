@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- `docker_hosts` and `pod_vms`, in `playbooks/vm-preparation.yml` after `roles/vm_base`. On `docker_hosts` Podman runs next to Docker until their compose apps move
+- `pod_vms`, in `playbooks/vm-preparation.yml` after `roles/vm_base`
 
 ## How it works
 

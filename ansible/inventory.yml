@@ -8,12 +8,6 @@ all:
           ansible_host: "{{ log_ip }}"
         iot:
           ansible_host: "{{ iot_lan_ip }}"
-    docker_hosts:
-      hosts:
-        pod-1:
-          ansible_host: "{{ pod1_ip }}"
-        pod-2:
-          ansible_host: "{{ pod2_ip }}"
     proxmox:
       hosts:
         pve-1:
@@ -26,16 +20,20 @@ all:
       # always-on lan box that routes the lan for netbird peers.
       # pod-1 left after netbird's dns grabbed :53 from pi-hole there. pod-2 keeps
       # netbird dns management off, dns-relay answers the vpn clients on 1053.
-      # members stay in their primary group (docker_hosts/pod_vms/proxmox) for connection vars.
+      # members stay in their primary group (pod_vms/proxmox) for connection vars.
       hosts:
         pod-2:   # routing peer
     pod_vms:
-      # vms with podman only, docker is gone. same base as docker_hosts
+      # the app vms, rootless podman only
       hosts:
+        pod-1:
+          ansible_host: "{{ pod1_ip }}"
+        pod-2:
+          ansible_host: "{{ pod2_ip }}"
         pod-3:
           ansible_host: "{{ pod3_ip }}"
     podman_hosts:
-      # podman without docker. bare metal, outside tofu
+      # podman on bare metal, outside tofu
       hosts:
         ctl-1:
           ansible_host: "{{ ctl1_ip }}"

@@ -91,7 +91,7 @@ cd ~/homelab/ansible
 ansible-playbook playbooks/push-keys.yml
 ansible-playbook playbooks/deploy-pve-firewall.yml
 ansible-playbook playbooks/deploy-login-notify.yml
-ansible-playbook playbooks/vm-preparation.yml    # pod-N: vm_base, podman_base, ufw, docker on docker_hosts, aide
+ansible-playbook playbooks/vm-preparation.yml    # pod-N: vm_base, podman_base, ufw, aide
 ansible-playbook playbooks/base.yml              # cron, journald, rsyslog, chrony, lxc hardening
 ansible-playbook playbooks/deploy-storage.yml -l storage
 ```
@@ -138,7 +138,7 @@ ansible-playbook playbooks/site.yml
 ```
 
 - `site.yml` holds the order: Authentik before the apps that log in through it (ingress and DNS are already up on edge), storage before the CIFS apps on pod-3, the PBS client last
-- One app on its own: `deploy-app.yml -e app=<name>` (Podman) or `deploy-<app>.yml` (`runtime: compose`)
+- One app on its own: `deploy-app.yml -e app=<name>`, Authentik through `deploy-authentik.yml` (the same role plus its upgrade guards)
 - Gitea without a backup has no admin yet, create it once (values from the vault, `gitea_admin_*`):
   `ssh pod-1 'cd / && sudo -u svc-gitea XDG_RUNTIME_DIR=/run/user/$(id -u svc-gitea) podman exec -u git gitea gitea admin user create --username <user> --email <email> --password <pw> --admin --must-change-password=false'`
 
@@ -156,8 +156,7 @@ pbc() { sudo bash -c 'set -a; . /etc/pbs.env; set +a; exec proxmox-backup-client
 pbc snapshot list host/<host>                  # pick the newest <time>
 R=/var/tmp/restore
 pbc restore host/<host>/<time> dumps.pxar        $R/dumps
-pbc restore host/<host>/<time> podman-apps.pxar  $R/podman-apps   # podman apps
-pbc restore host/<host>/<time> apps.pxar         $R/apps          # compose apps
+pbc restore host/<host>/<time> podman-apps.pxar  $R/podman-apps
 ```
 
 Podman app with Postgres, as its svc user:
@@ -190,8 +189,8 @@ rsync -a <admin_user>@<ctl1_ip>:/srv/apps/semaphore/aide/ aide/
 
 ```bash
 cd ~/homelab/ansible
-ansible 'pod_vms:docker_hosts' -a 'apps ps'                    # every container healthy
-ansible 'pod_vms:docker_hosts' -b -a 'systemctl start pbs-backup.service'   # one backup now, then check the PBS UI
+ansible pod_vms -a 'apps ps'                    # every container healthy
+ansible pod_vms -b -a 'systemctl start pbs-backup.service'   # one backup now, then check the PBS UI
 ```
 
 - Gatus: every check green
@@ -208,7 +207,7 @@ Images (`tofu/variables.tf`):
 Packages and repos:
 - Every `ansible.builtin.apt` → `ansible.builtin.dnf` (or `package` where the name is the same): vm_base, podman_base, podman_app, cronie, chrony, aide, rsyslog, pbs, update, lxc_base, samba, mosquitto, mqtt_exporter, ota_server, iot_ap
 - `deb822_repository` → `yum_repository`, EPEL on (fail2ban, node_exporter, hostapd)
-- `ansible_facts['distribution_release']` in repo URLs (pbs, the docker block in vm-preparation)
+- `ansible_facts['distribution_release']` in repo URLs (pbs)
 - `vm_base_packages`: `auditd` → `audit`, `libpam-pwquality` → `libpwquality`, `apparmor*` out, `unattended-upgrades` → `dnf-automatic`, `needrestart` → `dnf-utils`, `prometheus-node-exporter` → EPEL's `golang-github-prometheus-node-exporter` (other unit name)
 - PBS client: no EL package, only the static binary ([ADR 0013](adr/0013-pbs-file-level-backups.md))
 - cronie: the unit is `crond`, not `cronie`

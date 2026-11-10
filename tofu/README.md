@@ -1,6 +1,6 @@
 # tofu
 
-- OpenTofu builds the Docker VMs, the NetBird VM, the Home Assistant OS VM, the storage, log and IoT gateway LXCs with the `bpg/proxmox` provider
+- OpenTofu builds the pod VMs, the NetBird VM, the edge VM, the Home Assistant OS VM, the storage, log and IoT gateway LXCs with the `bpg/proxmox` provider
 - The Debian guests are created from a Debian cloud image, HAOS from its own image (step 3b)
 - cloud-init sets the IP, the admin user and the SSH key on the Debian guests
 - IPs, VMIDs, the admin user, the SSH key path and the pool paths come from `../ansible/group_vars/all/` (read in `locals.tf`), so OpenTofu and Ansible can't drift apart
@@ -54,12 +54,12 @@ tofu init
 tofu apply
 ```
 
-- The Docker VMs, the NetBird VM and the HAOS VM have `prevent_destroy`, because their databases live on the VM disk
+- The pod VMs, the NetBird VM and the HAOS VM have `prevent_destroy`, because their databases live on the VM disk
 - Never apply a plan that replaces one of them
 
 ## 5. After the first apply
 
-- Docker VMs: once `vm-preparation.yml` has installed qemu-guest-agent, set `agent { enabled = true }` in `vms.tf` and run `tofu apply` again
+- pod VMs: once `vm-preparation.yml` has installed qemu-guest-agent, set `agent { enabled = true }` in `vms.tf` and run `tofu apply` again
 - NetBird VM: the same flip in its own resource, after nixos-anywhere (NixOS turns the agent on)
 
 ## Related

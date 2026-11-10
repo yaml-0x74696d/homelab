@@ -16,7 +16,7 @@ Where a Podman app is described in the repo, where its files land on the host, a
 | house rules for every app (restart, health, start timeout) | `roles/podman_app/templates/10-homelab.conf.j2` |
 | how map fields become unit keys | `roles/podman_app/templates/50-map.conf.j2` |
 | the auto-update time, the ntfy wrapper | `roles/podman_base/defaults/main.yml` |
-| `apps_root`, the svc prefix and group | `group_vars/all/app_settings.yml` |
+| `podman_apps_root`, the svc prefix and group | `group_vars/all/app_settings.yml` |
 
 ## In the repo
 

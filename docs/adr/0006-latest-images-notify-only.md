@@ -1,6 +1,6 @@
 # 6. `:latest` images, notify-only updates
 
-Status: Accepted
+Status: Superseded by [0021](0021-podman-quadlets.md)
 
 ## Context
 
@@ -21,7 +21,7 @@ Which images move and which are pinned:
 - Stateful or picky images are pinned through `<app>_*_tag` variables in the deploy playbooks:
   - Databases: Postgres `16-alpine` (Authentik, Nextcloud, Paperless), Immich's Postgres build with vector support, Valkey `9` (Immich) and `8-alpine` (SearXNG)
   - Pinned to a major version: Gotenberg `8`, Nextcloud `35-apache` (it can't skip a major)
-  - Pinned to an exact version: Authentik through `authentik_tag` in `group_vars/all/app_settings.yml` (stepped through release by release)
+  - Pinned to an exact version: Authentik (stepped through release by release, [0014](0014-authentik-as-idp.md))
 
 How I find out about updates (Diun, on every Docker host, `apps/diun`, `deploy-diun.yml`):
 - Diun watches the local Docker socket and checks the image digests once a day (`diun_schedule: "0 6 * * *"`, `diun_jitter: 30s`)

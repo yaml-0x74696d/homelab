@@ -1,4 +1,0 @@
-# lan split-horizon: everything under the domain hits traefik on pod-1
-address=/{{ domain }}/{{ pod1_ip }}
-# netbird control plane is its own box, not behind traefik (longest match wins)
-address=/nb.{{ domain }}/{{ netbird_ip }}

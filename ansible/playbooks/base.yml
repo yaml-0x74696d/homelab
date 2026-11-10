@@ -3,14 +3,14 @@
 # order: tofu apply (log lxc) → deploy-pve-firewall.yml → this.
 
 - name: Base tools on the guests
-  hosts: docker_hosts:pod_vms:podman_hosts:lxc_containers
+  hosts: pod_vms:podman_hosts:lxc_containers
   roles:
     - cronie
     - journald
     - rsyslog
 
 - name: Time sync on the vms and ctl-1
-  hosts: docker_hosts:pod_vms:podman_hosts
+  hosts: pod_vms:podman_hosts
   roles:
     - chrony
 

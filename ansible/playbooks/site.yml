@@ -2,10 +2,6 @@
 # full deploy. run a single deploy-<service>.yml to touch just one service.
 - name: Base tools (time, cron, logs)
   import_playbook: base.yml
-- name: Deploy traefik
-  import_playbook: deploy-proxy.yml
-- name: Deploy pihole
-  import_playbook: deploy-dns.yml
 - name: Deploy homepage
   import_playbook: deploy-app.yml
   vars:
@@ -56,8 +52,6 @@
   import_playbook: deploy-app.yml
   vars:
     app: semaphore
-- name: Deploy diun
-  import_playbook: deploy-diun.yml
 - name: Deploy iot gateway (lxc)
   import_playbook: deploy-iot.yml
 # needs pve-3 powered on

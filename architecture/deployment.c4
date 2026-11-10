@@ -10,7 +10,6 @@ deployment {
         instanceOf apps.homepage
         instanceOf apps.pdfcraft
         instanceOf edge.ddns
-        instanceOf ops.diun
         instanceOf ops.podman-updates
         instanceOf storage.pbs-client
         instanceOf observability.node-exporter
@@ -48,7 +47,6 @@ deployment {
         instanceOf observability.grafana
         instanceOf observability.gatus
         instanceOf edge.ddns
-        instanceOf ops.diun
         instanceOf ops.podman-updates
         instanceOf storage.pbs-client
         instanceOf remote.router-peer

@@ -1,7 +1,0 @@
----
-- name: Restart app containers
-  community.docker.docker_container:
-    name: "{{ item }}"
-    state: started
-    restart: true
-  loop: "{{ docker_app_restart }}"

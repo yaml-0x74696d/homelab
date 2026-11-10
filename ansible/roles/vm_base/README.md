@@ -1,11 +1,11 @@
 # vm_base
 
 - Hardening and base packages every Debian VM gets, whatever runs on it
-- The firewall and the container runtime are not part of it: `vm-preparation.yml` adds ufw + Docker on the Docker VMs, `roles/podman_base` adds Podman next to Docker
+- The firewall and the container runtime are not part of it: `vm-preparation.yml` adds ufw, `roles/podman_base` adds Podman
 
 ## Runs on
 
-- `docker_hosts` and `pod_vms`, in `playbooks/vm-preparation.yml`. Not the PVE nodes or the NetBird VM
+- `pod_vms`, in `playbooks/vm-preparation.yml`. Not the PVE nodes or the NetBird VM
 - ctl-1 (bare metal) in `playbooks/ctl-preparation.yml`, without guest agent and cockpit
 - The LXCs get `roles/lxc_base`, which reuses `tasks/unattended_upgrades.yml`
 

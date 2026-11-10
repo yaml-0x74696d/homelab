@@ -66,7 +66,7 @@ Each node runs one pod VM, grouped by what the apps need. Ingress and LAN DNS ru
 | edge (VM 200) | pve-1 | Ingress and DNS (NixOS) | Traefik, AdGuard Home |
 | pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
-- pod-1 and pod-2 also run Diun (until they are podman-only), all three the PBS client and AIDE
+- Every app runs as a rootless Podman quadlet, there is no Docker left; all three run the PBS client and AIDE
 - Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
 - pod-3 gets to run the heavy services, because pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)
@@ -74,7 +74,7 @@ Each node runs one pod VM, grouped by what the apps need. Ingress and LAN DNS ru
 How a VM is built:
 - OpenTofu creates it from the Debian genericcloud image
 - cloud-init sets the IP, the admin user and the SSH key
-- `vm-preparation.yml` hardens it (`roles/vm_base`) and installs Docker
+- `vm-preparation.yml` hardens it (`roles/vm_base`) and installs Podman
 - Every VM has `prevent_destroy`, because the databases live on the VM disk ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md))
 
 Memory:
@@ -88,13 +88,13 @@ How an LXC is built:
 - The firewall depends on the LXC: ufw in storage, the PVE firewall in front of log, both in front of iot's LAN leg, ufw alone on its WiFi
 
 How an app is deployed:
-- Each app is a folder `ansible/apps/<name>/` plus a playbook `deploy-<name>.yml`
-- All compose apps use the same `docker_app` role ([ADR 0002](adr/0002-generic-docker-app-role.md))
-- App data lives under `/opt/stacks/<name>` (`apps_root`) on the VM
+- Each app is an entry in `apps.yml` plus a folder `ansible/apps/<name>/` with its quadlet units
+- `deploy-app.yml -e app=<name>` runs the `podman_app` role: svc user, secrets, units, firewall ([ADR 0021](adr/0021-podman-quadlets.md), [podman-layout](podman-layout.md))
+- App data lives under `/srv/apps/<name>` (`podman_apps_root`)
 
 ## Storage
 
-The bulk storage is one big pool on pve-3, shared to the Docker VMs over SMB.
+The bulk storage is one big pool on pve-3, shared to the pod VMs over SMB.
 
 ![](img/storage.png)
 
@@ -143,9 +143,7 @@ How a request from a browser reaches an app.
 
 - Plain HTTP on port 80 only redirects to HTTPS on 443
 - Every router comes from `apps.yml` (`routes` of each app plus `infra_routes`), built into Traefik's dynamic config on edge (`nixos/edge/traefik.nix`). There is no hand-written router file
-- Published app ports go through the `DOCKER-USER` firewall chain, which only lets a few callers in (Gitea's ssh port: the LAN):
-  - Traefik from edge, Homepage over pod-1's local bridge
-  - Prometheus, Grafana and Gatus from pod-2
+- Every app port gets one ufw rule per source, from `allow_from` in `apps.yml`: edge, pod-2 (Prometheus, Gatus) and Homepage; Gitea's ssh port: LAN and VPN
 
 ## Certificates
 
@@ -164,8 +162,8 @@ Authentik is the single login for the apps.
 
 ![](img/identity.png)
 
-- Authentik runs on pod-1 (server, worker and Postgres)
-- Its version is pinned and updated one release at a time (`authentik_tag` / `authentik_series`, checked in `deploy-authentik.yml`)
+- Authentik runs on pod-1 as one pod (server, worker and Postgres)
+- Its version is pinned and updated one release at a time (the tag in `apps.yml`, `authentik_series` in `app_settings.yml`, checked in `deploy-authentik.yml`)
 - Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, NetBird
 - Each of those apps keeps a local admin as a break-glass account, except Vaultwarden (SSO only)
 - Apps without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, Prometheus, the Vaultwarden admin page
@@ -207,10 +205,10 @@ Where backups go:
 - Its datastore `homelab` is a 100 GB thin LV on the SSD, separate from the HDD pool
 
 How a backup runs:
-- Every Docker VM has the PBS client (`roles/pbs`), started by a timer every evening at 20:00
+- Every pod VM has the PBS client (`roles/pbs`), started by a timer every evening at 20:00
 - A random delay keeps the hosts from starting at the same time
 - First the databases are dumped (Postgres, SQLite `.backup`)
-- Then `/opt/stacks` (`apps_root`) goes up as one archive, and `/srv/apps` (`podman_apps_root`) as a second one once the host runs a Podman app
+- Then `/srv/apps` (`podman_apps_root`) goes up as one archive (`/opt/stacks` too, as long as a host still has it)
 - A failed run is pushed to ntfy
 - The client's token can only write backups, not delete them
 
@@ -228,16 +226,16 @@ Prometheus for metrics, ntfy for alerts.
 
 - Prometheus on pod-2 collects metrics from:
   - the PVE hosts
-  - node-exporter and the Docker engine on every VM, node-exporter on every LXC
+  - node-exporter on every VM and LXC
   - the ESP32 sensors, through mqtt-exporter
 - Grafana shows dashboards on top of it
 - Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
 - Homepage is the start page: Gatus' summary on top, Proxmox stats for nodes, VMs and LXCs, and a tile per app generated from the apps map (`homepage:` block), with an up badge where the map has the app's port
 
 Alerts:
-- Diun checks every running image once a day and reports new versions, it never pulls them ([ADR 0006](adr/0006-latest-images-notify-only.md))
+- Podman apps: `podman auto-update` pulls and rolls back on a failed health check, a newer-tag check reports pinned images ([ADR 0021](adr/0021-podman-quadlets.md))
 - ntfy (an ntfy.sh topic) is the only alert channel ([ADR 0019](adr/0019-ntfy-single-alert-channel.md))
-- PBS, AIDE, login-notify and Diun all send there
+- PBS, AIDE, login-notify and the image updates all send there
 
 ## Logging and time
 
@@ -255,7 +253,7 @@ Time:
 - The LXCs use the host's clock
 
 Cron:
-- cronie runs the host cron jobs on the Docker VMs and the LXCs
+- cronie runs the host cron jobs on the pod VMs and the LXCs
 
 ## Home automation
 

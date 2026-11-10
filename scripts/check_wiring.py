@@ -2,7 +2,7 @@
 """Check that apps.yml and everything wired to it agree. Usage: check_wiring.py [repo]
 
 Reads the files only, no network. apps.yml is the source; homepage's
-tiles, app_ports, the pbs jobs and the unit templates have to match it.
+tiles, the pbs jobs and the unit templates have to match it.
 """
 import re
 import sys
@@ -15,7 +15,6 @@ UID_MAX = 65534          # subuid range = uid * 65536 has to stay in 32 bit
 PORT_MIN_ROOTLESS = 1024
 APPS_MAP = "ansible/group_vars/all/apps.yml"
 APP_SETTINGS = "ansible/group_vars/all/app_settings.yml"
-PORTS = "ansible/group_vars/all/ports.yml"
 INVENTORY = "ansible/inventory.yml"
 HOST_VARS = "ansible/host_vars"
 APPS_DIR = "ansible/apps"
@@ -129,26 +128,14 @@ def main():
 
     infra_hosts = {r["host"] for r in infra}
 
-    # --- app_ports: one source, the map
-    for key, val in (load(repo, PORTS).get("app_ports") or {}).items():
-        name = key.replace("_", "-")
-        if name in apps and "port" in apps[name] and f"apps['{name}'].port" not in str(val):
-            errors.append(f"app_ports.{key}: literal {val}, take it from apps['{name}'].port")
-
-    # --- pbs: a podman app's sqlite lives under podman_apps_root, its postgres is dumped as svc-<app>
+    # --- pbs: sqlite paths live under podman_apps_root/<app>, postgres is dumped as svc-<app>
     for hv in (repo / HOST_VARS).glob("*.yml"):
         for j in (yaml.safe_load(hv.read_text()) or {}).get("pbs_jobs", []):
-            if j.get("type") == "sqlite":
-                name = j["path"].split("/")[0]
-            elif j.get("podman"):
-                name = j.get("app")
-                if name not in apps:
-                    errors.append(f"{hv.name}: pbs job {j['name']} on podman needs app, an app from apps.yml")
-                    continue
-            else:
-                continue
-            if name in apps and (apps[name].get("runtime", "podman") == "podman") != bool(j.get("podman")):
-                errors.append(f"{hv.name}: pbs job {j['name']} needs podman: {apps[name].get('runtime', 'podman') == 'podman'}")
+            name = j["path"].split("/")[0] if j.get("type") == "sqlite" else j.get("app")
+            if name not in apps:
+                errors.append(f"{hv.name}: pbs job {j['name']} doesn't point at an app from apps.yml")
+            elif "podman" in j:
+                errors.append(f"{hv.name}: pbs job {j['name']}: drop podman:, every job runs on podman now")
 
     # --- homepage: app tiles are generated from homepage: blocks, the rest is hand-written
     tpl = (repo / HOMEPAGE).read_text()

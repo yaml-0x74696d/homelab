@@ -43,7 +43,7 @@ AdGuard Home (`nixos/edge/adguard.nix`):
 - Break-glass when Authentik is down: `ssh -L 3000:127.0.0.1:3000 <admin_user>@<edge_ip>`, then `http://localhost:3000`. The SSH key is the lock, no AdGuard user (its hash would land in the world-readable nix store)
 
 Apps calling Authentik:
-- The pod VMs resolve through the router, which doesn't know the LAN names. Apps that call `auth.<domain>` themselves (OIDC discovery, tokens) pin it to edge: `AddHost=` in the Podman units, `extra_hosts` in the compose files (Authentik), both from `app_sources.edge`
+- The pod VMs resolve through the router, which doesn't know the LAN names. Apps that call `auth.<domain>` themselves (OIDC discovery, tokens) pin it to edge: `AddHost=` in the Podman units, from `app_sources.edge`
 
 Updates:
 - autoUpgrade at 04:00 (up to 20 minutes random delay), reboots only between 04:00 and 04:45, right after the NetBird VM (03:00 to 04:00), so the two never reboot at once. Both windows in `schedules.yml`
@@ -54,7 +54,7 @@ Updates:
 ## Consequences
 
 - Easier: a new route is an `apps.yml` entry plus `nixos-rebuild`, there is no router file to keep in sync
-- Easier: ingress and DNS survive the Docker VM rebuilds, they are on their own VM
+- Easier: ingress and DNS survive the pod VM rebuilds, they are on their own VM
 - Easier: one wildcard certificate instead of one per router, fewer Let's Encrypt orders
 - Easier: a second Traefik can run side by side for a test, `ingress_extra_sources` (`app_settings.yml`) lets it through the backend firewalls
 
@@ -64,7 +64,5 @@ Updates:
 
 - Accepted: changes made in the AdGuard UI are gone at the next restart, the UI is for looking
 - Accepted: a wildcard certificate covers every name under the domain, a stolen key would too
-
-- Later: Traefik on pod-1 and Pi-hole on pod-2 stay stopped as the rollback until 2026-11-17, then they are removed. Until then `dns_ip_host` back to `pod-2`, `app_sources.edge` back to `pod1_ip` and both started again restores the old ingress and DNS within minutes
 
 - Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0005](0005-prevent-destroy-on-stateful-vms.md) (prevent_destroy), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0009](0009-aide-with-manual-accept.md) (AIDE), [0010](0010-lan-dns-on-a-service-ip.md) (service IP), [0014](0014-authentik-as-idp.md) (forward-auth), [0015](0015-tls-via-dns-01.md) (DNS-01), [0022](0022-central-logging-relp.md) (logging), [0027](0027-gatus-generated-from-apps-map.md) (apps map)

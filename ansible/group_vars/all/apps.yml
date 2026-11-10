@@ -1,7 +1,6 @@
 ---
 # every app, pure data (edge and ci read it with yq, so no jinja). schema + defaults:
-# roles/podman_app/meta/argument_specs.yml. `runtime: compose` = still on docker:
-# edge routes it, deploy-app.yml refuses it. the line goes at the app's cutover.
+# roles/podman_app/meta/argument_specs.yml.
 apps:
   gatus:
     host: pod-2
@@ -437,7 +436,6 @@ apps:
 
 # traefik routes that aren't apps. target: an inventory host, or edge for what runs on edge itself.
 # port_var: the key in ports.yml (no jinja here). scheme defaults to http.
-# no target = only pod-1's traefik serves it, the entry goes at the edge cutover
 infra_routes:
   - {host: pve-1, target: pve-1, port_var: pve_ui_port, scheme: https, insecure_tls: true}
   - {host: pve-2, target: pve-2, port_var: pve_ui_port, scheme: https, insecure_tls: true}
@@ -447,7 +445,6 @@ infra_routes:
     target: edge
     middlewares: [authentik]
     homepage: {group: Admin, icon: adguard-home, label: AdGuard Home}
-  - host: proxy   # pod-1 traefik's dashboard, stopped since the edge cutover (rollback)
   - host: traefik   # edge traefik's dashboard
     target: edge
     middlewares: [authentik]

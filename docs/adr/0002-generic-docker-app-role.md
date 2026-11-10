@@ -1,6 +1,6 @@
 # 2. One generic role for all apps
 
-Status: Accepted
+Status: Superseded by [0021](0021-podman-quadlets.md)
 
 ## Context
 

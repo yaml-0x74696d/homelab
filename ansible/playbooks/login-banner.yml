@@ -1,6 +1,6 @@
 ---
 # swap debian's default motd for fastfetch, fleet-wide.
-# become/user come from inventory per group (docker=sudo, pve/storage=root).
+# become/user come from inventory per group (pod vms=sudo, pve/storage=root).
 - name: Fastfetch login banner
   hosts: all:!appliances
   tasks:

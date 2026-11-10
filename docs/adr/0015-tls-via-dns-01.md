@@ -22,7 +22,7 @@ Traefik (pod-1):
 - Uses the certresolver `cloudflare` (`dnschallenge.provider=cloudflare`)
 - Gets one certificate per router and stores them in `acme.json` (mode `0600`)
 - The Cloudflare token `cf_token` comes from the vault
-- Before asking Let's Encrypt, Traefik checks that the record is visible on public resolvers (`traefik_acme_resolvers: 1.1.1.1:53,8.8.8.8:53` in `deploy-proxy.yml`). Pi-hole answers the zone locally, so asking it would break the check
+- Before asking Let's Encrypt, Traefik checks that the record is visible on public resolvers (`acmeResolvers` in `nixos/edge/traefik.nix`). AdGuard Home answers the zone locally, so asking it would break the check
 - Traefik's `:80` stays LAN-only and only redirects to `:443`
 
 NetBird VM (`nixos/netbird/netbird.nix`):

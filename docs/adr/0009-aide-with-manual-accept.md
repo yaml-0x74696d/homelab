@@ -29,7 +29,7 @@ When it runs:
 
 What it skips (`aide_excludes_common` on every host, `aide_excludes_by_group` per inventory group):
 - Every host: `/run`, `/var/log` (the central copy on the log LXC is the tamper protection, [0022](0022-central-logging-relp.md)), apt's caches and lists, node-exporter's textfiles, ansible's temp files
-- Docker hosts: Docker data, the app folders, the CIFS mounts and cloud-init's per-boot state
+- Pod VMs: container storage, the app folders, the CIFS mounts and cloud-init's per-boot state
 - Proxmox hosts: `/etc/pve`, the pool, the PBS datastore, state that pve rebuilds itself (`/var/lib/lxc`, lxcfs, corosync, PBS job state, compiled firewall rules, `/etc/issue`) and all of `/dev`
 - LXCs: `/dev/.lxc` (procfs), the storage LXC also the pool bind mount, the IoT LXC also `/var/lib/mosquitto` (broker state)
 - Login homes (`aide_login_homes`): history files only keep owner, mode and type watched

@@ -6,7 +6,7 @@
 
 ## Runs on
 
-- All guests (`docker_hosts`, `pod_vms`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
+- All guests (`pod_vms`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
 - The NetBird VM gets the same from `nixos/base/logging.nix`, edge follows
 
 ## How it works

@@ -60,10 +60,10 @@
 - The UIDs are pinned, so a rebuilt CT keeps the same ownership
 - New shares only go at the end of the list. The position sets the GID, so reordering changes ownership
 - A password changed in the vault only reaches existing users with `-e samba_rotate_passwords=true` (for one run)
-- The mounts on the Docker VMs (`docker_app_cifs`) map the files to the container's UID, not to these UIDs
+- The mounts on the pod VMs (`cifs` in `apps.yml`) map the files to the container's UID, not to these UIDs
 
 ## Related
 
-- `mergerfs` role (the pool and the share folders), `docker_app` (the CIFS clients)
+- `mergerfs` role (the pool and the share folders), `podman_app` (the CIFS clients)
 - [ADR 0004: mergerfs instead of ZFS](../../../docs/adr/0004-mergerfs-instead-of-zfs.md)
-- [ADR 0017: SMB from the storage LXC to the Docker VMs](../../../docs/adr/0017-smb-shares-to-docker-vms.md)
+- [ADR 0017: SMB from the storage LXC to the pod VMs](../../../docs/adr/0017-smb-shares-to-docker-vms.md)

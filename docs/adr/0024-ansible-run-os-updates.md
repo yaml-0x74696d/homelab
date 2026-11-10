@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - The apt hosts are pve-1/2/3, pod-1/2/3 and the storage, log and IoT LXCs
-- Only the docker VMs get unattended security updates (`roles/vm_base`), everything else waits for a manual run
+- Only the pod VMs get unattended security updates (`roles/vm_base`), everything else waits for a manual run
 - A kernel check via `uname -r` against `/boot` flags the LXCs every time, they have no kernel there
 - Checking only the kernel misses services still running on an old libc or openssl
 - With `force-confold` the package's new config lands as `*.dpkg-dist`, unnoticed
@@ -22,7 +22,7 @@ Status: Accepted
 
 The setup:
 - `playbooks/update.yml` with `roles/update`, scheduled in Semaphore every Saturday 14:00 without ctl-1 ([0031](0031-semaphore-on-a-pi.md)), by hand from the controller when needed. ctl-1 itself updates from the controller
-- Three plays, one host at a time (`serial: 1`): `lxc_containers`, then `docker_hosts`, `pod_vms` and `podman_hosts`, then `proxmox`. Guests first, so a bad package shows up before a node gets it
+- Three plays, one host at a time (`serial: 1`): `lxc_containers`, then `pod_vms` and `podman_hosts`, then `proxmox`. Guests first, so a bad package shows up before a node gets it
 - Explicit groups, not `all`: the NetBird VM updates through Nix ([0008](0008-nixos-for-the-dmz-box.md))
 - Before the plays, `roles/reach` checks every host. The part-time nodes and their guests (`part_time_nodes`, `guest_nodes` in `network.yml`) may be off: skipped, the run exits 0. Any other host that's down is skipped too, listed as DOWN, the run exits non-zero
 
@@ -48,7 +48,6 @@ How I hear about it:
 - Easier: no false reboot flags, and stale services get restarted instead of running on until the next reboot
 - Easier: an upgrade no longer means one AIDE accept per host
 
-- Harder: `needrestart -r a` restarts `docker.service` on the docker VMs, and with it every container. The docker-ce upgrade did that already
 - Harder: needrestart restarts pve services on the nodes too (pveproxy, pvedaemon, the HA services)
 
 - Accepted: whatever changes on a host during the upgrade goes into the AIDE baseline without review. The clean check right before keeps that window short ([0009](0009-aide-with-manual-accept.md))

@@ -9,7 +9,7 @@ pbs_token_id: "backup@pbs!client"
 pbs_repository: "{{ pbs_token_id }}@{{ pve3_ip }}:{{ pbs_port }}:{{ pbs_datastore }}"
 pbs_id: "{{ inventory_hostname }}"        # backup group id, one per host
 
-# staging dir + app dir: pbs_staging_dir / apps_root in group_vars (aide excludes them too)
+# staging dir + app dir: pbs_staging_dir / podman_apps_root in group_vars (aide excludes them too)
 
 # failure alerts → ntfy. uses the shared ntfy_url/ntfy_token from vault; empty = off.
 pbs_ntfy_url: "{{ ntfy_url | default('') }}"

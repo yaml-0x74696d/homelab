@@ -23,7 +23,7 @@ lint:
 check:
     pre-commit run --all-files --hook-stage manual
 
-# deploy one compose app, e.g. just deploy immich
+# run one deploy-<name>.yml, e.g. just deploy authentik
 deploy app:
     cd ansible && ansible-playbook playbooks/deploy-{{ app }}.yml
 

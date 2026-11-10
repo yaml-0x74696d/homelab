@@ -57,21 +57,6 @@ aide_var_dirs:
 
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:
-  docker_hosts:
-    - /var/lib/docker
-    - /var/lib/containerd
-    - /var/lib/containers       # root podman storage
-    - /dev/shm                  # podman lock files, tmpfs
-    - "{{ apps_root }}"
-    - "{{ podman_apps_root }}"   # podman app data
-    - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"   # rootless podman images + containers, per app user
-    - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"   # module payloads when ansible runs as the svc user
-    - "{{ cifs_mount_root }}"   # pool shares
-    - "{{ pbs_staging_dir }}"
-    - /var/lib/cloud            # cloud-init state, rewritten every boot
-    - /var/tmp/cloud-init
-    - /dev/disk/by-uuid         # cloud-init iso gets a dated uuid
-  # docker_hosts minus docker
   pod_vms:
     - /var/lib/containers       # root podman storage
     - /dev/shm                  # podman lock files, tmpfs

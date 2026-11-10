@@ -1,4 +1,0 @@
----
-# admin_user over ssh, sudo with the vault's password
-ansible_become: true
-ansible_become_password: "{{ sudo_pass }}"

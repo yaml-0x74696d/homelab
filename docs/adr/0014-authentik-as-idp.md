@@ -18,10 +18,10 @@ Status: Accepted
 ## Decision
 
 The setup:
-- Authentik on pod-1 (`apps/authentik`, `deploy-authentik.yml`): server, worker and Postgres (`authentik_pg_tag`)
+- Authentik on pod-1 (`apps/authentik`, `deploy-authentik.yml`): one Podman pod with server, worker and Postgres (`16-alpine`, no auto-update)
 - MFA is enforced in Authentik
 - Every app keeps a local admin as a break-glass account, except Vaultwarden (`SSO_ONLY=true`)
-- The version is pinned in `group_vars/all/app_settings.yml` (`authentik_tag` + `authentik_series`)
+- The version is pinned as the image tag in `group_vars/all/apps.yml`, the release series it may step through are `authentik_series` in `app_settings.yml`
 
 Two ways apps use it:
 - OIDC, for apps that support it
@@ -29,21 +29,21 @@ Two ways apps use it:
   - So mobile apps, sync clients and git clients keep working
   - NetBird logs in this way too (public PKCE client, [0003](0003-netbird-instead-of-port-forwards.md))
 - Forward-auth, for UIs that are only used in the browser
-  - Traefik middleware `authentik@file` (`apps/proxy/traefik/dynamic/middlewares.yml`) sends the request to the embedded outpost on `proxy-net` first
+  - Traefik middleware `authentik` on edge (`nixos/edge/traefik.nix`) sends the request to the embedded outpost on pod-1 first
   - Used by the Traefik dashboard, Prometheus and the Vaultwarden admin page
 
 Connecting apps:
-- Containers can't resolve internal names, so apps on pod-2/3 reach `auth.<domain>` through an `extra_hosts` entry pointing at pod-1
-- Each app's client ID and secret is entered once, through its CLI or as env from the vault (`.env.j2`)
+- Containers can't resolve internal names, so apps reach `auth.<domain>` through an `AddHost=` entry pointing at edge ([0032](0032-edge-vm-traefik-adguard-on-nixos.md))
+- Each app's client ID and secret is entered once, through its CLI or as a Podman secret from the vault
 
-- Enforced by: the pre-tasks in `deploy-authentik.yml` refuse downgrades, skipped release series, and pulls while pod-1's thin pool is above `authentik_pool_max_pct` (85 %)
+- Enforced by: `deploy-authentik.yml` wraps the `podman_app` role; its pre-tasks refuse downgrades against the running image, skipped release series, and pulls while pve-1's thin pool is above `authentik_pool_max_pct` (85 %)
 
 ## Consequences
 
 - Easier: one login with MFA for every app and the VPN
 - Easier: apps without a login get one, without touching the app (forward-auth)
 
-- Harder: upgrades go one release series at a time (`-e authentik_tag=<next>`). Database migrations can take a while, the deploy waits up to `authentik_health_retries` × `authentik_health_delay`
+- Harder: upgrades go one release series at a time (raise the tag in `apps.yml`, deploy, repeat). Database migrations can take a while, the start may take up to `start_timeout` in `apps.yml`
 - Harder: OIDC is set up by hand for every app (provider + application in Authentik, client in the app)
 
 - Accepted: Authentik is a single point of failure for logins. That's why every app except Vaultwarden keeps a local break-glass admin, and monitoring isn't fully behind it

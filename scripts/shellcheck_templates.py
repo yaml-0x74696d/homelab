@@ -26,11 +26,9 @@ DUMMY_VARS = {
     "pbs_id": "pod-1",
     "pbs_exclude": ["cache"],
     "pbs_jobs": [
-        {"name": "pg", "type": "postgres", "container": "pg-db", "data_dir": "pg/data"},
+        {"name": "pg", "type": "postgres", "container": "pg-db", "data_dir": "pg/data", "app": "pg"},
         {"name": "lite", "type": "sqlite", "path": "lite/app.db"},
-        {"name": "lite-podman", "type": "sqlite", "path": "lite/app.db", "podman": True},
     ],
-    "apps_root": "/opt/apps",
     "podman_apps_root": "/srv/podman-apps",
     "podman_svc_prefix": "svc-",
     "podman_svc_group": "podman-svc",

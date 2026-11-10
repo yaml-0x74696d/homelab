@@ -19,7 +19,7 @@ Status: Accepted
 ## Decision
 
 The setup:
-- `proxmox-backup-client` on every Docker VM (`roles/pbs`, `deploy-pbs.yml`), not vzdump
+- `proxmox-backup-client` on every pod VM (`roles/pbs`, `deploy-pbs.yml`), not vzdump
 - PBS runs as a host package on pve-3, with the datastore `homelab` at `/mnt/pbs`
 - The client logs in with the token `backup@pbs!client`, which has the `DatastoreBackup` role on `/datastore/homelab` only
 - Retention is set in the PBS UI: garbage collection daily, keep 7 daily / 4 weekly / 3 monthly
@@ -30,8 +30,7 @@ When and how it runs:
 - Each run: dump the databases, push, then wipe the staging folder
 - It pushes these archives:
   - `dumps.pxar`: the database dumps (Postgres `pg_dump --clean --if-exists`, SQLite online `.backup`)
-  - `apps.pxar`: everything in `apps_root`, except the live database files, caches and query logs
-  - `podman-apps.pxar`: the same for `podman_apps_root`, once a host runs a Podman app
+  - `podman-apps.pxar`: everything in `podman_apps_root`, except the live database files, caches and query logs
 
 What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/pod-{1,2,3}.yml`):
 
@@ -46,7 +45,7 @@ What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/pod-{1,2,3}.
 ## Consequences
 
 - Easier: small, deduplicated backups that restore straight into a rebuilt VM
-- Easier: a new app with plain config files needs no backup change, `apps_root` is backed up by default
+- Easier: a new app with plain config files needs no backup change, `podman_apps_root` is backed up by default
 
 - Harder: a new app with a database needs a `pbs_jobs` entry. Without it, the live database file only lands in `apps.pxar` as a plain copy, which isn't crash-consistent
 - Harder: a rebuild is `tofu apply` + Ansible + restore, more steps than restoring a VM image

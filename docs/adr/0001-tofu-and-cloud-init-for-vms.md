@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - The VMs were clicked together by hand, so a rebuild was never the same twice
-- Guests: the three Docker VMs, the NetBird VM, the storage, log and IoT LXCs, spread over 3 Proxmox nodes
+- Guests: the three pod VMs, the NetBird VM, edge, the storage, log and IoT LXCs, spread over 3 Proxmox nodes
 - Turning on 2FA for `root@pam` broke password login for any automation
 
 - Alternatives:

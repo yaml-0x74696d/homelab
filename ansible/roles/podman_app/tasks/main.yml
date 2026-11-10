@@ -7,7 +7,7 @@
       - podman_app_entry.runtime | default('podman') == 'podman'
       - podman_app_entry.state | default('present') == 'present'
       - inventory_hostname in podman_app_entry.hosts | default([podman_app_entry.host])
-    fail_msg: "{{ podman_app_name }}: runtime compose, state absent/purged or wrong host"
+    fail_msg: "{{ podman_app_name }}: runtime vm, state absent/purged or wrong host"
     quiet: true
 
 # a missing overlay would swap private files for public ones and drop the private-only ones as stale
@@ -261,7 +261,7 @@
   register: podman_app_fstab
   notify: Restart app
 
-# fails while something still holds it (the docker app before its cutover)
+# fails while something still holds it (another app on the same share)
 - name: Unmount changed pool shares of {{ podman_app_name }}
   ansible.posix.mount:
     path: "{{ cifs_mount_root }}/{{ item.item.path }}"

@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - 38 secrets: API tokens, database passwords, OIDC client secrets, SMB passwords, the ntfy topic
-- Every app needs some of them at deploy time, but the compose files should stay plain YAML
+- Every app needs some of them at deploy time, but the app definitions should stay plain files in git
 - The repo is public, so nothing secret may ever land in git
 
 - Alternatives:
@@ -25,7 +25,7 @@ The vault:
 - Facts that aren't secret stay in the other `group_vars/all/*.yml` files, never in the vault
 
 How apps get their secrets:
-- vault → `apps/<name>/.env.j2` → rendered `.env` (mode `0600`) → `${VAR}` in compose
+- vault → `secrets:` in `apps.yml` (a vault key, or a template that uses vault keys) → a Podman secret of the app's svc user → env or a read-only file in the container (`Secret=` in the unit)
 
 The NetBird VM (NixOS):
 - Secrets are put on the NetBird VM by hand under `/var/lib/secrets/` (`secretsDir`)
@@ -36,10 +36,9 @@ The NetBird VM (NixOS):
 ## Consequences
 
 - Easier: one tool that's already in the stack, no extra key management
-- Easier: compose files and templates stay readable, secrets only show up as `${VAR}`
+- Easier: unit templates stay readable, secrets only show up as `Secret=` lines, and nothing secret lands in a unit file
 - Easier: the vault, `.vault_pass`, `private.yml`, tfvars, tofu state and AIDE hashes live in one encrypted, offsite-synced folder on secure storage, symlinked into the repo, so the offsite copy is always current
 
-- Harder: vault values must not contain `$`, compose interpolation eats it (bcrypt hashes need `$$`)
 - Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NetBird VM
 
 - Accepted: one password unlocks every secret

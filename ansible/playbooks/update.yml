@@ -3,7 +3,7 @@
 # never reboots, the summary says where one is due. the nixos vm updates on its own.
 # a failed host stops the run and pushes an alert. hosts in reach_optional_hosts may be off
 - name: Reach
-  hosts: lxc_containers:docker_hosts:pod_vms:podman_hosts:proxmox
+  hosts: lxc_containers:pod_vms:podman_hosts:proxmox
   gather_facts: false
   roles: [reach]
 
@@ -15,7 +15,7 @@
   roles: [update]
 
 - name: Update vms
-  hosts: docker_hosts:pod_vms:podman_hosts:&reachable
+  hosts: pod_vms:podman_hosts:&reachable
   serial: 1
   roles: [update]
 
@@ -28,7 +28,7 @@
 
 # on the apt hosts, not localhost, so -l <host> keeps it. set_fact/debug don't connect
 - name: Report
-  hosts: lxc_containers:docker_hosts:pod_vms:podman_hosts:proxmox
+  hosts: lxc_containers:pod_vms:podman_hosts:proxmox
   gather_facts: false
   run_once: true
   tasks:

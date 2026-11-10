@@ -1,11 +1,11 @@
-# 17. SMB from the storage LXC to the Docker VMs
+# 17. SMB from the storage LXC to the pod VMs
 
 Status: Accepted
 
 ## Context
 
 - The bulk data (media, Nextcloud files, documents, photos) lives on the mergerfs pool on pve-3 ([0004](0004-mergerfs-instead-of-zfs.md))
-- The apps run on the Docker VMs, mostly pod-3
+- The apps run on the pod VMs, mostly pod-3
 - The pool already had Samba shares and scoped users for the LAN (Time Machine, ISO images, admin access)
 - Databases must not live on a network share ([0005](0005-prevent-destroy-on-stateful-vms.md))
 
@@ -36,7 +36,7 @@ The server (`roles/samba`):
 - Security settings: `server min protocol = SMB3`, `smb encrypt = desired`, `map to guest = never`
 - ufw only allows 445/139 from the LAN
 
-The clients (`docker_app_cifs` in `roles/docker_app`, `cifs` in `roles/podman_app`):
+The clients (`cifs` in `apps.yml`, mounted by `roles/podman_app`):
 - Credentials in `/etc/cifs/<share>.creds` (mode `0600`)
 - An fstab `cifs` entry with `vers=3.1.1` and `mfsymlinks,nofail,_netdev`
 - `uid`/`gid` on the mount are set to the container's user (Podman: `svc-<app>`, mapped by keep-id), Podman mounts add `x-systemd.automount`
@@ -49,7 +49,7 @@ The clients (`docker_app_cifs` in `roles/docker_app`, `cifs` in `roles/podman_ap
 
 ## Consequences
 
-- Easier: one way to share everything. LAN clients, Time Machine and the Docker VMs all use the same shares and users
+- Easier: one way to share everything. LAN clients, Time Machine and the pod VMs all use the same shares and users
 - Easier: each app only sees its own share, with its own credentials
 
 - Harder: the UID/GID on the mount must match the user inside the container (Nextcloud 33, Paperless 1000), or writes fail
@@ -58,4 +58,4 @@ The clients (`docker_app_cifs` in `roles/docker_app`, `cifs` in `roles/podman_ap
 - Accepted: Immich doesn't officially support its library on CIFS (atomic moves, permissions). Its database stays local, and NFS is the fallback (open issue)
 - Accepted: because of `nofail`, a host still boots when the storage CT is down. But then an app can start on an empty mount point (Podman apps wait for a `findmnt` start gate, [0021](0021-podman-quadlets.md))
 
-- Related: [0002](0002-generic-docker-app-role.md) (`docker_app_cifs`), [0004](0004-mergerfs-instead-of-zfs.md) (pool), [0005](0005-prevent-destroy-on-stateful-vms.md) (DBs stay local), [0021](0021-podman-quadlets.md) (mount gate)
+- Related: [0004](0004-mergerfs-instead-of-zfs.md) (pool), [0005](0005-prevent-destroy-on-stateful-vms.md) (DBs stay local), [0021](0021-podman-quadlets.md) (mount gate)

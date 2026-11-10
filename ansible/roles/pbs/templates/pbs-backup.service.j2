@@ -1,15 +1,7 @@
-{# docker only for docker exec dumps: a host whose postgres jobs are all on podman doesn't need it #}
-{% set ns = namespace(docker=false) %}
-{% for j in pbs_jobs if j.type == 'postgres' and not j.podman | default(false) %}
-{% set ns.docker = true %}
-{% endfor %}
 [Unit]
 Description=PBS data backup (db dumps + app config)
-After={{ 'docker.service ' if ns.docker else '' }}network-online.target
+After=network-online.target
 Wants=network-online.target
-{% if ns.docker %}
-Requires=docker.service
-{% endif %}
 
 [Service]
 Type=oneshot

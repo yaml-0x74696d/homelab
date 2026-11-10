@@ -33,7 +33,7 @@ The code it runs:
 - `playbooks/repo-pull.yml` pulls it, as a Semaphore template
 - The quadlet sets `ANSIBLE_CONFIG`, `AIDE_CHECKSUM_DIR` and `HOMELAB_PRIVATE_DIR` and forwards them to the tasks (`SEMAPHORE_FORWARDED_ENV_VARS`), so templates need no variable group
 - The gitignored `vault.yml` and `private.yml` come from ctl-0 (`ctl_base_private_files`, tag `private-files`)
-- ctl-0's `<private_dir>/apps` (the private config overlays, nothing else from that dir) is mirrored with rsync to `semaphore_private_dir` in the same run and mounted read-only at that path. `HOMELAB_PRIVATE_DIR` points `podman_app` and `docker_app` at it, `private.yml`'s `~/...` would be the container user's home
+- ctl-0's `<private_dir>/apps` (the private config overlays, nothing else from that dir) is mirrored with rsync to `semaphore_private_dir` in the same run and mounted read-only at that path. `HOMELAB_PRIVATE_DIR` points `podman_app` at it, `private.yml`'s `~/...` would be the container user's home
 - The vault password and Semaphore's ssh key live only in Semaphore's key store, encrypted with `semaphore_key_encryption`. No vault password and no tofu state on the Pi
 - `ansible.cfg` needs a `.vault_pass`, so the clone gets a dummy one, the real password comes from the key store
 - Semaphore's public key goes to every host through `push-keys.yml`

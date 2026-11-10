@@ -8,14 +8,14 @@ Status: Accepted
 - The workload is static: fixed apps on fixed hosts, no autoscaling, no rolling deploys at scale
 - RAM is already tight
 - The 8 GB thin clients run at ~7.5 GB used
-- A move from compose to Podman quadlets is planned ([0021](0021-podman-quadlets.md), proposed)
+- The apps run as Podman quadlets, one host per app ([0021](0021-podman-quadlets.md))
 - The lab has to stay usable day to day
 
 - Alternatives:
   - K8s (why not: control plane doesn't fit in 8 GB, features unused)
   - k3s (why not: control plane doesn't fit in 8 GB, features unused)
   - OpenShift (why not: see [0011](0011-proxmox-as-hypervisor.md), node specs too high)
-  - Keep compose / quadlets (chosen)
+  - Plain quadlets, one host per app (chosen)
 
 ## Decision
 
@@ -27,7 +27,7 @@ Status: Accepted
 
 ## Consequences
 
-- Easier: simpler to debug, one host and one compose file per app
+- Easier: simpler to debug, one host and a few unit files per app
 
 - Harder: none of K8s's features (scheduling, self-healing, scaling) would get used, but its overhead would (control plane RAM, etcd, networking layer)
 - Harder: there's no room on the 8 GB nodes for a control plane next to the apps

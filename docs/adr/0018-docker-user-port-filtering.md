@@ -1,6 +1,6 @@
 # 18. Filter published container ports in DOCKER-USER
 
-Status: Accepted
+Status: Superseded by [0026](0026-ufw-as-guest-firewall.md)
 
 ## Context
 

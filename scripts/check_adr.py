@@ -4,7 +4,9 @@ import re
 import sys
 from pathlib import Path
 
-STATUSES = ("Accepted", "Proposed")
+STATUSES = ("Accepted", "Proposed", "Superseded")
+# superseded ones name their successor: "Status: Superseded by [0021](0021-....md)"
+SUPERSEDED_RE = re.compile(r"^ by \[(\d{4})\]\(\1-[^)]+\.md\)$")
 SECTIONS = ["Context", "Decision", "Consequences"]
 CONSEQUENCE_ORDER = ["Easier", "Harder", "Accepted"]
 FILE_RE = re.compile(r"^(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
@@ -42,19 +44,23 @@ def check_adr(path, num):
     m = re.match(r"^# (\d+)\. (.+)$", lines[0] if lines else "")
     if not m:
         err(name, "first line must be '# N. Title'")
-        return None, None
+        return None, (None, None)
     if int(m.group(1)) != num:
         err(name, f"heading number {m.group(1)} != file number {num}")
     title = m.group(2)
 
-    status = None
-    sm = re.search(r"^Status: (\S+)$", text, re.M)
+    status, by = None, None
+    sm = re.search(r"^Status: (\S+)(.*)$", text, re.M)
     if not sm:
         err(name, "missing 'Status: ...' line")
     else:
         status = sm.group(1)
+        sup = SUPERSEDED_RE.match(sm.group(2))
+        by = sup.group(1) if sup else None
         if status not in STATUSES:
             err(name, f"status '{status}' not in {STATUSES} (new status = ask Tim)")
+        elif (status == "Superseded") != bool(sup):
+            err(name, "only Superseded takes a suffix, and it must be ' by [NNNN](NNNN-....md)'")
         if lines.index(sm.group(0)) != 2:
             err(name, "status must be line 3, right under the title")
 
@@ -108,7 +114,7 @@ def check_adr(path, num):
         if lm and not target.startswith(lm.group(1) + "-"):
             err(name, f"link text [{label}] points at {target}")
 
-    return title, status
+    return title, (status, by)
 
 
 def check_readme(adr_dir, adrs):
@@ -118,7 +124,7 @@ def check_readme(adr_dir, adrs):
         return
     entries = re.findall(r"^- \[(\d+)\. (.+?)\]\(([^)]+)\)(.*)$", readme.read_text(), re.M)
     listed = [e[2] for e in entries]
-    for num, (fname, title, status) in sorted(adrs.items()):
+    for num, (fname, title, (status, by)) in sorted(adrs.items()):
         hits = [e for e in entries if e[2] == fname]
         if len(hits) != 1:
             err("README.md", f"{fname} listed {len(hits)} times, want 1")
@@ -126,7 +132,7 @@ def check_readme(adr_dir, adrs):
         n, t, _, tail = hits[0]
         if int(n) != num or t != title:
             err("README.md", f"entry '{n}. {t}' != heading '{num}. {title}'")
-        want = " (proposed)" if status == "Proposed" else ""
+        want = " (proposed)" if status == "Proposed" else f" (superseded by {int(by)})" if status == "Superseded" else ""
         if tail.strip() != want.strip():
             err("README.md", f"{fname}: suffix '{tail.strip()}' should be '{want.strip()}'")
     if listed != sorted(listed):
