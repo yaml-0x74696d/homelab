@@ -8,6 +8,11 @@ ntfy_url: ""
 ntfy_token: ""
 ntfy_timeout: 10   # seconds per push
 
+# homepage (apps/homepage): api tokens for the pve + pbs widgets (secrets in the vault), the router tile's ping
+homepage_pve_token_id: "api@pam!homepage"
+homepage_pbs_token_id: "homepage@pbs!homepage"
+homepage_ping_target: 1.1.1.1
+
 # authentik can't skip a release series or downgrade; deploy-authentik.yml enforces both.
 # step through with -e authentik_tag=<next>, then set this to where you landed.
 authentik_tag: "2026.8.3"

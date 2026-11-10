@@ -9,7 +9,9 @@
 - name: Deploy pihole
   import_playbook: deploy-dns.yml
 - name: Deploy homepage
-  import_playbook: deploy-dashboard.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: homepage
 - name: Deploy authentik
   import_playbook: deploy-authentik.yml
 - name: Deploy vaultwarden

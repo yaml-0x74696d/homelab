@@ -19,7 +19,7 @@ PORTS = "ansible/group_vars/all/ports.yml"
 INVENTORY = "ansible/inventory.yml"
 HOST_VARS = "ansible/host_vars"
 APPS_DIR = "ansible/apps"
-HOMEPAGE = "ansible/apps/dashboard/homepage/config/services.yaml.j2"
+HOMEPAGE = "ansible/apps/homepage/services.yaml.j2"
 
 errors, warnings = [], []
 TILES_RE = re.compile(r"\{\{\s*tiles\('([A-Za-z]+)'\)\s*\}\}")

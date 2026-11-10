@@ -347,8 +347,18 @@ apps:
 
   homepage:
     host: pod-1
-    runtime: compose
+    uid: 2140
     port: 3003
+    allow_from: [edge, netbird]
+    secrets:
+      - name: homepage-services
+        template: services.yaml.j2   # pve + pbs tokens inline
+      - name: homepage-proxmox
+        template: proxmox.yaml.j2
+    containers:
+      - name: homepage
+        image: ghcr.io/gethomepage/homepage
+        tag: latest
     routes:
       - host: home
 

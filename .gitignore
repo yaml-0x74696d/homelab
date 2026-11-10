@@ -42,4 +42,4 @@ architecture/dist/
 .vscode/
 
 # homepage background, personal (belongs in the private overlay, this catches a stray copy)
-ansible/apps/dashboard/homepage/config/images/background.jpg
+ansible/apps/homepage/config/images/background.jpg
