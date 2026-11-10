@@ -34,13 +34,13 @@
 
 ## Notes
 
-- Pi-hole shares pod-2 with the agent ([ADR 0003](../../../docs/adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](../../../docs/adr/0010-pihole-on-a-service-ip.md))
-- NetBird's DNS management must be turned off for pod-2's group, or NetBird grabs port 53 there too
+- dns-relay (CoreDNS, port 1053) shares pod-2 with the agent and answers the VPN clients ([ADR 0003](../../../docs/adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](../../../docs/adr/0010-lan-dns-on-a-service-ip.md))
+- NetBird's DNS management stays off for pod-2's group, so NetBird never takes port 53 on its routing peer
 - Don't run NetBird and the router's WireGuard at the same time. Both route the LAN CIDR, the routes collide and NetBird's routing and DNS break
 - The routing peer must resolve `nb.{{ domain }}` to the NetBird VM (local DNS override)
 
 ## Related
 
 - [ADR 0003: NetBird instead of port forwards](../../../docs/adr/0003-netbird-instead-of-port-forwards.md)
-- [ADR 0010: Pi-hole on a service IP](../../../docs/adr/0010-pihole-on-a-service-ip.md)
+- [ADR 0010: LAN DNS behind a service IP](../../../docs/adr/0010-lan-dns-on-a-service-ip.md)
 - Control plane: `nixos/netbird/` (separate NixOS VM), firewall: `pve_firewall` role

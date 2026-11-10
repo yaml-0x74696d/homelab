@@ -96,16 +96,25 @@ ansible-playbook playbooks/base.yml              # cron, journald, rsyslog, chro
 ansible-playbook playbooks/deploy-storage.yml -l storage
 ```
 
-## 4. NetBird VM
+## 4. NixOS VMs (netbird, edge)
 
-Installed once with nixos-anywhere, OpenTofu only made the empty VM ([docs/nixos-layout.md](nixos-layout.md), [ADR 0008](adr/0008-nixos-for-the-dmz-box.md)):
+Each is installed once with nixos-anywhere, OpenTofu only made the empty Debian VM ([docs/nixos-layout.md](nixos-layout.md), [ADR 0008](adr/0008-nixos-for-the-dmz-box.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md)). `private.yml` is a symlink and nix copies links without their targets, so the system is built locally with `--override-input` first, then installed from the store paths. Otherwise it gets the example values, the example SSH keys included.
 
 ```bash
 cd ~/homelab/nixos
-nix run github:nix-community/nixos-anywhere -- --flake .#netbird root@<netbird_ip>
-./update.sh
+H=edge   # or netbird
+P=$(dirname "$(realpath ../ansible/group_vars/all/private/private.yml)")
+SYS=$(nix build --no-link --print-out-paths --override-input private path:$P .#nixosConfigurations.$H.config.system.build.toplevel)
+DISKO=$(nix build --no-link --print-out-paths --override-input private path:$P .#nixosConfigurations.$H.config.system.build.diskoScript)
+grep -c "$(cut -d' ' -f2 ~/.ssh/id_ed25519.pub)" $SYS/etc/ssh/authorized_keys.d/root   # 1, else the install locks you out
+# secrets as a tree in ram: /var/lib/secrets/<host>/..., /var/lib/secrets/aide/ntfy.env (docs/nixos-layout.md)
+S=$XDG_RUNTIME_DIR/$H-secrets
+nix run github:nix-community/nixos-anywhere -- --store-paths $DISKO $SYS --extra-files $S --chown /var/lib/secrets 0:0 -i ~/.ssh/id_ed25519 --target-host <admin_user>@<host ip>
+rm -rf $S; ssh-keygen -R <host ip>
 cd ../ansible && ansible-playbook playbooks/deploy-netbird-agent.yml   # pod-2 is the routing peer
 ```
+
+- Edge only holds `dns_ip` while `dns_ip_host` in `network.yml` says `edge`. On a fresh lab it does from the start
 
 ## 5. ctl-1 (Semaphore)
 
@@ -128,7 +137,7 @@ cd ~/homelab/ansible
 ansible-playbook playbooks/site.yml
 ```
 
-- `site.yml` holds the order: ingress (Traefik, Pi-hole) and Authentik before the apps that log in through it, storage before the CIFS apps on pod-3, the PBS client last
+- `site.yml` holds the order: Authentik before the apps that log in through it (ingress and DNS are already up on edge), storage before the CIFS apps on pod-3, the PBS client last
 - One app on its own: `deploy-app.yml -e app=<name>` (Podman) or `deploy-<app>.yml` (`runtime: compose`)
 
 ## 7. Restore the data

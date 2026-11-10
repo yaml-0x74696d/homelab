@@ -3,7 +3,6 @@ deployment {
     pve1 = node "pve-1" {
       description "Gateway node, 4c / 7.5G"
       pod1 = vm "pod-1" {
-        instanceOf edge.traefik
         instanceOf identity.authentik
         instanceOf apps.vaultwarden
         instanceOf apps.gitea
@@ -20,7 +19,8 @@ deployment {
         instanceOf ops.chrony
       }
       edge = vm "edge" {
-        description "NixOS, Traefik + AdGuard Home from apps.yml, live at the cutover"
+        description "NixOS, Traefik + AdGuard Home from apps.yml"
+        instanceOf edge.traefik
         instanceOf edge.adguard
         instanceOf observability.rsyslog
         instanceOf ops.chrony
@@ -45,7 +45,6 @@ deployment {
       description "Monitoring node, 4c / 7.5G"
       pod2 = vm "pod-2" {
         instanceOf edge.relay
-        instanceOf edge.pihole
         instanceOf observability.prometheus
         instanceOf observability.grafana
         instanceOf observability.gatus

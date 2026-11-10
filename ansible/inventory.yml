@@ -24,8 +24,8 @@ all:
           ansible_host: "{{ pve3_ip }}"
     netbird_agent:
       # always-on lan box that routes the lan for netbird peers.
-      # pod-1 left after netbird's dns grabbed :53 from pihole there; pihole now
-      # runs on pod-2 with netbird dns management off for that group.
+      # pod-1 left after netbird's dns grabbed :53 from pi-hole there. pod-2 keeps
+      # netbird dns management off, dns-relay answers the vpn clients on 1053.
       # members stay in their primary group (docker_hosts/pod_vms/proxmox) for connection vars.
       hosts:
         pod-2:   # routing peer

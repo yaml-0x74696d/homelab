@@ -93,8 +93,8 @@ views "Flows" {
   dynamic view request {
     title "Request to an app without SSO (forward-auth)"
     variant sequence
-    household -> edge.pihole "prometheus.domain?"
-    household <- edge.pihole "LAN ip of traefik"
+    household -> edge.adguard "prometheus.domain?"
+    household <- edge.adguard "LAN ip of traefik"
     household -> edge.traefik "https"
     edge.traefik -> identity.authentik.server "forward-auth: session valid?"
     edge.traefik <- identity.authentik.server "yes (or redirect to login)"
@@ -129,13 +129,13 @@ views "Flows" {
     variant sequence
     alt {
       when 'on the LAN' {
-        household -> edge.pihole "app.domain?"
-        household <- edge.pihole "LAN ip of traefik"
+        household -> edge.adguard "app.domain?"
+        household <- edge.adguard "LAN ip of traefik"
         household -> edge.traefik "https"
       }
       else 'remote' {
-        phone -> edge.pihole "app.domain? (overlay ip)"
-        phone <- edge.pihole "LAN ip of traefik"
+        phone -> edge.relay "app.domain? (overlay ip)"
+        phone <- edge.relay "LAN ip of traefik"
         phone -> remote.router-peer "LAN ip goes through the tunnel"
         phone -> edge.traefik "https"
       }

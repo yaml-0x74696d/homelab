@@ -28,7 +28,7 @@ in
     address = [ "${facts.netbird_ip}/${lanPrefix}" ];
     networkConfig = {
       Gateway = facts.gateway_ip;
-      DNS = [ facts.dns_ip facts.gateway_ip ];   # pihole (dns service ip), gateway fallback
+      DNS = [ facts.dns_ip facts.gateway_ip ];   # lan dns (service ip on edge), gateway fallback
     };
   };
 

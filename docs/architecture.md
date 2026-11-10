@@ -57,15 +57,16 @@ Ansible also sets up a couple of services on the hosts themselves:
 
 ## Compute
 
-Each node runs one Docker VM, grouped by what the apps need.
+Each node runs one pod VM, grouped by what the apps need. Ingress and LAN DNS run on their own NixOS VM, edge.
 
 | VM | Node | Purpose | Apps |
 |---|---|---|---|
-| pod-1 (VM 201) | pve-1 | Core | Traefik, Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
-| pod-2 (VM 202) | pve-2 | Monitoring and DNS | Pi-hole, dns-relay, Prometheus, Grafana, Gatus, nginx |
+| pod-1 (VM 201) | pve-1 | Core | Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
+| pod-2 (VM 202) | pve-2 | Monitoring | dns-relay, Prometheus, Grafana, Gatus, nginx, DDNS |
+| edge (VM 200) | pve-1 | Ingress and DNS (NixOS) | Traefik, AdGuard Home |
 | pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
 
-- All three also run Diun, docker-socket-proxy, the PBS client and AIDE
+- pod-1 and pod-2 also run Diun and docker-socket-proxy (until they are podman-only), all three the PBS client and AIDE
 - Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
 - pod-3 gets to run the heavy services, because pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)
@@ -116,17 +117,17 @@ The sharing:
 
 ## DNS
 
-All name resolution goes through Pi-hole on a fixed service IP.
+All name resolution goes through AdGuard Home on edge, on a fixed service IP.
 
 ![](img/name-resolution.png)
 
 - The router hands out `.53` as the only IPv4 DNS server
-- `.53` is a second IP on pod-2 (`dns-ip.service`), not the VM's own address
-- Pi-hole blocks ads and answers the internal names (split horizon)
-- One wildcard record points every app name at Traefik (`.201`), so new apps need no DNS record
+- `.53` is a second IP on edge (`dns_ip_host: edge`, set by networkd), not the VM's own address
+- AdGuard Home blocks ads (AdGuard DNS filter) and answers the internal names (split horizon), upstream over DoT/DoH
+- Every routed name gets a rewrite to Traefik on edge (`.200`), generated from `apps.yml`, so a new app needs no DNS record of its own. Names that aren't routed go to public DNS
 - The one exception is the NetBird hostname, which points straight at `.250`
 - Remote clients get the same answers through NetBird's nameserver group: it points at `dns-relay` on pod-2's overlay IP (port 1053), CoreDNS that forwards to the service IP
-- If DNS moves to another VM later, only the service IP moves and no client changes ([ADR 0010](adr/0010-pihole-on-a-service-ip.md))
+- When DNS moves to another VM, only the service IP moves and no client changes ([ADR 0010](adr/0010-lan-dns-on-a-service-ip.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md))
 
 ## Request path
 
@@ -135,16 +136,15 @@ How a request from a browser reaches an app.
 ![](img/request.png)
 ![](img/login.png)
 
-1. The client asks Pi-hole for the app's name and gets Traefik's IP
-2. Traefik (on pod-1) picks the app by its hostname (`Host()` rule)
+1. The client asks AdGuard Home for the app's name and gets Traefik's IP
+2. Traefik (on edge) picks the app by its hostname (`Host()` rule)
 3. If the app needs a login, Authentik checks it first, either through OIDC or forward-auth
 4. Traefik passes the request on to the app
 
 - Plain HTTP on port 80 only redirects to HTTPS on 443
-- Apps on pod-1 are found through their container labels. They also publish their port from `apps.yml`, filtered like the others, so the edge VM can route them directly
-- Apps on pod-2/3, Home Assistant on the HAOS VM and the PVE/PBS web UIs are listed in a file instead (`apps/proxy/traefik/dynamic/remote_services.yml`, 16 routes)
+- Every router comes from `apps.yml` (`routes` of each app plus `infra_routes`), built into Traefik's dynamic config on edge (`nixos/edge/traefik.nix`). There is no hand-written router file
 - Published app ports go through the `DOCKER-USER` firewall chain, which only lets a few callers in (Gitea's ssh port: the LAN):
-  - Traefik and Homepage from pod-1
+  - Traefik from edge, Homepage over pod-1's local bridge
   - Prometheus, Grafana and Gatus from pod-2
 
 ## Certificates
@@ -154,7 +154,7 @@ All certificates come from Let's Encrypt, proven through DNS instead of an open 
 ![](img/cert-renewal.png)
 
 - Let's Encrypt checks a DNS record at Cloudflare (DNS-01), so port 80 doesn't need to be reachable
-- Traefik gets one certificate per router for the LAN apps
+- Traefik on edge holds one wildcard certificate (`*.<domain>`) for every LAN app
 - The NetBird VM gets its own certificate the same way (nginx + ACME)
 - cloudflare-ddns keeps the public DNS record pointed at the current WAN IP
 
@@ -188,7 +188,7 @@ The control plane:
 
 The routing:
 - pod-2 is the routing peer (`netbird_agent` role) and forwards traffic into the LAN
-- NetBird's DNS management is off for pod-2's group, so NetBird never takes port 53 on its routing peer ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-pihole-on-a-service-ip.md))
+- NetBird's DNS management is off for pod-2's group, so NetBird never takes port 53 on its routing peer ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-lan-dns-on-a-service-ip.md))
 - Peers talk to each other directly over WireGuard, the TURN relay is only a fallback
 
 The fallback:

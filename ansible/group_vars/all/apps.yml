@@ -365,8 +365,8 @@ infra_routes:
     target: edge
     middlewares: [authentik]
     homepage: {group: Admin, icon: adguard-home, label: AdGuard Home}
-  - host: proxy   # pod-1 traefik's dashboard
-    homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}
+  - host: proxy   # pod-1 traefik's dashboard, stopped since the edge cutover (rollback)
   - host: traefik   # edge traefik's dashboard
     target: edge
     middlewares: [authentik]
+    homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}

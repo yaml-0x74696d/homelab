@@ -29,10 +29,10 @@
 | Guest | ID | Node | CPU | RAM (balloon floor) | Disk | IP |
 |---|---|---|---|---|---|---|
 | pod-1 | VM 201 | pve-1 | 4 | 4 GB (3 GB) | 32 GB | .201 |
-| pod-2 | VM 202 | pve-2 | 4 | 4 GB (2 GB) | 32 GB | .202 (+ DNS service IP .53) |
-| pod-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 32 GB | .203 |
+| pod-2 | VM 202 | pve-2 | 4 | 4 GB (2 GB) | 32 GB | .202 |
+| pod-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 64 GB | .203 |
 | netbird | VM 250 | pve-2 | 2 | 2 GB (1 GB) | 20 GB | .250 |
-| edge | VM 200 | pve-1 | 1 | 1.5 GB (1.5 GB) | 16 GB | .200 (takes the DNS service IP .53 at the cutover) |
+| edge | VM 200 | pve-1 | 1 | 1.5 GB (1.5 GB) | 16 GB | .200 (+ DNS service IP .53) |
 | storage | CT 300 | pve-3 | 2 | 1 GB + 512 MB swap | 24 GB | .150 |
 | log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
 | iot | CT 302 | pve-1 | 1 | 512 MB + 256 MB swap | 8 GB | .152 + IoT `.50.10` on its WiFi card |
@@ -41,15 +41,13 @@
 
 ## Stack
 
-- Proxmox (3 nodes) · OpenTofu (bpg/proxmox) · Ansible · Docker Compose · NixOS (NetBird VM, edge) · PBS · NetBird · Traefik · Pi-hole · Authentik
+- Proxmox (3 nodes) · OpenTofu (bpg/proxmox) · Ansible · Docker Compose · NixOS (NetBird VM, edge) · PBS · NetBird · Traefik · AdGuard Home · Authentik
 
 ## What runs
 
 | Group | App | Host | Purpose |
 |---|---|---|---|
-| Ingress | Traefik (`proxy`) | pod-1 | Reverse proxy, TLS via Cloudflare DNS |
-| Ingress | Pi-hole (`dns`) | pod-2 | DNS + ad blocking, split-horizon records |
-| Ingress | Traefik + AdGuard Home | edge (NixOS) | Routers and DNS rewrites built from `apps.yml`, take over from `proxy` + `dns` at the cutover |
+| Ingress | Traefik + AdGuard Home | edge (NixOS) | Reverse proxy (TLS via Cloudflare DNS-01) and LAN DNS + ad blocking, routers and rewrites built from `apps.yml` |
 | Ingress | dns-relay (CoreDNS) | pod-2 | DNS for VPN clients, forwards to the LAN DNS |
 | Ingress | cloudflare-ddns | pod-1, pod-2 | Keeps the public records current, one copy per host |
 | Identity | Authentik | pod-1 | SSO, OIDC + forward-auth |
@@ -140,16 +138,16 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 - [docs/adr/](docs/adr/README.md): 32 records
 - 0001 OpenTofu + cloud-init · 0002 generic app role · 0003 NetBird · 0004 mergerfs · 0005 prevent_destroy
-- 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 Pi-hole service IP
+- 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 LAN DNS service IP
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the Docker VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
 - 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
-- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM (proposed)
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM
 
 ## Future plans
 
 - Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook, CI quadlet dry-run
-- Phase 2: edge = NixOS VM on pve-1 (1.5 GB) running Traefik + AdGuard Home natively, code in `nixos/edge/`; the cutover replaces the Traefik + Pi-hole containers ([ADR 0032](docs/adr/0032-edge-vm-traefik-adguard-on-nixos.md))
+- Phase 2 (done): edge = NixOS VM on pve-1 running Traefik + AdGuard Home, Traefik on pod-1 and Pi-hole on pod-2 are stopped and go after a week of rollback ([ADR 0032](docs/adr/0032-edge-vm-traefik-adguard-on-nixos.md))
 - Phase 3–4: pod-2 / pod-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
 - Phase 6: pod-1 → Podman (Authentik, SearXNG)
 - Podman auto-update with rollback replaces `:latest` + Diun (ADR 0006)

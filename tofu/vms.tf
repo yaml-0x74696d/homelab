@@ -152,7 +152,7 @@ resource "proxmox_virtual_environment_vm" "netbird" {
       }
     }
     dns {
-      # pihole first so it resolves the git host for the flake, gateway as fallback
+      # lan dns first so it resolves the git host for the flake, gateway as fallback
       servers = [local.net.dns_ip, local.net.gateway_ip]
     }
     user_account {
