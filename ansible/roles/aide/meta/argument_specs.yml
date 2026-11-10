@@ -5,7 +5,7 @@ argument_specs:
     options:
       aide_check_time:
         type: str
-        description: systemd OnCalendar of the check (group_vars hosts.yml, shared with nixos)
+        description: systemd OnCalendar of the check (group_vars schedules.yml, shared with nixos)
       aide_check_delay:
         type: str
         description: Random delay on top of it

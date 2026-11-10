@@ -1,0 +1,31 @@
+# image, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=gitea
+
+[Container]
+PublishPort={{ podman_app_entry.port }}:3000
+# git over ssh: the image's openssh on 22
+PublishPort={{ podman_app_entry.extra_ports[0].port }}:22
+Volume={{ podman_app_dir }}/data:/data:Z
+Timezone=local
+# oidc discovery + tokens go to authentik through edge, container dns can't resolve auth.<domain>
+AddHost=auth.{{ domain }}:{{ app_sources.edge }}
+Environment=USER_UID={{ podman_app_entry.container_uid }}
+Environment=USER_GID={{ podman_app_entry.container_uid }}
+Environment=GITEA__server__DOMAIN=git.{{ domain }}
+Environment=GITEA__server__ROOT_URL=https://git.{{ domain }}/
+Environment=GITEA__server__SSH_DOMAIN=git.{{ domain }}
+Environment=GITEA__server__SSH_PORT={{ podman_app_entry.extra_ports[0].port }}
+Environment=GITEA__server__START_SSH_SERVER=false
+Environment=GITEA__database__DB_TYPE=sqlite3
+Environment=GITEA__service__DISABLE_REGISTRATION=true
+Environment=GITEA__security__INSTALL_LOCK=true
+# oidc: the source itself is added once with `gitea admin auth add-oauth`. these map accounts:
+# auto-create, name them by the authentik username, link to a local account with the same email
+Environment=GITEA__oauth2_client__ENABLE_AUTO_REGISTRATION=true
+Environment=GITEA__oauth2_client__USERNAME=preferred_username
+Environment=GITEA__oauth2_client__ACCOUNT_LINKING=auto
+# homelab theme lives in data/gitea/public/assets/css
+Environment=GITEA__ui__THEMES=homelab,gitea-auto,gitea-dark,gitea-light
+Environment=GITEA__ui__DEFAULT_THEME=homelab
+HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:3000/api/healthz

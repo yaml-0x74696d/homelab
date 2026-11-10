@@ -21,7 +21,7 @@ Where things are kept in `ansible/`, and which value is used when a variable is 
 
 ```
 ansible/
-├── inventory.yml        hosts and groups only: proxmox, docker_hosts, podman_hosts (ctl-1), lxc_containers, netbird_agent, appliances (never logged in to)
+├── inventory.yml        hosts and groups only: proxmox, pod_vms, podman_hosts (ctl-1), lxc_containers, netbird_agent, appliances (never logged in to)
 ├── group_vars/all/      every shared variable, one topic per file
 ├── group_vars/<group>.yml  how a group is logged in to (user, become)
 ├── host_vars/<host>.yml what only one host has
@@ -57,8 +57,9 @@ roles/podman_app/
 | `network.yml` | IPs, CIDRs, bridges, VMIDs, the IoT node and its WiFi card |
 | `ports.yml` | every port, once |
 | `apps.yml` | the apps map. Pure data without Jinja, read by edge and CI with yq. Gatus checks and Homepage tiles are generated from it |
-| `app_settings.yml` | around the apps: `apps_root`, ntfy, Gatus, MQTT |
-| `hosts.yml` | SSH, Docker logs, journald, AIDE, the admin key |
+| `app_settings.yml` | around the apps: `podman_apps_root`, ntfy, Gatus, MQTT |
+| `hosts.yml` | SSH, journald, AIDE, the admin key |
+| `schedules.yml` | every timer: NixOS upgrade + reboot windows, AIDE, PBS, Podman auto-update, also read by nixos |
 | `base.yml` | time and logging, also read by nixos |
 | `storage.yml` | pool paths, shares |
 | `vault.yml` | secrets, encrypted, not in git. `vault.yml.example` has the keys |
@@ -107,11 +108,11 @@ For connection settings (`become`, `user`, `connection`) the play keyword is ove
 ansible.cfg < command line < keyword (become: false) < variable (ansible_become: true)
 ```
 
-`ansible_become: true` is set for `docker_hosts` and `podman_hosts` (`group_vars/<group>.yml`), so `become: false` on a play has no effect there. `ansible_become: false` in the play's `vars:` is needed instead.
+`ansible_become: true` is set for `pod_vms` and `podman_hosts` (`group_vars/<group>.yml`), so `become: false` on a play has no effect there. `ansible_become: false` in the play's `vars:` is needed instead.
 
 ## Conventions
 
-For new and changed code, not for the compose apps on their way out:
+For new and changed code:
 
 - A config file that has a checker gets `validate:` on its `template`/`copy`, so a broken file never lands (`sshd -t -f %s`, `rsyslogd -N1 -f %s`, `chronyd -p -f %s`, `dnsmasq --test -C %s`, `testparm -s %s`). Without one, a check task right after
 - Scripts go into a role's `files/`, not inline `content: |` in a playbook. Values they need come from a small file next to them (`/etc/default/<name>`)

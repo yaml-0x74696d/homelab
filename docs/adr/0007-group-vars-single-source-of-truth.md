@@ -31,13 +31,13 @@ The source:
 - `ansible/group_vars/all/` holds the facts, split by topic: `network.yml`, `ports.yml`, `storage.yml`, `hosts.yml`, `app_settings.yml`, `apps.yml` (the apps map), `base.yml`
 - `private/private.yml` holds the non-secret facts that stay out of the public repo (MACs), gitignored
 - `vault.yml` holds the secrets and is only read by Ansible
-- Shared schedules and timeouts live there too (`aide_check_time`, `ntfy_timeout`, SSH settings), so the Ansible hosts and the NetBird VM behave the same
+- Shared schedules and timeouts live there too (`schedules.yml` for every timer, `ntfy_timeout`, SSH settings), so the Ansible hosts and the NixOS VMs behave the same
 
 How each tool reads it:
 - Ansible: as normal group_vars, the inventory's `ansible_host` points at the `*_ip` variables
 - OpenTofu: `tofu/locals.tf` reads network/ports/hosts/storage/private with `yamldecode(file(...))`, and the VM specs (`vms`/`lxcs` maps) are built on top
 - Nix: `nixos/facts.nix` turns network/ports/hosts/apps/base/private into JSON with yq-go at build time (import from derivation). Every module gets the result as `specialArgs.facts`
-- Shell: `nixos/update.sh` and `aide-accept.sh` read `netbird_ip` with `nix run nixpkgs#yq-go`
+- Shell: `nixos/update.sh` and `aide-accept.sh` read `<host>_ip` (`netbird_ip`, `edge_ip`) with `nix run nixpkgs#yq-go`
 
 - Enforced by: `just check` runs `tofu validate` and `nix flake check` against the same files, so a missing or renamed variable fails
 
@@ -52,4 +52,4 @@ How each tool reads it:
 - Accepted: the NixOS flake reaches outside its own folder (`../ansible`), so it only works from a full checkout of the repo
 - Accepted: it's one big shared namespace. Role-specific settings still go in `roles/<role>/defaults`, only facts used by more than one tool belong here
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md), [0008](0008-nixos-for-the-dmz-box.md)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md), [0008](0008-nixos-for-the-dmz-box.md), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (routes from apps.yml)

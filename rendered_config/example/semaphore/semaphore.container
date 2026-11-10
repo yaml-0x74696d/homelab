@@ -31,5 +31,5 @@ Environment=HOMELAB_PRIVATE_DIR=/home/admin/homelab-private
 # tasks only get the env vars listed here. single quotes keep the json quotes past systemd's parser
 Environment='SEMAPHORE_FORWARDED_ENV_VARS=["AIDE_CHECKSUM_DIR", "ANSIBLE_CONFIG", "HOMELAB_PRIVATE_DIR"]'
 # token exchange goes straight to traefik, container dns can't resolve auth.<domain>
-AddHost=auth.example.org:192.168.178.201
+AddHost=auth.example.org:192.168.178.200
 HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/ping

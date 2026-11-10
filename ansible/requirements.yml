@@ -1,8 +1,6 @@
 ---
 # one major each, the same on ctl-0 and in ci; a new major is a deliberate bump
 collections:
-  - name: community.docker
-    version: ">=5.4.0,<6.0.0"
   - name: community.general
     version: ">=13.5.0,<14.0.0"
   - name: ansible.posix

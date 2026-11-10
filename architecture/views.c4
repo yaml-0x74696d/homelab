@@ -6,7 +6,7 @@ views {
       color slate
       include edge, identity, remote, apps, media, automation, observability, storage
     }
-    include cloudflare, letsencrypt, ntfy, fritzbox, github
+    include cloudflare, letsencrypt, ntfy, router, github
     autoLayout TopBottom
   }
 
@@ -24,17 +24,17 @@ views {
 views "Deployment" {
   deployment view pve1 {
     title "pve-1: what runs where"
-    include home.pve1, home.pve1.*, home.pve1.docker1.*, home.pve1.gateway.*, home.pve1.iot.*
+    include home.pve1, home.pve1.*, home.pve1.pod1.*, home.pve1.gateway.*, home.pve1.iot.*
     style home.pve1.iot { color amber }
   }
   deployment view pve2 {
     title "pve-2: what runs where"
-    include home.pve2, home.pve2.*, home.pve2.docker2.*, home.pve2.dmz.*, home.pve2.dmz.netbird.*
+    include home.pve2, home.pve2.*, home.pve2.pod2.*, home.pve2.dmz.*, home.pve2.dmz.netbird.*
     style home.pve2.dmz { color red }
   }
   deployment view pve3 {
     title "pve-3: what runs where"
-    include home.pve3, home.pve3.*, home.pve3.docker3.*, home.pve3.haos.*, home.pve3.storage.*, home.pve3.log.*, home.pve3.pbs.*
+    include home.pve3, home.pve3.*, home.pve3.pod3.*, home.pve3.haos.*, home.pve3.storage.*, home.pve3.log.*, home.pve3.pbs.*
   }
 }
 
@@ -93,8 +93,8 @@ views "Flows" {
   dynamic view request {
     title "Request to an app without SSO (forward-auth)"
     variant sequence
-    household -> edge.pihole "prometheus.domain?"
-    household <- edge.pihole "LAN ip of traefik"
+    household -> edge.adguard "prometheus.domain?"
+    household <- edge.adguard "LAN ip of traefik"
     household -> edge.traefik "https"
     edge.traefik -> identity.authentik.server "forward-auth: session valid?"
     edge.traefik <- identity.authentik.server "yes (or redirect to login)"
@@ -129,13 +129,13 @@ views "Flows" {
     variant sequence
     alt {
       when 'on the LAN' {
-        household -> edge.pihole "app.domain?"
-        household <- edge.pihole "LAN ip of traefik"
+        household -> edge.adguard "app.domain?"
+        household <- edge.adguard "LAN ip of traefik"
         household -> edge.traefik "https"
       }
       else 'remote' {
-        phone -> edge.pihole "app.domain? (overlay ip)"
-        phone <- edge.pihole "LAN ip of traefik"
+        phone -> edge.relay "app.domain? (overlay ip)"
+        phone <- edge.relay "LAN ip of traefik"
         phone -> remote.router-peer "LAN ip goes through the tunnel"
         phone -> edge.traefik "https"
       }

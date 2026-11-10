@@ -1,4 +1,4 @@
-# docker_app deploy flow. `just diagrams` renders it to docs/img/deploy-app.svg
+# podman_app deploy flow. `just diagrams` renders it to docs/img/deploy-app.svg
 # colours from likec4: blue = ansible code, slate = inputs, green (c4 accent) = target
 shape: sequence_diagram
 style.fill: "#18191b"   # likec4 dark canvas
@@ -14,18 +14,19 @@ classes: {
   font-color: "#f8fafc"
 }
 
-pb: "deploy-<app>.yml" {class: code}
-role: "roles/docker_app" {class: code}
+pb: "deploy-app.yml -e app=<app>" {class: code}
+role: "roles/podman_app" {class: code}
 src: "apps/<app>/" {class: input}
 facts: "group_vars/all" {class: input}
-host: "docker host" {class: target}
+host: "pod vm" {class: target}
 
-pb -> role: "1. hosts, docker_app_* vars"
-role -> host: "2. dirs, networks, touch files, ufw"
-src -> role: "3. plain files, *.j2"
-facts -> role: "4. facts + vault.yml secrets"
-role -> host: "5. copy + render into /opt/apps/<app>/"
-role -> host: "6. cifs creds (smb_passwords) + mount"
-role -> host: "7. docker compose up"
-role -> host: "8. restart docker_app_restart (only if config changed)" {style.stroke-dash: 4}
-pb -> host: "9. post_tasks, e.g. gitea admin"
+pb -> role: "1. apps.yml entry"
+facts -> role: "2. apps.yml, vault.yml, app_sources"
+role -> host: "3. svc-<app> user, subuid range, linger"
+src -> role: "4. units *.j2, config/, secret templates"
+role -> host: "5. dirs + quadlets in ~/.config/containers/systemd"
+role -> host: "6. config to /srv/apps/<app>/config, cifs mounts"
+role -> host: "7. ufw rules from allow_from"
+role -> host: "8. podman secrets, image pull"
+role -> host: "9. restart (only if something changed), start, wait for healthy" {style.stroke-dash: 4}
+role -> host: "10. auto-update timer, prune old images"

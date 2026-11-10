@@ -4,11 +4,11 @@ Status: Accepted
 
 ## Context
 
-- The sensors (ESPHome or my own C) sit on their own WiFi. The broker ran on docker-1 with a leg in that net, one hop from the vault and SSO
+- The sensors (ESPHome or my own C) sit on their own WiFi. The broker ran on pod-1 with a leg in that net, one hop from the vault and SSO
 - I want MQTT as the hub, and nothing connecting into the IoT net: the devices open every connection, firmware updates included
 
 - Alternatives:
-  - Broker on docker-1 or the edge VM (why not: a broken broker sits next to the vault, SSO or the proxy)
+  - Broker on pod-1 or the edge VM (why not: a broken broker sits next to the vault, SSO or the proxy)
   - Own VM (why not: a kernel and 1 GB+ RAM for one daemon)
   - ESPHome's native API and push OTA (why not: Home Assistant would connect into the IoT net)
   - Per-device users, ACLs and TLS (why not: certificates on ESP32s for a few sensors in my flat)

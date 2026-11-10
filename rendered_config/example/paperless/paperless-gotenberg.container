@@ -1,0 +1,7 @@
+# image, pod, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=paperless gotenberg
+
+[Container]
+Exec=gotenberg --chromium-disable-javascript=true --chromium-allow-list=file:///tmp/.*
+HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:3000/health

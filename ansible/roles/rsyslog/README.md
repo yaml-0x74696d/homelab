@@ -6,7 +6,7 @@
 
 ## Runs on
 
-- All guests (`docker_hosts`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
+- All guests (`pod_vms`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
 - The NetBird VM gets the same from `nixos/base/logging.nix`, edge follows
 
 ## How it works
@@ -31,7 +31,7 @@
 | `rsyslog_remote_dir` | `/var/log/remote` | Where the server writes |
 | `rsyslog_remote_retention` | 90 | Days kept on the server |
 | `rsyslog_server_queue_size` | 50000 | Server queue, in messages |
-| `rsyslog_server_hosts` | inventory IPs + `netbird_ip` | Sender IP → host directory on the server |
+| `rsyslog_server_hosts` | inventory IPs + `netbird_ip`, `edge_ip` | Sender IP → host directory on the server |
 
 ## Notes
 

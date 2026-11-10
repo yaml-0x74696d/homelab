@@ -4,13 +4,13 @@ Status: Accepted
 
 ## Context
 
-- 3 small nodes: 2× Wyse 5070 with 8 GB and 1 custom box with 16 GB
+- 3 small nodes: 2 small form factor PCs with 8 GB and 1 desktop PC with 16 GB
 - I want VMs + LXC, backups and remote management
 
 - Alternatives:
   - Plain KVM / libvirt (why not: cluster, migration, web console and storage handling come out of the box instead of building them myself)
   - Gentoo with libvirt + QEMU (why not: the workload isn't static or special enough to justify tuning USE flags (Gentoo's main point), and compiling + maintaining a host OS on thin clients is time taken from the services)
-  - OpenShift (why not: it's Kubernetes, same reasons as [0012](0012-no-kubernetes.md), and its minimum node specs are above what a Wyse box has)
+  - OpenShift (why not: it's Kubernetes, same reasons as [0012](0012-no-kubernetes.md), and its minimum node specs are above what a small form factor PC has)
   - VergeOS (why not: commercial, aimed at enterprise, not free for a homelab)
 - Proxmox is KVM/QEMU underneath anyway, the question is who builds the layer on top
 

@@ -6,7 +6,7 @@ Status: Accepted
 
 - Every playbook ran by hand from ctl-0, my desktop, which is only on when I use it
 - Updates, AIDE checks and deploys should also run on a schedule, with a run history
-- I didn't want another VM in the cluster for it, and an unused Raspberry Pi 3 B+ was lying around
+- I didn't want another VM in the cluster for it, and an unused Raspberry Pi 3 was lying around
 - The Pi has 1 GB RAM, a 16 GB SD card and an ARM CPU, so the PBS client (amd64 only) doesn't run there
 
 - Alternatives:
@@ -29,11 +29,11 @@ The setup:
 - The container runs on the host network: ansible has to reach ctl-1's own sshd, and pasta hands `ctl1_ip` back to the container
 
 The code it runs:
-- A git clone of the public repo on `semaphore_repo_version` (`testing`) at `semaphore_repo_dir`, mounted read-only into the container
+- A git clone of the public repo on `semaphore_repo_version` (`main`) at `semaphore_repo_dir`, mounted read-only into the container
 - `playbooks/repo-pull.yml` pulls it, as a Semaphore template
 - The quadlet sets `ANSIBLE_CONFIG`, `AIDE_CHECKSUM_DIR` and `HOMELAB_PRIVATE_DIR` and forwards them to the tasks (`SEMAPHORE_FORWARDED_ENV_VARS`), so templates need no variable group
 - The gitignored `vault.yml` and `private.yml` come from ctl-0 (`ctl_base_private_files`, tag `private-files`)
-- ctl-0's `<private_dir>/apps` (the private config overlays, nothing else from that dir) is mirrored with rsync to `semaphore_private_dir` in the same run and mounted read-only at that path. `HOMELAB_PRIVATE_DIR` points `podman_app` and `docker_app` at it, `private.yml`'s `~/...` would be the container user's home
+- ctl-0's `<private_dir>/apps` (the private config overlays, nothing else from that dir) is mirrored with rsync to `semaphore_private_dir` in the same run and mounted read-only at that path. `HOMELAB_PRIVATE_DIR` points `podman_app` at it, `private.yml`'s `~/...` would be the container user's home
 - The vault password and Semaphore's ssh key live only in Semaphore's key store, encrypted with `semaphore_key_encryption`. No vault password and no tofu state on the Pi
 - `ansible.cfg` needs a `.vault_pass`, so the clone gets a dummy one, the real password comes from the key store
 - Semaphore's public key goes to every host through `push-keys.yml`
@@ -45,7 +45,7 @@ Schedules (set in the UI, Semaphore's own database):
 AIDE hashes:
 - Semaphore keeps the accepted hashes in its own rw dir (`/srv/apps/semaphore/aide`, `AIDE_CHECKSUM_DIR`). That copy is the reference for every Debian host, ctl-1 included
 - `aide-accept.yml` accepts in Semaphore through the survey var `aide_accept=yes`, the diff stays in the task log
-- ctl-0's `ansible/aide` is a copy, pulled back with rsync after accepts. The NetBird VM's hash stays on ctl-0 (`nixos/aide-accept.sh`)
+- ctl-0's `ansible/aide` is a copy, pulled back with rsync after accepts. The NixOS VMs' hashes stay on ctl-0 (`nixos/aide-accept.sh <host>`)
 
 - Enforced by: the read-only repo and private dir mounts, ufw on ctl-1 (port from `allow_from` only, ssh from the LAN), and the hash compare in `roles/aide` before every run and accept
 

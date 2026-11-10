@@ -1,0 +1,6 @@
+# image, pod, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=immich cache
+
+[Container]
+HealthCmd=sh -c 'redis-cli ping | grep -q PONG'

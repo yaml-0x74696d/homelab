@@ -6,7 +6,7 @@
 ## Runs on
 
 - proxmox (`playbooks/deploy-login-notify.yml`)
-- The Docker VMs aren't covered, `hosts: all` in the playbook would add them
+- The pod VMs aren't covered, `hosts: all` in the playbook would add them
 
 ## How it works
 

@@ -1,0 +1,153 @@
+{# app tiles come from apps.yml (homepage: block) and infra_routes. badge = siteMonitor on the app's
+   port, so only for apps with a port in the map (pod-1's come with edge). stats only for servers + vms #}
+{% macro tiles(group) %}
+{% for name, a in apps.items() if a.homepage is defined and a.homepage.group == group and a.state | default('present') == 'present' %}
+{# pasta gives homepage pod-1's own ip, so its own host's apps go through host.containers.internal (like gatus) #}
+{% set ip = 'host.containers.internal' if a.host == apps.homepage.host else hostvars[a.host].ansible_host %}
+{% set url = 'http://' ~ ip ~ ':' ~ a.port if a.port is defined else none %}
+        - {{ a.homepage.label | default(name | capitalize) }}:
+            icon: {{ a.homepage.icon }}
+            href: https://{{ a.routes[0].host }}.{{ domain }}{{ a.homepage.path | default('') }}
+{% if url %}
+            siteMonitor: {{ url }}
+{% endif %}
+{% if a.homepage.widget is defined and url %}
+            widget:
+                type: {{ a.homepage.widget }}
+                url: {{ url }}
+{% endif %}
+{% endfor %}
+{% for r in infra_routes if r.homepage is defined and r.homepage.group == group %}
+        - {{ r.homepage.label }}:
+            icon: {{ r.homepage.icon }}
+            href: https://{{ r.host }}.{{ domain }}{{ r.homepage.path | default('') }}
+{% endfor %}
+{% endmacro %}
+- Status:
+{{ tiles('Status') }}
+
+- Servers:
+        - PVE-1:
+            icon: proxmox
+            href: https://pve-1.{{ domain }}
+            ping: {{ pve1_ip }}
+            widget:
+                type: proxmox
+                url: https://{{ pve1_ip }}:{{ pve_ui_port }}
+                username: {{ homepage_pve_token_id }}
+                password: "{{ proxmox_secret }}"
+                node: pve-1
+                fields: ["resources.cpu", "resources.mem"]
+        - PVE-2:
+            icon: proxmox
+            href: https://pve-2.{{ domain }}
+            ping: {{ pve2_ip }}
+            widget:
+                type: proxmox
+                url: https://{{ pve2_ip }}:{{ pve_ui_port }}
+                username: {{ homepage_pve_token_id }}
+                password: "{{ proxmox_secret }}"
+                node: pve-2
+                fields: ["resources.cpu", "resources.mem"]
+        - PVE-3:
+            icon: proxmox
+            href: https://pve-3.{{ domain }}
+            ping: {{ pve3_ip }}
+            widget:
+                type: proxmox
+                url: https://{{ pve3_ip }}:{{ pve_ui_port }}
+                username: {{ homepage_pve_token_id }}
+                password: "{{ proxmox_secret }}"
+                node: pve-3
+                fields: ["resources.cpu", "resources.mem"]
+        - PBS:
+            icon: proxmox-backup-server
+            href: https://pbs.{{ domain }}
+            ping: {{ pve3_ip }}
+            widget:
+                type: proxmoxbackupserver
+                url: https://{{ pve3_ip }}:{{ pbs_port }}
+                username: {{ homepage_pbs_token_id }}
+                password: "{{ pbs_homepage_token | default('') }}"
+                fields: ["datastore_usage", "failed_tasks_24h"]
+
+- VMs:
+            - pod-1:
+                icon: /images/debian.png
+                proxmoxNode: pve-1
+                proxmoxVMID: {{ vmids.pod1 }}
+                showStats: true
+                href: https://{{ pod1_ip }}:{{ cockpit_port }}/
+                fields: ["cpu", "mem"]
+            - pod-2:
+                icon: /images/debian.png
+                proxmoxNode: pve-2
+                proxmoxVMID: {{ vmids.pod2 }}
+                showStats: true
+                href: https://{{ pod2_ip }}:{{ cockpit_port }}/
+                fields: ["cpu", "mem"]
+            - pod-3:
+                icon: /images/debian.png
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.pod3 }}
+                showStats: true
+                href: https://{{ pod3_ip }}:{{ cockpit_port }}/
+                fields: ["cpu", "mem"]
+            - netbird:
+                icon: nixos
+                proxmoxNode: pve-2
+                proxmoxVMID: {{ vmids.netbird }}
+                showStats: true
+                href: https://nb.{{ domain }}
+                fields: ["cpu", "mem"]
+            - edge:
+                icon: nixos
+                proxmoxNode: pve-1
+                proxmoxVMID: {{ vmids.edge }}
+                showStats: true
+                href: https://traefik.{{ domain }}
+                fields: ["cpu", "mem"]
+            - haos:
+                icon: home-assistant
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.haos }}
+                showStats: true
+                href: https://ha.{{ domain }}
+                fields: ["cpu", "mem"]
+
+- LXCs:
+            - storage:
+                icon: /images/lxc.png
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.storage }}
+                proxmoxType: lxc
+                showStats: true
+                fields: ["cpu", "mem"]
+            - log:
+                icon: /images/lxc.png
+                proxmoxNode: pve-3
+                proxmoxVMID: {{ vmids.log }}
+                proxmoxType: lxc
+                showStats: true
+                fields: ["cpu", "mem"]
+            - iot:
+                icon: /images/lxc.png
+                proxmoxNode: {{ iot_node }}
+                proxmoxVMID: {{ vmids.iot }}
+                proxmoxType: lxc
+                showStats: true
+                fields: ["cpu", "mem"]
+
+- Homecloud:
+{{ tiles('Homecloud') }}
+- Home:
+{{ tiles('Home') }}
+        - FritzBox:
+            icon: fritzbox
+            href: https://{{ gateway_ip }}
+            ping: {{ homepage_ping_target }}
+
+- Tools:
+{{ tiles('Tools') }}
+- Admin:
+{{ tiles('Admin') }}

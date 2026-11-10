@@ -1,6 +1,6 @@
 # 6. `:latest` images, notify-only updates
 
-Status: Accepted
+Status: Superseded by [0021](0021-podman-quadlets.md)
 
 ## Context
 
@@ -12,16 +12,16 @@ Status: Accepted
   - Pinned tags + Renovate (why not: a PR for every image update, too much for one person)
   - Watchtower auto-pull (why not: auto-pull without rollback, same risk as the bulk pull)
   - A bulk-pull playbook (why not: restarts everything at once, see above)
-- Why: `:latest` means an update is just a pull, no tag edits. Auto-update without rollback was too risky after the docker-1 crash
+- Why: `:latest` means an update is just a pull, no tag edits. Auto-update without rollback was too risky after the pod-1 crash
 
 ## Decision
 
 Which images move and which are pinned:
-- Most app images are on `:latest` (19 of 37) or a moving channel (`stable`, `release`, `alpine`, `apache`)
+- Most app images are on `:latest` (19 of 37) or a moving channel (`stable`, `release`, `alpine`)
 - Stateful or picky images are pinned through `<app>_*_tag` variables in the deploy playbooks:
-  - Databases: Postgres `16-alpine` (Authentik, Nextcloud, Paperless), Immich's Postgres build with vector support, Redis `6.2-alpine`, Valkey `8-alpine`
-  - Pinned to a major version: Gotenberg `8`
-  - Pinned to an exact version: Vaultwarden `1.37.1`, and Authentik through `authentik_tag` in `group_vars/all/app_settings.yml` (stepped through release by release)
+  - Databases: Postgres `16-alpine` (Authentik, Nextcloud, Paperless), Immich's Postgres build with vector support, Valkey `9` (Immich) and `8-alpine` (SearXNG)
+  - Pinned to a major version: Gotenberg `8`, Nextcloud `35-apache` (it can't skip a major)
+  - Pinned to an exact version: Authentik (stepped through release by release, [0014](0014-authentik-as-idp.md))
 
 How I find out about updates (Diun, on every Docker host, `apps/diun`, `deploy-diun.yml`):
 - Diun watches the local Docker socket and checks the image digests once a day (`diun_schedule: "0 6 * * *"`, `diun_jitter: 30s`)
@@ -34,7 +34,7 @@ How I find out about updates (Diun, on every Docker host, `apps/diun`, `deploy-d
 How an update happens:
 - A normal redeploy never pulls a newer image (`docker_app_compose_pull: policy`)
 - Updates are done by hand, one app at a time: `docker compose pull && up -d`, check that `ps` shows it healthy, then the next one
-- docker-1 is busy, so its apps are updated off-peak
+- pod-1 is busy, so its apps are updated off-peak
 
 - Enforced by: `docker_app_compose_pull: policy` (a redeploy never pulls), and Diun can only notify
 

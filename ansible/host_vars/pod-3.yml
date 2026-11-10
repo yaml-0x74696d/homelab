@@ -1,0 +1,13 @@
+---
+# what pbs backs up on pod-3 (see roles/pbs). bulk data (photos/media/docs/files)
+# lives on the cifs pool (cifs_mount_root), outside podman_apps_root, not covered here by design.
+pbs_jobs:
+  - { name: nextcloud, type: postgres, container: nextcloud-db, data_dir: nextcloud/database, app: nextcloud }
+  - { name: immich, type: postgres, container: immich-db, data_dir: immich/postgres, app: immich }
+  - { name: paperless, type: postgres, container: paperless-db, data_dir: paperless/database, app: paperless }
+  # jellyfin has no dump tool; .backup its db (everything is in jellyfin.db since 10.11)
+  - { name: jellyfin, type: sqlite, path: jellyfin/config/data/jellyfin.db }
+
+pbs_exclude:
+  - jellyfin/cache
+  - jellyfin/config/transcodes

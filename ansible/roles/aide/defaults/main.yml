@@ -1,5 +1,5 @@
 ---
-# schedule: aide_check_time / aide_check_delay in group_vars hosts.yml (shared with nixos)
+# schedule: aide_check_time / aide_check_delay in group_vars schedules.yml (shared with nixos)
 aide_check_nice: 19
 aide_check_io_class: idle
 
@@ -57,12 +57,9 @@ aide_var_dirs:
 
 # churn on top of debian's rules, picked by inventory group
 aide_excludes_by_group:
-  docker_hosts:
-    - /var/lib/docker
-    - /var/lib/containerd
+  pod_vms:
     - /var/lib/containers       # root podman storage
     - /dev/shm                  # podman lock files, tmpfs
-    - "{{ apps_root }}"
     - "{{ podman_apps_root }}"   # podman app data
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.local/share/containers"   # rootless podman images + containers, per app user
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"   # module payloads when ansible runs as the svc user

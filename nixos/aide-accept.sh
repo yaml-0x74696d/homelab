@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# review + accept aide changes on the netbird vm and record the db hash. run from ctl-0.
-# first run builds the baseline. ansible/aide/netbird.sha256 is gitignored, back it up with the vault.
+# review + accept aide changes on a nixos vm and record the db hash. run from ctl-0.
+# usage: aide-accept.sh <netbird|edge> [ssh target]
+# first run builds the baseline. ansible/aide/<host>.sha256 is gitignored, back it up with the vault.
 set -euo pipefail
 
-# netbird ip from the shared facts (ansible/group_vars), no copy here
+NAME=${1:?usage: $0 <netbird|edge> [ssh target]}
+[ -f "$(dirname "$0")/$NAME/configuration.nix" ] || { echo "!! no host nixos/$NAME"; exit 1; }
+
+# host ip from the shared facts (ansible/group_vars), no copy here
 fact() { nix run nixpkgs#yq-go -- "$1" "$(dirname "$0")/../ansible/group_vars/all/network.yml"; }
-HOST=${1:-root@$(fact .netbird_ip)}
-SUM="$(cd "$(dirname "$0")" && pwd)/../ansible/aide/netbird.sha256"
+HOST=${2:-root@$(fact ".${NAME}_ip")}
+SUM="$(cd "$(dirname "$0")" && pwd)/../ansible/aide/$NAME.sha256"
 CFG=--config=/etc/aide.conf
 DB=/var/lib/aide/aide.db
 

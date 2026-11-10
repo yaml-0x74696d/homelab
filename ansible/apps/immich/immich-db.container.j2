@@ -1,0 +1,13 @@
+# image, pod, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=immich db
+
+[Container]
+Volume={{ podman_app_dir }}/postgres:/var/lib/postgresql/data:Z
+Secret=immich-db-pass,type=env,target=POSTGRES_PASSWORD
+Environment=POSTGRES_USER=immich
+Environment=POSTGRES_DB=immich
+Environment=POSTGRES_INITDB_ARGS=--data-checksums
+# same as upstream, parallel queries need more than the 64m default
+ShmSize=128m
+HealthCmd=pg_isready -d immich -U immich

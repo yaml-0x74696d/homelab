@@ -18,11 +18,11 @@ Status: Accepted
 
 - Let's Encrypt everywhere, through ACME DNS-01 against Cloudflare
 
-Traefik (docker-1):
+Traefik (pod-1):
 - Uses the certresolver `cloudflare` (`dnschallenge.provider=cloudflare`)
 - Gets one certificate per router and stores them in `acme.json` (mode `0600`)
 - The Cloudflare token `cf_token` comes from the vault
-- Before asking Let's Encrypt, Traefik checks that the record is visible on public resolvers (`traefik_acme_resolvers: 1.1.1.1:53,8.8.8.8:53` in `deploy-proxy.yml`). Pi-hole answers the zone locally, so asking it would break the check
+- Before asking Let's Encrypt, Traefik checks that the record is visible on public resolvers (`acmeResolvers` in `nixos/edge/traefik.nix`). AdGuard Home answers the zone locally, so asking it would break the check
 - Traefik's `:80` stays LAN-only and only redirects to `:443`
 
 NetBird VM (`nixos/netbird/netbird.nix`):
@@ -30,19 +30,19 @@ NetBird VM (`nixos/netbird/netbird.nix`):
 - coturn reuses the same certificate for TURN over TLS (`turns:5349`)
 
 Public DNS:
-- cloudflare-ddns (Podman, one copy each on docker-1 and docker-2) keeps the public records pointed at the current WAN IP, with the same token
+- cloudflare-ddns (Podman, one copy each on pod-1 and pod-2) keeps the public records pointed at the current WAN IP, with the same token
 
-- Enforced by: the FRITZ!Box forwards no port 80, and nftables on the NetBird VM only opens 443 + TURN
+- Enforced by: the router forwards no port 80, and nftables on the NetBird VM only opens 443 + TURN
 
 ## Consequences
 
 - Easier: real certificates for LAN-only names, and nothing on the WAN is needed to renew them
 - Easier: certificates renew on their own, about 30 days before they expire. If `acme.json` gets lost, they're simply issued again
 
-- Harder: the Cloudflare API token can edit DNS for the whole zone, it lives in the vault, on docker-1 (`.env` of `proxy`, mode `0600`), as a Podman secret on docker-1 and docker-2 (cloudflare-ddns) and on the NetBird VM
+- Harder: the Cloudflare API token can edit DNS for the whole zone, it lives in the vault, on pod-1 (`.env` of `proxy`, mode `0600`), as a Podman secret on pod-1 and pod-2 (cloudflare-ddns) and on the NetBird VM
 - Harder: renewals depend on Cloudflare's API and public DNS
 
-- Accepted: whoever gets root on docker-1 or the NetBird VM can edit the whole zone
+- Accepted: whoever gets root on pod-1 or the NetBird VM can edit the whole zone
 - Accepted: every certificate lands in the public certificate transparency logs, so the app hostnames are public (the apps themselves aren't)
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0010](0010-pihole-on-a-service-ip.md) (split-horizon DNS), [0014](0014-authentik-as-idp.md) (SSO)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0010](0010-lan-dns-on-a-service-ip.md) (split-horizon DNS), [0014](0014-authentik-as-idp.md) (SSO), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (wildcard on edge)

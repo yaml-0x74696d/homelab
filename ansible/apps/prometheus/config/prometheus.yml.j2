@@ -19,19 +19,12 @@ scrape_configs:
   - job_name: 'node-exporter'
     static_configs:
       - targets:
-          - '{{ addr('docker-1', docker1_ip) }}:{{ node_exporter_port }}'
-          - '{{ addr('docker-2', docker2_ip) }}:{{ node_exporter_port }}'
-          - '{{ addr('docker-3', docker3_ip) }}:{{ node_exporter_port }}'
+          - '{{ addr('pod-1', pod1_ip) }}:{{ node_exporter_port }}'
+          - '{{ addr('pod-2', pod2_ip) }}:{{ node_exporter_port }}'
+          - '{{ addr('pod-3', pod3_ip) }}:{{ node_exporter_port }}'
 {% for h in groups['lxc_containers'] + groups['podman_hosts'] %}
           - '{{ hostvars[h].ansible_host }}:{{ node_exporter_port }}'
 {% endfor %}
-
-  - job_name: 'docker-engines'
-    static_configs:
-      - targets:
-          - '{{ addr('docker-1', docker1_ip) }}:{{ docker_metrics_port }}'
-          - '{{ addr('docker-2', docker2_ip) }}:{{ docker_metrics_port }}'
-          - '{{ addr('docker-3', docker3_ip) }}:{{ docker_metrics_port }}'
 
   - job_name: 'iot_sensors'
     scrape_interval: {{ prometheus_scrape_interval }}

@@ -1,0 +1,8 @@
+# managed by ansible (roles/podman_app), from apps.yml: {{ podman_app_name }} pod
+{% set cu = podman_app_entry.container_uid | default(0) %}
+[Pod]
+PodName={{ podman_app_name }}
+{% if cu != 0 %}
+{# keep-id on the pod, its containers share the userns. gid = uid #}
+UserNS=keep-id:uid={{ cu }},gid={{ cu }}
+{% endif %}

@@ -103,7 +103,7 @@ in
     };
   };
 
-  # keep the coturn relay range small so the fritzbox forward is a narrow block
+  # keep the coturn relay range small so the router forward is a narrow block
   services.coturn = {
     min-port = facts.netbird_relay_ports.min;
     max-port = facts.netbird_relay_ports.max;

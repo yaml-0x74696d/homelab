@@ -18,11 +18,12 @@ semaphore_ssh_pubkey: ""
 
 # nic macs, they pin the dhcp leases. samples = proxmox prefix BC:24:11 + the vmid.
 macs:
-  docker-1: { lan: "BC:24:11:00:02:01" }
-  docker-2: { lan: "BC:24:11:00:02:02" }
-  docker-3: { lan: "BC:24:11:00:02:03" }
+  pod-1: { lan: "BC:24:11:00:02:01" }
+  pod-2: { lan: "BC:24:11:00:02:02" }
+  pod-3: { lan: "BC:24:11:00:02:03" }
   netbird: { lan: "BC:24:11:00:02:50" }   # nixos matches the nic by it
-  haos: { lan: "BC:24:11:00:02:10" }   # the fritz!box pins haos_ip to it
+  edge: { lan: "BC:24:11:00:02:00" }      # same
+  haos: { lan: "BC:24:11:00:02:10" }   # the router pins haos_ip to it
   storage: { lan: "BC:24:11:00:03:00" }
   log: { lan: "BC:24:11:00:03:01" }
   iot: { lan: "BC:24:11:00:03:02" }

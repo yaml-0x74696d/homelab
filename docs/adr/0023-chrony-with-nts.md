@@ -11,7 +11,7 @@ Status: Accepted
 - Alternatives:
   - Keep timesyncd (why not: no NTS, only one source at a time)
   - chrony from the Debian pool (why not: the pool has no NTS)
-  - FRITZ!Box as LAN time server (why not: plain NTP, one source, mediocre accuracy)
+  - The router as LAN time server (why not: plain NTP, one source, mediocre accuracy)
   - pve-3 as LAN time server for the guests (why not: one more thing to run, and it would still need a trusted upstream)
 - Why: chrony with NTS gives authenticated time from several independent sources with no extra service
 

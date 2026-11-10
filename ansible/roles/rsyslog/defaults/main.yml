@@ -17,4 +17,4 @@ rsyslog_server_queue_size: 50000     # messages
 # source ip -> dir name; the dir comes from the connection, not from what the sender claims
 rsyslog_server_hosts: >-
   {{ dict(groups['all'] | map('extract', hostvars, 'ansible_host') | zip(groups['all']))
-     | combine({netbird_ip: 'netbird'}) }}
+     | combine({netbird_ip: 'netbird', edge_ip: 'edge'}) }}

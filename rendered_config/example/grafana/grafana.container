@@ -23,5 +23,5 @@ Environment=GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP=true
 # single-user box: every authentik login is org admin
 Environment="GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH='Admin'"
 # token exchange goes straight to traefik, container dns can't resolve auth.<domain>
-AddHost=auth.example.org:192.168.178.201
+AddHost=auth.example.org:192.168.178.200
 HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/health

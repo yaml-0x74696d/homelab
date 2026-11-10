@@ -14,8 +14,8 @@ resource "proxmox_download_file" "debian" {
   }
 }
 
-resource "proxmox_virtual_environment_vm" "docker" {
-  for_each = local.docker_vms
+resource "proxmox_virtual_environment_vm" "pod" {
+  for_each = local.pod_vms
 
   name      = each.key
   node_name = each.value.node
@@ -26,7 +26,7 @@ resource "proxmox_virtual_environment_vm" "docker" {
   # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
   reboot_after_update = false
 
-  # stateful: docker volumes (dbs) live on the vm disk — never let tofu recreate these
+  # stateful: app data and dbs live on the vm disk, never let tofu recreate these
   lifecycle {
     prevent_destroy = true
     # the image only counts when the disk is created (and imported vms have none)
@@ -152,7 +152,7 @@ resource "proxmox_virtual_environment_vm" "netbird" {
       }
     }
     dns {
-      # pihole first so it resolves the git host for the flake, gateway as fallback
+      # lan dns first so it resolves the git host for the flake, gateway as fallback
       servers = [local.net.dns_ip, local.net.gateway_ip]
     }
     user_account {
@@ -165,6 +165,83 @@ resource "proxmox_virtual_environment_vm" "netbird" {
   network_device {
     bridge      = local.net.lan_bridge
     mac_address = local.vms.netbird.mac0
+    firewall    = true
+  }
+}
+
+# edge: traefik + adguard home on nixos. same bootstrap as netbird: debian shell first,
+# nixos-anywhere then installs the flake in ../nixos (nixosConfigurations.edge).
+resource "proxmox_virtual_environment_vm" "edge" {
+  name      = "edge"
+  node_name = local.vms.edge.node
+  vm_id     = local.vms.edge.vmid
+  on_boot   = true
+  started   = true
+
+  # changes that need a restart stay pending until a planned reboot, tofu never reboots on its own
+  reboot_after_update = false
+
+  # little state (certs, query log), but a recreate takes lan dns and every route down
+  lifecycle {
+    prevent_destroy = true
+    # image and cloud-init only count for the debian bootstrap, nixos owns disk and network after that
+    ignore_changes = [disk[0].import_from, initialization]
+  }
+
+  # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)
+  agent { enabled = false }
+
+  # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
+  serial_device { device = "socket" }
+
+  cpu {
+    cores = local.vms.edge.cores
+    type  = "host"
+  }
+
+  memory {
+    dedicated = local.vms.edge.memory
+    floating  = local.vms.edge.balloon
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  scsi_hardware = "virtio-scsi-single"
+
+  disk {
+    datastore_id = var.vm_datastore
+    import_from  = proxmox_download_file.debian[local.vms.edge.node].id
+    interface    = "scsi0"
+    size         = local.vms.edge.disk
+    iothread     = true
+    discard      = "on"
+    ssd          = true
+  }
+
+  # bootstrap only, nixos sets the static ip itself (see nixos/edge/configuration.nix)
+  initialization {
+    datastore_id = var.vm_datastore
+    ip_config {
+      ipv4 {
+        address = "${local.vms.edge.ip}/${local.lan_prefix}"
+        gateway = local.net.gateway_ip
+      }
+    }
+    dns {
+      servers = [local.net.dns_ip, local.net.gateway_ip]
+    }
+    user_account {
+      username = local.priv.admin_user
+      password = var.vm_password
+      keys     = local.ssh_keys
+    }
+  }
+
+  network_device {
+    bridge      = local.net.lan_bridge
+    mac_address = local.vms.edge.mac0
     firewall    = true
   }
 }
@@ -228,10 +305,24 @@ resource "proxmox_virtual_environment_vm" "haos" {
     ssd          = true
   }
 
-  # dhcp, the fritz!box pins haos_ip to this mac
+  # dhcp, the router pins haos_ip to this mac
   network_device {
     bridge      = local.net.lan_bridge
     mac_address = local.vms.haos.mac0
     firewall    = true
   }
+}
+
+# the vms were docker-N before, renamed in place
+moved {
+  from = proxmox_virtual_environment_vm.docker["docker-1"]
+  to   = proxmox_virtual_environment_vm.pod["pod-1"]
+}
+moved {
+  from = proxmox_virtual_environment_vm.docker["docker-2"]
+  to   = proxmox_virtual_environment_vm.pod["pod-2"]
+}
+moved {
+  from = proxmox_virtual_environment_vm.docker["docker-3"]
+  to   = proxmox_virtual_environment_vm.pod["pod-3"]
 }

@@ -1,13 +1,13 @@
 # 18. Filter published container ports in DOCKER-USER
 
-Status: Accepted
+Status: Superseded by [0026](0026-ufw-as-guest-firewall.md)
 
 ## Context
 
 - The Docker VMs run ufw with default deny ([0002](0002-generic-docker-app-role.md), `vm-preparation.yml`)
 - Docker publishes ports with its own NAT rules, and those apply before ufw ever sees the packet
 - So a published port is open to the whole LAN, no matter what ufw says
-- The apps on docker-2/3 publish ports so Traefik on docker-1 can reach them
+- The apps on pod-2/3 publish ports so Traefik on pod-1 can reach them
 
 - Alternatives:
   - No published ports (overlay / one Docker network across hosts) (why not: needs Swarm or an overlay, extra complexity)
@@ -27,11 +27,11 @@ How it works:
 - The rules match on `--ctorigdstport`, the port before Docker's NAT rewrote it
 
 Who may call (`docker_backend_callers` in `group_vars/all/ports.yml`):
-- docker-1: Traefik, Homepage, Home Assistant
-- docker-2: Prometheus, Grafana
+- pod-1: Traefik, Homepage, Home Assistant
+- pod-2: Prometheus, Grafana
 
 What's filtered and what's open:
-- Filtered: docker-socket-proxy and every backend app port (Nextcloud, Immich, Jellyfin, Paperless, Grafana, Prometheus and more)
+- Filtered: every backend app port (Nextcloud, Immich, Jellyfin, Paperless, Grafana, Prometheus and more)
 - Open on purpose: 53 (DNS), 80/443 (Traefik), 2222 (Gitea SSH)
 
 - Enforced by: `vm-preparation.yml` rewrites the block on every run, and the ports come from the same `app_ports` map that compose uses ([0007](0007-group-vars-single-source-of-truth.md))

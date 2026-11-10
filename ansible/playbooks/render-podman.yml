@@ -3,7 +3,7 @@
 # nothing touches a host. run it through scripts/render_podman.sh (a clean copy with the examples in place).
 # the script masks the vault: every value renders as <vault:name>
 - name: Render podman apps
-  hosts: docker_hosts:podman_hosts
+  hosts: pod_vms:podman_hosts
   gather_facts: false
   become: false
   vars:

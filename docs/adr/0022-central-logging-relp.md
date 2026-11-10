@@ -51,4 +51,4 @@ Not included:
 - Accepted: the log LXC is a single copy, a disk loss there loses the central history (the hosts still keep 4 weeks locally)
 - Accepted: on the NetBird VM, messages sent while rsyslog is down (a `nixos-rebuild` restart) are lost, journald only buffers the socket
 
-- Related: [0007](0007-group-vars-single-source-of-truth.md) (ports, ips), [0008](0008-nixos-for-the-dmz-box.md) (NetBird VM), [0019](0019-ntfy-single-alert-channel.md) (alerts stay on ntfy, logs are for looking back)
+- Related: [0007](0007-group-vars-single-source-of-truth.md) (ports, ips), [0008](0008-nixos-for-the-dmz-box.md) (NetBird VM), [0019](0019-ntfy-single-alert-channel.md) (alerts stay on ntfy, logs are for looking back), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge)

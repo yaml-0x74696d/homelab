@@ -1,7 +1,7 @@
 # ctl_base
 
 - What ctl-1 needs on top of `vm_base` + `podman_base`: static address, ufw, the git clone Semaphore runs from and a copy of the private overlay dir
-- ctl-1 is a Raspberry Pi 3 B+ on Raspberry Pi OS Lite (trixie, 64-bit) outside the cluster, always on, running the Semaphore app (`apps/semaphore`)
+- ctl-1 is a Raspberry Pi 3 on Raspberry Pi OS Lite (trixie, 64-bit) outside the cluster, always on, running the Semaphore app (`apps/semaphore`)
 
 ## Runs on
 
@@ -30,7 +30,7 @@
 - ufw: deny in, ssh rate-limited from the LAN, node-exporter from Prometheus only. Semaphore's port comes from `podman_app` (`allow_from`)
 - The clone: `ctl-preparation.yml` clones once, after that `playbooks/repo-pull.yml` pulls (a Semaphore template). Vault password and tofu state never land on ctl-1, the vault password lives in Semaphore's key store
 - Private files: `vault.yml` and `private.yml` are gitignored, so they're copied from the controller. After a change to them or to `private_dir` on ctl-0: `ctl-preparation.yml -l ctl-1 -t private-files`. Mode `0640`, `0600` would hide the ACL entry behind the mask
-- Private dir: the controller's `<private_dir>/apps` (the app roles' config overlays) is mirrored with rsync to `<ctl_base_private_dir>/apps`, deletions included. Only `apps/`: `private_dir` also holds the vault password, keys and tofu state, which stay on the controller. So so a Semaphore deploy lays the same private files over the public ones and doesn't drop them as stale. Same tag, same run as the private files. The quadlet mounts it read-only at the same path and sets `HOMELAB_PRIVATE_DIR` to it: `private.yml`'s `~/...` would expand to the container user's home there, `podman_app`/`docker_app` read the env var first
+- Private dir: the controller's `<private_dir>/apps` (the app roles' config overlays) is mirrored with rsync to `<ctl_base_private_dir>/apps`, deletions included. Only `apps/`: `private_dir` also holds the vault password, keys and tofu state, which stay on the controller. So a Semaphore deploy lays the same private files over the public ones and doesn't drop them as stale. Same tag, same run as the private files. The quadlet mounts it read-only at the same path and sets `HOMELAB_PRIVATE_DIR` to it: `private.yml`'s `~/...` would expand to the container user's home there, `podman_app` reads the env var first
 - Vault password: `ansible.cfg`'s `vault_password_file` has to exist, so the clone gets a `dummy` one (`ctl_base_vault_pass_dummy`), like CI. Ansible tries every vault secret, the real one comes from Semaphore's key store
 - Owner: the clone, the private files and the overlay copy belong to `admin_user` (`ansible_become: false` on those tasks, the inventory's become would beat the keyword). Root only sets the ACLs
 - Checkout access: the home dir gets `g:<svc-semaphore gid>:x`, the clone and the private dir `rX` plus a default ACL that covers later pulls. The `rX` pass reruns with `-t private-files`, since copy and rsync reset the mask. Set by gid, so it works before the group exists. In the rootless container that gid is gid 0, which the image's `semaphore` user runs as

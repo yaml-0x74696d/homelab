@@ -2,24 +2,28 @@
 # full deploy. run a single deploy-<service>.yml to touch just one service.
 - name: Base tools (time, cron, logs)
   import_playbook: base.yml
-- name: Deploy docker-proxy
-  import_playbook: deploy-docker-proxy.yml
-- name: Deploy traefik
-  import_playbook: deploy-proxy.yml
-- name: Deploy pihole
-  import_playbook: deploy-dns.yml
 - name: Deploy homepage
-  import_playbook: deploy-dashboard.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: homepage
 - name: Deploy authentik
   import_playbook: deploy-authentik.yml
 - name: Deploy vaultwarden
-  import_playbook: deploy-vaultwarden.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: vaultwarden
 - name: Deploy gitea
-  import_playbook: deploy-gitea.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: gitea
 - name: Deploy pdfcraft
-  import_playbook: deploy-pdfcraft.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: pdfcraft
 - name: Deploy searxng
-  import_playbook: deploy-searxng.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: searxng
 - name: Deploy prometheus
   import_playbook: deploy-app.yml
   vars:
@@ -36,6 +40,10 @@
   import_playbook: deploy-app.yml
   vars:
     app: cloudflare-ddns
+- name: Deploy dns-relay
+  import_playbook: deploy-app.yml
+  vars:
+    app: dns-relay
 - name: Deploy gatus
   import_playbook: deploy-app.yml
   vars:
@@ -44,22 +52,28 @@
   import_playbook: deploy-app.yml
   vars:
     app: semaphore
-- name: Deploy diun
-  import_playbook: deploy-diun.yml
 - name: Deploy iot gateway (lxc)
   import_playbook: deploy-iot.yml
 # needs pve-3 powered on
 - name: Deploy storage (mergerfs + samba)
   import_playbook: deploy-storage.yml
-# home cloud (docker-3) — cifs-mounts pool shares, so runs after storage
+# home cloud (pod-3) — cifs-mounts pool shares, so runs after storage
 - name: Deploy nextcloud
-  import_playbook: deploy-nextcloud.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: nextcloud
 - name: Deploy immich
-  import_playbook: deploy-immich.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: immich
 - name: Deploy jellyfin
-  import_playbook: deploy-jellyfin.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: jellyfin
 - name: Deploy paperless
-  import_playbook: deploy-paperless.yml
+  import_playbook: deploy-app.yml
+  vars:
+    app: paperless
 # backup clients: needs the apps present + pve-3 (datastore) on
 - name: Deploy pbs backup client
   import_playbook: deploy-pbs.yml

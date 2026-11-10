@@ -14,7 +14,7 @@ update_quorum_retries: 6   # after the restarts, corosync needs a moment to rejo
 update_quorum_delay: 10    # seconds
 
 # the summary covers these, in play order
-update_summary_hosts: "{{ groups['lxc_containers'] + groups['docker_hosts'] + groups['podman_hosts'] + groups['proxmox'] }}"
+update_summary_hosts: "{{ groups['lxc_containers'] + groups['pod_vms'] + groups['podman_hosts'] + groups['proxmox'] }}"
 
 # a daily aide check already running: wait up to retries x delay seconds
 update_aide_wait_retries: 60

@@ -62,6 +62,17 @@
 - name: Set timezone
   community.general.timezone: { name: "{{ timezone }}" }
 
+# the inventory name is the hostname, a vm rename only happens here
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Point the hostname at loopback
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1\s'
+    line: "127.0.1.1 {{ inventory_hostname }}"
+
 - name: Enable and start services
   ansible.builtin.systemd:
     name: "{{ item }}"

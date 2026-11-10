@@ -24,9 +24,9 @@ argument_specs:
             description: "Several hosts, one copy each. Only for apps nothing reaches: no port, routes, homepage or allow_from"
           runtime:
             type: str
-            choices: [podman, compose, vm]
+            choices: [podman, vm]
             default: podman
-            description: "compose = still on docker, vm = an appliance vm (haos). both routed by edge, never deployed by this role"
+            description: "vm = an appliance vm (haos): routed by edge, never deployed by this role"
           state:
             type: str
             choices: [present, absent, purged]
@@ -39,7 +39,8 @@ argument_specs:
           container_uid:
             type: int
             default: 0
-            description: uid the app's main process runs as inside the container. only 0 is built (no keep-id), the role refuses anything else
+            description: "uid the app's main process runs as inside the container. not 0 = UserNS=keep-id onto svc-<name>
+              (on the pod for multi-container apps), every container then needs user"
           port:
             type: int
             description: Main published port. routes default to it, allow_from opens it
@@ -70,12 +71,13 @@ argument_specs:
             type: list
             elements: dict
             required: true
-            description: Every container, also for single-container apps. apps/<name>/<container>.container.j2 holds the rest
+            description: "Every container, also for single-container apps. apps/<name>/<container>.container.j2 holds the rest.
+              more than one = a pod, apps/<name>/<name>.pod.j2 holds its ports and hosts"
             options:
-              name: {type: str, required: true, description: Container + unit name}
+              name: {type: str, required: true, description: "Container + unit name. in a pod: the app's name for the main one, <app>-<role> for the rest"}
               image: {type: str, required: true, description: Fully qualified image without tag}
               tag: {type: str, required: true}
-              user: {type: str, description: "User= in the container. required in pods (keep-id)"}
+              user: {type: str, description: "User= in the container. required with container_uid (keep-id)"}
               auto_update: {type: bool, default: true, description: "false for dbs: changes only on a tag bump + deploy"}
               stop_timeout: {type: int, description: Seconds before the stop turns into a kill}
               healthcheck: {type: bool, default: true, description: "false: image can't run a HealthCmd (scratch), started once running"}
@@ -83,11 +85,14 @@ argument_specs:
               read_only: {type: bool, default: false}
               drop_caps: {type: list, elements: str, default: []}
               add_caps: {type: list, elements: str, default: []}
+              after: {type: list, elements: str, default: [], description: "Containers of this app that must be healthy first (Requires= + After=)"}
+              cifs: {type: list, elements: str, default: [], description: "cifs paths this container mounts, it waits for them (start gate)"}
+              devices: {type: list, elements: str, default: [], description: "Host devices (/dev/dri/renderD128). svc-<name> joins the device's group"}
           dirs:
             type: list
             elements: dict
             default: []
-            description: Dirs under the app's data dir, owned by svc-<name> (= root in the container) unless owner is set
+            description: Dirs under the app's data dir, owned by svc-<name> (= container_uid in the container) unless owner is set
             options:
               path: {type: str, required: true}
               mode: {type: str, default: "0750"}
@@ -96,13 +101,14 @@ argument_specs:
             type: list
             elements: dict
             default: []
-            description: Pool shares. not built, the role refuses a non-empty list
+            description: "Pool shares, mounted on the host by fstab automount, owned by svc-<name>"
             options:
               share: {type: str, required: true}
               user: {type: str, required: true, description: "Samba user, its password is smb_passwords[user]"}
-              path: {type: str, required: true}
+              path: {type: str, required: true, description: "Mount point under cifs_mount_root (photos = /srv/photos)"}
               file_mode: {type: str, default: "0660"}
               dir_mode: {type: str, default: "0770"}
+              opts: {type: list, elements: str, default: [], description: "More mount options: ro, nobrl"}
           start_timeout:
             type: str
             description: TimeoutStartSec, default podman_app_start_timeout
@@ -119,11 +125,11 @@ argument_specs:
             type: list
             elements: dict
             default: []
-            description: "Traefik's routers are written by hand in apps/proxy/traefik/dynamic/, check_wiring.py keeps them in line. gatus and homepage read it"
+            description: "Edge builds one Traefik router per route from this (nixos/edge/traefik.nix), gatus and homepage read it too"
             options:
               host: {type: str, required: true, description: "Subdomain: <host>.<domain>"}
               path: {type: str, description: PathPrefix}
-              middlewares: {type: list, elements: str, default: [], description: Names defined in apps/proxy/traefik/dynamic/}
+              middlewares: {type: list, elements: str, default: [], description: "Names defined in nixos/edge/traefik.nix, an unknown one fails the build"}
               port: {type: int, description: "Backend port, default the app's port"}
       podman_app_private_dir:
         type: str

@@ -10,15 +10,15 @@ pve_firewall_gateway_ip: "{{ gateway_ip }}"
 # arbitrary ports). rest of the lan stays dropped.
 pve_firewall_routing_peers: "{{ groups['netbird_agent'] | map('extract', hostvars, 'ansible_host') | list }}"
 
-# lan hosts the netbird vm only needs dns + https on: traefik (authentik, gitea) + the pihole service ip
-pve_firewall_netbird_dns_https: ["{{ docker1_ip }}", "{{ dns_ip }}"]
+# lan hosts the netbird vm only needs dns + https on: the ingress (authentik, gitea), edge in the parallel run, the dns service ip
+pve_firewall_netbird_dns_https: "{{ [app_sources.edge, dns_ip] + ingress_extra_sources }}"
 
 # ssh (22) to the pve hosts — real shells only
 pve_firewall_ssh_hosts: "{{ admin_hosts }}"
 
 # web ui (8006) — admins, ui-only devices + the infra callers (homepage widget, gatus)
 pve_firewall_ui_hosts: >-
-  {{ admin_hosts + admin_ui_hosts + [{'ip': docker1_ip, 'c': 'homepage widget'},
+  {{ admin_hosts + admin_ui_hosts + [{'ip': pod1_ip, 'c': 'homepage widget'},
      {'ip': hostvars[apps['gatus'].host].ansible_host, 'c': 'gatus'}] }}
 
 # cluster mesh (corosync / migration between nodes)
@@ -34,12 +34,13 @@ pve_firewall_log_vmid: "{{ vmids.log }}"
 pve_firewall_log_ip: "{{ log_ip }}"
 pve_firewall_log_port: "{{ log_relp_port }}"
 pve_firewall_log_sources:
-  - "{{ docker1_ip }}"
-  - "{{ docker2_ip }}"
-  - "{{ docker3_ip }}"
+  - "{{ pod1_ip }}"
+  - "{{ pod2_ip }}"
+  - "{{ pod3_ip }}"
   - "{{ storage_ip }}"
   - "{{ iot_lan_ip }}"
   - "{{ netbird_ip }}"
+  - "{{ edge_ip }}"
   - "{{ ctl1_ip }}"
 
 # who scrapes node-exporter (log + iot lxc) and the mqtt exporter (iot lxc)
@@ -61,4 +62,5 @@ pve_firewall_haos_observer_port: 4357   # haos' supervisor health page
 # guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
 # would default-DROP them unless we drop an explicit "enable: 0" per guest.
 # PRE-FLIGHT: add every other vmid that shows firewall=1 or it breaks.
-pve_firewall_open_guests: ["{{ vmids.docker1 }}", "{{ vmids.docker2 }}", "{{ vmids.docker3 }}", "{{ vmids.storage }}"]
+# edge filters itself (nftables), like the pod vms with ufw
+pve_firewall_open_guests: ["{{ vmids.edge }}", "{{ vmids.pod1 }}", "{{ vmids.pod2 }}", "{{ vmids.pod3 }}", "{{ vmids.storage }}"]

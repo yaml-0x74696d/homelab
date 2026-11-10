@@ -34,3 +34,10 @@ podman_app_stop_timeout: 10       # seconds, podman's own default
 podman_app_restart_sec: 30s
 podman_app_restart_steps: 5
 podman_app_restart_max_delay: 10min
+
+# pool shares (cifs:): fstab mounts under cifs_mount_root, bind-mounted by the unit templates
+podman_app_cifs_vers: "3.1.1"          # smb dialect
+podman_app_cifs_creds_dir: /etc/cifs   # <share>.creds, root-only
+
+# more than one container = one pod: apps/<name>/<name>.pod.j2, <name>-pod.service
+podman_app_pod: "{{ podman_app_entry.containers | default([]) | length > 1 }}"

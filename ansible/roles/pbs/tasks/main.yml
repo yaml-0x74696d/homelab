@@ -1,4 +1,16 @@
 ---
+# the dump runs as svc-<app>
+- name: Check the postgres jobs
+  ansible.builtin.assert:
+    that:
+      - item.app is defined
+      - item.app in apps
+    fail_msg: "pbs job {{ item.name }}: postgres needs app, an app from apps.yml"
+    quiet: true
+  loop: "{{ pbs_jobs | selectattr('type', 'eq', 'postgres') }}"
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Keyrings dir
   ansible.builtin.file:
     path: /etc/apt/keyrings

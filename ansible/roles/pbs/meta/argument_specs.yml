@@ -54,9 +54,13 @@ argument_specs:
           data_dir:
             type: str
             description: Postgres data dir, left out of the flat archive
+          app:
+            type: str
+            description: "Podman postgres: the apps.yml app, the dump runs as svc-<app>"
           podman:
             type: bool
-            description: The app runs on Podman
+            default: false
+            description: "The app runs on Podman: sqlite path under podman_apps_root, postgres dumped with podman exec as svc-<app> (needs app)"
       pbs_exclude:
         type: list
         elements: str

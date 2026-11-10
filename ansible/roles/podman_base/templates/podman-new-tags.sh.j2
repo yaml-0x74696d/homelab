@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# managed by ansible (roles/podman_base). runs as root from podman-new-tags.timer.
+# auto-update only refreshes the same tag, so a pinned image never says a newer version exists.
+# this lists the tags of every app image on the host and pushes the newer ones. quiet when none.
+set -uo pipefail
+
+HOST="$(hostname -s)"
+
+notify() {
+  [ -n "${NTFY_URL:-}" ] || return 0
+  local hdr=(-H "Title: $1" -H "Priority: $2" -H "Tags: package")
+  # token through stdin, argv shows up in ps
+  if [ -n "${NTFY_TOKEN:-}" ]; then printf 'header = "Authorization: Bearer %s"\n' "$NTFY_TOKEN"; fi \
+    | curl -fsS -K - -m "$NTFY_TIMEOUT" "${hdr[@]}" -d "$3" "$NTFY_URL" >/dev/null 2>&1 || true
+}
+
+users() { getent group '{{ podman_svc_group }}' | cut -d: -f4 | tr , '\n' | grep -v '^$' | sort; }
+
+# what the quadlets run, not what's pulled: a stopped app still counts
+images() {
+  for u in $(users); do
+    grep -hs '^Image=' "$(getent passwd "$u" | cut -d: -f6)"/.config/containers/systemd/*.container.d/50-map.conf
+  done | cut -d= -f2- | sort -u
+}
+
+newer="" failed=""
+for ref in $(images); do
+  repo=${ref%:*} tag=${ref##*:}
+  # latest, release, apache: floats, nothing to compare
+  [[ $tag =~ [0-9] ]] || continue
+  # same shape as the pinned tag, every number may change: 16-alpine finds 17-alpine, not 17-bookworm
+  re="^$(sed -E 's/[].[*^$+?(){}|\\/]/\\&/g; s/[0-9]+/[0-9]+/g' <<<"$tag")\$"
+  if ! tags=$(skopeo list-tags "docker://$repo" | jq -r '.Tags[]'); then
+    failed+="$ref"$'\n'
+    continue
+  fi
+  top=$(grep -E "$re" <<<"$tags" | sort -V | tail -1)
+  if [ -n "$top" ] && [ "$top" != "$tag" ] && [ "$(printf '%s\n%s\n' "$tag" "$top" | sort -V | tail -1)" = "$top" ]; then
+    newer+="$repo: $tag -> $top"$'\n'
+  fi
+done
+
+[ -n "$newer" ] && notify "new image tags on $HOST" default "$newer"
+if [ -n "$failed" ]; then
+  notify "podman-new-tags: lookups failed on $HOST" low "$failed"
+  exit 1
+fi
+exit 0

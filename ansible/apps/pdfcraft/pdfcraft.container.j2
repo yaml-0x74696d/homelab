@@ -1,0 +1,6 @@
+[Unit]
+Description=pdfcraft
+
+[Container]
+PublishPort={{ podman_app_entry.port }}:80
+HealthCmd=wget -qO /dev/null http://127.0.0.1/

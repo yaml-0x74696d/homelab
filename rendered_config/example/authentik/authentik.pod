@@ -1,0 +1,3 @@
+# name: drop-in from roles/podman_app. one netns, the db is on 127.0.0.1
+[Pod]
+PublishPort=9000:9000

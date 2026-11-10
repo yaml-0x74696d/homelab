@@ -1,0 +1,10 @@
+# image, pod, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=searxng
+
+[Container]
+Secret=searxng-secret,type=env,target=SEARXNG_SECRET
+Environment=SEARXNG_BASE_URL=https://search.example.org/
+Environment=SEARXNG_VALKEY_URL=valkey://127.0.0.1:6379/0
+Environment=SEARXNG_LIMITER=true
+HealthCmd=wget -qO /dev/null http://127.0.0.1:8080/healthz

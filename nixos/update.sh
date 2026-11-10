@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
-# update the netbird VM: bump flake, build, switch, sanity check. run from ctl-0 (needs nix).
+# update a nixos vm: bump flake, build, switch, sanity check. run from ctl-0 (needs nix).
+# usage: update.sh <netbird|edge> [ssh target]
 set -euo pipefail
 
-# netbird ip from the shared facts (ansible/group_vars), no copy here
+NAME=${1:?usage: $0 <netbird|edge> [ssh target]}
+[ -f "$(dirname "$0")/$NAME/configuration.nix" ] || { echo "!! no host nixos/$NAME"; exit 1; }
+
+# host ip from the shared facts (ansible/group_vars), no copy here
 fact() { nix run nixpkgs#yq-go -- "$1" "$(dirname "$0")/../ansible/group_vars/all/network.yml"; }
-HOST=${1:-root@$(fact .netbird_ip)}
+HOST=${2:-root@$(fact ".${NAME}_ip")}
 cd "$(dirname "$0")"
 
 PRIVATE="$PWD/../ansible/group_vars/all/private"
 [ -f "$PRIVATE/private.yml" ] || { echo "!! $PRIVATE/private.yml missing (cp the example, fill in)"; exit 1; }
 # private.yml may be a symlink into the synced private folder; nix copies links, not their targets
 PRIVATE=$(dirname "$(realpath "$PRIVATE/private.yml")")
-rebuild() { nix run nixpkgs#nixos-rebuild -- "$1" --flake .#netbird --override-input private "path:$PRIVATE" "${@:2}"; }
+rebuild() { nix run nixpkgs#nixos-rebuild -- "$1" --flake ".#$NAME" --override-input private "path:$PRIVATE" "${@:2}"; }
 
 echo ">> bump flake inputs"
 nix flake update

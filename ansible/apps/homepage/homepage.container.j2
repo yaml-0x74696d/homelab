@@ -1,0 +1,19 @@
+# image, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=homepage
+
+[Container]
+PublishPort={{ podman_app_entry.port }}:3000
+# config file by file: /app/config stays the image's own, homepage copies its skeletons there
+Volume={{ podman_app_dir }}/config/settings.yaml:/app/config/settings.yaml:ro
+Volume={{ podman_app_dir }}/config/bookmarks.yaml:/app/config/bookmarks.yaml:ro
+Volume={{ podman_app_dir }}/config/widgets.yaml:/app/config/widgets.yaml:ro
+Volume={{ podman_app_dir }}/config/custom.css:/app/config/custom.css:ro
+# logos, background and font, private overlay included
+Volume={{ podman_app_dir }}/config/images:/app/public/images:ro
+# the api tokens sit inline, so these two are podman secrets
+Secret=homepage-services,type=mount,target=/app/config/services.yaml,mode=0400
+Secret=homepage-proxmox,type=mount,target=/app/config/proxmox.yaml,mode=0400
+Environment=HOMEPAGE_ALLOWED_HOSTS=home.{{ domain }}
+Environment=LOG_TARGETS=stdout
+HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/healthcheck

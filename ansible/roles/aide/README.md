@@ -6,9 +6,9 @@
 
 ## Runs on
 
-- docker_hosts, podman_hosts, proxmox, lxc_containers (`playbooks/aide.yml`)
+- pod_vms, podman_hosts, proxmox, lxc_containers (`playbooks/aide.yml`)
 - Only the hosts `roles/reach` found up in its first play. Hosts in `reach_optional_hosts` (the part-time nodes and their guests) may be off, the run still exits 0. Any other host that's down fails it
-- The NetBird VM does the same as a Nix module: `nixos/netbird/aide.nix` + `nixos/aide-accept.sh`
+- The NixOS VMs (netbird, edge) do the same as a Nix module: `nixos/base/aide.nix` + `nixos/aide-accept.sh <host>`
 
 ## How it works
 
@@ -53,7 +53,7 @@
 
 | Variable | Default | What |
 |---|---|---|
-| `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to 30 min | When the check runs (group_vars `hosts.yml`, shared with NixOS) |
+| `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to 30 min | When the check runs (group_vars `schedules.yml`, shared with NixOS) |
 | `aide_excludes_common` | see below | Excludes on every host |
 | `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
 | `aide_login_homes` | admin home, `/root` | Homes with history files on the `VarFile` rule (see Notes) |
@@ -70,7 +70,7 @@
 ## Excluded paths
 
 - All hosts: `/run` (tmpfs), ansible's temp dirs and payloads, `.cache` in the admin's and root's home, `aide.db.new`, `/var/log` (every line is on the log LXC already, see [ADR 0022](../../../docs/adr/0022-central-logging-relp.md)), `/var/lib/rsyslog`, apt's caches and lists, PackageKit's db, node-exporter's textfiles
-- docker_hosts: `/var/lib/docker`, `/var/lib/containerd`, `apps_root` (`/opt/stacks`, the compose apps), `podman_apps_root` (`/srv/apps`, podman app data), the CIFS mount root, the PBS staging folder, cloud-init state (`/var/lib/cloud`, `/var/tmp/cloud-init`), `/dev/disk/by-uuid` (the cloud-init ISO gets a dated UUID)
+- pod_vms: root and rootless podman storage, `/dev/shm`, the svc users' ansible payloads, `podman_apps_root` (`/srv/apps`, app data), the CIFS mount root, the PBS staging folder, cloud-init state (`/var/lib/cloud`, `/var/tmp/cloud-init`), `/dev/disk/by-uuid` (the cloud-init ISO gets a dated UUID)
 - podman_hosts: root and rootless podman storage, `/dev/shm`, the svc users' ansible payloads, `podman_apps_root`, and on ctl-1 the Semaphore checkout (`semaphore_repo_dir`, kept current by `playbooks/repo-pull.yml`) and its `private_dir` copy (`semaphore_private_dir`, synced by `roles/ctl_base`)
 - proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, state pve rebuilds itself (`/var/lib/lxc`, `/var/cache/lxc`, lxcfs, corosync, `/var/lib/proxmox-backup`, `/var/lib/pve-firewall`, replication state, smartmontools, `/etc/issue`, `76pveproxy` from `datacenter.cfg`), all of `/dev`, and on pve-3 the pool, its disks and the PBS datastore
 - lxc_containers: `/dev/.lxc` (procfs), the pool bind mount, `/var/lib/mosquitto` (broker persistence)
@@ -79,10 +79,10 @@
 
 - Login homes (`aide_login_homes`): shell/tool history files only keep owner, mode and type watched (`VarFile`), the home dir its owner and mode (`VarDir`). `.ssh` and the rc files keep the full rule
 - Accept after every update (`aide-accept.yml`), or tomorrow's push repeats the same changes
-- The excludes need care (Docker, logs), or the alerts get noisy
+- The excludes need care (container storage, logs), or the alerts get noisy
 - Build the baseline after the host is hardened, not before
 
 ## Related
 
 - [ADR 0009: AIDE with manual accept](../../../docs/adr/0009-aide-with-manual-accept.md)
-- `nixos/netbird/aide.nix` (NetBird VM)
+- `nixos/base/aide.nix` (NixOS VMs)

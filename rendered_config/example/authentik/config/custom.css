@@ -1,0 +1,26 @@
+/* homelab palette, see docs/00-dashboard/style.md. flow background image stays as set in the ui */
+:root {
+  --ak-accent: #ee0000;
+  --ak-dark-foreground: #cccccc;
+  --ak-dark-foreground-darker: #9d9d9d;
+  --ak-dark-background: #141414;
+  --ak-dark-background-light: #181818;
+  --ak-dark-background-light-ish: #1f1f1f;
+  --ak-dark-background-lighter: #2a2d2e;
+
+  --pf-global--primary-color--100: #ee0000;
+  --pf-global--primary-color--200: #be0000;
+  --pf-global--primary-color--dark-100: #ee0000;
+  --pf-global--active-color--100: #ee0000;
+  --pf-global--link--Color: #ff4d4d;
+  --pf-global--link--Color--hover: #ff7373;
+  --pf-global--link--Color--dark: #ff4d4d;
+  --pf-global--link--Color--dark--hover: #ff7373;
+
+  --pf-global--BorderColor--100: #2b2b2b;
+  --pf-global--BorderRadius--sm: 4px;
+  --pf-global--BorderRadius--lg: 4px;
+  --pf-global--BoxShadow--sm: none;
+  --pf-global--BoxShadow--md: none;
+  --pf-global--BoxShadow--lg: none;
+}

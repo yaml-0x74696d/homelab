@@ -3,49 +3,8 @@ pve_ui_port: 8006
 pbs_port: 8007
 cockpit_port: 9090
 node_exporter_port: 9100
-docker_metrics_port: 9323
-docker_proxy_port: 2375
 mqtt_port: 1883
 mqtt_exporter_port: 9641   # on the iot lxc, prometheus scrapes it
 ota_port: 80   # firmware downloads on the iot lxc, iot leg only (roles/ota_server)
 log_relp_port: 20514   # rsyslog relp to the log lxc
 netbird_relay_ports: { min: 49160, max: 49200 }   # coturn relay range, narrow so the router forward stays small
-
-# published on the docker hosts; compose, traefik, homepage and prometheus read these.
-# apps in apps.yml take their port from there, the rest stay literal
-app_ports:
-  grafana: "{{ apps['grafana'].port }}"
-  gatus: "{{ apps['gatus'].port }}"
-  nextcloud: "{{ apps['nextcloud'].port }}"
-  immich: "{{ apps['immich'].port }}"
-  jellyfin: "{{ apps['jellyfin'].port }}"
-  paperless: "{{ apps['paperless'].port }}"
-  nginx: "{{ apps['nginx'].port }}"
-  pihole: 8088
-  authentik: "{{ apps['authentik'].port }}"
-  vaultwarden: "{{ apps['vaultwarden'].port }}"
-  gitea: "{{ apps['gitea'].port }}"
-  searxng: "{{ apps['searxng'].port }}"
-  homepage: "{{ apps['homepage'].port }}"
-  pdfcraft: "{{ apps['pdfcraft'].port }}"
-  semaphore: "{{ apps['semaphore'].port }}"
-  homeassistant: "{{ apps['homeassistant'].port }}"   # traefik routes it to the haos vm
-  prometheus: "{{ apps['prometheus'].port }}"
-
-# published ports bypass ufw; vm-preparation filters these in DOCKER-USER instead.
-# backends only answer traefik (docker-1) and prometheus/gatus (docker-2)
-docker_backend_callers: ["{{ docker1_ip }}", "{{ docker2_ip }}"]
-docker_published_allow:
-  - { port: "{{ docker_proxy_port }}", src: "{{ docker_backend_callers }}" }   # homepage
-  - { port: "{{ app_ports.authentik }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.vaultwarden }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.gitea }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.searxng }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.homepage }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.pdfcraft }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ apps['gitea'].extra_ports[0].port }}", src: ["{{ lan_cidr }}"] }   # git over ssh, netbird arrives from the lan
-  - { port: "{{ app_ports.nextcloud }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.immich }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.jellyfin }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.paperless }}", src: "{{ docker_backend_callers }}" }
-  - { port: "{{ app_ports.pihole }}", src: "{{ docker_backend_callers }}" }

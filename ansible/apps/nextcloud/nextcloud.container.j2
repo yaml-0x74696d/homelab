@@ -1,0 +1,29 @@
+# image, pod, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=nextcloud
+
+[Container]
+Volume={{ podman_app_dir }}/html:/var/www/html:Z
+# user data and other apps' shares on the pool
+Volume={{ cifs_mount_root }}/nextcloud:/data
+Volume={{ cifs_mount_root }}/nc-media:/external/media
+Volume={{ cifs_mount_root }}/nc-documents:/external/documents
+Volume={{ cifs_mount_root }}/nc-photos:/external/photos:ro
+Secret=nextcloud-db-pass,type=env,target=POSTGRES_PASSWORD
+Secret=nextcloud-admin-pass,type=env,target=NEXTCLOUD_ADMIN_PASSWORD
+Environment=POSTGRES_HOST=127.0.0.1
+Environment=POSTGRES_DB=nextcloud
+Environment=POSTGRES_USER=nextcloud
+Environment=REDIS_HOST=127.0.0.1
+Environment=NEXTCLOUD_ADMIN_USER={{ admin_user }}
+Environment=NEXTCLOUD_DATA_DIR=/data
+Environment=NEXTCLOUD_TRUSTED_DOMAINS=cloud.{{ domain }}
+Environment=OVERWRITEPROTOCOL=https
+Environment=OVERWRITECLIURL=https://cloud.{{ domain }}
+# only traefik may set X-Forwarded-For
+Environment=TRUSTED_PROXIES={{ app_sources.edge }}
+Environment=PHP_MEMORY_LIMIT={{ nextcloud_php_memory_limit }}
+Environment=PHP_UPLOAD_LIMIT={{ nextcloud_php_upload_limit }}
+HealthCmd=curl -fsS -o /dev/null http://127.0.0.1/status.php
+# occ upgrade runs before apache listens
+HealthStartPeriod=10m

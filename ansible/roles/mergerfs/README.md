@@ -45,5 +45,5 @@
 ## Related
 
 - [ADR 0004: mergerfs instead of ZFS](../../../docs/adr/0004-mergerfs-instead-of-zfs.md)
-- `samba` role (shares the pool), `docker_app` (CIFS mounts on the Docker VMs)
+- `samba` role (shares the pool), `podman_app` (CIFS mounts on the pod VMs)
 - The PBS datastore is a separate thin LV on the SSD, not on this pool

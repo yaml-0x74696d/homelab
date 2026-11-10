@@ -30,11 +30,11 @@ Who sends:
 | `roles/pbs` | A failed run or an empty dump |
 | `roles/aide` | Changes on `<host>`, counts only, or "aide failed" |
 | `roles/login_notify` | SSH and PVE web logins on the Proxmox hosts |
-| `apps/diun` | New image digests (endpoint and topic are split from `ntfy_url` in `.env.j2`) |
+| `roles/podman_base` | Failed auto-updates (rolled back) and newer tags of pinned images |
 | NetBird VM | AIDE results, through `/var/lib/secrets/aide/ntfy.env` |
 
 How sending works:
-- Every script sender uses `curl -m ntfy_timeout … || true`, so a failed push never fails the job. Diun uses its own ntfy notifier
+- Every script sender uses `curl -m ntfy_timeout … || true`, so a failed push never fails the job
 - If `ntfy_url` is empty, the senders still run but stay quiet
 
 - Enforced by: one set of variables that every sender reads, no targets per role
@@ -50,4 +50,4 @@ How sending works:
 - Accepted: it depends on ntfy.sh being up, and a lost push isn't retried
 - Accepted: anyone who finds out the topic name can read and post to it
 
-- Related: [0009](0009-aide-with-manual-accept.md) (AIDE, counts only), [0013](0013-pbs-file-level-backups.md) (PBS alerts), [0006](0006-latest-images-notify-only.md) (Diun), [0024](0024-ansible-run-os-updates.md) (update summary), [0027](0027-gatus-generated-from-apps-map.md) (gatus)
+- Related: [0009](0009-aide-with-manual-accept.md) (AIDE, counts only), [0013](0013-pbs-file-level-backups.md) (PBS alerts), [0021](0021-podman-quadlets.md) (image updates), [0024](0024-ansible-run-os-updates.md) (update summary), [0027](0027-gatus-generated-from-apps-map.md) (gatus)

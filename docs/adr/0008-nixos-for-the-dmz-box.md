@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- The NetBird control plane is the only VM that takes inbound WAN traffic (443/tcp, 3478/udp and a small TURN relay range). The FRITZ!Box WireGuard is the only other way in
+- The NetBird control plane is the only VM that takes inbound WAN traffic (443/tcp, 3478/udp and a small TURN relay range). The router's WireGuard is the only other way in
 - It sits on pve-2 as an isolated DMZ VM
 - Its only data is the NetBird SQLite store, so it's cheap to rebuild
 - Everything else runs Debian + Ansible
@@ -31,9 +31,9 @@ Install and updates:
   3. `switch --target-host`
   4. Check for failed units
   5. Warn if a new kernel needs a reboot
-- `system.autoUpgrade` also runs nightly between 04:00 and 04:45 (random delay) from the git repo, reboots are only allowed between 03:00 and 05:00
+- `system.autoUpgrade` also runs daily between 03:00 and 03:30 (random delay) from the git repo, reboots are only allowed between 03:00 and 04:00 (`schedules.yml`)
 
-Hardening (`netbird/hardening.nix`):
+Hardening (`base/hardening.nix`):
 - Users only come from the config (immutable users), SSH is key-only, LAN-only and on port `ssh_port`, with modern ciphers/KEX/MACs only
 - nftables denies by default, only 443 and the coturn ports are public
 - On 443 the WAN only reaches the gRPC paths
@@ -62,4 +62,4 @@ Secrets:
 
 - Facts are shared with the rest through group_vars ([0007](0007-group-vars-single-source-of-truth.md))
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0009](0009-aide-with-manual-accept.md) (AIDE), [0022](0022-central-logging-relp.md) (logging), [0023](0023-chrony-with-nts.md) (time), [0024](0024-ansible-run-os-updates.md) (apt hosts)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0009](0009-aide-with-manual-accept.md) (AIDE), [0022](0022-central-logging-relp.md) (logging), [0023](0023-chrony-with-nts.md) (time), [0024](0024-ansible-run-os-updates.md) (apt hosts), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge, same flake)

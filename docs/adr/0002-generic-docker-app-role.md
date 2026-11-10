@@ -1,6 +1,6 @@
 # 2. One generic role for all apps
 
-Status: Accepted
+Status: Superseded by [0021](0021-podman-quadlets.md)
 
 ## Context
 
@@ -18,7 +18,7 @@ Status: Accepted
 How an app is set up:
 - There is one role, `roles/docker_app`
 - Each app is a folder `apps/<name>/` (compose file + config) plus a thin playbook `playbooks/deploy-<name>.yml`
-- The smallest playbook only sets the host and `docker_app_name` (`deploy-pdfcraft.yml`, 8 lines)
+- The smallest playbook only sets the host and `docker_app_name` (`deploy-diun.yml` adds a few vars)
 - `site.yml` imports every deploy playbook in order, except `deploy-pve-firewall.yml` (lockout risk), `deploy-netbird-agent.yml` and `deploy-login-notify.yml`, which run on their own
 - Running one playbook only touches that one app
 
