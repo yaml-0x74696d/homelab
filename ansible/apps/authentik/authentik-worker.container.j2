@@ -1,0 +1,18 @@
+# image, pod, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=authentik worker
+
+[Container]
+Volume={{ podman_app_dir }}/media:/data/media:Z
+Volume={{ podman_app_dir }}/custom-templates:/templates:Z
+Secret=authentik-db-pass,type=env,target=AUTHENTIK_POSTGRESQL__PASSWORD
+Secret=authentik-secret-key,type=env,target=AUTHENTIK_SECRET_KEY
+Environment=AUTHENTIK_POSTGRESQL__HOST=127.0.0.1
+Environment=AUTHENTIK_POSTGRESQL__USER=authentik
+Environment=AUTHENTIK_POSTGRESQL__NAME=authentik
+# same listen settings as the server, on other ports: the pod shares one netns
+Environment=AUTHENTIK_LISTEN__HTTP=0.0.0.0:9001
+Environment=AUTHENTIK_LISTEN__HTTPS=0.0.0.0:9444
+Environment=AUTHENTIK_LISTEN__METRICS=0.0.0.0:9301
+Exec=worker
+HealthCmd=ak healthcheck

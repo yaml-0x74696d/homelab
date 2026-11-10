@@ -1,0 +1,10 @@
+# image, pod, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=authentik db
+
+[Container]
+Volume=/srv/apps/authentik/database:/var/lib/postgresql/data:Z
+Secret=authentik-db-pass,type=env,target=POSTGRES_PASSWORD
+Environment=POSTGRES_USER=authentik
+Environment=POSTGRES_DB=authentik
+HealthCmd=pg_isready -d authentik -U authentik

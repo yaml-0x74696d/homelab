@@ -1,0 +1,19 @@
+# image, pod, auto-update, house rules: drop-ins from roles/podman_app
+[Unit]
+Description=authentik server
+
+[Container]
+Volume=/srv/apps/authentik/media:/data/media:Z
+Volume=/srv/apps/authentik/custom-templates:/templates:Z
+Volume=/srv/apps/authentik/config/custom.css:/web/dist/custom.css:ro
+Secret=authentik-db-pass,type=env,target=AUTHENTIK_POSTGRESQL__PASSWORD
+Secret=authentik-secret-key,type=env,target=AUTHENTIK_SECRET_KEY
+Environment=AUTHENTIK_POSTGRESQL__HOST=127.0.0.1
+Environment=AUTHENTIK_POSTGRESQL__USER=authentik
+Environment=AUTHENTIK_POSTGRESQL__NAME=authentik
+# 2026.5 defaults to [::], the pod has no ipv6
+Environment=AUTHENTIK_LISTEN__HTTP=0.0.0.0:9000
+Environment=AUTHENTIK_LISTEN__HTTPS=0.0.0.0:9443
+Environment=AUTHENTIK_LISTEN__METRICS=0.0.0.0:9300
+Exec=server
+HealthCmd=ak healthcheck

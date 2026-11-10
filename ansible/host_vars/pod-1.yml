@@ -1,6 +1,6 @@
 ---
 # what pbs backs up on pod-1 (see roles/pbs). pg reads user/db from the container env.
 pbs_jobs:
-  - { name: authentik, type: postgres, container: authentik-db, data_dir: authentik/database }
+  - { name: authentik, type: postgres, container: authentik-db, data_dir: authentik/database, podman: true, app: authentik }
   - { name: gitea, type: sqlite, path: gitea/data/gitea/gitea.db, podman: true }
   - { name: vaultwarden, type: sqlite, path: vaultwarden/data/db.sqlite3, podman: true }

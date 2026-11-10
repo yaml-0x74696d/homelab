@@ -21,7 +21,7 @@ layout:
     columns: 4
   VMs:
     style: row
-    columns: 5
+    columns: 6
   LXCs:
     style: row
     columns: 3

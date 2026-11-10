@@ -291,11 +291,39 @@ apps:
     routes:
       - host: paperless
 
-  # pod-1, still compose
   authentik:
     host: pod-1
-    runtime: compose
+    uid: 2170
     port: 9000
+    allow_from: [edge, netbird, homepage]
+    start_timeout: 15min   # migrations run on start after a tag bump
+    secrets:
+      - name: authentik-db-pass
+        vault: authentik_pg
+      - name: authentik-secret-key
+        vault: authentik_key
+    dirs:
+      - path: database
+        owner: 70   # postgres in the alpine image
+        mode: "0700"   # initdb sets it, 0750 would flip back each run
+      - path: media
+        owner: 1000   # the image runs as authentik (1000)
+      - path: custom-templates
+        owner: 1000
+    # deploy-authentik.yml checks the tag: one release series at a time, never down
+    containers:
+      - name: authentik
+        image: ghcr.io/goauthentik/server
+        tag: "2026.8.3"
+        after: [authentik-db]
+      - name: authentik-worker
+        image: ghcr.io/goauthentik/server
+        tag: "2026.8.3"
+        after: [authentik-db]
+      - name: authentik-db
+        image: docker.io/library/postgres
+        tag: 16-alpine
+        auto_update: false
     homepage: {group: Admin, icon: authentik}
     routes:
       - host: auth
