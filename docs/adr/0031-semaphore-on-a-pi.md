@@ -29,7 +29,7 @@ The setup:
 - The container runs on the host network: ansible has to reach ctl-1's own sshd, and pasta hands `ctl1_ip` back to the container
 
 The code it runs:
-- A git clone of the public repo on `semaphore_repo_version` (`podman-migration`, `main` once it is merged) at `semaphore_repo_dir`, mounted read-only into the container
+- A git clone of the public repo on `semaphore_repo_version` (`main`) at `semaphore_repo_dir`, mounted read-only into the container
 - `playbooks/repo-pull.yml` pulls it, as a Semaphore template
 - The quadlet sets `ANSIBLE_CONFIG`, `AIDE_CHECKSUM_DIR` and `HOMELAB_PRIVATE_DIR` and forwards them to the tasks (`SEMAPHORE_FORWARDED_ENV_VARS`), so templates need no variable group
 - The gitignored `vault.yml` and `private.yml` come from ctl-0 (`ctl_base_private_files`, tag `private-files`)

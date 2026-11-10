@@ -145,11 +145,8 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 ## Future plans
 
-- Phase 1: `podman_base` + `podman_app` roles, quadlet conventions (pinned image + auto-update, CIFS automount + `findmnt` start gate), restore rehearsal runbook, CI quadlet dry-run
-- Phase 2 (done): edge = NixOS VM on pve-1 running Traefik + AdGuard Home, replacing Traefik on pod-1 and Pi-hole on pod-2 ([ADR 0032](docs/adr/0032-edge-vm-traefik-adguard-on-nixos.md))
-- Phase 3–4: pod-2 / pod-3 rebuilt as Podman hosts, rootless per app, same VMID/IP/MAC; gated by a restore rehearsal
-- Phase 6 (done): pod-1 → Podman, Docker purged from every VM
-- Podman auto-update with rollback replaces `:latest` + Diun ([ADR 0021](docs/adr/0021-podman-quadlets.md))
+- The restore rehearsal again, on Podman only ([docs/restore-rehearsal.md](docs/restore-rehearsal.md) still walks through a compose app)
+- A remove path in `podman_app` (`state: absent`), today a removal is a checklist ([docs/apps.md](docs/apps.md#remove-an-app))
 - Later: guest OS Debian → EL10 once the hardware has x86-64-v3 / AVX2 ([ADR 0025](docs/adr/0025-debian-guests-until-x86-64-v3.md)); Proxmox hosts stay Debian
 - From then on: real commits on this repo
 
