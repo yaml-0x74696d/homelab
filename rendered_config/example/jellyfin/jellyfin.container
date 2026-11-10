@@ -11,7 +11,7 @@ PublishPort=8082:8096
 Environment=TZ=Europe/Berlin
 Environment=JELLYFIN_PublishedServerUrl=https://media.example.org
 # token exchange goes straight to traefik, container dns can't resolve auth.<domain>
-AddHost=auth.example.org:192.168.178.201
+AddHost=auth.example.org:192.168.178.200
 HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8096/health
 # a version bump migrates the db before it answers
 HealthStartPeriod=3m

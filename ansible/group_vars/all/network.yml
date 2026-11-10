@@ -26,8 +26,8 @@ iot_node: "{{ guest_nodes.iot }}"   # node with the wifi card, CT 302 runs here
 iot_wifi_nic: wlp0s12f0        # the card's name on iot_node, moved into CT 302 as wlan0
 iot_wifi_country: DE           # regulatory domain, set on iot_node (the ct isn't allowed to)
 iot_dhcp_range: [192.168.50.50, 192.168.50.200]
-dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (pod-2)
-dns_ip_host: pod-2             # who holds dns_ip. edge adds it only once this says edge (cutover)
+dns_ip: 192.168.178.53         # service ip, follows whichever host runs dns (edge)
+dns_ip_host: edge              # who holds dns_ip (adguard home on edge, adr 0032)
 mqtt_broker_ip: "{{ iot_lan_ip }}"   # lan consumers (ha); sensors use iot_ip
 
 # proxmox node of each guest: tofu places them there, roles/reach lets the guests of part_time_nodes be off

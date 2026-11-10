@@ -21,7 +21,7 @@ Environment=NEXTCLOUD_TRUSTED_DOMAINS=cloud.example.org
 Environment=OVERWRITEPROTOCOL=https
 Environment=OVERWRITECLIURL=https://cloud.example.org
 # only traefik may set X-Forwarded-For
-Environment=TRUSTED_PROXIES=192.168.178.201
+Environment=TRUSTED_PROXIES=192.168.178.200
 Environment=PHP_MEMORY_LIMIT=1G
 Environment=PHP_UPLOAD_LIMIT=10G
 HealthCmd=curl -fsS -o /dev/null http://127.0.0.1/status.php

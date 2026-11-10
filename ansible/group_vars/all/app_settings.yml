@@ -73,8 +73,8 @@ podman_svc_group: svc-apps     # every svc user, may read the ntfy env file
 # what an allow_from name in apps.yml resolves to. an app name resolves to its host's ip
 app_sources:
   lan: "{{ lan_cidr }}"
-  edge: "{{ pod1_ip }}"      # the live ingress: traefik on pod-1 until the edge cutover
+  edge: "{{ edge_ip }}"      # the live ingress: traefik on the edge vm
   netbird: "{{ pod2_ip }}"   # routing peer, remote traffic arrives masqueraded from it
   vpn: "{{ netbird_overlay_cidr }}"   # peers that talk to pod-2's overlay ip directly (dns-relay)
-# parallel run before the cutover: edge's traefik may reach the backends too (firewall only). [] after it
-ingress_extra_sources: ["{{ edge_ip }}"]
+# more ingress ips while two traefiks run side by side (firewall only), empty otherwise
+ingress_extra_sources: []

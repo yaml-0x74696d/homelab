@@ -361,10 +361,10 @@ infra_routes:
   - {host: pve-2, target: pve-2, port_var: pve_ui_port, scheme: https, insecure_tls: true}
   - {host: pve-3, target: pve-3, port_var: pve_ui_port, scheme: https, insecure_tls: true}
   - {host: pbs, target: pve-3, port_var: pbs_port, scheme: https, insecure_tls: true}
-  - host: dns     # pi-hole's ui on pod-1's traefik, adguard home's on edge
+  - host: dns     # adguard home's ui on edge
     target: edge
     middlewares: [authentik]
-    homepage: {group: Admin, icon: /images/pihole.png, label: Pi-hole, path: /admin/login}
+    homepage: {group: Admin, icon: adguard-home, label: AdGuard Home}
   - host: proxy   # pod-1 traefik's dashboard
     homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}
   - host: traefik   # edge traefik's dashboard

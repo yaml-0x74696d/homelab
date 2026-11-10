@@ -4,6 +4,13 @@
   become: true
 
   pre_tasks:
+    # two hosts on one service ip break lan dns. pi-hole only runs where dns_ip_host says
+    - name: Check this host holds the dns service ip
+      ansible.builtin.assert:
+        that: dns_ip_host == inventory_hostname
+        fail_msg: "dns_ip belongs to {{ dns_ip_host }} (network.yml), not {{ inventory_hostname }}"
+        quiet: true
+
     - name: Dns service ip unit
       ansible.builtin.copy:
         dest: /etc/systemd/system/dns-ip.service

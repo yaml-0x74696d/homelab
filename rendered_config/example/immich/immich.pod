@@ -2,4 +2,4 @@
 [Pod]
 PublishPort=8081:2283
 # token exchange goes straight to traefik, container dns can't resolve auth.<domain>
-AddHost=auth.example.org:192.168.178.201
+AddHost=auth.example.org:192.168.178.200
