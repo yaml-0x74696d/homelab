@@ -20,6 +20,9 @@ services:
       - PASSWORD_HINTS_ALLOWED=false
     volumes:
       - ./data:/data
+    # oidc discovery + tokens go to authentik through edge, see EDGE_IP in .env
+    extra_hosts:
+      - "auth.${DOMAIN}:${EDGE_IP}"
     networks:
       - proxy-net
     labels:
