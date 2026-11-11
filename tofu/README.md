@@ -57,10 +57,10 @@ tofu apply
 - The pod VMs, the NetBird VM and the HAOS VM have `prevent_destroy`, because their databases live on the VM disk
 - Never apply a plan that replaces one of them
 
-## 5. After the first apply
+## 5. Guest agent on a fresh build
 
-- pod VMs: once `vm-preparation.yml` has installed qemu-guest-agent, set `agent { enabled = true }` in `vms.tf` and run `tofu apply` again
-- NetBird VM: the same flip in its own resource, after nixos-anywhere (NixOS turns the agent on)
+- `vms.tf` has `agent { enabled = true }`, but a fresh Debian guest has no agent yet, so the first apply can hang waiting for it
+- for the first apply set it to `false`, then back to `true` after `vm-preparation.yml` (pod VMs) or nixos-anywhere (NetBird, edge) and apply again
 
 ## Related
 
