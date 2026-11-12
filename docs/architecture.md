@@ -215,7 +215,7 @@ How a backup runs:
 What's in and out:
 - Which databases each host dumps is set in `pbs_jobs` in `host_vars/`
 - Left out: caches, query logs, the Prometheus TSDB and the MQTT broker state
-- Bulk media on the pool (photos, media, documents) isn't backed up, it can be synced again
+- Bulk media on the pool (photos, media, documents) isn't backed up; irreplaceable files are kept outside the lab
 - No VM images: a broken VM is rebuilt with OpenTofu + Ansible and the data restored ([ADR 0013](adr/0013-pbs-file-level-backups.md))
 
 ## Monitoring

@@ -49,6 +49,6 @@ Who uses it:
 - Harder: `samba_shares` can only be added to at the end. The position in the list sets the GID, so reordering breaks ownership
 
 - Accepted: no parity. A dead disk loses only the files on that disk, the rest of the pool keeps working
-- Accepted: configs and databases are backed up by PBS, bulk media is not on purpose (it can be ripped or synced again)
+- Accepted: configs and databases are backed up by PBS, bulk media is not on purpose (it can be ripped or synced again, and irreplaceable files are kept outside the lab)
 
 - Related: [0002](0002-generic-docker-app-role.md) (CIFS mounts), [0005](0005-prevent-destroy-on-stateful-vms.md) (DBs stay local)
