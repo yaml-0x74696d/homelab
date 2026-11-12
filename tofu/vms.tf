@@ -33,8 +33,8 @@ resource "proxmox_virtual_environment_vm" "pod" {
     ignore_changes = [disk[0].import_from]
   }
 
-  # qemu-guest-agent comes from vm-preparation; flip to true and re-apply after
-  agent { enabled = false }
+  # agent package comes from vm_base
+  agent { enabled = true }
 
   # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
   serial_device { device = "socket" }
@@ -109,8 +109,8 @@ resource "proxmox_virtual_environment_vm" "netbird" {
     ignore_changes = [disk[0].import_from, initialization]
   }
 
-  # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)
-  agent { enabled = false }
+  # nixos/base enables the agent
+  agent { enabled = true }
 
   # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
   serial_device { device = "socket" }
@@ -188,8 +188,8 @@ resource "proxmox_virtual_environment_vm" "edge" {
     ignore_changes = [disk[0].import_from, initialization]
   }
 
-  # debian bootstrap has no agent; flip to true after nixos-anywhere (nixos enables it)
-  agent { enabled = false }
+  # nixos/base enables the agent
+  agent { enabled = true }
 
   # serial0 socket: `qm terminal <vmid>` from the pve host when ssh/network is down
   serial_device { device = "socket" }
