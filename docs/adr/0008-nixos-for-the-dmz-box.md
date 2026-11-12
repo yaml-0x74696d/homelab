@@ -1,6 +1,6 @@
 # 8. NixOS for the NetBird VM only
 
-Status: Accepted
+Status: Superseded by [0035](0035-nixos-for-netbird-and-edge.md)
 
 ## Context
 

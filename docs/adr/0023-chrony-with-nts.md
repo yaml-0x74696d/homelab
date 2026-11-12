@@ -35,4 +35,4 @@ Status: Accepted
 
 - Accepted: if all four servers are unreachable, the clock free-runs until they're back
 
-- Related: [0008](0008-nixos-for-the-dmz-box.md) (NetBird VM), [0022](0022-central-logging-relp.md) (log timestamps across hosts), [0014](0014-authentik-as-idp.md) (TOTP)
+- Related: [0014](0014-authentik-as-idp.md) (TOTP), [0022](0022-central-logging-relp.md) (log timestamps across hosts), [0035](0035-nixos-for-netbird-and-edge.md) (NetBird VM)

@@ -19,7 +19,7 @@ Status: Accepted
 ## Decision
 
 The control plane:
-- Self-hosted NetBird on its own NixOS VM (`netbird`, VMID 250, on pve-2, `.250`), using nixpkgs `services.netbird.server` ([0008](0008-nixos-for-the-dmz-box.md))
+- Self-hosted NetBird on its own NixOS VM (`netbird`, VMID 250, on pve-2, `.250`), using nixpkgs `services.netbird.server` ([0035](0035-nixos-for-netbird-and-edge.md))
 - Parts: management (SQLite), signal, dashboard, coturn (STUN/TURN) and nginx with one TLS vhost
 - TLS through ACME DNS-01 (Cloudflare), so port 80 isn't forwarded
 - Login through Authentik OIDC (public PKCE client)
@@ -60,4 +60,4 @@ The fallback:
 - Accepted: user and group sync from the IdP is turned off (Authentik's machine auth answered 405). Users still log in through OIDC
 - Accepted: the server secrets were put on the VM by hand and are not in git. agenix/sops is planned
 
-- Related: [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0010](0010-lan-dns-on-a-service-ip.md) (LAN DNS)
+- Related: [0010](0010-lan-dns-on-a-service-ip.md) (LAN DNS), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS)

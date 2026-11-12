@@ -1,6 +1,6 @@
 # 15. TLS only via DNS-01, no port 80 from the WAN
 
-Status: Accepted
+Status: Superseded by [0034](0034-tls-via-dns-01.md)
 
 ## Context
 

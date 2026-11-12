@@ -58,4 +58,4 @@ Configs:
 - Accepted: `just check` takes minutes (Nix build of `facts.nix`, the first hook install). Commits stay fast, because the slow hooks only run in the manual stage
 - Accepted: the diagram PNGs are committed (exported with `just c4`), so the large-file limit is raised for `docs/img/` only
 
-- Related: [0007](0007-group-vars-single-source-of-truth.md) (OpenTofu + Nix checks read the same facts), [0008](0008-nixos-for-the-dmz-box.md) (flake check)
+- Related: [0007](0007-group-vars-single-source-of-truth.md) (OpenTofu + Nix checks read the same facts), [0035](0035-nixos-for-netbird-and-edge.md) (flake check)

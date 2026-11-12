@@ -52,4 +52,4 @@ How each tool reads it:
 - Accepted: the NixOS flake reaches outside its own folder (`../ansible`), so it only works from a full checkout of the repo
 - Accepted: it's one big shared namespace. Role-specific settings still go in `roles/<role>/defaults`, only facts used by more than one tool belong here
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md), [0008](0008-nixos-for-the-dmz-box.md), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (routes from apps.yml)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (routes from apps.yml), [0035](0035-nixos-for-netbird-and-edge.md)

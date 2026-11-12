@@ -12,7 +12,7 @@ Status: Accepted
 - Alternatives:
   - Keep Docker + compose (why not: root daemon, no auto-update with rollback)
   - Rootful Podman (why not: no gain over Docker, still root)
-  - Kubernetes / k3s (why not: see [0012](0012-no-kubernetes.md))
+  - Kubernetes / k3s (why not: see [0033](0033-no-kubernetes.md))
 - Why: I want to be able to leave the homelab alone for a couple of months. I'd rather fix a broken service when I have time than run an unpatched vulnerability
 
 ## Decision
@@ -67,4 +67,4 @@ Rollout:
 
 - Replaces [0002](0002-generic-docker-app-role.md) (`docker_app` role) and [0006](0006-latest-images-notify-only.md) (`:latest` + Diun): every app runs as quadlets + `AutoUpdate`
 
-- Related: [0002](0002-generic-docker-app-role.md), [0006](0006-latest-images-notify-only.md), [0012](0012-no-kubernetes.md) (why not K8s), [0017](0017-smb-shares-to-docker-vms.md) (CIFS mounts), [0024](0024-ansible-run-os-updates.md) (OS updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian pod hosts), [0026](0026-ufw-as-guest-firewall.md) (firewall), [0027](0027-gatus-generated-from-apps-map.md) (gatus), [0031](0031-semaphore-on-a-pi.md) (Semaphore on ctl-1)
+- Related: [0002](0002-generic-docker-app-role.md), [0006](0006-latest-images-notify-only.md), [0017](0017-smb-shares-to-docker-vms.md) (CIFS mounts), [0024](0024-ansible-run-os-updates.md) (OS updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian pod hosts), [0026](0026-ufw-as-guest-firewall.md) (firewall), [0027](0027-gatus-generated-from-apps-map.md) (gatus), [0031](0031-semaphore-on-a-pi.md) (Semaphore on ctl-1), [0033](0033-no-kubernetes.md) (why not K8s)
