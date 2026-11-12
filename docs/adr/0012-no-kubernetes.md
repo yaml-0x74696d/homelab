@@ -1,6 +1,6 @@
 # 12. No Kubernetes
 
-Status: Accepted
+Status: Superseded by [0033](0033-no-kubernetes.md)
 
 ## Context
 

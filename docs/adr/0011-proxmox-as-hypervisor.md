@@ -10,7 +10,7 @@ Status: Accepted
 - Alternatives:
   - Plain KVM / libvirt (why not: cluster, migration, web console and storage handling come out of the box instead of building them myself)
   - Gentoo with libvirt + QEMU (why not: the workload isn't static or special enough to justify tuning USE flags (Gentoo's main point), and compiling + maintaining a host OS on thin clients is time taken from the services)
-  - OpenShift (why not: it's Kubernetes, same reasons as [0012](0012-no-kubernetes.md), and its minimum node specs are above what a small form factor PC has)
+  - OpenShift (why not: it's Kubernetes, same reasons as [0033](0033-no-kubernetes.md), and its minimum node specs are above what a small form factor PC has)
   - VergeOS (why not: commercial, aimed at enterprise, not free for a homelab)
 - Proxmox is KVM/QEMU underneath anyway, the question is who builds the layer on top
 
@@ -29,4 +29,4 @@ Status: Accepted
 
 - Accepted: tied to Proxmox's API and tooling. Moving away means rewriting `tofu/` and the PVE roles
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu), [0012](0012-no-kubernetes.md) (no Kubernetes), [0025](0025-debian-guests-until-x86-64-v3.md) (guest OS)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu), [0025](0025-debian-guests-until-x86-64-v3.md) (guest OS), [0033](0033-no-kubernetes.md) (no Kubernetes)

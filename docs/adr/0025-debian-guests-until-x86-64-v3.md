@@ -18,7 +18,7 @@ Status: Accepted
 
 - The guests stay on Debian 13, the Podman migration ([0021](0021-podman-quadlets.md)) included
 - EL10 is revisited when the hardware has x86-64-v3
-- The PVE nodes stay Debian ([0011](0011-proxmox-as-hypervisor.md)), the NetBird VM stays NixOS ([0008](0008-nixos-for-the-dmz-box.md))
+- The PVE nodes stay Debian ([0011](0011-proxmox-as-hypervisor.md)), the NetBird VM stays NixOS ([0035](0035-nixos-for-netbird-and-edge.md))
 
 - Enforced by: `debian_image_url` and `lxc_template` in `tofu/variables.tf`, the image and template every guest is built from ([0001](0001-tofu-and-cloud-init-for-vms.md))
 
@@ -32,4 +32,4 @@ Status: Accepted
 - Accepted: Podman runs under AppArmor, not SELinux
 - Accepted: no EL on the guests for now
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (images), [0008](0008-nixos-for-the-dmz-box.md) (NetBird VM), [0011](0011-proxmox-as-hypervisor.md) (PVE on Debian), [0021](0021-podman-quadlets.md) (pod hosts), [0024](0024-ansible-run-os-updates.md) (apt updates), [0026](0026-ufw-as-guest-firewall.md) (no firewalld)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (images), [0011](0011-proxmox-as-hypervisor.md) (PVE on Debian), [0021](0021-podman-quadlets.md) (pod hosts), [0024](0024-ansible-run-os-updates.md) (apt updates), [0026](0026-ufw-as-guest-firewall.md) (no firewalld), [0035](0035-nixos-for-netbird-and-edge.md) (NetBird VM)

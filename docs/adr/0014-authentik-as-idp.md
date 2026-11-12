@@ -49,4 +49,4 @@ Connecting apps:
 - Accepted: Authentik is a single point of failure for logins. That's why every app except Vaultwarden keeps a local break-glass admin, and monitoring isn't fully behind it
 - Accepted: with Authentik down, Vaultwarden takes no new logins. Clients that are already logged in keep their offline copy
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird OIDC), [0015](0015-tls-via-dns-01.md) (TLS), [0002](0002-generic-docker-app-role.md) (app role)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird OIDC), [0034](0034-tls-via-dns-01.md) (TLS), [0002](0002-generic-docker-app-role.md) (app role)

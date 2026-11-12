@@ -59,4 +59,4 @@ Alerts and accepting:
 - Accepted: changes made on a host while `update.yml` upgrades it go into the baseline unreviewed
 - Accepted: `/dev` on the pve nodes is unwatched (VM disks, ISOs, USB and corosync IPC churn there daily), so a payload in `/dev/shm` or a planted device node goes unseen
 
-- Related: `roles/aide`, [0008](0008-nixos-for-the-dmz-box.md), [0024](0024-ansible-run-os-updates.md) (auto-accept after upgrades), [0031](0031-semaphore-on-a-pi.md) (hashes on ctl-1), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge)
+- Related: `roles/aide`, [0024](0024-ansible-run-os-updates.md) (auto-accept after upgrades), [0031](0031-semaphore-on-a-pi.md) (hashes on ctl-1), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge), [0035](0035-nixos-for-netbird-and-edge.md)

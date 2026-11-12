@@ -98,7 +98,7 @@ ansible-playbook playbooks/deploy-storage.yml -l storage
 
 ## 4. NixOS VMs (netbird, edge)
 
-Each is installed once with nixos-anywhere, OpenTofu only made the empty Debian VM ([docs/nixos-layout.md](nixos-layout.md), [ADR 0008](adr/0008-nixos-for-the-dmz-box.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md)). `private.yml` is a symlink and nix copies links without their targets, so the system is built locally with `--override-input` first, then installed from the store paths. Otherwise it gets the example values, the example SSH keys included.
+Each is installed once with nixos-anywhere, OpenTofu only made the empty Debian VM ([docs/nixos-layout.md](nixos-layout.md), [ADR 0035](adr/0035-nixos-for-netbird-and-edge.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md)). `private.yml` is a symlink and nix copies links without their targets, so the system is built locally with `--override-input` first, then installed from the store paths. Otherwise it gets the example values, the example SSH keys included.
 
 ```bash
 cd ~/homelab/nixos

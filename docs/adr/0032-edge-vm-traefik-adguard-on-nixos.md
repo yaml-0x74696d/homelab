@@ -8,7 +8,7 @@ Status: Accepted
 - Both Docker VMs were to be rebuilt as Podman hosts, so ingress and LAN DNS would have gone down with each rebuild
 - Traefik's routers were written by hand in `apps/proxy/traefik/dynamic/remote_services.yml` next to the `routes:` in `apps.yml`. `scripts/check_wiring.py` only found a mismatch after the fact
 - pve-1 and pve-2 carry the vital services ([0030](0030-haos-vm-on-pve-3.md)), pve-1 has room for a small VM since HA moved to pve-3
-- The NetBird VM already shows the NixOS pattern: flake, nixos-anywhere, autoUpgrade, facts from group_vars ([0008](0008-nixos-for-the-dmz-box.md))
+- The NetBird VM already shows the NixOS pattern: flake, nixos-anywhere, autoUpgrade, facts from group_vars ([0035](0035-nixos-for-netbird-and-edge.md))
 
 - Alternatives:
   - Keep Traefik and Pi-hole in Docker (why not: they go down with every rebuild, routers stay hand-written)
@@ -31,7 +31,7 @@ Traefik (`nixos/edge/traefik.nix`):
 - A route's host is resolved to its IP through the inventory (`host_ips` in `facts.nix`), the backend port is the route's `port` or the app's. Infra routes name a ports.yml key (`port_var`), `scheme` and `insecure_tls`
 - Middlewares (`authentik` forward-auth, `nextcloud-dav`) live in the module. A route that names an undefined middleware fails the build
 - The dynamic config is a copied file, `/etc/traefik/dynamic.yml`, which Traefik watches. A route change is a `nixos-rebuild`, Traefik isn't restarted
-- One wildcard certificate `*.<domain>` via DNS-01 (Cloudflare, `cf_token` in `/var/lib/secrets/edge/cloudflare.env`) ([0015](0015-tls-via-dns-01.md))
+- One wildcard certificate `*.<domain>` via DNS-01 (Cloudflare, `cf_token` in `/var/lib/secrets/edge/cloudflare.env`) ([0034](0034-tls-via-dns-01.md))
 - Dashboard at `traefik.<domain>` behind Authentik, access log to the journal and on to the log LXC ([0022](0022-central-logging-relp.md))
 
 AdGuard Home (`nixos/edge/adguard.nix`):
@@ -65,4 +65,4 @@ Updates:
 - Accepted: changes made in the AdGuard UI are gone at the next restart, the UI is for looking
 - Accepted: a wildcard certificate covers every name under the domain, a stolen key would too
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0005](0005-prevent-destroy-on-stateful-vms.md) (prevent_destroy), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0008](0008-nixos-for-the-dmz-box.md) (NixOS), [0009](0009-aide-with-manual-accept.md) (AIDE), [0010](0010-lan-dns-on-a-service-ip.md) (service IP), [0014](0014-authentik-as-idp.md) (forward-auth), [0015](0015-tls-via-dns-01.md) (DNS-01), [0022](0022-central-logging-relp.md) (logging), [0027](0027-gatus-generated-from-apps-map.md) (apps map)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0005](0005-prevent-destroy-on-stateful-vms.md) (prevent_destroy), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0009](0009-aide-with-manual-accept.md) (AIDE), [0010](0010-lan-dns-on-a-service-ip.md) (service IP), [0014](0014-authentik-as-idp.md) (forward-auth), [0022](0022-central-logging-relp.md) (logging), [0027](0027-gatus-generated-from-apps-map.md) (apps map), [0034](0034-tls-via-dns-01.md) (DNS-01), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS)

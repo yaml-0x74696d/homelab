@@ -45,4 +45,4 @@ The NetBird VM (NixOS):
 - Accepted: agenix/sops for the NetBird VM is still open
 - Accepted: whoever gets into the secure storage has the vault and its password together
 
-- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0008](0008-nixos-for-the-dmz-box.md) (NetBird secrets)
+- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0035](0035-nixos-for-netbird-and-edge.md) (NetBird secrets)

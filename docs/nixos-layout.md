@@ -76,7 +76,7 @@ cd nixos && nix flake check           # what pre-commit and CI run
 
 - `update.sh` builds first, so a renamed option fails before anything is switched
 - Rollback: `ssh root@<host> nixos-rebuild switch --rollback`
-- Each VM is installed once with nixos-anywhere, OpenTofu only makes the empty VM ([ADR 0008](adr/0008-nixos-for-the-dmz-box.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md))
+- Each VM is installed once with nixos-anywhere, OpenTofu only makes the empty VM ([ADR 0035](adr/0035-nixos-for-netbird-and-edge.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md))
 - Secrets go on the box by hand before the first switch: `/var/lib/secrets/netbird/`, `/var/lib/secrets/edge/cloudflare.env`, `/var/lib/secrets/aide/ntfy.env`
 - autoUpgrade: netbird 03:00 to 04:00, edge 04:00 to 04:45, never both at once (`group_vars/all/schedules.yml`)
 

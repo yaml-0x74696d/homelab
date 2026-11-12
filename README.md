@@ -1,20 +1,20 @@
 # homelab
 
-- Overview of my 3-node Proxmox homelab. With this project I am going for full IaC, through Ansible, OpenTofu and NixOS.
-- This repo is a showcase copy of my private repo (self-hosted Gitea), renamed and with placeholders.
+A 3-node Proxmox homelab, running since 2025. Hosts, guests and apps are code: OpenTofu, Ansible and NixOS, checked in CI. Every design decision is a written record ([docs/adr](docs/adr/README.md)).
+
+Domain, MACs and keys are placeholders; the real values live in a gitignored `private.yml`.
 
 ![System landscape](docs/img/index.png)
 
-- Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), all 23 views, clickable (built by `.github/workflows/pages.yml`)
+- Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), clickable (built by `.github/workflows/pages.yml`)
 - More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views); sensors and the IoT gateway: [docs/iot.md](docs/iot.md); where things go and which value wins: [Ansible](docs/ansible-layout.md), [OpenTofu](docs/tofu-layout.md), [Podman](docs/podman-layout.md), [NixOS](docs/nixos-layout.md)
 - Running it: [updates](docs/updates.md), [adding and removing apps](docs/apps.md), [troubleshooting](docs/troubleshooting.md), [new hardware](docs/new-hardware.md), from bare hardware: [bootstrap](docs/bootstrap.md)
 
 ## Overview
 
-- 3 Proxmox nodes, 4 VMs + 3 LXCs, 17 Podman apps, 23 Ansible roles, 21 playbooks, 23 C4 views
 - 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
 - Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
-- Every check runs the same locally and in CI: 26 pre-commit hooks (`just check`, the `apps.yml` schema included) and the Podman units through `quadlet -dryrun` (`just quadlet`)
+- Every check runs the same locally and in CI: the pre-commit hooks (`just check`, the `apps.yml` schema included) and the Podman units through `quadlet -dryrun` (`just quadlet`)
 
 ## Hardware
 
@@ -81,10 +81,10 @@ ansible/
   group_vars/<group>.yml  login per group (user, become)
   inventory.yml    hosts only: pod_vms, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent, appliances (haos)
   roles/           aide, chrony, cronie, ctl_base, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, reach, rsyslog, samba, update, vm_base
-  apps/<name>/     Quadlet units + templates per app (17)
+  apps/<name>/     Quadlet units + templates per app
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NixOS VMs: netbird, edge (+ update.sh, aide-accept.sh)
-architecture/    LikeC4 model: landscape, containers, deployment, 8 flows
+architecture/    LikeC4 model: landscape, containers, deployment, flows
 docs/            Architecture, ADRs, exported diagrams
 rendered_config/ Podman apps rendered with example values for review (just render, CI keeps it current)
 justfile         setup · lint · check · deploy · deploy-app · render · c4 · diagrams
@@ -127,28 +127,28 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
 - Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden), forward-auth for apps without SSO
-- TLS everywhere via Let's Encrypt DNS-01 (Cloudflare), no port 80 forwarded from the WAN
+- TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN
 - AIDE on every host + the NixOS VMs: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
-- Backups: PBS, scoped token that can only write, DB dumps before each run; a restore is rehearsed before each rebuild ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
+- Backups: PBS, scoped token that can only write, DB dumps before each run; a restore was rehearsed on 2026-11-08 ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
+- Irreplaceable files live outside the lab; the mergerfs pool has no parity and no backup (accepted)
 - Secrets: Ansible Vault; gitleaks on every commit and over the full history in CI
 
 ## Decisions
 
-- [docs/adr/](docs/adr/README.md): 32 records
+- [docs/adr/](docs/adr/README.md): one record per decision
 - 0001 OpenTofu + cloud-init · 0002 generic app role · 0003 NetBird · 0004 mergerfs · 0005 prevent_destroy
 - 0006 `:latest` + Diun · 0007 group_vars as source of truth · 0008 NixOS DMZ · 0009 AIDE · 0010 LAN DNS service IP
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the pod VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
 - 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
-- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox
 
 ## Future plans
 
 - The restore rehearsal again, on Podman only ([docs/restore-rehearsal.md](docs/restore-rehearsal.md) still walks through a compose app)
 - A remove path in `podman_app` (`state: absent`), today a removal is a checklist ([docs/apps.md](docs/apps.md#remove-an-app))
 - Later: guest OS Debian → EL10 once the hardware has x86-64-v3 / AVX2 ([ADR 0025](docs/adr/0025-debian-guests-until-x86-64-v3.md)); Proxmox hosts stay Debian
-- From then on: real commits on this repo
 
 ## License
 

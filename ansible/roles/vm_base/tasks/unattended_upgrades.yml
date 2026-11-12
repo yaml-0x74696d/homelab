@@ -22,7 +22,7 @@
   changed_when: false
   check_mode: false
 
-- name: Check a security source matches the pattern
+- name: Check a Debian-Security source exists
   ansible.builtin.assert:
     that: vm_base_apt_policy.stdout is search('n=[a-z]+-security,l=Debian-Security')
     fail_msg: no Debian-Security source, unattended-upgrades would install nothing
