@@ -37,3 +37,4 @@ Format: status, context, decision, consequences.
 - [33. No Kubernetes](0033-no-kubernetes.md)
 - [34. TLS only via DNS-01, no port 80 from the WAN](0034-tls-via-dns-01.md)
 - [35. NixOS for the NetBird VM and edge](0035-nixos-for-netbird-and-edge.md)
+- [36. AI assistant in a sandbox without access to the lab](0036-ai-assistant-in-a-sandbox.md)

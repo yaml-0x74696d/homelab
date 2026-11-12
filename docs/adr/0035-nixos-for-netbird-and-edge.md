@@ -63,7 +63,7 @@ Secrets:
 - Harder: the unstable channel has the newest NetBird module, but upgrades can break options. That's why `update.sh` builds before it switches
 - Harder: autoUpgrade builds `main` with its local copy of `private.yml` (`/etc/homelab-private`), so a change on `testing` only sticks once it's merged, and a `private.yml` change needs an `update.sh` run
 
-- Accepted: whoever can merge to `main` is root on both VMs by the next night. What guards `main`: changes only through a PR, CI must pass, signed commits, and two-factor login on my GitHub account
+- Accepted: whoever can merge to `main` is root on both VMs by the next night. What guards `main`: changes only through a PR (no approvals needed, I am the only reviewer), the `checks` CI job must pass, and two-factor login on my GitHub account. Commits are not signed
 - Accepted: the VMs move to the newest nixos-unstable every night. `flake.lock` in git is not what runs, and `nix flake check` in CI tests a different nixpkgs than the next night's build
 - Accepted: a bad upgrade can take LAN DNS and ingress down at 04:00 until I roll back to the previous generation
 - Accepted: the NetBird management service only has the module's own sandbox. Extra systemd sandboxing kills netbird-mgmt during the OIDC call

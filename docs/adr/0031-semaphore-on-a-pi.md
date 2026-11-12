@@ -61,5 +61,6 @@ AIDE hashes:
 - Accepted: `aide_accept=yes` accepts what the run finds, without a second look before the swap
 - Accepted: no backup of the Pi. Projects and templates are quick to redo, the run history is lost with the card
 - Accepted: the SD card wears, so the journal is volatile and goes to the log LXC ([0022](0022-central-logging-relp.md))
+- Accepted: whoever can merge to `main` runs code as root on every Debian host within a day: `repo-pull` takes `main` at 11:45, `aide` runs from it at 13:15, `update` on Saturdays. Same guards as in [0035](0035-nixos-for-netbird-and-edge.md): PR only, the `checks` CI job, two-factor login
 
-- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0014](0014-authentik-as-idp.md), [0016](0016-ansible-vault-for-secrets.md) (vault), [0021](0021-podman-quadlets.md), [0022](0022-central-logging-relp.md), [0024](0024-ansible-run-os-updates.md) (updates), [0026](0026-ufw-as-guest-firewall.md), [0027](0027-gatus-generated-from-apps-map.md) (failed runs), [0033](0033-no-kubernetes.md)
+- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0014](0014-authentik-as-idp.md), [0016](0016-ansible-vault-for-secrets.md) (vault), [0021](0021-podman-quadlets.md), [0022](0022-central-logging-relp.md), [0024](0024-ansible-run-os-updates.md) (updates), [0026](0026-ufw-as-guest-firewall.md), [0027](0027-gatus-generated-from-apps-map.md) (failed runs), [0033](0033-no-kubernetes.md), [0035](0035-nixos-for-netbird-and-edge.md) (same trust in main)
