@@ -19,5 +19,5 @@ pbs_ntfy_token: "{{ ntfy_token | default('') }}"
 pbs_timeout: 1h
 
 # per-host, set in host_vars/<host>.yml
-pbs_jobs: []          # dbs to dump: {name, type: postgres|sqlite, container?, path?, data_dir?, podman?}
+pbs_jobs: []          # dbs to dump: {name, type: postgres|sqlite, container?, path?, data_dir?, app?}
 pbs_exclude: []       # extra flat-archive excludes (caches, disposable state)
