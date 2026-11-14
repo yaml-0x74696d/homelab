@@ -179,15 +179,18 @@ sudo systemctl --user -M svc-<app>@ start <app>-pod
 
 ## 8. AIDE baselines
 
-The first run on each host builds its baseline. Once the apps are in place:
+The pod VMs and ctl-1 got their baseline in steps 3 and 5, before the apps. The PVE nodes, the LXCs and the NixOS VMs have none yet. Once the apps are in place:
 
 ```bash
 cd ~/homelab/ansible
-ansible-playbook playbooks/aide-accept.yml
-rsync -a <admin_user>@<ctl1_ip>:/srv/apps/semaphore/aide/ aide/
+ansible-playbook playbooks/aide.yml          # builds the missing baselines (pve nodes, lxcs)
+ansible-playbook playbooks/aide-accept.yml   # pod vms + ctl-1: accept what the apps changed
+../nixos/aide-accept.sh netbird
+../nixos/aide-accept.sh edge
 ```
 
-- The hashes live on ctl-1 (`/srv/apps/semaphore/aide`). ctl-0's `ansible/aide` is a copy, synced back after an accept
+- The hashes are on ctl-0 now (`ansible/aide`). Copy the Debian hosts' once into Semaphore's dir on ctl-1, the reference from here on ([roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md), step 5). Without that, Semaphore's first `aide` run finds no hash and reports every host as a mismatch
+- After that ctl-0's `ansible/aide` is the copy, synced back after an accept: `rsync -a <admin_user>@<ctl1_ip>:/srv/apps/semaphore/aide/ aide/`
 
 ## 9. Verify
 
