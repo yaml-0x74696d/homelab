@@ -34,7 +34,7 @@ pvecm create homelab
 pvecm add <pve1_ip>
 
 # any node: the token for OpenTofu, its secret goes into terraform.tfvars
-pveum user token add root@pam tofu --privsep 0
+pveum user token add root@pam terraform --privsep 0
 pvesm set local --content iso,vztmpl,backup,snippets,import
 ```
 
