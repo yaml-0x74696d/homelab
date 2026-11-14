@@ -66,6 +66,7 @@ proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id '
 ## 2. Guests (OpenTofu)
 
 - LXC template and HAOS image: [tofu/README.md](../tofu/README.md), steps 3 and 3b
+- A fresh guest has no guest agent yet: `agent { enabled = false }` for the first apply, see step 5 there
 - Applied guest by guest, the log LXC first, since every other host ships its logs there:
 
 ```bash
