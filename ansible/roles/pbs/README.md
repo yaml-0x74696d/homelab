@@ -40,7 +40,7 @@
 | Host | Databases | Left out |
 |---|---|---|
 | pod-1 | Authentik (Postgres), Gitea, Vaultwarden (SQLite) | – |
-| pod-2 | Grafana, Gatus (SQLite) | Prometheus TSDB (bulky, old metrics aren't worth keeping) |
+| pod-2 | Grafana, Gatus, Actual Budget (SQLite) | Prometheus TSDB (bulky, old metrics aren't worth keeping) |
 | pod-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin (SQLite) | Jellyfin cache and transcodes |
 
 - The bulk data on the CIFS pool (photos, media, documents, files) isn't in here

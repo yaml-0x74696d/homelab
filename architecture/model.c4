@@ -98,8 +98,8 @@ model {
   }
 
   media = system "Home cloud" {
-    technology "Nextcloud, Immich, Jellyfin, Paperless-ngx"
-    description "Files, photos, media and documents on the storage pool"
+    technology "Nextcloud, Immich, Jellyfin, Paperless-ngx, Actual Budget"
+    description "Files, photos, media and documents on the storage pool, the budget on pod-2"
     nextcloud = app "Nextcloud" {
       web = container "Nextcloud"
       pg = db "Nextcloud Postgres" { style { icon tech:postgresql } }
@@ -129,6 +129,7 @@ model {
       web -> tika
       web -> gotenberg
     }
+    actual = container "Actual Budget" { technology "budgeting, sqlite" }
   }
 
   automation = system "Home automation" {
@@ -248,6 +249,7 @@ model {
   edge.traefik -[https]-> media.immich.server "routes"
   edge.traefik -[https]-> media.jellyfin "routes"
   edge.traefik -[https]-> media.paperless.web "routes"
+  edge.traefik -[https]-> media.actual "routes"
   edge.traefik -[https]-> observability.grafana "routes"
   edge.traefik -[https]-> observability.gatus "routes"
   edge.traefik -[https]-> observability.prometheus "routes"
@@ -271,6 +273,7 @@ model {
   media.immich.server -[oidc]-> identity.authentik.server "login"
   media.jellyfin -[oidc]-> identity.authentik.server "login"
   media.paperless.web -[oidc]-> identity.authentik.server "login"
+  media.actual -[oidc]-> identity.authentik.server "login"
   ops.semaphore -[oidc]-> identity.authentik.server "login"
 
   // storage
