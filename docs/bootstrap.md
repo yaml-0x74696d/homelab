@@ -76,6 +76,7 @@ for t in 'proxmox_virtual_environment_container.log' \
          'proxmox_virtual_environment_vm.pod["pod-2"]' \
          'proxmox_virtual_environment_vm.pod["pod-3"]' \
          'proxmox_virtual_environment_vm.netbird' \
+         'proxmox_virtual_environment_vm.edge' \
          'proxmox_virtual_environment_vm.haos'; do
   tofu plan -target="$t" -out=/tmp/g.plan && tofu apply /tmp/g.plan; rm -f /tmp/g.plan
 done
