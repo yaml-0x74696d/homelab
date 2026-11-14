@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- 38 secrets: API tokens, database passwords, OIDC client secrets, SMB passwords, the ntfy topic
+- The secrets: API tokens, database passwords, OIDC client secrets, SMB passwords, the ntfy topic
 - Every app needs some of them at deploy time, but the app definitions should stay plain files in git
 - The repo is public, so nothing secret may ever land in git
 
@@ -19,7 +19,7 @@ Status: Accepted
 
 The vault:
 - One encrypted file, `ansible/group_vars/all/vault.yml` (`ansible-vault`)
-- `vault.yml.example` lists all 38 keys without values
+- `vault.yml.example` lists every key without its value
 - The password is in `ansible/.vault_pass`, read through `vault_password_file` in `ansible.cfg`
 - Both files are gitignored here, the real vault only lives on the controller
 - Facts that aren't secret stay in the other `group_vars/all/*.yml` files, never in the vault
