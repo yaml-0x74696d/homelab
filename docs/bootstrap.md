@@ -55,6 +55,8 @@ apt install proxmox-backup-server
 proxmox-backup-manager datastore create homelab /mnt/pbs
 proxmox-backup-manager user create backup@pbs
 proxmox-backup-manager user generate-token backup@pbs client   # secret into the vault
+# user and token both: a token only gets what its user has too
+proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id backup@pbs
 proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id 'backup@pbs!client'
 ```
 
