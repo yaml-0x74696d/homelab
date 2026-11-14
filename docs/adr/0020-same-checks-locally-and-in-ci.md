@@ -43,7 +43,7 @@ CI (`.github/workflows/`):
 
 Configs:
 - `.yamllint`, with rules that fit ansible-lint
-- `ansible/.ansible-lint` (`profile: production`), which skips the collections and the Traefik file that uses Go templates
+- `ansible/.ansible-lint` (`profile: production`), which skips the collections
 
 - Enforced by: the git pre-commit hook on every commit, and CI on every push to main/testing and every PR
 
