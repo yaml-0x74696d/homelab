@@ -57,7 +57,7 @@ Weak to strong:
 
 | Setting | Where | Why |
 |---|---|---|
-| `prevent_destroy = true` | pod VMs, netbird, edge | the databases are on the VM disk (edge: a recreate takes LAN DNS and every route down) ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md)) |
+| `prevent_destroy = true` | pod VMs, netbird, edge, haos | the databases are on the VM disk (edge: a recreate takes LAN DNS and every route down) ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md)) |
 | `ignore_changes = [url]` | cloud images | Proxmox doesn't keep the source URL, imported files have none |
 | `ignore_changes = [disk[0].import_from]` | VMs | the image only counts when the disk is created |
 | `ignore_changes = [initialization]` | netbird, edge | NixOS owns disk and network after the bootstrap |
