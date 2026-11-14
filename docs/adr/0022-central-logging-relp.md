@@ -45,7 +45,7 @@ Not included:
 - Easier: plain text files, readable without any tool
 
 - Harder: `journalctl -b -1` shows nothing after a reboot, the history is in `/var/log/messages` or on the log LXC
-- Harder: one more guest to keep running and backed up
+- Harder: one more guest to keep running
 
 - Accepted: logs cross the LAN in plain text
 - Accepted: the log LXC is a single copy, a disk loss there loses the central history (the hosts still keep 4 weeks locally)
