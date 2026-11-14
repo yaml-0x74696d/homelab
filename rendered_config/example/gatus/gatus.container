@@ -8,6 +8,7 @@ Secret=gatus-config,type=mount,target=/config/config.yaml,mode=0400
 Environment=GATUS_CONFIG_PATH=/config/config.yaml
 PublishPort=3001:8080
 # every route straight to traefik: checks must not depend on dns
+AddHost=actual.example.org:192.168.178.200
 AddHost=auth.example.org:192.168.178.200
 AddHost=cloud.example.org:192.168.178.200
 AddHost=git.example.org:192.168.178.200

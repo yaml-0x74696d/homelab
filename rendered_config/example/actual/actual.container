@@ -1,0 +1,19 @@
+[Unit]
+Description=actual
+
+[Container]
+Volume=/srv/apps/actual/data:/data
+PublishPort=5006:5006
+Secret=actual-oidc-secret,type=mount,target=/run/secrets/oidc,mode=0400
+Environment=ACTUAL_OPENID_CLIENT_SECRET_FILE=/run/secrets/oidc
+Environment=ACTUAL_OPENID_DISCOVERY_URL=https://auth.example.org/application/o/actual/.well-known/openid-configuration
+Environment=ACTUAL_OPENID_CLIENT_ID=<vault:actual_oidc_id>
+Environment=ACTUAL_OPENID_SERVER_HOSTNAME=https://actual.example.org
+# authentik only, no password or header login
+Environment=ACTUAL_LOGIN_METHOD=openid
+Environment=ACTUAL_ALLOWED_LOGIN_METHODS=openid
+Environment=ACTUAL_OPENID_ENFORCE=true
+Environment=ACTUAL_TOKEN_EXPIRATION=openid-provider
+# container dns can't resolve auth.<domain>, go straight to traefik
+AddHost=auth.example.org:192.168.178.200
+HealthCmd=node scripts/health-check.js

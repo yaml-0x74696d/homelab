@@ -76,6 +76,24 @@ apps:
       - host: prom
         middlewares: [authentik]   # grafana reaches prom internally, not via this url
 
+  actual:
+    host: pod-2
+    uid: 2180
+    port: 5006
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: actual-oidc-secret
+        vault: actual_oidc_secret
+    dirs:
+      - path: data   # server-files (account.sqlite) + user-files (the budgets)
+    containers:
+      - name: actual
+        image: ghcr.io/actualbudget/actual
+        tag: latest
+    homepage: {group: Homecloud, icon: actual-budget}
+    routes:
+      - host: actual
+
   # dns for vpn clients: netbird's nameserver group points at pod-2's overlay ip:1053 (pod-2 is the
   # routing peer), coredns forwards it to the lan dns. 1053, rootless can't bind 53
   dns-relay:

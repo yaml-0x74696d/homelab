@@ -1,0 +1,19 @@
+[Unit]
+Description=actual
+
+[Container]
+Volume={{ podman_app_dir }}/data:/data
+PublishPort={{ podman_app_entry.port }}:5006
+Secret=actual-oidc-secret,type=mount,target=/run/secrets/oidc,mode=0400
+Environment=ACTUAL_OPENID_CLIENT_SECRET_FILE=/run/secrets/oidc
+Environment=ACTUAL_OPENID_DISCOVERY_URL=https://auth.{{ domain }}/application/o/actual/.well-known/openid-configuration
+Environment=ACTUAL_OPENID_CLIENT_ID={{ actual_oidc_id }}
+Environment=ACTUAL_OPENID_SERVER_HOSTNAME=https://actual.{{ domain }}
+# authentik only, no password or header login
+Environment=ACTUAL_LOGIN_METHOD=openid
+Environment=ACTUAL_ALLOWED_LOGIN_METHODS=openid
+Environment=ACTUAL_OPENID_ENFORCE=true
+Environment=ACTUAL_TOKEN_EXPIRATION=openid-provider
+# container dns can't resolve auth.<domain>, go straight to traefik
+AddHost=auth.{{ domain }}:{{ app_sources.edge }}
+HealthCmd=node scripts/health-check.js
