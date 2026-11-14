@@ -19,12 +19,12 @@ Status: Accepted
 
 ## Decision
 
-On every guest (`roles/journald`, `roles/rsyslog`, `playbooks/base.yml`) and the NetBird VM (`nixos/base/logging.nix`), with the shared values in `group_vars/all/base.yml`:
+On every guest (`roles/journald`, `roles/rsyslog`, `playbooks/base.yml`) and the NixOS VMs (`nixos/base/logging.nix`), with the shared values in `group_vars/all/base.yml`:
 - journald keeps the journal in RAM only (`Storage=volatile`, `RuntimeMaxUse` 100M) with rate limits
 - rsyslog reads it with `imjournal` and writes local files: `/var/log/messages`, `secure`, `cron`, `maillog`, `boot.log`, rotated weekly, 4 kept
 - The first start of rsyslog begins at the end of the journal (`IgnorePreviousMessages`), not at its oldest entry
 - Everything is forwarded with `omrelp` to the log LXC, through a disk-assisted queue (`resumeRetryCount=-1`, `saveOnShutdown`), so messages wait while the server is down and survive a reboot
-- The NetBird VM takes the journal over the syslog socket (the NixOS module's `imuxsock`) and writes `messages`, `secure`, `boot.log`
+- The NixOS VMs take the journal over the syslog socket (the NixOS module's `imuxsock`) and write `messages`, `secure`, `boot.log`
 
 The log LXC (CT 301, `.151`, pve-3):
 - The LXC is separate from the app VMs, so a dead VM's last logs survive. While pve-3 is off, the senders queue on disk and catch up
@@ -49,6 +49,6 @@ Not included:
 
 - Accepted: logs cross the LAN in plain text
 - Accepted: the log LXC is a single copy, a disk loss there loses the central history (the hosts still keep 4 weeks locally)
-- Accepted: on the NetBird VM, messages sent while rsyslog is down (a `nixos-rebuild` restart) are lost, journald only buffers the socket
+- Accepted: on the NixOS VMs, messages sent while rsyslog is down (a `nixos-rebuild` restart) are lost, journald only buffers the socket
 
-- Related: [0007](0007-group-vars-single-source-of-truth.md) (ports, ips), [0019](0019-ntfy-single-alert-channel.md) (alerts stay on ntfy, logs are for looking back), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge), [0035](0035-nixos-for-netbird-and-edge.md) (NetBird VM)
+- Related: [0007](0007-group-vars-single-source-of-truth.md) (ports, ips), [0019](0019-ntfy-single-alert-channel.md) (alerts stay on ntfy, logs are for looking back), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS VMs)

@@ -27,8 +27,8 @@ The vault:
 How apps get their secrets:
 - vault → `secrets:` in `apps.yml` (a vault key, or a template that uses vault keys) → a Podman secret of the app's svc user → env or a read-only file in the container (`Secret=` in the unit)
 
-The NetBird VM (NixOS):
-- Secrets are put on the NetBird VM by hand under `/var/lib/secrets/` (`secretsDir`)
+The NixOS VMs (netbird, edge):
+- Secrets are put on each VM by hand under `/var/lib/secrets/` (`secretsDir`)
 - The modules read them from those files, so they never end up in the Nix store or in git
 
 - Enforced by: `.gitignore`, plus gitleaks on every commit and over the full history (`just check`, CI)
@@ -39,10 +39,10 @@ The NetBird VM (NixOS):
 - Easier: unit templates stay readable, secrets only show up as `Secret=` lines, and nothing secret lands in a unit file
 - Easier: the vault, `.vault_pass`, `private.yml`, tfvars, tofu state and AIDE hashes live in one encrypted, offsite-synced folder on secure storage, symlinked into the repo, so the offsite copy is always current
 
-- Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NetBird VM
+- Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NixOS VMs
 
 - Accepted: one password unlocks every secret
-- Accepted: agenix/sops for the NetBird VM is still open
+- Accepted: agenix/sops for the NixOS VMs is still open
 - Accepted: whoever gets into the secure storage has the vault and its password together
 
-- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0035](0035-nixos-for-netbird-and-edge.md) (NetBird secrets)
+- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS secrets)
