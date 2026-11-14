@@ -94,7 +94,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 - Ansible group_vars get read by OpenTofu (yamldecode) and Nix (facts.nix), so an IP only has to change in one place ([ADR 0007](docs/adr/0007-group-vars-single-source-of-truth.md))
 - `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
-- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps`, `base`, `private/private.yml` YAML into JSON with yq-go
+- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `app_settings`, `apps`, `base`, `schedules`, `private/private.yml` YAML into JSON with yq-go
 - `nixos/update.sh` + `aide-accept.sh` read the host IP (`netbird_ip`, `edge_ip`) from the same file
 - edge reads `apps.yml` too: every route becomes a Traefik router and an AdGuard rewrite ([nixos-layout](docs/nixos-layout.md#how-edge-builds-its-routes))
 - Ports: `port` in `apps.yml` → Podman units, Traefik routes, Gatus and Homepage checks, firewall
