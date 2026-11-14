@@ -53,7 +53,7 @@
 - An `EXIT` trap wipes the staging folder even when the run fails
 - An `ERR` trap sends "backup failed" with the failing line to ntfy
 - `TimeoutStartSec` (`pbs_timeout`) stops a stuck push (e.g. pve-3 only half up), so it can't hold the lock forever
-- The token `backup@pbs!client` has the `DatastoreBackup` role on `/datastore/homelab` only. It can write, but not delete or prune
+- The token `backup@pbs!client` has the `DatastoreBackup` role on `/datastore/homelab` only. It can add backups and restore its own (the three hosts share it), but not delete or prune
 
 ## Settings
 

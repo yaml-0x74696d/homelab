@@ -23,7 +23,7 @@ Status: Accepted
 
 ## Consequences
 
-- Easier: PBS plugs straight in for backups (with a scoped token that can only write)
+- Easier: PBS plugs straight in for backups (with a scoped token that can't prune or delete)
 - Easier: the bpg/proxmox OpenTofu provider builds every guest from code ([0001](0001-tofu-and-cloud-init-for-vms.md))
 - Easier: the hosts are plain Debian, so most Ansible roles (AIDE, login-notify, journald) run on them too. The firewall is the PVE firewall (`pve_firewall`), and AIDE needs a Proxmox exclude list
 

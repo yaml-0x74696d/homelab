@@ -130,7 +130,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN
 - AIDE on every host + the NixOS VMs: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
-- Backups: PBS, scoped token that can only write, DB dumps before each run; a restore was rehearsed on 2026-11-08 ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
+- Backups: PBS, scoped token (adds backups and restores its own, can't prune or delete), DB dumps before each run; a restore was rehearsed on 2026-11-08 ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
 - Irreplaceable files live outside the lab; the mergerfs pool has no parity and no backup (accepted)
 - Secrets: Ansible Vault; gitleaks on every commit and over the full history in CI
 

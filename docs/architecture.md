@@ -210,7 +210,7 @@ How a backup runs:
 - First the databases are dumped (Postgres, SQLite `.backup`)
 - Then `/srv/apps` (`podman_apps_root`) goes up as one archive (`/opt/stacks` too, as long as a host still has it)
 - A failed run is pushed to ntfy
-- The client's token can only write backups, not delete them
+- The client's token can add backups and restore its own, not prune or delete them
 
 What's in and out:
 - Which databases each host dumps is set in `pbs_jobs` in `host_vars/`
