@@ -20,7 +20,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 
 | Node | Box | RAM | Role |
 |---|---|---|---|
-| pve-1 | Small form factor PC | 8 GB | Running the IoT WiFi AP directly and the edge VM |
+| pve-1 | Small form factor PC | 8 GB | Running the edge VM, its WiFi card is the IoT AP (moved into CT 302) |
 | pve-2 | Small form factor PC | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Desktop PC, 1 SSD + 4 HDDs | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
 | ctl-1 | Raspberry Pi 3 (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
