@@ -173,7 +173,7 @@ ansible iot -m shell -a "systemctl is-active hostapd dnsmasq mosquitto prometheu
 
 pve-2 has the same WiFi card. A move touches:
 
-- `iot_node` in `network.yml`, and `iot_wifi_nic` if the card has another name there (`iw dev` on pve-2)
+- `guest_nodes.iot` in `network.yml` (`iot_node` follows it), and `iot_wifi_nic` if the card has another name there (`iw dev` on pve-2)
 - the LXC template on pve-2; tofu rebuilds the LXC, `deploy-iot.yml` moves the card in
 - nothing else on the node: no bridge, no DHCP, only the regulatory domain (`deploy-iot.yml` sets it)
 - pve-2 also runs the NetBird DMZ VM, so IoT and DMZ share a node

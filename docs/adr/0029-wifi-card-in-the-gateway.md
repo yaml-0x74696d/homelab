@@ -24,7 +24,7 @@ Status: Accepted
 ## Consequences
 
 - Easier: no node in the IoT net, nothing set up by hand on pve-1
-- Easier: moving to pve-2 is `iot_node` and the card's name
+- Easier: moving to pve-2 is `guest_nodes.iot` (`iot_node` follows it) and the card's name
 - Harder: the IoT side has one firewall layer, ufw in the CT
 - Harder: CT down means no IoT WiFi
 - Accepted: the CT depends on node settings (regulatory domain, the hook) that tofu doesn't know about
