@@ -35,7 +35,7 @@ The sharing (`roles/samba`):
 - SMB3 is the minimum, and ufw only allows the LAN
 
 Who uses it:
-- The Docker VMs mount their share over CIFS ([0002](0002-generic-docker-app-role.md))
+- The pod VMs mount their shares over CIFS ([0017](0017-smb-shares-to-docker-vms.md))
 - Databases stay on the local VM disks
 - PBS gets its own 100 GB thin LV on the SSD, separate from the HDD pool
 
@@ -51,4 +51,4 @@ Who uses it:
 - Accepted: no parity. A dead disk loses only the files on that disk, the rest of the pool keeps working
 - Accepted: configs and databases are backed up by PBS, bulk media is not on purpose (it can be ripped or synced again, and irreplaceable files are kept outside the lab)
 
-- Related: [0002](0002-generic-docker-app-role.md) (CIFS mounts), [0005](0005-prevent-destroy-on-stateful-vms.md) (DBs stay local)
+- Related: [0002](0002-generic-docker-app-role.md) (the Docker role, superseded), [0005](0005-prevent-destroy-on-stateful-vms.md) (DBs stay local), [0017](0017-smb-shares-to-docker-vms.md) (CIFS mounts)
