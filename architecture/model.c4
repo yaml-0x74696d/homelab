@@ -232,7 +232,7 @@ model {
   ops.controller -> ops.proxmox "tofu: VMs + LXC"
   ops.controller -> ops.hosts "ansible: apps over ssh"
   admin -[https]-> ops.semaphore "runs + schedules playbooks"
-  ops.semaphore -> github "pulls the repo (testing)"
+  ops.semaphore -> github "pulls the repo (main)"
   ops.semaphore -> ops.proxmox "ansible: pve nodes over ssh"
   ops.semaphore -> ops.hosts "ansible: apps over ssh"
   ops.controller -> ops.semaphore "copies vault, private.yml + overlays"

@@ -204,7 +204,7 @@ views "Flows" {
     ops.controller -> ops.proxmox "tofu apply: VMs + LXC"
     ops.controller -> ops.hosts "ansible: renders + starts apps"
     admin -> github "pushes the repo"
-    ops.semaphore -> github "pulls the repo (testing)"
+    ops.semaphore -> github "pulls the repo (main)"
     ops.semaphore -> ops.hosts "ansible: renders + starts apps"
   }
 }
