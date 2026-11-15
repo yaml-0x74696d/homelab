@@ -226,7 +226,7 @@ Prometheus for metrics, ntfy for alerts.
 
 - Prometheus on pod-2 collects metrics from:
   - the PVE hosts
-  - node-exporter on every VM and LXC
+  - node-exporter on every VM and LXC but HAOS (its disk and uptime come from HA's System Monitor)
   - the ESP32 sensors, through mqtt-exporter
 - Grafana shows dashboards on top of it
 - Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory

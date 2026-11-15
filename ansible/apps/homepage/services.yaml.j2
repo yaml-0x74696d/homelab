@@ -1,34 +1,81 @@
-{# app tiles come from apps.yml (homepage: block) and infra_routes. badge = siteMonitor on the app's
-   port, so only for apps with a port in the map (pod-1's come with edge). stats only for servers + vms #}
+{# app tiles come from apps.yml (homepage: block), infra_routes and the router, sorted by label.
+   badge = siteMonitor on the app's port, so only for apps with a port in the map (pod-1's come with edge).
+   stats only for servers + vms #}
 {% macro tiles(group) %}
+{% set items = [] %}
 {% for name, a in apps.items() if a.homepage is defined and a.homepage.group == group and a.state | default('present') == 'present' %}
 {# pasta gives homepage pod-1's own ip, so its own host's apps go through host.containers.internal (like gatus) #}
 {% set ip = 'host.containers.internal' if a.host == apps.homepage.host else hostvars[a.host].ansible_host %}
 {% set url = 'http://' ~ ip ~ ':' ~ a.port if a.port is defined else none %}
-        - {{ a.homepage.label | default(name | capitalize) }}:
-            icon: {{ a.homepage.icon }}
-            href: https://{{ a.routes[0].host }}.{{ domain }}{{ a.homepage.path | default('') }}
-{% if url %}
-            siteMonitor: {{ url }}
-{% endif %}
-{% if a.homepage.widget is defined and url %}
-            widget:
-                type: {{ a.homepage.widget }}
-                url: {{ url }}
-{% endif %}
+{% set _ = items.append({'label': a.homepage.label | default(name | capitalize), 'icon': a.homepage.icon,
+     'href': 'https://' ~ a.routes[0].host ~ '.' ~ domain ~ a.homepage.path | default(''),
+     'monitor': url, 'widget': a.homepage.widget if (a.homepage.widget is defined and url) else none}) %}
 {% endfor %}
 {% for r in infra_routes if r.homepage is defined and r.homepage.group == group %}
-        - {{ r.homepage.label }}:
-            icon: {{ r.homepage.icon }}
-            href: https://{{ r.host }}.{{ domain }}{{ r.homepage.path | default('') }}
+{% set _ = items.append({'label': r.homepage.label, 'icon': r.homepage.icon,
+     'href': 'https://' ~ r.host ~ '.' ~ domain ~ r.homepage.path | default('')}) %}
 {% endfor %}
+{% if group == homepage_router_group %}
+{% set _ = items.append({'label': 'FritzBox', 'icon': 'sh-fritz', 'href': 'https://' ~ gateway_ip, 'ping': homepage_ping_target}) %}
+{% endif %}
+{% for t in items | sort(attribute='label') %}
+        - {{ t.label }}:
+            icon: {{ t.icon }}
+            href: {{ t.href }}
+{% if t.get('monitor') %}
+            siteMonitor: {{ t.monitor }}
+{% endif %}
+{% if t.get('ping') %}
+            ping: {{ t.ping }}
+{% endif %}
+{% if t.get('widget') == 'semaphore' %}
+{# not a homepage type: the last run from semaphore's api, newest task first, gatus' read-only token #}
+            widget:
+                type: customapi
+                url: {{ t.monitor }}/api/project/{{ semaphore_project_id }}/tasks/last
+                refreshInterval: {{ homepage_semaphore_refresh_ms }}
+                headers:
+                    Authorization: "Bearer {{ semaphore_gatus_token }}"
+                mappings:
+                    - field: 0.tpl_alias
+                      label: last run
+                    - field: 0.status
+                      label: result
+                    - field: 0.end
+                      label: ended
+                      format: relativeDate
+                      style: short
+{% elif t.get('widget') %}
+            widget:
+                type: {{ t.widget }}
+                url: {{ t.monitor }}
+{% endif %}
+{% endfor %}
+{% endmacro %}
+{# disk and uptime from node_exporter. the instance label is what prometheus scrapes,
+   its own host shows up as host.containers.internal #}
+{% macro node_metrics(host, ip=none) %}
+{% set prom = apps.prometheus %}
+{% set prom_ip = 'host.containers.internal' if prom.host == apps.homepage.host else hostvars[prom.host].ansible_host %}
+{% set inst = ('host.containers.internal' if host == prom.host else ip or hostvars[host].ansible_host) ~ ':' ~ node_exporter_port %}
+                widget:
+                    type: prometheusmetric
+                    url: http://{{ prom_ip }}:{{ prom.port }}
+                    refreshInterval: {{ homepage_metrics_refresh_ms }}
+                    metrics:
+                        - label: disk
+                          query: 100 * (1 - node_filesystem_avail_bytes{instance="{{ inst }}",mountpoint="/"} / node_filesystem_size_bytes{instance="{{ inst }}",mountpoint="/"})
+                          format: {type: number, suffix: "%", options: {maximumFractionDigits: 0}}
+                        - label: up
+                          query: time() - node_boot_time_seconds{instance="{{ inst }}"}
+                          format: {type: duration}
 {% endmacro %}
 - Status:
 {{ tiles('Status') }}
 
 - Servers:
         - PVE-1:
-            icon: proxmox
+            icon: sh-proxmox
             href: https://pve-1.{{ domain }}
             ping: {{ pve1_ip }}
             widget:
@@ -39,7 +86,7 @@
                 node: pve-1
                 fields: ["resources.cpu", "resources.mem"]
         - PVE-2:
-            icon: proxmox
+            icon: sh-proxmox
             href: https://pve-2.{{ domain }}
             ping: {{ pve2_ip }}
             widget:
@@ -50,7 +97,7 @@
                 node: pve-2
                 fields: ["resources.cpu", "resources.mem"]
         - PVE-3:
-            icon: proxmox
+            icon: sh-proxmox
             href: https://pve-3.{{ domain }}
             ping: {{ pve3_ip }}
             widget:
@@ -61,7 +108,7 @@
                 node: pve-3
                 fields: ["resources.cpu", "resources.mem"]
         - PBS:
-            icon: proxmox-backup-server
+            icon: sh-proxmox
             href: https://pbs.{{ domain }}
             ping: {{ pve3_ip }}
             widget:
@@ -73,79 +120,92 @@
 
 - VMs:
             - pod-1:
-                icon: /images/debian.png
+                icon: sh-debian
                 proxmoxNode: pve-1
                 proxmoxVMID: {{ vmids.pod1 }}
                 showStats: true
                 href: https://{{ pod1_ip }}:{{ cockpit_port }}/
                 fields: ["cpu", "mem"]
+{{ node_metrics('pod-1') }}
             - pod-2:
-                icon: /images/debian.png
+                icon: sh-debian
                 proxmoxNode: pve-2
                 proxmoxVMID: {{ vmids.pod2 }}
                 showStats: true
                 href: https://{{ pod2_ip }}:{{ cockpit_port }}/
                 fields: ["cpu", "mem"]
+{{ node_metrics('pod-2') }}
             - pod-3:
-                icon: /images/debian.png
+                icon: sh-debian
                 proxmoxNode: pve-3
                 proxmoxVMID: {{ vmids.pod3 }}
                 showStats: true
                 href: https://{{ pod3_ip }}:{{ cockpit_port }}/
                 fields: ["cpu", "mem"]
+{{ node_metrics('pod-3') }}
             - netbird:
-                icon: nixos
+                icon: sh-nixos
                 proxmoxNode: pve-2
                 proxmoxVMID: {{ vmids.netbird }}
                 showStats: true
                 href: https://nb.{{ domain }}
                 fields: ["cpu", "mem"]
+{{ node_metrics('netbird', netbird_ip) }}
             - edge:
-                icon: nixos
+                icon: sh-nixos
                 proxmoxNode: pve-1
                 proxmoxVMID: {{ vmids.edge }}
                 showStats: true
                 href: https://traefik.{{ domain }}
                 fields: ["cpu", "mem"]
+{{ node_metrics('edge', edge_ip) }}
             - haos:
-                icon: home-assistant
+                icon: sh-home-assistant
                 proxmoxNode: pve-3
                 proxmoxVMID: {{ vmids.haos }}
                 showStats: true
                 href: https://ha.{{ domain }}
                 fields: ["cpu", "mem"]
+{# haos runs no node_exporter: disk and boot time from ha's system monitor integration #}
+                widget:
+                    type: homeassistant
+                    url: http://{{ hostvars[apps.homeassistant.host].ansible_host }}:{{ apps.homeassistant.port }}
+                    key: "{{ homepage_ha_token | default('') }}"
+                    custom:
+                        - state: {{ homepage_haos_disk_entity }}
+                          label: disk
+                          value: "{state}%"
+                        - template: "{{ '{{' }} relative_time(as_datetime(states('{{ homepage_haos_boot_entity }}'))) {{ '}}' }}"
+                          label: up
 
 - LXCs:
             - storage:
-                icon: /images/lxc.png
+                icon: sh-linux-containers-lxc
                 proxmoxNode: pve-3
                 proxmoxVMID: {{ vmids.storage }}
                 proxmoxType: lxc
                 showStats: true
                 fields: ["cpu", "mem"]
+{{ node_metrics('storage') }}
             - log:
-                icon: /images/lxc.png
+                icon: sh-linux-containers-lxc
                 proxmoxNode: pve-3
                 proxmoxVMID: {{ vmids.log }}
                 proxmoxType: lxc
                 showStats: true
                 fields: ["cpu", "mem"]
+{{ node_metrics('log') }}
             - iot:
-                icon: /images/lxc.png
+                icon: sh-linux-containers-lxc
                 proxmoxNode: {{ iot_node }}
                 proxmoxVMID: {{ vmids.iot }}
                 proxmoxType: lxc
                 showStats: true
                 fields: ["cpu", "mem"]
+{{ node_metrics('iot') }}
 
 - Homecloud:
 {{ tiles('Homecloud') }}
-- Home:
-{{ tiles('Home') }}
-        - FritzBox:
-            icon: fritzbox
-            href: https://{{ gateway_ip }}
-            ping: {{ homepage_ping_target }}
 
 - Tools:
 {{ tiles('Tools') }}

@@ -20,6 +20,7 @@ deployment {
         description "NixOS, Traefik + AdGuard Home from apps.yml"
         instanceOf edge.traefik
         instanceOf edge.adguard
+        instanceOf observability.node-exporter
         instanceOf observability.rsyslog
         instanceOf ops.chrony
       }
@@ -60,6 +61,7 @@ deployment {
         netbird = vm "netbird" {
           description "NixOS, internet-facing"
           instanceOf remote.netbird
+          instanceOf observability.node-exporter
           instanceOf observability.rsyslog
           instanceOf ops.chrony
         }
