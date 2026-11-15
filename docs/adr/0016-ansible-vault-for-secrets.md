@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- 38 secrets: API tokens, database passwords, OIDC client secrets, SMB passwords, the ntfy topic
+- The secrets: API tokens, database passwords, OIDC client secrets, SMB passwords, the ntfy topic
 - Every app needs some of them at deploy time, but the app definitions should stay plain files in git
 - The repo is public, so nothing secret may ever land in git
 
@@ -19,7 +19,7 @@ Status: Accepted
 
 The vault:
 - One encrypted file, `ansible/group_vars/all/vault.yml` (`ansible-vault`)
-- `vault.yml.example` lists all 38 keys without values
+- `vault.yml.example` lists every key without its value
 - The password is in `ansible/.vault_pass`, read through `vault_password_file` in `ansible.cfg`
 - Both files are gitignored here, the real vault only lives on the controller
 - Facts that aren't secret stay in the other `group_vars/all/*.yml` files, never in the vault
@@ -27,8 +27,8 @@ The vault:
 How apps get their secrets:
 - vault → `secrets:` in `apps.yml` (a vault key, or a template that uses vault keys) → a Podman secret of the app's svc user → env or a read-only file in the container (`Secret=` in the unit)
 
-The NetBird VM (NixOS):
-- Secrets are put on the NetBird VM by hand under `/var/lib/secrets/` (`secretsDir`)
+The NixOS VMs (netbird, edge):
+- Secrets are put on each VM by hand under `/var/lib/secrets/` (`secretsDir`)
 - The modules read them from those files, so they never end up in the Nix store or in git
 
 - Enforced by: `.gitignore`, plus gitleaks on every commit and over the full history (`just check`, CI)
@@ -39,10 +39,10 @@ The NetBird VM (NixOS):
 - Easier: unit templates stay readable, secrets only show up as `Secret=` lines, and nothing secret lands in a unit file
 - Easier: the vault, `.vault_pass`, `private.yml`, tfvars, tofu state and AIDE hashes live in one encrypted, offsite-synced folder on secure storage, symlinked into the repo, so the offsite copy is always current
 
-- Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NetBird VM
+- Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NixOS VMs
 
 - Accepted: one password unlocks every secret
-- Accepted: agenix/sops for the NetBird VM is still open
+- Accepted: agenix/sops for the NixOS VMs is still open
 - Accepted: whoever gets into the secure storage has the vault and its password together
 
-- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0035](0035-nixos-for-netbird-and-edge.md) (NetBird secrets)
+- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS secrets)

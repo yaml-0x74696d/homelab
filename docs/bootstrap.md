@@ -34,7 +34,7 @@ pvecm create homelab
 pvecm add <pve1_ip>
 
 # any node: the token for OpenTofu, its secret goes into terraform.tfvars
-pveum user token add root@pam tofu --privsep 0
+pveum user token add root@pam terraform --privsep 0
 pvesm set local --content iso,vztmpl,backup,snippets,import
 ```
 
@@ -55,6 +55,8 @@ apt install proxmox-backup-server
 proxmox-backup-manager datastore create homelab /mnt/pbs
 proxmox-backup-manager user create backup@pbs
 proxmox-backup-manager user generate-token backup@pbs client   # secret into the vault
+# user and token both: a token only gets what its user has too
+proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id backup@pbs
 proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id 'backup@pbs!client'
 ```
 
@@ -64,6 +66,7 @@ proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id '
 ## 2. Guests (OpenTofu)
 
 - LXC template and HAOS image: [tofu/README.md](../tofu/README.md), steps 3 and 3b
+- A fresh guest has no guest agent yet: `agent { enabled = false }` for the first apply, see step 5 there
 - Applied guest by guest, the log LXC first, since every other host ships its logs there:
 
 ```bash
@@ -76,6 +79,7 @@ for t in 'proxmox_virtual_environment_container.log' \
          'proxmox_virtual_environment_vm.pod["pod-2"]' \
          'proxmox_virtual_environment_vm.pod["pod-3"]' \
          'proxmox_virtual_environment_vm.netbird' \
+         'proxmox_virtual_environment_vm.edge' \
          'proxmox_virtual_environment_vm.haos'; do
   tofu plan -target="$t" -out=/tmp/g.plan && tofu apply /tmp/g.plan; rm -f /tmp/g.plan
 done
@@ -175,15 +179,18 @@ sudo systemctl --user -M svc-<app>@ start <app>-pod
 
 ## 8. AIDE baselines
 
-The first run on each host builds its baseline. Once the apps are in place:
+The pod VMs and ctl-1 got their baseline in steps 3 and 5, before the apps. The PVE nodes, the LXCs and the NixOS VMs have none yet. Once the apps are in place:
 
 ```bash
 cd ~/homelab/ansible
-ansible-playbook playbooks/aide-accept.yml
-rsync -a <admin_user>@<ctl1_ip>:/srv/apps/semaphore/aide/ aide/
+ansible-playbook playbooks/aide.yml          # builds the missing baselines (pve nodes, lxcs)
+ansible-playbook playbooks/aide-accept.yml   # pod vms + ctl-1: accept what the apps changed
+../nixos/aide-accept.sh netbird
+../nixos/aide-accept.sh edge
 ```
 
-- The hashes live on ctl-1 (`/srv/apps/semaphore/aide`). ctl-0's `ansible/aide` is a copy, synced back after an accept
+- The hashes are on ctl-0 now (`ansible/aide`). Copy the Debian hosts' once into Semaphore's dir on ctl-1, the reference from here on ([roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md), step 5). Without that, Semaphore's first `aide` run finds no hash and reports every host as a mismatch
+- After that ctl-0's `ansible/aide` is the copy, synced back after an accept: `rsync -a <admin_user>@<ctl1_ip>:/srv/apps/semaphore/aide/ aide/`
 
 ## 9. Verify
 

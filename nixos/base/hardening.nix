@@ -31,6 +31,7 @@ in
   services.openssh = {
     enable = true;
     ports = [ facts.ssh_port ];
+    openFirewall = false;   # default opens the port to every source, the lan rule below is the way in
     settings = {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;

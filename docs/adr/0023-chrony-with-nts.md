@@ -17,10 +17,10 @@ Status: Accepted
 
 ## Decision
 
-- chrony on every VM (`roles/chrony`, `playbooks/base.yml`, NetBird VM: `nixos/base/time.nix`), sources only with `iburst nts`
+- chrony on every VM (`roles/chrony`, `playbooks/base.yml`, NixOS VMs: `nixos/base/time.nix`), sources only with `iburst nts`
 - Servers (`chrony_servers` in `group_vars/all/base.yml`): `ptbtime1/2/3.ptb.de` (PTB, stratum 1) and `time.cloudflare.com`
 - `makestep 1 3` steps the clock on the first updates after boot or a VM resume, `rtcsync` keeps the RTC in step
-- The NetBird VM keeps the module's `rtcautotrim`, the Debian VMs use `rtcsync`
+- The NixOS VMs keep the module's `rtcautotrim`, the Debian VMs use `rtcsync`
 - LXCs use the host's clock, the PVE nodes keep their own chrony
 - NTS needs outbound tcp/4460 for the key exchange, then udp/123
 
@@ -35,4 +35,4 @@ Status: Accepted
 
 - Accepted: if all four servers are unreachable, the clock free-runs until they're back
 
-- Related: [0014](0014-authentik-as-idp.md) (TOTP), [0022](0022-central-logging-relp.md) (log timestamps across hosts), [0035](0035-nixos-for-netbird-and-edge.md) (NetBird VM)
+- Related: [0014](0014-authentik-as-idp.md) (TOTP), [0022](0022-central-logging-relp.md) (log timestamps across hosts), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS VMs)

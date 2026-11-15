@@ -20,7 +20,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 
 | Node | Box | RAM | Role |
 |---|---|---|---|
-| pve-1 | Small form factor PC | 8 GB | Running the IoT WiFi AP directly and the edge VM |
+| pve-1 | Small form factor PC | 8 GB | Running the edge VM, its WiFi card is the IoT AP (moved into CT 302) |
 | pve-2 | Small form factor PC | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Desktop PC, 1 SSD + 4 HDDs | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
 | ctl-1 | Raspberry Pi 3 (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
@@ -94,7 +94,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 - Ansible group_vars get read by OpenTofu (yamldecode) and Nix (facts.nix), so an IP only has to change in one place ([ADR 0007](docs/adr/0007-group-vars-single-source-of-truth.md))
 - `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
-- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `apps`, `base`, `private/private.yml` YAML into JSON with yq-go
+- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `app_settings`, `apps`, `base`, `schedules`, `private/private.yml` YAML into JSON with yq-go
 - `nixos/update.sh` + `aide-accept.sh` read the host IP (`netbird_ip`, `edge_ip`) from the same file
 - edge reads `apps.yml` too: every route becomes a Traefik router and an AdGuard rewrite ([nixos-layout](docs/nixos-layout.md#how-edge-builds-its-routes))
 - Ports: `port` in `apps.yml` → Podman units, Traefik routes, Gatus and Homepage checks, firewall
@@ -130,7 +130,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN
 - AIDE on every host + the NixOS VMs: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
-- Backups: PBS, scoped token that can only write, DB dumps before each run; a restore was rehearsed on 2026-11-08 ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
+- Backups: PBS, scoped token (adds backups and restores its own, can't prune or delete), DB dumps before each run; a restore was rehearsed on 2026-11-08 ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
 - Irreplaceable files live outside the lab; the mergerfs pool has no parity and no backup (accepted)
 - Secrets: Ansible Vault; gitleaks on every commit and over the full history in CI
 

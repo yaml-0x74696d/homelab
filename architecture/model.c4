@@ -232,7 +232,7 @@ model {
   ops.controller -> ops.proxmox "tofu: VMs + LXC"
   ops.controller -> ops.hosts "ansible: apps over ssh"
   admin -[https]-> ops.semaphore "runs + schedules playbooks"
-  ops.semaphore -> github "pulls the repo (testing)"
+  ops.semaphore -> github "pulls the repo (main)"
   ops.semaphore -> ops.proxmox "ansible: pve nodes over ssh"
   ops.semaphore -> ops.hosts "ansible: apps over ssh"
   ops.controller -> ops.semaphore "copies vault, private.yml + overlays"
@@ -279,7 +279,10 @@ model {
   media.jellyfin -[cifs]-> storage.samba "media, read-only"
   media.paperless.web -[cifs]-> storage.samba "documents"
   storage.pbs-client -> storage.pbs "nightly backup"
+  storage.pbs-client -> identity.authentik.pg "pg_dump"
+  storage.pbs-client -> media.nextcloud.pg "pg_dump"
   storage.pbs-client -> media.immich.pg "pg_dump"
+  storage.pbs-client -> media.paperless.pg "pg_dump"
   storage.pbs -> ntfy "job alerts"
 
   // home automation

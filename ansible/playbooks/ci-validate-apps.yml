@@ -1,6 +1,6 @@
 ---
 # every podman entry in apps.yml against podman_app's argument_specs, no host touched (pre-commit hook apps-schema, manual stage).
-# compose and vm entries don't follow the schema yet
+# vm entries (haos) don't follow the schema
 - name: Validate the apps map
   hosts: localhost
   connection: local

@@ -37,7 +37,7 @@ nixos/
 
 ## Where the values come from
 
-- `facts.nix` turns `network`, `ports`, `hosts`, `app_settings`, `apps`, `base` and `private.yml` into JSON with yq-go at build time
+- `facts.nix` turns `network`, `ports`, `hosts`, `app_settings`, `apps`, `base`, `schedules` and `private.yml` into JSON with yq-go at build time
 - Modules get them as `facts` (through `specialArgs`): `facts.netbird_ip`, `facts.domain`
 - `private` is a flake input. It defaults to the repo's `private/` folder, the example is used when `private.yml` is missing (CI). Real builds point it at the real folder: `--override-input private path:<dir>`, `update.sh` does this
 - `facts.host_ips` maps every inventory host to its IP: `ansible_host` is `{{ <var> }}`, the var is looked up in the facts. edge uses it to turn an app's `host:` into a backend address

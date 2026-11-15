@@ -54,7 +54,7 @@ tofu init
 tofu apply
 ```
 
-- The pod VMs, the NetBird VM and the HAOS VM have `prevent_destroy`, because their databases live on the VM disk
+- The pod VMs, the NetBird VM, edge and the HAOS VM have `prevent_destroy`, because their databases live on the VM disk (edge: a recreate takes LAN DNS and every route down)
 - Never apply a plan that replaces one of them
 
 ## 5. Guest agent on a fresh build

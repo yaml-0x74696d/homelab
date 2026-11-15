@@ -79,7 +79,7 @@
 | `pve_firewall_netbird_turn_ports` | `[3478, 5349]` | STUN/TURN and TURN over TLS |
 | `pve_firewall_log_vmid` | `vmids.log` | The log LXC |
 | `pve_firewall_log_ip` | `log_ip` | The log LXC, target of the NetBird VM's RELP rule |
-| `pve_firewall_log_sources` | pod-1/2/3, storage, iot, netbird, edge | Hosts that may send RELP to the log LXC |
+| `pve_firewall_log_sources` | pod-1/2/3, storage, iot, netbird, edge, ctl-1 | Hosts that may send RELP to the log LXC |
 | `pve_firewall_log_port` | `log_relp_port` | The RELP port |
 | `pve_firewall_prometheus_ip` | `prometheus_ip` (`app_settings.yml`) | May scrape the log and IoT LXCs |
 | `pve_firewall_iot_vmid` | `vmids.iot` | The IoT gateway LXC |

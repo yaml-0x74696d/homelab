@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- Three tools describe the same lab: Ansible (config + apps), OpenTofu (VMs/LXC) and NixOS (NetBird VM)
+- Three tools describe the same lab: Ansible (config + apps), OpenTofu (VMs/LXC) and NixOS (the NetBird VM and edge)
 - IPs, VMIDs, ports, MACs and schedules were copied between them and drifted apart
 - After DNS moved to the `.53` service IP, an OpenTofu resolver setting still pointed at the old Pi-hole host `.201`. It silently fell through to the gateway
 - Before the change, the same values were copied all over the repo:
@@ -36,7 +36,7 @@ The source:
 How each tool reads it:
 - Ansible: as normal group_vars, the inventory's `ansible_host` points at the `*_ip` variables
 - OpenTofu: `tofu/locals.tf` reads network/ports/hosts/storage/private with `yamldecode(file(...))`, and the VM specs (`vms`/`lxcs` maps) are built on top
-- Nix: `nixos/facts.nix` turns network/ports/hosts/apps/base/private into JSON with yq-go at build time (import from derivation). Every module gets the result as `specialArgs.facts`
+- Nix: `nixos/facts.nix` turns network/ports/hosts/app_settings/apps/base/schedules/private into JSON with yq-go at build time (import from derivation). Every module gets the result as `specialArgs.facts`
 - Shell: `nixos/update.sh` and `aide-accept.sh` read `<host>_ip` (`netbird_ip`, `edge_ip`) with `nix run nixpkgs#yq-go`
 
 - Enforced by: `just check` runs `tofu validate` and `nix flake check` against the same files, so a missing or renamed variable fails

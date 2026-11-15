@@ -68,7 +68,7 @@ nixos/update.sh <netbird|edge>
 
 - Debian 13 gets security updates until mid-2028. The guests move before that
 - The pod VMs: in place (`dist-upgrade` to the new release, one VM at a time), or rebuilt from OpenTofu with a new image and the data restored. A rebuild needs a restore rehearsal first ([restore-rehearsal.md](restore-rehearsal.md))
-- The LXCs: a new template in `tofu/locals.tf`, rebuilt, `base.yml` again
+- The LXCs: a new template (`lxc_template` in `tofu/variables.tf`), rebuilt, `base.yml` again
 - The PVE nodes follow Proxmox's release, not Debian's
 - Before a guest OS change, check the EL10 list in [bootstrap.md](bootstrap.md#guests-on-el10-what-changes) for what else moves with it
 

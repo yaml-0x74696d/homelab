@@ -47,11 +47,11 @@ What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/pod-{1,2,3}.
 - Easier: small, deduplicated backups that restore straight into a rebuilt VM
 - Easier: a new app with plain config files needs no backup change, `podman_apps_root` is backed up by default
 
-- Harder: a new app with a database needs a `pbs_jobs` entry. Without it, the live database file only lands in `apps.pxar` as a plain copy, which isn't crash-consistent
+- Harder: a new app with a database needs a `pbs_jobs` entry. Without it, the live database file only lands in `podman-apps.pxar` as a plain copy, which isn't crash-consistent
 - Harder: a rebuild is `tofu apply` + Ansible + restore, more steps than restoring a VM image
 
 - Accepted: bulk media on the CIFS pool (photos, media, documents, Nextcloud files) is not backed up
 - Accepted: the Prometheus TSDB is skipped. It's bulky, and losing old metrics is fine
-- Accepted: the token can write but not prune or delete. Pruning and garbage collection are set by hand on the server
+- Accepted: the token can add backups and restore its own, but not prune or delete. Pruning and garbage collection are set by hand on the server
 
 - Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (rebuild from code), [0004](0004-mergerfs-instead-of-zfs.md) (pool not backed up), [0005](0005-prevent-destroy-on-stateful-vms.md) (recovery path), [0019](0019-ntfy-single-alert-channel.md) (alerts)
