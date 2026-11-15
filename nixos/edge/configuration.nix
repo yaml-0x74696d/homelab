@@ -11,6 +11,7 @@ in
     ../base/hardening.nix
     ../base/aide.nix
     ../base/fastfetch.nix
+    ../base/metrics.nix
     ./traefik.nix
     ./adguard.nix
   ];

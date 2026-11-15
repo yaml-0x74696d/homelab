@@ -43,6 +43,7 @@ paperless_oidc_secret: "CHANGE_ME"
 
 proxmox_secret: "CHANGE_ME"
 pbs_homepage_token: "CHANGE_ME"
+homepage_ha_token: "CHANGE_ME"   # ha long-lived token, the haos tile reads system monitor sensors
 
 # pbs backup client (roles/pbs): token secret + datastore cert fingerprint
 pbs_token_secret: "CHANGE_ME"

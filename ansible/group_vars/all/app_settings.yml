@@ -10,6 +10,18 @@ ntfy_timeout: 10   # seconds per push
 homepage_pve_token_id: "api@pam!homepage"
 homepage_pbs_token_id: "homepage@pbs!homepage"
 homepage_ping_target: 1.1.1.1
+homepage_router_group: Admin   # the router tile (gateway_ip) sits in this group
+homepage_one_row_max: 7   # more tiles than this split into even rows
+homepage_layout: tabs      # tabs or rows (one page). try the other: ansible-playbook playbooks/deploy-app.yml -e app=homepage -e homepage_layout=rows
+homepage_header_style: boxedWidgets   # boxedWidgets, boxed, underlined or clean
+homepage_metrics_refresh_ms: 30000   # prometheus widgets on the pod tiles
+# ha system monitor sensors for the haos tile, check the ids in ha (settings, entities)
+homepage_haos_disk_entity: sensor.system_monitor_disk_usage
+homepage_haos_boot_entity: sensor.system_monitor_uptime   # system monitor: when the vm booted
+homepage_semaphore_refresh_ms: 60000   # last semaphore run on its tile, the pi answers slowly
+homepage_tabs:
+  Home: [Status, Homecloud, Tools, Bookmarks]   # tab order and group order in it
+  Infra: [Admin, Servers, VMs, LXCs]
 
 # authentik can't skip a release series or downgrade; deploy-authentik.yml enforces both.
 # the tag lives in apps.yml: raise it one series, deploy, repeat

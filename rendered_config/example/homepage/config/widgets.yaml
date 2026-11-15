@@ -1,4 +1,17 @@
 ---
+# info row, left to right
+- datetime:
+    text_size: xl
+    locale: en-GB   # dd/mm/yyyy
+    format:
+      dateStyle: short
+      timeStyle: short
+      hourCycle: h23
+- search:
+    provider: custom
+    url: https://search.example.org/search?q=
+    target: _blank
+    focus: true
 - openmeteo:
     label: Home
     latitude: 52.52

@@ -1,0 +1,52 @@
+---
+title: Dashboard
+headerStyle: {{ homepage_header_style }}
+statusStyle: "basic"
+disableIndexing: true
+# background.jpg comes from the private overlay (<private_dir>/apps/homepage/config/images/). icons: selfh.st (sh-), loaded by the browser
+background:
+  image: /images/background.jpg
+  blur: xs
+  brightness: 75   # dimmed so the tiles stand out
+  saturate: 0
+cardBlur: sm
+useEqualHeights: true
+# type anywhere to jump to a tile, enter on no match searches searxng
+quicklaunch:
+  searchDescriptions: true
+  mobileButtonPosition: bottom-right
+theme: dark
+color: neutral   # tiles + blocks grey; red comes only from custom.css accents
+hideErrors: true
+{# columns follow the tiles services.yaml.j2 renders: one row up to homepage_one_row_max,
+   past that the fewest even rows (8 = 2x4, 9 = 3x3). a prime count stays one row #}
+{% set svc = lookup('ansible.builtin.template', podman_app_src ~ '/services.yaml.j2') | from_yaml %}
+{% set tiles = {} %}
+{% for g in svc %}
+{% set _ = tiles.update({(g.keys() | first): (g.values() | first | default([], true) | length)}) %}
+{% endfor %}
+{% set collapsed = ['Tools', 'Admin'] %}
+{# homepage_layout: rows = one page, tabs = the groups in homepage_tabs, in that order #}
+{% set tabbed = homepage_layout == 'tabs' %}
+{% set order = (homepage_tabs.values() | flatten) if tabbed else [] %}
+{% set order = order + (tiles.keys() | reject('in', order) | list) %}
+layout:
+{% for name in order %}
+  {{ name }}:
+{% if name in tiles %}
+{% set n = tiles[name] %}
+{% set ns = namespace(cols=n) %}
+{% if n > homepage_one_row_max %}
+{% for rows in range(2, n) if ns.cols == n and n % rows == 0 %}
+{% set ns.cols = n // rows %}
+{% endfor %}
+{% endif %}
+    style: row
+    columns: {{ ns.cols }}
+{% endif %}
+{% if tabbed %}
+    tab: {{ homepage_tabs | dict2items | selectattr('value', 'contains', name) | map(attribute='key') | first | default(homepage_tabs.keys() | first) }}
+{% elif name in collapsed %}
+    initiallyCollapsed: true
+{% endif %}
+{% endfor %}

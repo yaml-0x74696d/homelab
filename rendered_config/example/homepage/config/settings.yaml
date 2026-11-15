@@ -3,39 +3,49 @@ title: Dashboard
 headerStyle: boxedWidgets
 statusStyle: "basic"
 disableIndexing: true
-# background.jpg and the /images/*.png logos come from the private overlay (<private_dir>/apps/homepage/config/images/)
+# background.jpg comes from the private overlay (<private_dir>/apps/homepage/config/images/). icons: selfh.st (sh-), loaded by the browser
 background:
   image: /images/background.jpg
-  blur: none
-  brightness: 100
+  blur: xs
+  brightness: 75   # dimmed so the tiles stand out
   saturate: 0
+cardBlur: sm
+useEqualHeights: true
+# type anywhere to jump to a tile, enter on no match searches searxng
+quicklaunch:
+  searchDescriptions: true
+  mobileButtonPosition: bottom-right
 theme: dark
 color: neutral   # tiles + blocks grey; red comes only from custom.css accents
 hideErrors: true
 layout:
   Status:
     style: row
-    columns: 1
-  Servers:
-    style: row
-    columns: 4
-  VMs:
-    style: row
-    columns: 6
-  LXCs:
-    style: row
-    columns: 3
+    columns: 2
+    tab: Home
   Homecloud:
     style: row
-    columns: 5
-  Home:
-    style: row
-    columns: 2
+    columns: 6
+    tab: Home
   Tools:
     style: row
-    columns: 4
-    initiallyCollapsed: true
+    columns: 5
+    tab: Home
+  Bookmarks:
+    tab: Home
   Admin:
     style: row
     columns: 6
-    initiallyCollapsed: true
+    tab: Infra
+  Servers:
+    style: row
+    columns: 4
+    tab: Infra
+  VMs:
+    style: row
+    columns: 6
+    tab: Infra
+  LXCs:
+    style: row
+    columns: 3
+    tab: Infra

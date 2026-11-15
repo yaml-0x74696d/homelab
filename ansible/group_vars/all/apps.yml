@@ -18,7 +18,7 @@ apps:
         tag: stable
         healthcheck: false   # scratch image, nothing to run a check with
         add_caps: [NET_RAW]  # runs as root in the container, so pings use raw sockets
-    homepage: {group: Status, icon: gatus, widget: gatus}
+    homepage: {group: Status, icon: sh-gatus, widget: gatus}
     routes:
       - host: status
         middlewares: [authentik]
@@ -40,7 +40,7 @@ apps:
       - name: grafana
         image: docker.io/grafana/grafana-oss
         tag: latest
-    homepage: {group: Admin, icon: grafana}
+    homepage: {group: Admin, icon: sh-grafana}
     routes:
       - host: grafana
 
@@ -54,7 +54,7 @@ apps:
       - name: nginx
         image: docker.io/library/nginx
         tag: alpine
-    homepage: {group: Tools, icon: nginx, label: Web}
+    homepage: {group: Tools, icon: sh-nginx, label: Web}
     routes:
       - host: web
 
@@ -71,7 +71,7 @@ apps:
       - name: prometheus
         image: docker.io/prom/prometheus
         tag: latest
-    homepage: {group: Admin, icon: prometheus}
+    homepage: {group: Admin, icon: sh-prometheus}
     routes:
       - host: prom
         middlewares: [authentik]   # grafana reaches prom internally, not via this url
@@ -90,7 +90,7 @@ apps:
       - name: actual
         image: ghcr.io/actualbudget/actual
         tag: latest
-    homepage: {group: Homecloud, icon: actual-budget}
+    homepage: {group: Homecloud, icon: sh-actual-budget}
     routes:
       - host: actual
 
@@ -153,7 +153,7 @@ apps:
       - name: semaphore
         image: docker.io/semaphoreui/semaphore
         tag: latest
-    homepage: {group: Admin, icon: semaphore}
+    homepage: {group: Status, icon: sh-semaphore-ui, widget: semaphore}
     routes:
       - host: semaphore
 
@@ -198,7 +198,7 @@ apps:
         tag: alpine
         user: "999:1000"
         auto_update: false
-    homepage: {group: Homecloud, icon: nextcloud}
+    homepage: {group: Homecloud, icon: sh-nextcloud}
     routes:
       - host: cloud
         middlewares: [nextcloud-dav]
@@ -231,7 +231,7 @@ apps:
         image: docker.io/valkey/valkey
         tag: "9"
         auto_update: false
-    homepage: {group: Homecloud, icon: /images/immich.png}
+    homepage: {group: Homecloud, icon: sh-immich}
     routes:
       - host: photo
 
@@ -251,7 +251,7 @@ apps:
         image: docker.io/jellyfin/jellyfin
         tag: latest
         cifs: [media]
-    homepage: {group: Homecloud, icon: jellyfin}
+    homepage: {group: Homecloud, icon: sh-jellyfin}
     routes:
       - host: media
 
@@ -304,7 +304,7 @@ apps:
         tag: latest
         user: "35002:35002"
         healthcheck: false   # no curl or wget in the image
-    homepage: {group: Homecloud, icon: paperless-ngx}
+    homepage: {group: Homecloud, icon: sh-paperless-ngx}
     routes:
       - host: paperless
 
@@ -341,7 +341,7 @@ apps:
         image: docker.io/library/postgres
         tag: 16-alpine
         auto_update: false
-    homepage: {group: Admin, icon: authentik}
+    homepage: {group: Admin, icon: sh-authentik}
     routes:
       - host: auth
 
@@ -361,7 +361,7 @@ apps:
       - name: vaultwarden
         image: docker.io/vaultwarden/server
         tag: latest
-    homepage: {group: Homecloud, icon: /images/vaultwarden.png}
+    homepage: {group: Homecloud, icon: sh-vaultwarden-light}
     routes:
       - host: vault
       - host: vault
@@ -384,7 +384,7 @@ apps:
         image: docker.io/gitea/gitea
         tag: latest
         user: "0:0"   # s6 starts as root, then drops to git
-    homepage: {group: Tools, icon: gitea}
+    homepage: {group: Tools, icon: sh-gitea}
     routes:
       - host: git
 
@@ -408,7 +408,7 @@ apps:
         image: docker.io/valkey/valkey
         tag: 8-alpine
         auto_update: false
-    homepage: {group: Tools, icon: searxng, label: SearXNG}
+    homepage: {group: Tools, icon: sh-searxng, label: SearXNG}
     routes:
       - host: search
 
@@ -439,7 +439,7 @@ apps:
       - name: pdfcraft
         image: ghcr.io/pdfcrafttool/pdfcraft
         tag: latest
-    homepage: {group: Tools, icon: /images/pdfcraft.png, label: PDFcraft}
+    homepage: {group: Tools, icon: sh-pdfcraft, label: PDFcraft}
     routes:
       - host: pdf
 
@@ -448,7 +448,7 @@ apps:
     host: haos
     runtime: vm
     port: 80   # haos core serves on 80, 8123 only redirects there
-    homepage: {group: Home, icon: /images/homeassistant.png, label: Home Assistant}
+    homepage: {group: Tools, icon: sh-home-assistant, label: Home Assistant}
     routes:
       - host: ha
 
@@ -462,8 +462,8 @@ infra_routes:
   - host: dns     # adguard home's ui on edge
     target: edge
     middlewares: [authentik]
-    homepage: {group: Admin, icon: adguard-home, label: AdGuard Home}
+    homepage: {group: Admin, icon: sh-adguard-home, label: AdGuard Home}
   - host: traefik   # edge traefik's dashboard
     target: edge
     middlewares: [authentik]
-    homepage: {group: Admin, icon: /images/traefik.png, label: Traefik}
+    homepage: {group: Admin, icon: sh-traefik, label: Traefik}

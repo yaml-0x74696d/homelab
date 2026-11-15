@@ -22,6 +22,8 @@ scrape_configs:
           - '{{ addr('pod-1', pod1_ip) }}:{{ node_exporter_port }}'
           - '{{ addr('pod-2', pod2_ip) }}:{{ node_exporter_port }}'
           - '{{ addr('pod-3', pod3_ip) }}:{{ node_exporter_port }}'
+          - '{{ edge_ip }}:{{ node_exporter_port }}'
+          - '{{ netbird_ip }}:{{ node_exporter_port }}'
 {% for h in groups['lxc_containers'] + groups['podman_hosts'] %}
           - '{{ hostvars[h].ansible_host }}:{{ node_exporter_port }}'
 {% endfor %}
