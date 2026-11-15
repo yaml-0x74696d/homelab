@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - The apt hosts are pve-1/2/3, pod-1/2/3 and the storage, log and IoT LXCs
-- Only the pod VMs and the LXCs get unattended security updates (`roles/vm_base`, `roles/lxc_base`), the PVE nodes wait for a run
+- Only the pod VMs, ctl-1 and the LXCs get unattended security updates (`roles/vm_base`, `roles/lxc_base`), the PVE nodes wait for a run
 - A kernel check via `uname -r` against `/boot` flags the LXCs every time, they have no kernel there
 - Checking only the kernel misses services still running on an old libc or openssl
 - With `force-confold` the package's new config lands as `*.dpkg-dist`, unnoticed
