@@ -2,7 +2,7 @@
 Description=actual
 
 [Container]
-Volume=/srv/apps/actual/data:/data
+Volume=/srv/apps/actual/data:/data:Z
 PublishPort=5006:5006
 Secret=actual-oidc-secret,type=mount,target=/run/secrets/oidc,mode=0400
 Environment=ACTUAL_OPENID_CLIENT_SECRET_FILE=/run/secrets/oidc

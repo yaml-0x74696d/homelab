@@ -2,7 +2,7 @@
 Description=actual
 
 [Container]
-Volume={{ podman_app_dir }}/data:/data
+Volume={{ podman_app_dir }}/data:/data:Z
 PublishPort={{ podman_app_entry.port }}:5006
 Secret=actual-oidc-secret,type=mount,target=/run/secrets/oidc,mode=0400
 Environment=ACTUAL_OPENID_CLIENT_SECRET_FILE=/run/secrets/oidc
