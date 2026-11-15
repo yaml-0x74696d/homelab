@@ -70,6 +70,9 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 | Tools | Gitea | pod-1 | git server |
 | Tools | SearXNG | pod-1 | Search engine |
 | Tools | pdfcraft | pod-1 | PDF tools |
+| Tools | linkding | pod-3 | Bookmarks, login through Authentik only |
+| Tools | Memos | pod-3 | Notes |
+| Tools | Excalidraw | pod-3 | Whiteboard, behind Authentik, a CSP keeps it off excalidraw.com |
 | Tools | nginx | pod-2 | Website |
 | Tools | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a git clone of `semaphore_repo_version` |
 
@@ -127,7 +130,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - Podman apps: rootless, one svc user per app, no container socket anywhere
 - NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
-- Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden and Actual Budget), forward-auth for apps without SSO
+- Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden, Actual Budget and linkding), forward-auth for apps without SSO
 - TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN
 - AIDE on every host + the NixOS VMs: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
@@ -143,7 +146,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the pod VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
 - 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
-- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox · 0037 Actual Budget
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox · 0037 Actual Budget · 0038 linkding, Memos, Excalidraw · 0039 Syncthing ctl-0 ↔ ctl-1
 
 ## Future plans
 

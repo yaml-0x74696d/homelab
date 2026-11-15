@@ -37,7 +37,7 @@ The NixOS VMs (netbird, edge):
 
 - Easier: one tool that's already in the stack, no extra key management
 - Easier: unit templates stay readable, secrets only show up as `Secret=` lines, and nothing secret lands in a unit file
-- Easier: the vault, `.vault_pass`, `private.yml`, tfvars, tofu state and AIDE hashes live in one encrypted, offsite-synced folder on secure storage, symlinked into the repo, so the offsite copy is always current
+- Easier: the vault, `.vault_pass`, `private.yml`, tfvars and tofu state live in one encrypted, offsite-synced folder on secure storage, symlinked into the repo, so the offsite copy is always current. The AIDE hashes and the overlays live apart from it, synced with ctl-1 ([0039](0039-syncthing-between-ctl-0-and-ctl-1.md))
 
 - Harder: two ways secrets get placed: Ansible Vault for the Debian hosts, files by hand on the NixOS VMs
 
@@ -45,4 +45,4 @@ The NixOS VMs (netbird, edge):
 - Accepted: agenix/sops for the NixOS VMs is still open
 - Accepted: whoever gets into the secure storage has the vault and its password together
 
-- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS secrets)
+- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS secrets), [0039](0039-syncthing-between-ctl-0-and-ctl-1.md) (hashes + overlays)

@@ -1,0 +1,10 @@
+# ctl-0 by hand: ~/homelab-sync (syncthing with ctl-1) mirrored into the secure storage, one way.
+# syncthing never writes there itself. the storage keeps versions, so --delete is fine
+[Unit]
+Description=Copy ~/homelab-sync into the secure storage
+
+[Service]
+Type=oneshot
+# SYNC_COPY_DEST=<secure storage>/homelab/sync-copy, only on ctl-0
+EnvironmentFile=%h/.config/homelab-sync-copy.env
+ExecStart=/usr/bin/rsync -a --delete --exclude=.st* --exclude=*.sync-conflict-* --exclude=.syncthing.* %h/homelab-sync/ ${SYNC_COPY_DEST}/

@@ -1,0 +1,20 @@
+[Unit]
+Description=linkding
+
+[Container]
+Volume={{ podman_app_dir }}/data:/etc/linkding/data:Z
+PublishPort={{ podman_app_entry.port }}:9090
+Environment=LD_CSRF_TRUSTED_ORIGINS=https://{{ podman_app_entry.routes[0].host }}.{{ domain }}
+# authentik only, no password form
+Environment=LD_ENABLE_OIDC=True
+Environment=LD_DISABLE_LOGIN_FORM=True
+Environment=OIDC_OP_AUTHORIZATION_ENDPOINT=https://auth.{{ domain }}/application/o/authorize/
+Environment=OIDC_OP_TOKEN_ENDPOINT=https://auth.{{ domain }}/application/o/token/
+Environment=OIDC_OP_USER_ENDPOINT=https://auth.{{ domain }}/application/o/userinfo/
+Environment=OIDC_OP_JWKS_ENDPOINT=https://auth.{{ domain }}/application/o/linkding/jwks/
+Environment=OIDC_RP_CLIENT_ID={{ linkding_oidc_id }}
+Environment=OIDC_USERNAME_CLAIM=preferred_username
+Secret=linkding-oidc,type=env,target=OIDC_RP_CLIENT_SECRET
+# container dns can't resolve auth.<domain>, go straight to traefik
+AddHost=auth.{{ domain }}:{{ app_sources.edge }}
+HealthCmd=curl -fsS http://127.0.0.1:9090/health

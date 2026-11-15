@@ -16,6 +16,10 @@ edge_reboot_window: { lower: "04:00", upper: "04:45" }
 aide_check_time: "*-*-* 12:00:00"
 aide_check_delay: 30min
 
+# ctl-0, a user timer set by hand: ~/homelab-sync into the secure storage
+# (roles/ctl_base/files/ctl-0/homelab-sync-copy.timer holds it, keep both the same)
+# 21:00 daily
+
 # pbs backup (roles/pbs), the delay keeps the hosts apart on the datastore
 pbs_backup_time: "*-*-* 20:00:00"
 pbs_backup_delay: 20m

@@ -196,9 +196,9 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 
 The database hashes are the integrity anchor ([ADR 0009](adr/0009-aide-with-manual-accept.md)):
 - ctl-1 holds the reference, `/srv/apps/semaphore/aide/<host>.sha256`. Semaphore's accept runs write there
-- The controller's `ansible/aide/` is a copy. After every accept, from either side:
-  `rsync -a <admin_user>@<ctl1_ip>:/srv/apps/semaphore/aide/ aide/`
-- On ctl-1 the files belong to the subuid that Semaphore's container user maps to. Copying into that dir needs `sudo` and the same owner afterwards
+- The controller's `ansible/aide/` and ctl-1's dir are kept the same by Syncthing, both ways. An accept on either side reaches the other within seconds
+- Not synced: Syncthing's GUI (`127.0.0.1:8384` on ctl-0) shows the folder's state. A `.sync-conflict-…` file means both sides changed the same hash, keep the one that matches the host's db
+- On ctl-1 the dir has ACLs for `admin_user` (Syncthing) and Semaphore's container user, a copy by hand doesn't need `sudo` anymore
 - Renaming a host: rename `<host>.sha256` on both sides, then accept on that host
 - "database hash mismatch": the database changed outside an accept, or a copy is stale. Compare both copies first, then look at the host before accepting
 

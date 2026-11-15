@@ -84,7 +84,7 @@ model {
   }
 
   apps = system "Apps" {
-    technology "Vaultwarden, Gitea, SearXNG, Homepage, …"
+    technology "Vaultwarden, Gitea, SearXNG, Homepage, linkding, Memos, …"
     description "Everyday self-hosted tools"
     vaultwarden = container "Vaultwarden" { technology "password manager, sqlite" }
     gitea = container "Gitea" { technology "git, sqlite" }
@@ -95,6 +95,9 @@ model {
     }
     homepage = ui "Homepage" { technology "dashboard" }
     pdfcraft = ui "PDFCraft" { technology "pdf tools, wasm" }
+    linkding = container "linkding" { technology "bookmarks, sqlite" }
+    memos = container "Memos" { technology "notes, sqlite" }
+    excalidraw = ui "Excalidraw" { technology "whiteboard, local-only csp" }
   }
 
   media = system "Home cloud" {
@@ -236,6 +239,7 @@ model {
   ops.semaphore -> github "pulls the repo (main)"
   ops.semaphore -> ops.proxmox "ansible: pve nodes over ssh"
   ops.semaphore -> ops.hosts "ansible: apps over ssh"
+  ops.controller -[sync]-> ops.semaphore "aide hashes + private overlays, both ways"
   ops.controller -> ops.semaphore "copies vault, private.yml + overlays"
 
   // ingress
@@ -245,6 +249,9 @@ model {
   edge.traefik -[https]-> apps.searxng.web "routes"
   edge.traefik -[https]-> apps.homepage "routes"
   edge.traefik -[https]-> apps.pdfcraft "routes"
+  edge.traefik -[https]-> apps.linkding "routes"
+  edge.traefik -[https]-> apps.memos "routes"
+  edge.traefik -[https]-> apps.excalidraw "routes, behind forward-auth"
   edge.traefik -[https]-> media.nextcloud.web "routes"
   edge.traefik -[https]-> media.immich.server "routes"
   edge.traefik -[https]-> media.jellyfin "routes"
@@ -268,6 +275,8 @@ model {
   // sso
   apps.vaultwarden -[oidc]-> identity.authentik.server "login"
   apps.gitea -[oidc]-> identity.authentik.server "login"
+  apps.linkding -[oidc]-> identity.authentik.server "login"
+  apps.memos -[oidc]-> identity.authentik.server "login"
   observability.grafana -[oidc]-> identity.authentik.server "login"
   media.nextcloud.web -[oidc]-> identity.authentik.server "login"
   media.immich.server -[oidc]-> identity.authentik.server "login"

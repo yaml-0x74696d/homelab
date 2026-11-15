@@ -5,7 +5,7 @@
 domain: example.org
 admin_user: admin              # login user on every host + app admin accounts
 # outside the repo: apps/<name>/config/ in here lays over the public config (nginx site, own images). unset = none
-private_dir: ~/homelab-private
+private_dir: ~/homelab-sync   # synced with ctl-1 by syncthing, docs/bootstrap.md step 0
 
 # admin key on the nixos boxes (ansible hosts + tofu use admin_ssh_pubkey_file instead)
 admin_ssh_pubkeys:
@@ -43,6 +43,9 @@ admin_hosts:
   - { ip: 192.168.178.2, c: controller }
 # extra devices for the pve ui only (no ssh)
 admin_ui_hosts: []
+
+# ctl-0's syncthing device id (`syncthing device-id` there, 2.x), roles/ctl_base pairs ctl-1 with it
+syncthing_ctl0_id: ""
 
 # homepage weather widget: where you live
 homepage_weather_label: Home

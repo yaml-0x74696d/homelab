@@ -33,7 +33,7 @@ The code it runs:
 - `playbooks/repo-pull.yml` pulls it, as a Semaphore template
 - The quadlet sets `ANSIBLE_CONFIG`, `AIDE_CHECKSUM_DIR` and `HOMELAB_PRIVATE_DIR` and forwards them to the tasks (`SEMAPHORE_FORWARDED_ENV_VARS`), so templates need no variable group
 - The gitignored `vault.yml` and `private.yml` come from ctl-0 (`ctl_base_private_files`, tag `private-files`)
-- ctl-0's `<private_dir>/apps` (the private config overlays, nothing else from that dir) is mirrored with rsync to `semaphore_private_dir` in the same run and mounted read-only at that path. `HOMELAB_PRIVATE_DIR` points `podman_app` at it, `private.yml`'s `~/...` would be the container user's home
+- ctl-0's `<private_dir>/apps` (the private config overlays, nothing else from that dir) syncs both ways with `semaphore_private_dir` through Syncthing ([0039](0039-syncthing-between-ctl-0-and-ctl-1.md)) and is mounted read-only at that path. `HOMELAB_PRIVATE_DIR` points `podman_app` at it, `private.yml`'s `~/...` would be the container user's home
 - The vault password and Semaphore's ssh key live only in Semaphore's key store, encrypted with `semaphore_key_encryption`. No vault password and no tofu state on the Pi
 - `ansible.cfg` needs a `.vault_pass`, so the clone gets a dummy one, the real password comes from the key store
 - Semaphore's public key goes to every host through `push-keys.yml`
@@ -45,7 +45,7 @@ Schedules (set in the UI, Semaphore's own database):
 AIDE hashes:
 - Semaphore keeps the accepted hashes in its own rw dir (`/srv/apps/semaphore/aide`, `AIDE_CHECKSUM_DIR`). That copy is the reference for every Debian host, ctl-1 included
 - `aide-accept.yml` accepts in Semaphore through the survey var `aide_accept=yes`, the diff stays in the task log
-- ctl-0's `ansible/aide` is a copy, pulled back with rsync after accepts. The NixOS VMs' hashes stay on ctl-0 (`nixos/aide-accept.sh <host>`)
+- ctl-0's `ansible/aide` is a copy, Syncthing keeps it the same in both directions. The NixOS VMs' hashes stay on ctl-0 (`nixos/aide-accept.sh <host>`)
 
 - Enforced by: the read-only repo and private dir mounts, ufw on ctl-1 (port from `allow_from` only, ssh from the LAN), and the hash compare in `roles/aide` before every run and accept
 
@@ -57,10 +57,10 @@ AIDE hashes:
 - Harder: a vault, `private.yml` or `private_dir` change needs a run from ctl-0 before Semaphore sees it
 - Harder: ctl-1 holds the keys to every host, so it is the most valuable box to break into
 
-- Accepted: ctl-1 holds the AIDE hashes for all hosts, itself included. Root on ctl-1 could swap a database and its hash together. ctl-0's copy is the cross-check, if I pull it after every accept
+- Accepted: ctl-1 holds the AIDE hashes for all hosts, itself included. Root on ctl-1 could swap a database and its hash together. ctl-0's Syncthing versions (`.stversions`) are the cross-check, the copy itself follows ctl-1
 - Accepted: `aide_accept=yes` accepts what the run finds, without a second look before the swap
 - Accepted: no backup of the Pi. Projects and templates are quick to redo, the run history is lost with the card
 - Accepted: the SD card wears, so the journal is volatile and goes to the log LXC ([0022](0022-central-logging-relp.md))
 - Accepted: whoever can merge to `main` runs code as root on every Debian host within a day: `repo-pull` takes `main` at 11:45, `aide` runs from it at 13:15, `update` on Saturdays. Same guards as in [0035](0035-nixos-for-netbird-and-edge.md): PR only, the `checks` CI job, two-factor login
 
-- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0014](0014-authentik-as-idp.md), [0016](0016-ansible-vault-for-secrets.md) (vault), [0021](0021-podman-quadlets.md), [0022](0022-central-logging-relp.md), [0024](0024-ansible-run-os-updates.md) (updates), [0026](0026-ufw-as-guest-firewall.md), [0027](0027-gatus-generated-from-apps-map.md) (failed runs), [0033](0033-no-kubernetes.md), [0035](0035-nixos-for-netbird-and-edge.md) (same trust in main)
+- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0014](0014-authentik-as-idp.md), [0016](0016-ansible-vault-for-secrets.md) (vault), [0021](0021-podman-quadlets.md), [0022](0022-central-logging-relp.md), [0024](0024-ansible-run-os-updates.md) (updates), [0026](0026-ufw-as-guest-firewall.md), [0027](0027-gatus-generated-from-apps-map.md) (failed runs), [0033](0033-no-kubernetes.md), [0035](0035-nixos-for-netbird-and-edge.md) (same trust in main), [0039](0039-syncthing-between-ctl-0-and-ctl-1.md) (syncthing with ctl-0)

@@ -443,6 +443,61 @@ apps:
     routes:
       - host: pdf
 
+  # bookmarks. login through authentik only (oidc), users match by email
+  linkding:
+    host: pod-3
+    uid: 2190
+    port: 8088
+    allow_from: [edge, netbird, homepage]
+    secrets:
+      - name: linkding-oidc
+        vault: linkding_oidc_secret
+    dirs:
+      - path: data   # db.sqlite3, favicons, previews, snapshots
+        owner: 33    # www-data in the image
+    containers:
+      - name: linkding
+        image: docker.io/sissbruecker/linkding
+        tag: latest
+    homepage: {group: Tools, icon: sh-linkding}
+    routes:
+      - host: links
+
+  # short notes on a timeline. sso (authentik) is set in its admin ui, the db holds it
+  memos:
+    host: pod-3
+    uid: 2200
+    port: 8089
+    allow_from: [edge, netbird, homepage]
+    secrets: []
+    dirs:
+      - path: data   # memos_prod.db + uploads
+        owner: 10001   # nonroot in the image
+    containers:
+      - name: memos
+        image: docker.io/neosmemo/memos
+        tag: stable
+    homepage: {group: Tools, icon: sh-memos}
+    routes:
+      - host: memos
+
+  # whiteboard. no login of its own, authentik in front. the drawing stays in the browser,
+  # the local-only csp keeps it from reaching excalidraw.com (sharing and live collab stay off)
+  excalidraw:
+    host: pod-3
+    uid: 2210
+    port: 8090
+    allow_from: [edge, netbird, homepage]
+    secrets: []
+    containers:
+      - name: excalidraw
+        image: docker.io/excalidraw/excalidraw
+        tag: latest
+    homepage: {group: Tools, icon: sh-excalidraw}
+    routes:
+      - host: draw
+        middlewares: [authentik, local-only]
+
   # haos vm, home assistant updates and configures itself inside, ansible never deploys it
   homeassistant:
     host: haos

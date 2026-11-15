@@ -94,6 +94,19 @@ let
             "X-authentik-meta-version"
           ];
         };
+        # the browser may only talk to the app's own origin: excalidraw's share, collab and
+        # library calls to excalidraw.com fail, the drawing never leaves the lab
+        local-only.headers.contentSecurityPolicy = lib.concatStringsSep "; " [
+          "default-src 'self'"
+          "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'"
+          "style-src 'self' 'unsafe-inline'"
+          "img-src 'self' data: blob:"
+          "font-src 'self' data:"
+          "connect-src 'self' data: blob:"
+          "worker-src 'self' blob:"
+          "object-src 'none'"
+          "frame-ancestors 'self'"
+        ];
         # dav discovery: /.well-known/{card,cal}dav -> /remote.php/dav
         nextcloud-dav.redirectRegex = {
           regex = "https://(.*)/.well-known/(card|cal)dav";

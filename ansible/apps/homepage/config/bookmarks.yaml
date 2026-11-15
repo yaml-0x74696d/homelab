@@ -9,3 +9,7 @@
     - RedHat:
         - icon: sh-red-hat
           href: https://console.redhat.com/
+    # the gui listens on localhost only: works from ctl-0's browser, nowhere else
+    - Syncthing:
+        - icon: sh-syncthing
+          href: http://127.0.0.1:8384/

@@ -7,7 +7,18 @@ The whole lab from bare hardware, in order. Each step needs the one before it. S
 
 ## 0. Controller (ctl-0)
 
-The private files live in one folder on secure storage (encrypted, synced offsite), symlinked into the repo ([ADR 0016](adr/0016-ansible-vault-for-secrets.md)):
+Two folders outside the repo hold what git must not:
+
+```
+<secure storage>/homelab/        encrypted, synced offsite, Syncthing never touches it
+  vault.yml, private.yml, .vault_pass, terraform.tfvars, terraform.tfstate
+  sync-copy/                     daily one-way copy of ~/homelab-sync (apps/, aide/)
+~/homelab-sync/                  Syncthing with ctl-1, both ways
+  apps/                          private_dir: the app config overlays
+  aide/                          the accepted AIDE hashes
+```
+
+Both are symlinked into the clone ([ADR 0016](adr/0016-ansible-vault-for-secrets.md), [ADR 0039](adr/0039-syncthing-between-ctl-0-and-ctl-1.md)):
 
 ```bash
 git clone https://github.com/yaml-0x74696d/homelab.git ~/homelab && cd ~/homelab
@@ -15,13 +26,28 @@ P=<secure storage>/homelab
 ln -s $P/vault.yml       ansible/group_vars/all/vault.yml
 ln -s $P/private.yml     ansible/group_vars/all/private/private.yml
 ln -s $P/.vault_pass     ansible/.vault_pass
-ln -s $P/aide            ansible/aide
 ln -s $P/terraform.tfvars tofu/terraform.tfvars
 ln -s $P/terraform.tfstate tofu/terraform.tfstate   # only with an existing lab
+
+# overlays + hashes: from the offsite copy on a new controller, empty on a new lab
+mkdir -p ~/homelab-sync
+cp -a $P/sync-copy/. ~/homelab-sync/ 2>/dev/null || mkdir -p ~/homelab-sync/{apps,aide}
+ln -s ~/homelab-sync/aide ansible/aide
+
 just setup    # pre-commit hooks, ansible collections
 just check    # must pass before anything is deployed
 ssh-add <admin key>
 ```
+
+- `private.yml` sets `private_dir: ~/homelab-sync`, `podman_app` reads the overlays from `<private_dir>/apps`
+- `ansible/aide` stays a symlink: `aide-accept.yml` and `nixos/aide-accept.sh` write the new hashes there, Syncthing carries them to ctl-1
+- Check the links: `ls -la ansible/aide ansible/.vault_pass ansible/group_vars/all/vault.yml ansible/group_vars/all/private/private.yml tofu/terraform.tf*`, each one points into one of the two folders
+- If ctl-1 still runs, Syncthing fills `~/homelab-sync` from there too, the offsite copy is for when both are gone
+
+Syncthing and the offsite copy, **(hand)** once ctl-1 exists (step 5), all steps in [roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md#syncthing-with-ctl-0):
+- Syncthing from the distro as a user service, LAN only (discovery, relays, NAT off), paired with ctl-1, folders `homelab-aide` → `~/homelab-sync/aide` (simple versioning) and `homelab-private` → `~/homelab-sync/apps`, both with "Ignore Permissions"
+- `.stignore` with `.git` in `~/homelab-sync/apps`
+- The copy timer: `roles/ctl_base/files/ctl-0/homelab-sync-copy.{service,timer}` into `~/.config/systemd/user/`, `~/.config/homelab-sync-copy.env` with `SYNC_COPY_DEST=<secure storage>/homelab/sync-copy`, `systemctl --user enable --now homelab-sync-copy.timer`
 
 ## 1. Proxmox nodes
 
@@ -134,6 +160,8 @@ ansible-playbook playbooks/deploy-app.yml -e app=semaphore
 ansible-playbook playbooks/push-keys.yml   # semaphore's key onto every host (ADR 0031)
 ```
 
+- Syncthing on ctl-1 comes with `ctl-preparation.yml` (tag `syncthing`), it pairs once `syncthing_ctl0_id` is in `private.yml`. Then ctl-0's half from step 0, and `ctl-preparation.yml -l ctl-1 -t private-files,syncthing` once more
+
 ## 6. Apps
 
 ```bash
@@ -189,8 +217,7 @@ ansible-playbook playbooks/aide-accept.yml   # pod vms + ctl-1: accept what the 
 ../nixos/aide-accept.sh edge
 ```
 
-- The hashes are on ctl-0 now (`ansible/aide`). Copy the Debian hosts' once into Semaphore's dir on ctl-1, the reference from here on ([roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md), step 5). Without that, Semaphore's first `aide` run finds no hash and reports every host as a mismatch
-- After that ctl-0's `ansible/aide` is the copy, synced back after an accept: `rsync -a <admin_user>@<ctl1_ip>:/srv/apps/semaphore/aide/ aide/`
+- The hashes land in ctl-0's `ansible/aide`. Syncthing carries them to Semaphore's dir on ctl-1 and back, set it up first ([roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md#syncthing-with-ctl-0)). Without it, Semaphore's first `aide` run finds no hash and reports every host as a mismatch
 
 ## 9. Verify
 

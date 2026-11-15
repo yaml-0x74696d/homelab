@@ -32,16 +32,31 @@ argument_specs:
         type: list
         elements: str
         description: Gitignored files copied from the controller's checkout, relative to the repo root
-      ctl_base_private_src:
-        type: str
-        description: The controller's overlays (<private_dir>/apps), mirrored to <ctl_base_private_dir>/apps. empty or missing = no sync
       ctl_base_private_dir:
         type: path
         description: ctl-1's copy of private_dir, readable by svc-semaphore, mounted into semaphore at the same path
       ctl_base_private_excludes:
         type: list
         elements: str
-        description: rsync excludes for the sync
+        description: Patterns syncthing ignores in the overlays (.stignore)
+      ctl_base_syncthing_peer_id:
+        type: str
+        description: ctl-0's syncthing device id. empty = syncthing runs without a device or folders
+      ctl_base_syncthing_home:
+        type: path
+        description: Syncthing's state dir for the admin user, holds config.xml with the api key
+      ctl_base_syncthing_api:
+        type: str
+        description: Syncthing's rest api on ctl-1, localhost only
+      ctl_base_syncthing_start_timeout:
+        type: int
+        description: Seconds to wait for syncthing's first config.xml
+      ctl_base_syncthing_aide_dir:
+        type: path
+        description: Semaphore's aide hash dir, synced with ctl-0's ansible/aide
+      ctl_base_semaphore_uid:
+        type: int
+        description: Semaphore's container user as seen on the host, gets write access to the aide dir
       ctl_base_vault_pass_dummy:
         type: str
         description: Placeholder for ansible.cfg's vault_password_file, relative to the repo root
