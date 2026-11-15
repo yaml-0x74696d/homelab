@@ -1,0 +1,120 @@
+---
+# syncthing with ctl-0: the aide hashes and the private overlays, both ways, lan only.
+# ctl-0's side is set up by hand (README.md), its device id comes from private.yml
+- name: Install syncthing
+  ansible.builtin.apt:
+    name: syncthing
+    state: present
+
+- name: Syncthing for {{ admin_user }}
+  ansible.builtin.systemd_service:
+    name: "syncthing@{{ admin_user }}.service"
+    enabled: true
+    state: started
+  ignore_errors: "{{ ansible_check_mode }}"   # the package isn't really there in check mode
+
+- name: Syncthing port from the lan
+  community.general.ufw:
+    rule: allow
+    port: "{{ syncthing_port }}"
+    proto: tcp
+    src: "{{ lan_cidr }}"
+    direction: in
+
+# tim syncs the hashes, semaphore's container user writes new ones: both need the dir
+- name: Aide dir for syncthing and semaphore
+  ansible.posix.acl:
+    path: "{{ ctl_base_syncthing_aide_dir }}"
+    etype: user
+    entity: "{{ item.0 }}"
+    permissions: rwX
+    default: "{{ item.1 }}"
+    recursive: true
+    state: present
+  loop: "{{ [admin_user, ctl_base_semaphore_uid | string] | product([false, true]) | list }}"
+  ignore_errors: "{{ ansible_check_mode }}"   # the dir comes with deploy-app.yml
+
+# never synced itself, so each side keeps its own
+- name: Syncthing ignores in the private overlays
+  ansible.builtin.copy:
+    content: "{{ ctl_base_private_excludes | join('\n') }}\n"
+    dest: "{{ ctl_base_private_dir }}/apps/.stignore"
+    mode: "0640"
+  become: false
+  vars:
+    ansible_become: false
+
+# needs the running service and its config.xml, neither exists in check mode
+- name: Configure syncthing over its api
+  when: not ansible_check_mode
+  block:
+    - name: Wait for the syncthing config
+      ansible.builtin.wait_for:
+        path: "{{ ctl_base_syncthing_home }}/config.xml"
+        search_regex: "<apikey>"
+        timeout: "{{ ctl_base_syncthing_start_timeout }}"
+
+    - name: Read the syncthing config
+      ansible.builtin.slurp:
+        src: "{{ ctl_base_syncthing_home }}/config.xml"
+      register: ctl_base_syncthing_xml
+      no_log: true
+
+    - name: Syncthing api key
+      ansible.builtin.set_fact:
+        ctl_base_syncthing_key: "{{ ctl_base_syncthing_xml.content | b64decode | regex_search('<apikey>([^<]+)</apikey>', '\\1') | first }}"
+      no_log: true
+
+    # lan only: no global discovery, relays, nat or usage reports. ctl-0 dials in on the fixed address
+    - name: Syncthing options
+      ansible.builtin.uri:
+        url: "{{ ctl_base_syncthing_api }}/config/options"
+        method: PATCH
+        headers: { X-API-Key: "{{ ctl_base_syncthing_key }}" }
+        body_format: json
+        body:
+          listenAddresses: ["tcp://0.0.0.0:{{ syncthing_port }}"]
+          globalAnnounceEnabled: false
+          localAnnounceEnabled: false
+          relaysEnabled: false
+          natEnabled: false
+          urAccepted: -1
+          crashReportingEnabled: false
+          startBrowser: false
+      no_log: true
+
+    - name: Ctl-0 as a syncthing device
+      ansible.builtin.uri:
+        url: "{{ ctl_base_syncthing_api }}/config/devices/{{ ctl_base_syncthing_peer_id }}"
+        method: PUT
+        headers: { X-API-Key: "{{ ctl_base_syncthing_key }}" }
+        body_format: json
+        body:
+          deviceID: "{{ ctl_base_syncthing_peer_id }}"
+          name: ctl-0
+          addresses: [dynamic]
+      when: ctl_base_syncthing_peer_id | length > 0
+      no_log: true
+
+    # ignorePerms: a chmod would reset the acl mask and lock semaphore's group out
+    - name: Syncthing folders
+      ansible.builtin.uri:
+        url: "{{ ctl_base_syncthing_api }}/config/folders/{{ item.id }}"
+        method: PUT
+        headers: { X-API-Key: "{{ ctl_base_syncthing_key }}" }
+        body_format: json
+        body:
+          id: "{{ item.id }}"
+          label: "{{ item.id }}"
+          path: "{{ item.path }}"
+          type: sendreceive
+          ignorePerms: true
+          fsWatcherEnabled: true
+          devices: [{ deviceID: "{{ ctl_base_syncthing_peer_id }}" }]
+      loop:
+        - { id: homelab-aide, path: "{{ ctl_base_syncthing_aide_dir }}" }
+        - { id: homelab-private, path: "{{ ctl_base_private_dir }}/apps" }
+      loop_control:
+        label: "{{ item.id }}"
+      when: ctl_base_syncthing_peer_id | length > 0
+      no_log: true

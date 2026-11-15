@@ -27,6 +27,8 @@ grafana_oidc_secret: "CHANGE_ME"
 
 actual_oidc_id: "CHANGE_ME"
 actual_oidc_secret: "CHANGE_ME"
+linkding_oidc_id: "CHANGE_ME"
+linkding_oidc_secret: "CHANGE_ME"
 
 searxng_secret: "CHANGE_ME"
 

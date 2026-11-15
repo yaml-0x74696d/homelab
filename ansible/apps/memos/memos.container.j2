@@ -1,0 +1,10 @@
+[Unit]
+Description=memos
+
+[Container]
+Volume={{ podman_app_dir }}/data:/var/opt/memos:Z
+PublishPort={{ podman_app_entry.port }}:5230
+Environment=TZ={{ timezone }}
+# the sso provider (authentik) is set in memos' admin ui, the token call goes straight to traefik
+AddHost=auth.{{ domain }}:{{ app_sources.edge }}
+HealthCmd=wget -qO /dev/null http://127.0.0.1:5230/healthz

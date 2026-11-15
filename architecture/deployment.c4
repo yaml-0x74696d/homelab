@@ -75,6 +75,9 @@ deployment {
         instanceOf media.immich
         instanceOf media.jellyfin
         instanceOf media.paperless
+        instanceOf apps.linkding
+        instanceOf apps.memos
+        instanceOf apps.excalidraw
         instanceOf ops.podman-updates
         instanceOf storage.pbs-client
         instanceOf observability.node-exporter

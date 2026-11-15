@@ -64,7 +64,7 @@ Each node runs one pod VM, grouped by what the apps need. Ingress and LAN DNS ru
 | pod-1 (VM 201) | pve-1 | Core | Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
 | pod-2 (VM 202) | pve-2 | Monitoring | dns-relay, Prometheus, Grafana, Gatus, nginx, Actual Budget, DDNS |
 | edge (VM 200) | pve-1 | Ingress and DNS (NixOS) | Traefik, AdGuard Home |
-| pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless |
+| pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless, linkding, Memos, Excalidraw |
 
 - Every app runs as a rootless Podman quadlet, there is no Docker left; all three run the PBS client and AIDE
 - Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
@@ -164,8 +164,8 @@ Authentik is the single login for the apps.
 
 - Authentik runs on pod-1 as one pod (server, worker and Postgres)
 - Its version is pinned and updated one release at a time (the tag in `apps.yml`, `authentik_series` in `app_settings.yml`, checked in `deploy-authentik.yml`)
-- Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, Actual Budget, NetBird
-- Each of those apps keeps a local admin as a break-glass account, except Vaultwarden and Actual Budget (SSO only)
+- Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, Actual Budget, linkding, Memos, NetBird
+- Each of those apps keeps a local admin as a break-glass account, except Vaultwarden, Actual Budget and linkding (SSO only)
 - Apps without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, Prometheus, the Vaultwarden admin page
 - Containers can't resolve internal names: apps on pod-1 reach `auth.<domain>` through a network alias on Traefik, apps on pod-2/3 through an `extra_hosts` entry pointing at pod-1
 

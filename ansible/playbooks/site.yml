@@ -78,6 +78,18 @@
   import_playbook: deploy-app.yml
   vars:
     app: paperless
+- name: Deploy linkding
+  import_playbook: deploy-app.yml
+  vars:
+    app: linkding
+- name: Deploy memos
+  import_playbook: deploy-app.yml
+  vars:
+    app: memos
+- name: Deploy excalidraw
+  import_playbook: deploy-app.yml
+  vars:
+    app: excalidraw
 # backup clients: needs the apps present + pve-3 (datastore) on
 - name: Deploy pbs backup client
   import_playbook: deploy-pbs.yml

@@ -1,0 +1,20 @@
+[Unit]
+Description=linkding
+
+[Container]
+Volume=/srv/apps/linkding/data:/etc/linkding/data:Z
+PublishPort=8088:9090
+Environment=LD_CSRF_TRUSTED_ORIGINS=https://links.example.org
+# authentik only, no password form
+Environment=LD_ENABLE_OIDC=True
+Environment=LD_DISABLE_LOGIN_FORM=True
+Environment=OIDC_OP_AUTHORIZATION_ENDPOINT=https://auth.example.org/application/o/authorize/
+Environment=OIDC_OP_TOKEN_ENDPOINT=https://auth.example.org/application/o/token/
+Environment=OIDC_OP_USER_ENDPOINT=https://auth.example.org/application/o/userinfo/
+Environment=OIDC_OP_JWKS_ENDPOINT=https://auth.example.org/application/o/linkding/jwks/
+Environment=OIDC_RP_CLIENT_ID=<vault:linkding_oidc_id>
+Environment=OIDC_USERNAME_CLAIM=preferred_username
+Secret=linkding-oidc,type=env,target=OIDC_RP_CLIENT_SECRET
+# container dns can't resolve auth.<domain>, go straight to traefik
+AddHost=auth.example.org:192.168.178.200
+HealthCmd=curl -fsS http://127.0.0.1:9090/health

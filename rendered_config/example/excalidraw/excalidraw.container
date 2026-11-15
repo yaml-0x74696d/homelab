@@ -1,0 +1,7 @@
+[Unit]
+Description=excalidraw
+
+[Container]
+# static files only, nothing to keep
+PublishPort=8090:80
+HealthCmd=wget -qO /dev/null http://127.0.0.1/

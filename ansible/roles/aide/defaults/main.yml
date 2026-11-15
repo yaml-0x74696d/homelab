@@ -94,7 +94,8 @@ aide_excludes_by_group:
     - "/home/{{ podman_svc_prefix }}[^/]+/\\.ansible"
     - "{{ podman_apps_root }}"
     - "{{ semaphore_repo_dir }}"   # ctl-1: git checkout, playbooks/repo-pull.yml keeps it current
-    - "{{ semaphore_private_dir }}"   # ctl-1: private_dir copy, roles/ctl_base syncs it
+    - "{{ semaphore_private_dir }}"   # ctl-1: private_dir copy, syncthing keeps it current
+    - "/home/{{ admin_user }}/.local/state/syncthing"   # ctl-1: syncthing's index db, rewritten all the time
   lxc_containers:
     - "{{ storage_root }}"   # pool bind mount
     - /dev/.lxc              # procfs from lxc, pids change every run

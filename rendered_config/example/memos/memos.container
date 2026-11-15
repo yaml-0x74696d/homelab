@@ -1,0 +1,10 @@
+[Unit]
+Description=memos
+
+[Container]
+Volume=/srv/apps/memos/data:/var/opt/memos:Z
+PublishPort=8089:5230
+Environment=TZ=Europe/Berlin
+# the sso provider (authentik) is set in memos' admin ui, the token call goes straight to traefik
+AddHost=auth.example.org:192.168.178.200
+HealthCmd=wget -qO /dev/null http://127.0.0.1:5230/healthz

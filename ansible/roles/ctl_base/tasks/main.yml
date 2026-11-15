@@ -70,22 +70,15 @@
     ansible_become: false
   tags: private-files
 
-# mirror, so a file deleted on ctl-0 goes here too. no perms: new files take the default acl below
-- name: Sync the private overlays
-  ansible.posix.synchronize:
-    src: "{{ ctl_base_private_src }}/"
-    dest: "{{ ctl_base_private_dir }}/apps/"
-    archive: false
-    recursive: true
-    links: true
-    times: true
-    delete: true
-    rsync_opts: "{{ ctl_base_private_excludes | map('regex_replace', '^', '--exclude=') | list }}"
+# the overlays themselves come with syncthing (tasks/syncthing.yml)
+- name: Private overlays dir
+  ansible.builtin.file:
+    path: "{{ ctl_base_private_dir }}/apps"
+    state: directory
+    mode: "0750"
   become: false
   vars:
     ansible_become: false
-  diff: false
-  when: ctl_base_private_src and ctl_base_private_src is directory
   tags: private-files
 
 # not a password, see ctl_base_vault_pass_dummy
@@ -124,3 +117,10 @@
   loop: "{{ [ctl_base_repo_dir, ctl_base_private_dir] | product([false, true]) | list }}"
   ignore_errors: "{{ ansible_check_mode }}"   # check mode doesn't create the private dir on a first run
   tags: private-files
+
+- name: Syncthing with ctl-0
+  ansible.builtin.include_tasks:
+    file: syncthing.yml
+    apply:
+      tags: syncthing
+  tags: syncthing

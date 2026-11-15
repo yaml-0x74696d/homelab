@@ -49,4 +49,4 @@ Data:
 - Accepted: each budget's sync log (`user-files/group-<id>.sqlite`) is copied while the app runs, not dumped. Its name isn't known before the budget exists, and every device holds the whole budget and can reset sync
 - Accepted: the image follows `latest`
 
-- Related: [0013](0013-pbs-file-level-backups.md) (backups), [0014](0014-authentik-as-idp.md) (SSO), [0021](0021-podman-quadlets.md) (Podman apps)
+- Related: [0013](0013-pbs-file-level-backups.md) (backups), [0014](0014-authentik-as-idp.md) (SSO), [0021](0021-podman-quadlets.md) (Podman apps), [0038](0038-linkding-memos-excalidraw-on-pod-3.md) (more apps, pod-3)
