@@ -38,3 +38,4 @@ Format: status, context, decision, consequences.
 - [34. TLS only via DNS-01, no port 80 from the WAN](0034-tls-via-dns-01.md)
 - [35. NixOS for the NetBird VM and edge](0035-nixos-for-netbird-and-edge.md)
 - [36. AI assistant in a sandbox without access to the lab](0036-ai-assistant-in-a-sandbox.md)
+- [37. Actual Budget on pod-2, login only through Authentik](0037-actual-budget-on-pod-2.md)

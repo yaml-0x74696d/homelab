@@ -4,6 +4,8 @@
 pbs_jobs:
   - { name: grafana, type: sqlite, path: grafana/data/grafana.db }
   - { name: gatus, type: sqlite, path: "gatus/data/{{ gatus_db_file }}" }
+  # users, sessions, the list of budgets. the budgets themselves (user-files) go with the files
+  - { name: actual, type: sqlite, path: actual/data/server-files/account.sqlite }
 
 pbs_exclude:
   - prometheus/data                         # tsdb, bulky + recomputable (podman-apps.pxar)
