@@ -20,7 +20,7 @@ Status: Accepted
 The setup:
 - Authentik on pod-1 (`apps/authentik`, `deploy-authentik.yml`): one Podman pod with server, worker and Postgres (`16-alpine`, no auto-update)
 - MFA is enforced in Authentik
-- Every app keeps a local admin as a break-glass account, except Vaultwarden (`SSO_ONLY=true`)
+- Every app keeps a local admin as a break-glass account, except Vaultwarden (`SSO_ONLY=true`) and Actual Budget (`ACTUAL_OPENID_ENFORCE`, [0037](0037-actual-budget-on-pod-2.md))
 - The version is pinned as the image tag in `group_vars/all/apps.yml`, the release series it may step through are `authentik_series` in `app_settings.yml`
 
 Two ways apps use it:
@@ -46,7 +46,7 @@ Connecting apps:
 - Harder: upgrades go one release series at a time (raise the tag in `apps.yml`, deploy, repeat). Database migrations can take a while, the start may take up to `start_timeout` in `apps.yml`
 - Harder: OIDC is set up by hand for every app (provider + application in Authentik, client in the app)
 
-- Accepted: Authentik is a single point of failure for logins. That's why every app except Vaultwarden keeps a local break-glass admin, and monitoring isn't fully behind it
+- Accepted: Authentik is a single point of failure for logins. That's why every app except Vaultwarden and Actual Budget keeps a local break-glass admin, and monitoring isn't fully behind it
 - Accepted: with Authentik down, Vaultwarden takes no new logins. Clients that are already logged in keep their offline copy
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird OIDC), [0034](0034-tls-via-dns-01.md) (TLS), [0002](0002-generic-docker-app-role.md) (app role)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird OIDC), [0034](0034-tls-via-dns-01.md) (TLS), [0002](0002-generic-docker-app-role.md) (app role), [0037](0037-actual-budget-on-pod-2.md) (Actual Budget, SSO only)

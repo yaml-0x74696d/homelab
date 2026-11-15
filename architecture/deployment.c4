@@ -46,6 +46,7 @@ deployment {
         instanceOf observability.prometheus
         instanceOf observability.grafana
         instanceOf observability.gatus
+        instanceOf media.actual
         instanceOf edge.ddns
         instanceOf ops.podman-updates
         instanceOf storage.pbs-client
