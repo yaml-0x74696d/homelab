@@ -133,7 +133,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
 - Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden, Actual Budget and linkding), forward-auth for apps without SSO
-- TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN
+- TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN, except PVE, PBS and Cockpit (HTTPS with self-signed certs)
 - AIDE on every host + the NixOS VMs: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
 - login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
 - Backups: PBS, scoped token (adds backups and restores its own, can't prune or delete), DB dumps before each run; a restore was rehearsed on 2026-11-08 ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
