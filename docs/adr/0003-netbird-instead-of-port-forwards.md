@@ -33,8 +33,9 @@ What the WAN sees:
 The routing:
 - pod-2 is the routing peer (`netbird_agent` group, `roles/netbird_agent`)
 - The role adds the apt repo, turns on IP forwarding and enrolls the peer with a setup key
-- The network route `192.168.178.0/24` with masquerade is set in the dashboard
+- The Network `lan` (router: pod-2's peer group, masquerade on) and the policies on it are in `tofu/netbird.tf` ([0040](0040-netbird-policy-as-code.md))
 - NetBird's nameserver for the lab domain is `dns-relay` on pod-2 (port 1053), which forwards to AdGuard Home, so `*.<domain>` resolves to LAN IPs through the tunnel
+- The nameserver group `lab` is in `tofu/netbird.tf` too
 
 The DMZ firewall (`roles/pve_firewall`, `netbird.fw.j2`):
 - In: 443, TURN, the relay range, and SSH/ICMP from the LAN only
@@ -60,4 +61,4 @@ The fallback:
 - Accepted: user and group sync from the IdP is turned off (Authentik's machine auth answered 405). Users still log in through OIDC
 - Accepted: the server secrets were put on the VM by hand and are not in git. agenix/sops is planned
 
-- Related: [0010](0010-lan-dns-on-a-service-ip.md) (LAN DNS), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS)
+- Related: [0010](0010-lan-dns-on-a-service-ip.md) (LAN DNS), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS), [0040](0040-netbird-policy-as-code.md) (policy as code)
