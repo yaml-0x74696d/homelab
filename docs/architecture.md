@@ -51,6 +51,7 @@ Ansible also sets up a couple of services on the hosts themselves:
 | login-notify | All nodes |
 | pve_firewall | All nodes |
 | AIDE | All nodes |
+| pve_thinpool | All nodes |
 | mergerfs | pve-3 |
 
 - `update.yml` updates every apt host one at a time (LXCs, VMs, then the nodes), restarts stale services, re-baselines AIDE and reports pending reboots ([0024](adr/0024-ansible-run-os-updates.md))

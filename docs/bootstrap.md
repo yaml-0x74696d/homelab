@@ -121,6 +121,7 @@ cd ~/homelab/ansible
 ansible-playbook playbooks/push-keys.yml
 ansible-playbook playbooks/deploy-pve-firewall.yml
 ansible-playbook playbooks/deploy-login-notify.yml
+ansible-playbook playbooks/deploy-pve-thinpool.yml
 ansible-playbook playbooks/vm-preparation.yml    # pod-N: vm_base, podman_base, ufw, aide
 ansible-playbook playbooks/base.yml              # cron, journald, rsyslog, chrony, lxc hardening
 ansible-playbook playbooks/deploy-storage.yml -l storage

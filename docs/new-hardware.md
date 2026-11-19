@@ -36,7 +36,7 @@ The new box takes over the old node's name, IP and guests.
 ## Add a node
 
 1. `pveN_ip` in `network.yml`, the host in `inventory.yml` (`proxmox`), Proxmox installed and joined
-2. PVE firewall and login-notify: `deploy-pve-firewall.yml`, `deploy-login-notify.yml` (both run on their own, not from `site.yml`)
+2. PVE firewall, login-notify and thin pool metrics: `deploy-pve-firewall.yml`, `deploy-login-notify.yml`, `deploy-pve-thinpool.yml` (all run on their own, not from `site.yml`)
 3. Monitoring: a Homepage tile in `apps/homepage/services.yaml.j2` (Servers) and a `pve-hosts` target in `apps/prometheus/config/prometheus.yml.j2`, both by hand. Gatus picks it up from the inventory
 4. Move guests onto it, see below
 5. A fourth node changes the quorum math: with 4 nodes, losing 2 stops the cluster. Use an odd count or a QDevice

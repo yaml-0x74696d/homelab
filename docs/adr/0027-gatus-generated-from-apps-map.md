@@ -34,5 +34,7 @@ Status: Accepted
 - Harder: no container-state checks. cloudflare-ddns has no port, so only its DNS record is checked
 
 - Accepted: Gatus itself has no health check (its image is `scratch`, `healthcheck: false`)
+- Accepted: pod-1 and pod-3 reach Gatus' backend port directly for the heartbeats, so from those hosts its UI and API skip Authentik
+- Accepted: one push token is shared by all pushers. Any pod VM holds it in `/etc/pbs.env` and can fake any heartbeat
 
 - Related: [0013](0013-pbs-file-level-backups.md) (backups), [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (Podman), [0026](0026-ufw-as-guest-firewall.md) (ufw), [0031](0031-semaphore-on-a-single-board-computer.md) (scheduled runs), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (edge reads the same map)

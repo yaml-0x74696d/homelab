@@ -128,7 +128,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - HAOS VM: PVE guest firewall, HA only from Traefik and Homepage, admins direct ([ADR 0030](docs/adr/0030-haos-vm-on-pve-3.md))
 - Cockpit on the pod VMs: only edge reaches port 9090 (ufw, `cockpit_allow_from`), served as `cockpit-pod-N.<domain>` behind Authentik forward-auth
 - SSH host keys: `accept-new` on both controllers (ctl-0, Semaphore), a changed key fails the run
-- App ports: one ufw rule per port and source from `allow_from` in `apps.yml` (backends only answer edge, pod-2 and Homepage)
+- App ports: one ufw rule per port and source from `allow_from` in `apps.yml` (backends only answer edge, pod-2 and Homepage; Gatus' port also pod-1 and pod-3 for the heartbeats)
 - Podman apps: rootless, one svc user per app, no container socket anywhere
 - NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
