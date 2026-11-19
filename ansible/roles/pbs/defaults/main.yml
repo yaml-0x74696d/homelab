@@ -17,8 +17,9 @@ pbs_ntfy_token: "{{ ntfy_token | default('') }}"
 
 # heartbeat to gatus after a good run (gatus_push_* in app_settings.yml). gatus alerts when it stops
 pbs_heartbeat_url: "{{ gatus_push_url }}"
+pbs_heartbeat_path: "{{ gatus_push_path }}"
 pbs_heartbeat_key: "{{ gatus_push_group }}_backup-{{ inventory_hostname }}"   # <group>_<name> of the external endpoint
-pbs_heartbeat_token: "{{ gatus_push_token }}"
+pbs_heartbeat_token: "{{ gatus_push_token | default('') }}"   # empty = no heartbeat
 pbs_heartbeat_timeout: "{{ gatus_push_timeout }}"
 
 # a wedged push (e.g. pve-3 half-up) must not hold the lock forever

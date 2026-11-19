@@ -64,6 +64,7 @@ gatus_semaphore_interval: 10m
 # when a push stops (needs gatus 5.21). token: gatus_push_token (vault)
 gatus_push_url: "http://{{ hostvars[apps.gatus.host].ansible_host }}:{{ apps.gatus.port }}"
 gatus_push_group: heartbeats
+gatus_push_path: /api/v1/endpoints/{key}/external?success=true   # {key} = <group>_<name>
 gatus_push_timeout: 10            # seconds per push
 gatus_heartbeat_threshold: 1      # missed windows before ntfy, pushes before it resolves
 
@@ -74,7 +75,7 @@ thinpool_file: thinpool.prom      # in node-exporter's textfile dir
 thinpool_interval_min: 5          # minutes between runs
 gatus_thinpool_max_pct: 85        # percent, per node
 gatus_thinpool_stale_max: "{{ 3 * thinpool_interval_min * 60 }}"   # seconds, three missed runs
-gatus_thinpool_interval: 5m
+gatus_thinpool_interval: "{{ thinpool_interval_min }}m"
 
 # semaphore on ctl-1 (apps/semaphore, roles/ctl_base): a git clone, playbooks/repo-pull.yml updates it
 semaphore_repo_dir: "/home/{{ admin_user }}/homelab"

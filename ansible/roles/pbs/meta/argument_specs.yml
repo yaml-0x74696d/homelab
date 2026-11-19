@@ -31,13 +31,16 @@ argument_specs:
       pbs_heartbeat_url:
         type: str
         description: Gatus' backend url the heartbeat is pushed to
+      pbs_heartbeat_path:
+        type: str
+        description: Push path with {key} for the endpoint key
       pbs_heartbeat_key:
         type: str
         description: Key of the host's external endpoint in gatus (group_name)
       pbs_heartbeat_token:
         type: str
         no_log: true
-        description: Gatus push token
+        description: Gatus push token, empty = no heartbeat
       pbs_heartbeat_timeout:
         type: int
         description: Seconds the heartbeat push may take
