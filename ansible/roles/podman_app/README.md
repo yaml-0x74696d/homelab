@@ -88,10 +88,9 @@ An app with more than one container runs as one pod:
         image: docker.io/library/postgres
         tag: 16-alpine
         user: "999:999"
-        auto_update: false
       - name: paperless-redis
         image: docker.io/library/redis
-        tag: alpine
+        tag: 8-alpine
         user: "999:999"
     routes:
       - host: paperless

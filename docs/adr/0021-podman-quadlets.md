@@ -32,7 +32,9 @@ Updates:
 - `AutoUpdate=registry` with a `podman-auto-update.timer` per user, weekly (Sunday 13:00, `podman_base_auto_update_time`) with a random delay
 - Every container has a `HealthCmd` and `Notify=healthy`, so an image that starts but doesn't work is rolled back. An image that can't run a check (`scratch`) is marked `healthcheck: false` in the map
 - A wrapper around `podman auto-update` (`roles/podman_base`) pushes updated, rolled back and failed units to ntfy. App down/up is Gatus' job, so there is no `OnFailure=`
-- A pinned tag (databases, Authentik) only gets rebuilds of that tag. A weekly check (`podman-new-tags`, `roles/podman_base`) lists each image's tags with `skopeo` and pushes newer ones to ntfy
+- A database or cache follows the tag of its major (`16-alpine`, `8-alpine`) and auto-updates like the apps: minor releases keep the data format, and the health check and rollback apply
+- A new major stays a tag bump by hand ([updates](../updates.md)). A weekly check (`podman-new-tags`, `roles/podman_base`) lists each image's tags with `skopeo` and pushes newer ones to ntfy
+- Immich's database is the exception (`auto_update: false`): its tag pins the extension versions
 
 Secrets and access:
 - Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), as a value or rendered into a config file, so no `.env` file sits on disk
@@ -63,6 +65,7 @@ Rollout:
 - Harder: keep-id needs a re-owned copy of every image it runs, so those images take twice the disk (paperless: about 7 GB more)
 
 - Accepted: an update can still break a service between two weekly runs. Health checks and rollback limit the damage, and ntfy reports it
+- Accepted: a database update restarts its app with it, Sunday midday, for up to a minute
 - Accepted: an in-place purge keeps the VM's history (old packages, cloud-init state) that a rebuild would clear
 
 - Replaces [0002](0002-generic-docker-app-role.md) (`docker_app` role) and [0006](0006-latest-images-notify-only.md) (`:latest` + Diun): every app runs as quadlets + `AutoUpdate`

@@ -9,7 +9,7 @@ Every app is an entry in `group_vars/all/apps.yml` plus a folder `ansible/apps/<
    - `allow_from`: who may reach the port, usually `[edge, netbird, homepage]`
    - `secrets`: each from a vault key (`vault:`) or a template in the app folder (`template:`)
    - `dirs` for data, with `owner` when the image doesn't run as root and `mode: "0700"` for Postgres
-   - `containers`: fully qualified image, a tag. More than one container makes a pod: the main one is named like the app, the rest `<name>-<role>`, databases get `auto_update: false` and a pinned tag
+   - `containers`: fully qualified image, a tag. More than one container makes a pod: the main one is named like the app, the rest `<name>-<role>`, databases and caches pin their major and auto-update, only Immich's Postgres gets `auto_update: false`
    - `routes` (the hostname edge serves) and a `homepage` block for the tile
 2. **The units** in `ansible/apps/<name>/`: `<container>.container.j2` per container, `<name>.pod.j2` for a pod (ports and `AddHost=` go there). Copy a similar app: single container `vaultwarden`, pod with Postgres `paperless` or `authentik`
    - A `HealthCmd=` the image can run, and a `HealthStartPeriod=` if the first start is slow
