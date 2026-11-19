@@ -151,7 +151,7 @@ NetBird, once the VM is up and pod-2's agent is not yet enrolled ([tofu/README.m
 
 1. **(hand)** Open `https://nb.<domain>` and log in as the owner (first login through Authentik)
 2. **(hand)** Make the service user `tofu` and a PAT for it, put the PAT in `netbird_token` in `terraform.tfvars`
-3. **(hand)** Import the built-in policy: `tofu import netbird_policy.default <id>` (the id is in the dashboard URL of the `Default` policy)
+3. **(hand)** Import the built-in policy: `tofu import netbird_policy.default <id>` (the id is in the dashboard URL of the `Default` policy). Target the import narrowly; if `data.netbird_peer.pod2` blocks it, use an `import {}` block in the stage 1 apply
 4. Stage 1, targeted apply of the groups, policies, router, resources and setup keys (the `-target=` list is in `tofu/README.md`)
 5. `tofu output -json netbird_setup_keys`, put the `routing` key in the vault as `vault_netbird_setup_key`, then `ansible-playbook playbooks/deploy-netbird-agent.yml`
 6. Stage 2, targeted apply of `netbird_nameserver_group.lab` and `netbird_dns_settings.this`

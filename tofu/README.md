@@ -70,6 +70,8 @@ tofu apply
 - The management API is LAN-only, so run it from the LAN or a VPN peer that can reach `nb.<domain>`
 - Group members are the peer ids in `netbird_peers` in `private.yml`
 - The built-in `Default` policy has to be imported once before the first apply
+- On a fresh lab import it narrowly: `tofu import -target=netbird_policy.default ...`. If `data.netbird_peer.pod2` blocks the import, use an `import {}` block in the stage-1 targeted apply instead
+- The `vpn_dns_*` policies have two rule blocks (udp, tcp). After creating them `tofu plan` must show no diff; if the server keeps only one rule per policy, split into one policy per protocol
 - A full plan needs the VM up and a valid token. `data.netbird_peer.pod2` needs pod-2 enrolled, so the first apply is staged:
 
 ```bash
@@ -86,7 +88,7 @@ tofu apply /tmp/nb.plan && rm /tmp/nb.plan
 ```
 
 - `tofu output -json netbird_setup_keys` prints the keys, the `routing` one goes in the vault as `vault_netbird_setup_key`
-- Done by hand first, then imported: [docs/netbird-by-hand.md](../docs/netbird-by-hand.md)
+- Adopting click-made objects: [docs/netbird-by-hand.md](../docs/netbird-by-hand.md)
 
 ## Related
 
