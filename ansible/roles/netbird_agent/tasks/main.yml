@@ -62,7 +62,7 @@
   register: netbird_agent_config
 
 - name: Enroll with the management server
-  # one-time; the daemon reconnects on its own after. routes/dns/acls live in the dashboard.
+  # one-time; the daemon reconnects on its own after. routes, dns and policies live in tofu/netbird.tf.
   ansible.builtin.command: >-
     netbird up --management-url {{ netbird_agent_mgmt_url }}
     --setup-key {{ netbird_agent_setup_key }}
