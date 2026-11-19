@@ -28,10 +28,11 @@ Environment=AIDE_CHECKSUM_DIR=/aide
 Environment=ANSIBLE_CONFIG=/home/admin/homelab/ansible/ansible.cfg
 # private.yml's private_dir (~/...) would expand to the container user's home here
 Environment=HOMELAB_PRIVATE_DIR=/home/admin/homelab-private
-# ansible.cfg's ssh_args plus a known_hosts on the data dir (the container's ~/.ssh is gone on recreate). env wins over the cfg, so the rest is repeated
-Environment="ANSIBLE_SSH_ARGS=-C -o ControlMaster=auto -o ControlPersist=60s -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/var/lib/semaphore/known_hosts"
+# known_hosts on the data dir (the container's ~/.ssh is gone on recreate), appended to ansible.cfg's ssh_args
+# semaphore sets ANSIBLE_HOST_KEY_CHECKING=False itself, ansible then appends StrictHostKeyChecking=no after ssh_args. accept-new still wins, ssh keeps the first value
+Environment=ANSIBLE_SSH_EXTRA_ARGS=-o UserKnownHostsFile=/var/lib/semaphore/known_hosts
 # tasks only get the env vars listed here. single quotes keep the json quotes past systemd's parser
-Environment='SEMAPHORE_FORWARDED_ENV_VARS=["AIDE_CHECKSUM_DIR", "ANSIBLE_CONFIG", "ANSIBLE_SSH_ARGS", "HOMELAB_PRIVATE_DIR"]'
+Environment='SEMAPHORE_FORWARDED_ENV_VARS=["AIDE_CHECKSUM_DIR", "ANSIBLE_CONFIG", "ANSIBLE_SSH_EXTRA_ARGS", "HOMELAB_PRIVATE_DIR"]'
 # token exchange goes straight to traefik, container dns can't resolve auth.<domain>
 AddHost=auth.example.org:192.168.178.200
 HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/ping
