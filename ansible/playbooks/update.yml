@@ -36,3 +36,8 @@
       ansible.builtin.include_role:
         name: update
         tasks_from: summary
+    - name: Push to gatus
+      ansible.builtin.include_role:
+        name: gatus_push
+      vars:
+        gatus_push_job: update

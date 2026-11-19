@@ -12,3 +12,14 @@
         repo: "{{ semaphore_repo_url }}"
         dest: "{{ semaphore_repo_dir }}"
         version: "{{ semaphore_repo_version }}"
+
+# a missed run is what gatus alerts on, so only a good one pushes
+- name: Heartbeat
+  hosts: podman_hosts
+  gather_facts: false
+  tasks:
+    - name: Push to gatus
+      ansible.builtin.include_role:
+        name: gatus_push
+      vars:
+        gatus_push_job: repo-pull

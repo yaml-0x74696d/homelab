@@ -11,3 +11,14 @@
   hosts: pod_vms:podman_hosts:proxmox:lxc_containers:&reachable
   roles:
     - aide
+
+# no :&reachable here, so a host that failed above is still counted and no heartbeat goes out
+- name: Heartbeat
+  hosts: pod_vms:podman_hosts:proxmox:lxc_containers
+  gather_facts: false
+  tasks:
+    - name: Push to gatus
+      ansible.builtin.include_role:
+        name: gatus_push
+      vars:
+        gatus_push_job: aide
