@@ -80,3 +80,8 @@ proxmox-backup-client backup \
   --backup-id "{{ pbs_id }}" || fail "proxmox-backup-client"
 
 log "backup ok"   # staging wiped by the EXIT trap
+
+# heartbeat to gatus; a failed push never fails the backup. token from the env file, not argv
+printf 'header = "Authorization: Bearer %s"\n' "$PBS_HEARTBEAT_TOKEN" \
+  | curl -fsS -m {{ pbs_heartbeat_timeout }} -K - -X POST "{{ pbs_heartbeat_url }}/api/v1/endpoints/{{ pbs_heartbeat_key }}/external?success=true" \
+  || log "heartbeat push failed"
