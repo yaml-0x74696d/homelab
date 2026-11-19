@@ -1,7 +1,7 @@
 # netbird_agent
 
 - Installs a NetBird peer on a LAN host and keeps IP forwarding on for the LAN route
-- The role only enrolls the box. Making it route is done in the dashboard (network route + masquerade)
+- The role only enrolls the box. Making it route is done in `tofu/netbird.tf` (Network `lan`, router, masquerade)
 
 ## Runs on
 
@@ -16,12 +16,12 @@
 - `net.ipv4.ip_forward=1` is saved as a sysctl, so it survives a reboot (NetBird also sets it at runtime)
 - If `/etc/netbird/config.json` is missing and a setup key is given, it runs `netbird up --management-url … --setup-key …` (`no_log`)
 - After enrollment the daemon reconnects on its own
-- Routes, DNS and ACLs are managed in the dashboard
+- Routes, DNS and ACLs are managed in `tofu/netbird.tf`
 
 ## Enrollment
 
 - Peers join with setup keys, not SSO. The IdP isn't reachable from the internet, so a fresh peer couldn't log in
-- The key comes from the dashboard and is stored as `vault_netbird_setup_key`
+- The key comes from `tofu output -json netbird_setup_keys` (the `routing` key) and is stored as `vault_netbird_setup_key`
 - With an empty key, the role only installs NetBird and you enroll by hand
 
 ## Settings
@@ -29,7 +29,7 @@
 | Variable | Default | What |
 |---|---|---|
 | `netbird_agent_mgmt_url` | `https://nb.{{ domain }}` | The management server |
-| `netbird_agent_setup_key` | `vault_netbird_setup_key`, or empty | Reusable setup key from the dashboard |
+| `netbird_agent_setup_key` | `vault_netbird_setup_key`, or empty | Reusable setup key from tofu |
 | `netbird_agent_enable_forwarding` | `true` | Keep IP forwarding on |
 
 ## Notes
