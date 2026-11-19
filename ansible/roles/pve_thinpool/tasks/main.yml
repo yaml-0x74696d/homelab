@@ -1,0 +1,61 @@
+---
+# the drop-in extends debian's unit (ExecStart with $ARGS from /etc/default), so it needs that package
+- name: Look for debian's node-exporter defaults
+  ansible.builtin.stat:
+    path: /etc/default/prometheus-node-exporter
+  register: pve_thinpool_defaults
+
+- name: Check node-exporter is debian's package
+  ansible.builtin.assert:
+    that: pve_thinpool_defaults.stat.exists
+    fail_msg: "no /etc/default/prometheus-node-exporter on {{ inventory_hostname }}: set the textfile dir by hand and skip the drop-in"
+    quiet: true
+
+- name: Textfile dir
+  ansible.builtin.file:
+    path: "{{ pve_thinpool_textfile_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Node-exporter drop-in dir
+  ansible.builtin.file:
+    path: /etc/systemd/system/prometheus-node-exporter.service.d
+    state: directory
+    mode: '0755'
+
+- name: Node-exporter reads the textfile dir
+  ansible.builtin.template:
+    src: node-exporter-textfile.conf.j2
+    dest: /etc/systemd/system/prometheus-node-exporter.service.d/20-textfile.conf
+    mode: '0644'
+  notify: Restart node-exporter
+
+- name: Metrics script
+  ansible.builtin.copy:
+    src: pve-thinpool-metrics
+    dest: /usr/local/sbin/pve-thinpool-metrics
+    mode: '0755'
+
+- name: Systemd units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+  loop:
+    - pve-thinpool-metrics.service
+    - pve-thinpool-metrics.timer
+  register: pve_thinpool_units
+
+- name: Enable timer
+  ansible.builtin.systemd:
+    name: pve-thinpool-metrics.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ pve_thinpool_units is changed }}"
+
+# the first file, before the next scrape
+- name: First run
+  ansible.builtin.systemd:
+    name: pve-thinpool-metrics.service
+    state: started
+  when: pve_thinpool_units is changed

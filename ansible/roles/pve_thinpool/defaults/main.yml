@@ -1,0 +1,6 @@
+---
+pve_thinpool_interval: 5min
+pve_thinpool_textfile_dir: /var/lib/prometheus/node-exporter   # aide leaves it out
+pve_thinpool_file: thinpool.prom
+pve_thinpool_data_metric: "{{ thinpool_data_metric }}"
+pve_thinpool_metadata_metric: "{{ thinpool_metadata_metric }}"

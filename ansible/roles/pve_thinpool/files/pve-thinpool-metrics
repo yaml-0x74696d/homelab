@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# thin pool fill from lvs, as node-exporter textfile metrics
+# usage: pve-thinpool-metrics <textfile> <data metric> <metadata metric>
+set -euo pipefail
+out=$1 data=$2 meta=$3
+tmp=$(mktemp "$out.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+
+# attr starting with t = thin pool. percents are empty on an inactive pool, skipped
+LC_ALL=C lvs --noheadings --nosuffix --separator ' ' -o vg_name,lv_name,lv_attr,data_percent,metadata_percent \
+  | awk -v data="$data" -v meta="$meta" '
+      $3 ~ /^t/ && $4 != "" && $5 != "" {
+        d = d sprintf("%s{vg=\"%s\",pool=\"%s\"} %s\n", data, $1, $2, $4)
+        m = m sprintf("%s{vg=\"%s\",pool=\"%s\"} %s\n", meta, $1, $2, $5)
+      }
+      END {
+        printf "# TYPE %s gauge\n%s# TYPE %s gauge\n%s", data, d, meta, m
+      }' > "$tmp"
+
+chmod 0644 "$tmp"
+mv "$tmp" "$out"   # same dir, so the collector never reads a half file
+trap - EXIT

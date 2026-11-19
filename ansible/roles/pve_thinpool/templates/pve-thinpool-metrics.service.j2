@@ -1,0 +1,6 @@
+[Unit]
+Description=thin pool fill for node-exporter
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/pve-thinpool-metrics {{ pve_thinpool_textfile_dir }}/{{ pve_thinpool_file }} {{ pve_thinpool_data_metric }} {{ pve_thinpool_metadata_metric }}
