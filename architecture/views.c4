@@ -192,7 +192,7 @@ views "Flows" {
     variant sequence
     storage.pbs-client -> media.immich.pg "pg_dump"
     storage.pbs-client -> storage.pbs "uploads dumps + config"
-    storage.pbs -> ntfy "job result"
+    storage.pbs-client -> ntfy "job result"
   }
 
   dynamic view delivery {
