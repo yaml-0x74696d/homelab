@@ -70,7 +70,10 @@ gatus_heartbeat_threshold: 1      # missed windows before ntfy, pushes before it
 # thin pool fill: roles/pve_thinpool writes the metrics, gatus queries prometheus for them
 thinpool_data_metric: pve_thinpool_data_percent
 thinpool_metadata_metric: pve_thinpool_metadata_percent
-gatus_thinpool_max_pct: 85        # percent, the highest pool on any node
+thinpool_file: thinpool.prom      # in node-exporter's textfile dir
+thinpool_interval_min: 5          # minutes between runs
+gatus_thinpool_max_pct: 85        # percent, per node
+gatus_thinpool_stale_max: "{{ 3 * thinpool_interval_min * 60 }}"   # seconds, three missed runs
 gatus_thinpool_interval: 5m
 
 # semaphore on ctl-1 (apps/semaphore, roles/ctl_base): a git clone, playbooks/repo-pull.yml updates it

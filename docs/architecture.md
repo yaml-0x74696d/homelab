@@ -231,7 +231,7 @@ Prometheus for metrics, ntfy for alerts.
   - the ESP32 sensors, through mqtt-exporter
 - Grafana shows dashboards on top of it
 - Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
-- Gatus also takes pushed heartbeats: each backup host and the Semaphore runs of repo-pull, aide and update report in after a good run, and a missing one alerts. It queries Prometheus for the thin pool fill of the PVE nodes
+- Gatus also takes pushed heartbeats: each backup host and the Semaphore runs of repo-pull, aide and update report in after a good run, and a missing one alerts. It queries Prometheus per PVE node for the thin pool fill and for the freshness of that data
 - Homepage is the start page: Gatus' summary on top, Proxmox stats for nodes, VMs and LXCs, and a tile per app generated from the apps map (`homepage:` block), with an up badge where the map has the app's port
 
 Alerts:

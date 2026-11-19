@@ -17,7 +17,7 @@ Status: Accepted
 - `apps/gatus/config.yaml.j2` generates every check: each route in `apps.yml` (status and certificate expiry), Traefik, a ping for every guest in the inventory, the PVE and PBS ports, the domain's A record, and the last run of each scheduled Semaphore template
 - Jobs that can silently stop push a heartbeat instead: one external endpoint per backup host (`roles/pbs`) and per Semaphore template (`roles/gatus_push`, the last play of `repo-pull.yml`, `aide.yml` and `update.yml`). Gatus alerts when no push arrives within the window of that job's schedule (`heartbeat_daily`, `heartbeat_weekly` in `schedules.yml`)
 - A push needs the Gatus backend port on pod-2, the route sits behind authentik. `allow_from` lets pod-1 and pod-3 in, the playbooks push from pod-2 itself. The token is `gatus_push_token` in the vault
-- A thin pool filling up on the PVE nodes: `roles/pve_thinpool` writes its data and metadata percent into node-exporter's textfile dir, Gatus asks Prometheus for the highest value and alerts above `gatus_thinpool_max_pct`
+- A thin pool filling up on the PVE nodes: `roles/pve_thinpool` writes its data and metadata percent into node-exporter's textfile dir, Gatus asks Prometheus per node (data, metadata and freshness of the file) and alerts above `gatus_thinpool_max_pct` or when the file is older than `gatus_thinpool_stale_max`
 - Alerts go to ntfy, with server and topic split from the one `ntfy_url` ([0019](0019-ntfy-single-alert-channel.md))
 - A route behind authentik only proves the login (`[STATUS] == 302`), so an app with a port in the map gets a second check on its backend
 - The status page itself sits behind authentik: it shows the topology and internal IPs
