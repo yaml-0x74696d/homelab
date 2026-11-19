@@ -1,6 +1,6 @@
-# NetBird by hand, then into tofu
+# Adopting an existing NetBird dashboard
 
-Doing the VPN's access model in the dashboard first, testing it, then taking it over with `tofu import`. The end state is `tofu/netbird.tf` ([ADR 0040](adr/0040-netbird-policy-as-code.md)). On a fresh lab skip this and follow [bootstrap step 4](bootstrap.md).
+A guide for taking over click-made NetBird objects with `tofu import`, e.g. on a rebuild or a second lab. The end state is `tofu/netbird.tf` ([ADR 0040](adr/0040-netbird-policy-as-code.md)). On a fresh lab skip this and follow [bootstrap step 4](bootstrap.md).
 
 ## 1. Inventory
 
@@ -40,6 +40,7 @@ done
 - `admin-lan`: `admin` to `res-lan`, all protocols
 - `household-web`: `household` to `res-edge`, TCP 443
 - `vpn-dns-admin`, `vpn-dns-household`: the source group to `routing`, the `dns-relay` port (`apps.yml`), one rule for UDP and one for TCP
+- After creating the DNS policies, `tofu plan` must show no diff. If the server keeps only one rule per policy, split them into one policy per protocol
 - A posture check with the minimum client version on the two household policies
 - No policy from `household` to `res-netbird`
 
