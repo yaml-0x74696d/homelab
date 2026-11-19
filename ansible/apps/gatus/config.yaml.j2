@@ -75,7 +75,7 @@ endpoints:
 {# traefik itself, so 'traefik down' isn't just every route at once #}
   - name: traefik
     group: edge
-    url: "tcp://{{ app_sources.edge }}:443"
+    url: "tcp://{{ app_sources.edge }}:{{ https_port }}"
     interval: {{ gatus_interval }}
     conditions: ["[CONNECTED] == true"]
 {% if ntfy_url %}
