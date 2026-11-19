@@ -35,6 +35,7 @@ Updates:
 - A database or cache follows the tag of its major (`16-alpine`, `8-alpine`) and auto-updates like the apps: minor releases keep the data format, and the health check and rollback apply
 - A new major stays a tag bump by hand ([updates](../updates.md)). A weekly check (`podman-new-tags`, `roles/podman_base`) lists each image's tags with `skopeo` and pushes newer ones to ntfy
 - Immich's database is the exception (`auto_update: false`): its tag pins the extension versions
+- Authentik's own tag is pinned to an exact release series: it moves with its release notes, one series at a time via `just deploy authentik` ([updates](../updates.md))
 
 Secrets and access:
 - Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), as a value or rendered into a config file, so no `.env` file sits on disk
