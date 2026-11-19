@@ -1,5 +1,6 @@
 ---
 pve_ui_port: 8006
+https_port: 443   # edge, what the household vpn group may reach
 pbs_port: 8007
 cockpit_port: 9090
 node_exporter_port: 9100

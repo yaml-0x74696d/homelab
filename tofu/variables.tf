@@ -59,3 +59,22 @@ variable "haos_image" {
   default     = "local:import/haos.qcow2"
   description = "home assistant os disk image on pve-3, unpacked by hand (upstream ships .qcow2.xz, pve can't unpack xz), see README"
 }
+
+variable "netbird_token" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "PAT of the NetBird service user 'tofu'; empty only works for plans that don't touch netbird"
+}
+
+variable "netbird_min_client_version" {
+  type        = string
+  default     = "0.82.0"
+  description = "oldest NetBird client a household device may connect with (posture check); the deployed server's minor"
+}
+
+variable "netbird_setup_key_expiry_seconds" {
+  type        = number
+  default     = 7776000 # 90 days
+  description = "lifetime of the reusable setup keys, one per peer group"
+}
