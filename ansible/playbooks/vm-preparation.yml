@@ -30,8 +30,18 @@
         direction: in
       loop:
         - { rule: 'limit', port: "{{ ssh_port }}" }
-        - { port: "{{ cockpit_port }}" }
+        - { port: "{{ cockpit_port }}", src: "{{ cockpit_allow_from }}" }
         - { port: "{{ node_exporter_port }}", proto: 'tcp' }
+
+    - name: Drop the old LAN-wide cockpit rule
+      community.general.ufw:
+        rule: allow
+        port: "{{ cockpit_port }}"
+        proto: any
+        src: "{{ lan_cidr }}"
+        direction: in
+        delete: true
+      when: cockpit_allow_from != lan_cidr
 
     - name: Enable ufw
       community.general.ufw:

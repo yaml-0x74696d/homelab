@@ -217,6 +217,7 @@ model {
     }
     podman-updates = container "podman auto-update" { #ops; description "Auto-update with rollback + newer-tag check, per host" }
     chrony = container "chrony" { #ops; description "Time sync, per VM" }
+    cockpit = container "Cockpit" { #ops; technology "web console"; description "Admin console on the pod VMs, only edge reaches it" }
   }
 
   // people
@@ -262,6 +263,7 @@ model {
   edge.traefik -[http]-> observability.prometheus "routes"
   edge.traefik -[http]-> automation.homeassistant "routes"
   edge.traefik -[http]-> ops.semaphore "routes"
+  edge.traefik -[https]-> ops.cockpit "routes, behind forward-auth"
   edge.traefik -> cloudflare "ACME DNS-01 TXT records"
   edge.traefik -> letsencrypt "orders certificates"
   edge.ddns -> cloudflare "keeps A records current"

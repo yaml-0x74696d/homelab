@@ -3,3 +3,6 @@
   ansible.builtin.systemd: { name: ssh, state: restarted }
 - name: Restart auditd
   ansible.builtin.systemd: { name: auditd, state: restarted }
+# socket activated, the next connection starts it with the new config
+- name: Stop cockpit
+  ansible.builtin.systemd: { name: cockpit.service, state: stopped }

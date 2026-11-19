@@ -124,7 +124,7 @@
                 proxmoxNode: pve-1
                 proxmoxVMID: {{ vmids.pod1 }}
                 showStats: true
-                href: https://{{ pod1_ip }}:{{ cockpit_port }}/
+                href: https://cockpit-pod-1.{{ domain }}/
                 fields: ["cpu", "mem"]
 {{ node_metrics('pod-1') }}
             - pod-2:
@@ -132,7 +132,7 @@
                 proxmoxNode: pve-2
                 proxmoxVMID: {{ vmids.pod2 }}
                 showStats: true
-                href: https://{{ pod2_ip }}:{{ cockpit_port }}/
+                href: https://cockpit-pod-2.{{ domain }}/
                 fields: ["cpu", "mem"]
 {{ node_metrics('pod-2') }}
             - pod-3:
@@ -140,7 +140,7 @@
                 proxmoxNode: pve-3
                 proxmoxVMID: {{ vmids.pod3 }}
                 showStats: true
-                href: https://{{ pod3_ip }}:{{ cockpit_port }}/
+                href: https://cockpit-pod-3.{{ domain }}/
                 fields: ["cpu", "mem"]
 {{ node_metrics('pod-3') }}
             - netbird:
