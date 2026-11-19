@@ -16,7 +16,7 @@
      'href': 'https://' ~ r.host ~ '.' ~ domain ~ r.homepage.path | default('')}) %}
 {% endfor %}
 {% if group == homepage_router_group %}
-{% set _ = items.append({'label': 'FritzBox', 'icon': 'sh-fritz', 'href': 'https://' ~ gateway_ip, 'ping': homepage_ping_target}) %}
+{% set _ = items.append({'label': 'Router', 'icon': 'mdi-router-wireless', 'href': 'https://' ~ gateway_ip, 'ping': homepage_ping_target}) %}
 {% endif %}
 {% for t in items | sort(attribute='label') %}
         - {{ t.label }}:
