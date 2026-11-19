@@ -32,7 +32,7 @@ Who sends:
 | `roles/login_notify` | SSH and PVE web logins on the Proxmox hosts |
 | `roles/podman_base` | Updated, rolled back and failed auto-updates, newer tags of pinned images |
 | `roles/update` | The summary of an `update.yml` run, or the host it stopped at |
-| Gatus (`apps/gatus`) | A route, host or scheduled Semaphore run that fails its check, and when it's back |
+| Gatus (`apps/gatus`) | A route, host or scheduled Semaphore run that fails its check, a backup or Semaphore run whose heartbeat stops, a thin pool over its limit, and when it's back |
 | NixOS VMs (netbird, edge) | AIDE results, through `/var/lib/secrets/aide/ntfy.env` |
 
 How sending works:

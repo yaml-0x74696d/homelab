@@ -144,7 +144,7 @@ How a request from a browser reaches an app.
 - Plain HTTP on port 80 only redirects to HTTPS on 443
 - Every router comes from `apps.yml` (`routes` of each app plus `infra_routes`), built into Traefik's dynamic config on edge (`nixos/edge/traefik.nix`). There is no hand-written router file
 - Cockpit on each pod VM is served as `cockpit-pod-N.<domain>` through Traefik behind Authentik (`infra_routes`, backend HTTPS with `insecure_tls`). ufw allows its port from `cockpit_allow_from` (edge) only, `roles/vm_base` sets the origin and the proxy header in `cockpit.conf`
-- Every app port gets one ufw rule per source, from `allow_from` in `apps.yml`: edge, pod-2 (Prometheus, Gatus) and Homepage; Gitea's ssh port: LAN and VPN
+- Every app port gets one ufw rule per source, from `allow_from` in `apps.yml`: edge, pod-2 (Prometheus, Gatus), Homepage and, for Gatus' heartbeats, pod-1 and pod-3; Gitea's ssh port: LAN and VPN
 
 ## Certificates
 
@@ -210,7 +210,7 @@ How a backup runs:
 - A random delay keeps the hosts from starting at the same time
 - First the databases are dumped (Postgres, SQLite `.backup`)
 - Then `/srv/apps` (`podman_apps_root`) goes up as one archive (`/opt/stacks` too, as long as a host still has it)
-- A failed run is pushed to ntfy
+- A failed run is pushed to ntfy, a good one sends a heartbeat to Gatus, which alerts when it stays away
 - The client's token can add backups and restore its own, not prune or delete them
 
 What's in and out:
@@ -226,17 +226,18 @@ Prometheus for metrics, ntfy for alerts.
 ![](img/observability.png)
 
 - Prometheus on pod-2 collects metrics from:
-  - the PVE hosts
+  - the PVE hosts, including the thin pools' fill (`roles/pve_thinpool`, node-exporter's textfile collector)
   - node-exporter on every VM and LXC but HAOS (its disk and uptime come from HA's System Monitor)
   - the ESP32 sensors, through mqtt-exporter
 - Grafana shows dashboards on top of it
 - Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
+- Gatus also takes pushed heartbeats: each backup host and the Semaphore runs of repo-pull, aide and update report in after a good run, and a missing one alerts. It queries Prometheus for the thin pool fill of the PVE nodes
 - Homepage is the start page: Gatus' summary on top, Proxmox stats for nodes, VMs and LXCs, and a tile per app generated from the apps map (`homepage:` block), with an up badge where the map has the app's port
 
 Alerts:
 - Podman apps: `podman auto-update` pulls and rolls back on a failed health check, a newer-tag check reports pinned images ([ADR 0021](adr/0021-podman-quadlets.md))
 - ntfy (an ntfy.sh topic) is the only alert channel ([ADR 0019](adr/0019-ntfy-single-alert-channel.md))
-- PBS, AIDE, login-notify and the image updates all send there
+- PBS, AIDE, login-notify, the image updates and Gatus all send there
 
 ## Logging and time
 
