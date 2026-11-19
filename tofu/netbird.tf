@@ -51,7 +51,7 @@ resource "netbird_network_router" "lan" {
   network_id  = netbird_network.lan.id
   peer_groups = [netbird_group.routing.id]
   masquerade  = true
-  metric      = 9999
+  metric      = 9999   # netbird's default
   enabled     = true
 }
 
@@ -183,7 +183,7 @@ resource "netbird_policy" "default" {
   }
 }
 
-# the peer exists only once pod-2 is enrolled (stage 2). name = its hostname
+# the peer exists only once pod-2 is enrolled (stage 2). name = its hostname (the "pod-2" key in locals.tf vms)
 data "netbird_peer" "pod2" {
   name = "pod-2"
 }
