@@ -152,7 +152,7 @@ endpoints:
 {% endfor %}
   - name: "{{ h }} thin pool metrics fresh"
     group: proxmox
-    url: "http://{{ prom }}/api/v1/query?query={{ ('time() - max(node_textfile_mtime_seconds{' ~ node ~ ',file=~".*/' ~ thinpool_file ~ '"})') | urlencode }}"
+    url: "http://{{ prom }}/api/v1/query?query={{ ('time() - max(node_textfile_mtime_seconds{' ~ node ~ ',file=~".*/' ~ (thinpool_file | replace('.', '\\\\.')) ~ '"})') | urlencode }}"
     interval: {{ gatus_thinpool_interval }}
     conditions:
       - "[STATUS] == 200"
@@ -164,7 +164,9 @@ endpoints:
 {% endif %}
 {% endfor %}
 
-{# pushed from outside: no push within the heartbeat = failed. one miss alerts (the default needs a run of them), one push resolves #}
+{# pushed from outside: no push within the heartbeat = failed. one miss alerts (the default needs a run of them), one push resolves.
+   gatus won't start with an empty token, so no token = no block #}
+{% if gatus_push_token | default('') %}
 external-endpoints:
 {% for h in groups['pod_vms'] %}
   - name: "backup-{{ h }}"
@@ -192,3 +194,4 @@ external-endpoints:
         success-threshold: {{ gatus_heartbeat_threshold }}
 {% endif %}
 {% endfor %}
+{% endif %}
