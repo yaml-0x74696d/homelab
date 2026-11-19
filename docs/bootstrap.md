@@ -126,6 +126,8 @@ ansible-playbook playbooks/base.yml              # cron, journald, rsyslog, chro
 ansible-playbook playbooks/deploy-storage.yml -l storage
 ```
 
+The first run to each host learns its SSH host key (`StrictHostKeyChecking=accept-new` in `ansible.cfg`), a later change fails the run. Semaphore keeps its own `known_hosts` on ctl-1 and learns the hosts again on its first runs. A rebuilt host needs the old key removed on both ([troubleshooting](troubleshooting.md#a-renamed-vm-keeps-its-old-hostname-or-ssh-keys)).
+
 ## 4. NixOS VMs (netbird, edge)
 
 Each is installed once with nixos-anywhere, OpenTofu only made the empty Debian VM ([docs/nixos-layout.md](nixos-layout.md), [ADR 0035](adr/0035-nixos-for-netbird-and-edge.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md)). `private.yml` is a symlink and nix copies links without their targets, so the system is built locally with `--override-input` first, then installed from the store paths. Otherwise it gets the example values, the example SSH keys included.

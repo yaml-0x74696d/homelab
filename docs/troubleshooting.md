@@ -156,7 +156,10 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 
 **A renamed VM keeps its old hostname or SSH keys**
 - Cause: cloud-init only runs again on a new instance-id, which needs a cold stop and start, not a reboot
-- Fix: `qm stop <vmid> && qm start <vmid>`. New SSH host keys follow: `ssh-keygen -R <ip>` on the controller and ctl-1, AIDE accept on that host. PBS starts a new backup group `host/<new name>`, delete the old one in the PBS UI once it's not needed
+- Fix: `qm stop <vmid> && qm start <vmid>`. New SSH host keys follow, and a changed key fails the run on both controllers (AIDE accept on that host too):
+  - ctl-0: `ssh-keygen -R <ip>`
+  - Semaphore, its `known_hosts` is in the container: `ssh ctl-1 'sudo -u svc-semaphore XDG_RUNTIME_DIR=/run/user/2060 podman exec semaphore ssh-keygen -R <ip> -f /var/lib/semaphore/known_hosts'`
+  - PBS starts a new backup group `host/<new name>`, delete the old one in the PBS UI once it's not needed
 
 **`qm reboot` hangs**
 - Cause: no guest agent answering

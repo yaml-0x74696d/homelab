@@ -57,6 +57,7 @@ AIDE hashes:
 - Harder: a vault, `private.yml` or `private_dir` change needs a run from ctl-0 before Semaphore sees it
 - Harder: ctl-1 holds the keys to every host, so it is the most valuable box to break into
 
+- Accepted: SSH host keys are trusted on first contact (`StrictHostKeyChecking=accept-new`), on ctl-0 and in Semaphore, which keeps its own `known_hosts` on its data dir (`semaphore_known_hosts`). A changed key fails the run and is removed by hand on both
 - Accepted: ctl-1 holds the AIDE hashes for all hosts, itself included. Root on ctl-1 could swap a database and its hash together. ctl-0's Syncthing versions (`.stversions`) are the cross-check, the copy itself follows ctl-1
 - Accepted: `aide_accept=yes` accepts what the run finds, without a second look before the swap
 - Accepted: no backup of ctl-1. Projects and templates are quick to redo, the run history is lost with the card
