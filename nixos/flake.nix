@@ -2,7 +2,7 @@
   description = "nixos vms: netbird (dmz, pve-2), edge (traefik + adguard home, pve-1)";
 
   inputs = {
-    # unstable: the services.netbird.server module + netbird 0.77.x live here.
+    # unstable: the services.netbird.server module + netbird 0.82.x live here.
     # pin to a release once it carries the server module if you want calmer upgrades.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     disko = {
