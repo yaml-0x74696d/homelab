@@ -23,7 +23,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 | pve-1 | Small form factor PC | 8 GB | Running the edge VM, its WiFi card is the IoT AP (moved into CT 302) |
 | pve-2 | Small form factor PC | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Desktop PC, 1 SSD + 4 HDDs | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
-| ctl-1 | Raspberry Pi 3 (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
+| ctl-1 | Single-board computer (Debian-based arm64 OS), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
 
 ## VM/LXC
 
@@ -114,7 +114,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - From bare hardware, in order: [docs/bootstrap.md](docs/bootstrap.md)
 - OpenTofu: tfvars from the example, `tofu apply`
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
-- ctl-1 (the Pi): admin user by hand (`roles/ctl_base/README.md`), then `ctl-preparation.yml`, `base.yml`, `deploy-app.yml -e app=semaphore`
+- ctl-1: admin user by hand (`roles/ctl_base/README.md`), then `ctl-preparation.yml`, `base.yml`, `deploy-app.yml -e app=semaphore`
 - Plain `ansible-playbook` is the main path; for an EE run copy `ansible-navigator.yml.example` → `ansible-navigator.yml` and mount the private folder
 - NixOS: nixos-anywhere once per VM, then `nixos/update.sh <netbird|edge>`. `nix flake check` needs builds (facts.nix), `--no-build` fails
 
@@ -146,7 +146,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the pod VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
 - 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
-- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox · 0037 Actual Budget · 0038 linkding, Memos, Excalidraw · 0039 Syncthing ctl-0 ↔ ctl-1
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a single-board computer · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox · 0037 Actual Budget · 0038 linkding, Memos, Excalidraw · 0039 Syncthing ctl-0 ↔ ctl-1
 
 ## Future plans
 
