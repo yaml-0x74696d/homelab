@@ -73,8 +73,9 @@
 | `pbs_token_secret`, `pbs_fingerprint` | vault | Token secret and server fingerprint |
 | `pbs_ntfy_url`, `pbs_ntfy_token` | `ntfy_url`, `ntfy_token` | Where failure alerts go, empty = off |
 | `pbs_heartbeat_url`, `pbs_heartbeat_timeout` | `gatus_push_url`, `gatus_push_timeout` | Gatus' backend port on pod-2, seconds per push |
+| `pbs_heartbeat_path` | `gatus_push_path` | Push path, `{key}` is replaced by `pbs_heartbeat_key` |
 | `pbs_heartbeat_key` | `<gatus_push_group>_backup-<host>` | Key of the host's external endpoint in Gatus |
-| `pbs_heartbeat_token` | `gatus_push_token` (vault) | Push token |
+| `pbs_heartbeat_token` | `gatus_push_token` (vault) | Push token, empty = no heartbeat in the script |
 | `pbs_staging_dir`, `ntfy_timeout` | group_vars | Shared with other roles |
 | `podman_apps_root`, `podman_svc_prefix` | group_vars | Shared with `roles/podman_app` |
 
