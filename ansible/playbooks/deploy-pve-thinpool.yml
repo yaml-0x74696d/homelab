@@ -2,6 +2,5 @@
 # thin pool fill for the node-exporter on the pve nodes, gatus alerts on it
 - name: Thin pool metrics
   hosts: proxmox
-  become: true
   roles:
     - pve_thinpool
