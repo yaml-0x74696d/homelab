@@ -235,6 +235,7 @@ model {
   admin -> ops.controller "runs playbooks + tofu"
   ops.controller -> apps.gitea "pulls the repo"
   ops.controller -> ops.proxmox "tofu: VMs + LXC"
+  ops.controller -[https]-> remote.netbird.mgmt "tofu: groups, policies, network"
   ops.controller -> ops.hosts "ansible: apps over ssh"
   admin -[https]-> ops.semaphore "runs + schedules playbooks"
   ops.semaphore -> github "pulls the repo (main)"
