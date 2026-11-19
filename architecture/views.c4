@@ -86,6 +86,7 @@ views "Containers" {
     include *, storage.**
     include -> storage.**
     exclude * where tag is #ops
+    include storage.pbs-client
   }
 }
 
