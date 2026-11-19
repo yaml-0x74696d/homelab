@@ -62,7 +62,34 @@ tofu apply
 - `vms.tf` has `agent { enabled = true }`, but a fresh Debian guest has no agent yet, so the first apply can hang waiting for it
 - for the first apply set it to `false`, then back to `true` after `vm-preparation.yml` (pod VMs) or nixos-anywhere (NetBird, edge) and apply again
 
+## 6. NetBird
+
+`netbird.tf` holds the VPN's groups, Network, policies, nameserver group and setup keys ([ADR 0040](../docs/adr/0040-netbird-policy-as-code.md)). The NetBird VM has to exist first.
+
+- Make a service user `tofu` (dashboard: Team, Service Users, role admin) and a personal access token for it, up to a year. Put it in `netbird_token`
+- The management API is LAN-only, so run it from the LAN or a VPN peer that can reach `nb.<domain>`
+- Group members are the peer ids in `netbird_peers` in `private.yml`
+- The built-in `Default` policy has to be imported once before the first apply
+- A full plan needs the VM up and a valid token. `data.netbird_peer.pod2` needs pod-2 enrolled, so the first apply is staged:
+
+```bash
+tofu plan -out=/tmp/nb.plan \
+  -target=netbird_policy.admin_lan -target=netbird_policy.household_web \
+  -target=netbird_policy.vpn_dns_admin -target=netbird_policy.vpn_dns_household \
+  -target=netbird_policy.default -target=netbird_network_router.lan \
+  -target=netbird_network_resource.edge -target=netbird_network_resource.netbird \
+  -target=netbird_network_resource.lan -target=netbird_setup_key.this
+tofu apply /tmp/nb.plan && rm /tmp/nb.plan
+# stage 2, once pod-2 is enrolled
+tofu plan -out=/tmp/nb.plan -target=netbird_nameserver_group.lab -target=netbird_dns_settings.this
+tofu apply /tmp/nb.plan && rm /tmp/nb.plan
+```
+
+- `tofu output -json netbird_setup_keys` prints the keys, the `routing` one goes in the vault as `vault_netbird_setup_key`
+- Done by hand first, then imported: [docs/netbird-by-hand.md](../docs/netbird-by-hand.md)
+
 ## Related
 
 - [ADR 0001: OpenTofu and cloud-init for VMs](../docs/adr/0001-tofu-and-cloud-init-for-vms.md)
 - [ADR 0005: prevent_destroy on stateful VMs](../docs/adr/0005-prevent-destroy-on-stateful-vms.md)
+- [ADR 0040: NetBird policy as code](../docs/adr/0040-netbird-policy-as-code.md)

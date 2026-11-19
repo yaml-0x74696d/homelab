@@ -147,6 +147,16 @@ rm -rf $S; ssh-keygen -R <host ip>
 cd ../ansible && ansible-playbook playbooks/deploy-netbird-agent.yml   # pod-2 is the routing peer
 ```
 
+NetBird, once the VM is up and pod-2's agent is not yet enrolled ([tofu/README.md](../tofu/README.md#6-netbird), [ADR 0040](adr/0040-netbird-policy-as-code.md)):
+
+1. **(hand)** Open `https://nb.<domain>` and log in as the owner (first login through Authentik)
+2. **(hand)** Make the service user `tofu` and a PAT for it, put the PAT in `netbird_token` in `terraform.tfvars`
+3. **(hand)** Import the built-in policy: `tofu import netbird_policy.default <id>` (the id is in the dashboard URL of the `Default` policy)
+4. Stage 1, targeted apply of the groups, policies, router, resources and setup keys (the `-target=` list is in `tofu/README.md`)
+5. `tofu output -json netbird_setup_keys`, put the `routing` key in the vault as `vault_netbird_setup_key`, then `ansible-playbook playbooks/deploy-netbird-agent.yml`
+6. Stage 2, targeted apply of `netbird_nameserver_group.lab` and `netbird_dns_settings.this`
+7. Enroll the devices with the `admin` and `household` keys, then add every peer id to `netbird_peers` in `private.yml` (pod-2 under `routing`) and run `tofu plan`, it must show no changes
+
 - Edge only holds `dns_ip` while `dns_ip_host` in `network.yml` says `edge`. On a fresh lab it does from the start
 
 ## 5. ctl-1 (Semaphore)
