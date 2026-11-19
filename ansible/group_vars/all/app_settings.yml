@@ -104,5 +104,7 @@ app_sources:
   edge: "{{ edge_ip }}"      # the live ingress: traefik on the edge vm
   netbird: "{{ pod2_ip }}"   # routing peer, remote traffic arrives masqueraded from it
   vpn: "{{ netbird_overlay_cidr }}"   # peers that talk to pod-2's overlay ip directly (dns-relay)
+  pod-1: "{{ pod1_ip }}"   # pbs pushes its heartbeat to gatus (pod-2 comes in as netbird)
+  pod-3: "{{ pod3_ip }}"
 # more ingress ips while two traefiks run side by side (firewall only), empty otherwise
 ingress_extra_sources: []
