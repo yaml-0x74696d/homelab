@@ -14,14 +14,14 @@
 - If NetBird was already installed by hand, the repo step is skipped, because its own repo with `Signed-By` would clash
 - The `netbird` daemon is enabled and started
 - `net.ipv4.ip_forward=1` is saved as a sysctl, so it survives a reboot (NetBird also sets it at runtime)
-- If `/etc/netbird/config.json` is missing and a setup key is given, it runs `netbird up --management-url … --setup-key …` (`no_log`)
+- If `/etc/netbird/config.json` is missing and a setup key is given, it runs `netbird up --management-url … --setup-key-file …` (`no_log`). The key goes in a 0600 temp file that is removed after, so it is not in argv
 - After enrollment the daemon reconnects on its own
 - Routes, DNS and ACLs are managed in `tofu/netbird.tf`
 
 ## Enrollment
 
 - Peers join with setup keys, not SSO. The IdP isn't reachable from the internet, so a fresh peer couldn't log in
-- The key comes from `tofu output -json netbird_setup_keys` (the `routing` key) and is stored as `vault_netbird_setup_key`
+- The key comes from `tofu output -json netbird_setup_keys` (the `routing` key) and is stored as `vault_netbird_setup_key`. Keys are one-off and short-lived: re-enrolling pod-2 needs a fresh one, `tofu apply -target='netbird_setup_key.this["routing"]' -replace='netbird_setup_key.this["routing"]'`
 - With an empty key, the role only installs NetBird and you enroll by hand
 
 ## Settings
@@ -29,7 +29,7 @@
 | Variable | Default | What |
 |---|---|---|
 | `netbird_agent_mgmt_url` | `https://nb.{{ domain }}` | The management server |
-| `netbird_agent_setup_key` | `vault_netbird_setup_key`, or empty | Reusable setup key from tofu |
+| `netbird_agent_setup_key` | `vault_netbird_setup_key`, or empty | One-off setup key from tofu |
 | `netbird_agent_enable_forwarding` | `true` | Keep IP forwarding on |
 
 ## Notes

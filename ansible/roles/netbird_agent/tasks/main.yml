@@ -61,13 +61,35 @@
     path: /etc/netbird/config.json
   register: netbird_agent_config
 
+# one-time; the daemon reconnects on its own after. routes, dns and policies live in tofu/netbird.tf.
+# the key goes through a 0600 temp file so it never shows in argv.
 - name: Enroll with the management server
-  # one-time; the daemon reconnects on its own after. routes, dns and policies live in tofu/netbird.tf.
-  ansible.builtin.command: >-
-    netbird up --management-url {{ netbird_agent_mgmt_url }}
-    --setup-key {{ netbird_agent_setup_key }}
   when:
     - not netbird_agent_config.stat.exists
     - netbird_agent_setup_key | length > 0
-  changed_when: true
-  no_log: true
+  block:
+    - name: Temp file for the setup key
+      ansible.builtin.tempfile:
+        state: file
+        prefix: nbkey
+      register: netbird_agent_keyfile
+
+    - name: Write the setup key
+      ansible.builtin.copy:
+        content: "{{ netbird_agent_setup_key }}"
+        dest: "{{ netbird_agent_keyfile.path }}"
+        mode: '0600'
+      no_log: true
+
+    - name: Netbird up
+      ansible.builtin.command: >-
+        netbird up --management-url {{ netbird_agent_mgmt_url }}
+        --setup-key-file {{ netbird_agent_keyfile.path }}
+      changed_when: true
+      no_log: true
+  always:
+    - name: Remove the setup key file
+      ansible.builtin.file:
+        path: "{{ netbird_agent_keyfile.path }}"
+        state: absent
+      when: netbird_agent_keyfile.path is defined
