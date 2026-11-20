@@ -208,11 +208,12 @@ resource "netbird_dns_settings" "this" {
   disabled_management_groups = [netbird_group.routing.id]
 }
 
-# one reusable key per peer group, enrolled peers land in it
+# one one-off key per peer group, enrolled peers land in it.
+# a new device = a targeted apply that makes a fresh key (-replace the old one)
 resource "netbird_setup_key" "this" {
   for_each       = local.nb_peer_groups
   name           = each.key
-  type           = "reusable"
+  type           = "one-off"
   expiry_seconds = var.netbird_setup_key_expiry_seconds
   auto_groups    = [each.value]
 }

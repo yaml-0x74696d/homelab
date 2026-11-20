@@ -75,6 +75,6 @@ variable "netbird_min_client_version" {
 
 variable "netbird_setup_key_expiry_seconds" {
   type        = number
-  default     = 7776000 # 90 days
-  description = "lifetime of the reusable setup keys, one per peer group"
+  default     = 86400 # 1 day, a new device gets a fresh key by a targeted apply
+  description = "lifetime of the one-off setup keys, one per peer group"
 }
