@@ -32,7 +32,7 @@ Format: status, context, decision, consequences.
 - [28. IoT gateway LXC: MQTT hub, firmware pulled from the gateway, one shared user without TLS](0028-iot-gateway-lxc.md)
 - [29. The IoT WiFi card moves into the gateway LXC](0029-wifi-card-in-the-gateway.md)
 - [30. Home Assistant as a HAOS VM on pve-3](0030-haos-vm-on-pve-3.md)
-- [31. Semaphore on a single-board computer as the always-on runner](0031-semaphore-on-a-pi.md)
+- [31. Semaphore on a single-board computer as the always-on runner](0031-semaphore-on-a-single-board-computer.md)
 - [32. Edge VM: Traefik and AdGuard Home on NixOS, routes from the apps map](0032-edge-vm-traefik-adguard-on-nixos.md)
 - [33. No Kubernetes](0033-no-kubernetes.md)
 - [34. TLS only via DNS-01, no port 80 from the WAN](0034-tls-via-dns-01.md)
