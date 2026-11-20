@@ -73,9 +73,11 @@ Weak to strong:
 
 ```
 tofu plan                                            # full, read-only, should say "No changes"
-tofu plan -target='proxmox_virtual_environment_container.iot' -out=/tmp/iot.plan
-tofu apply /tmp/iot.plan && rm /tmp/iot.plan
+tofu plan -target='proxmox_virtual_environment_container.iot' -out=iot.plan
+tofu apply iot.plan; rm -f iot.plan
 ```
+
+- Plans are written inside `tofu/` (`*.plan` is gitignored) and removed right after, because a saved plan holds secrets in clear
 
 - A full plan also asks the NetBird API, so it needs the NetBird VM up and a valid `netbird_token`
 - The full plan is safe and run often, the full apply never: only targeted plans are applied

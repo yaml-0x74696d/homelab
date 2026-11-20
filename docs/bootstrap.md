@@ -107,11 +107,12 @@ for t in 'proxmox_virtual_environment_container.log' \
          'proxmox_virtual_environment_vm.netbird' \
          'proxmox_virtual_environment_vm.edge' \
          'proxmox_virtual_environment_vm.haos'; do
-  tofu plan -target="$t" -out=/tmp/g.plan && tofu apply /tmp/g.plan; rm -f /tmp/g.plan
+  tofu plan -target="$t" -out=g.plan && tofu apply g.plan; rm -f g.plan
 done
 ```
 
 - `tofu apply` asks nothing with a saved plan, so read each plan as it goes by, or run the targets one at a time
+- The plan file sits inside `tofu/` (`*.plan` is gitignored) and is removed after each target, because plans hold secrets in clear
 - **(hand)** Router: a DHCP reservation for HAOS on `macs.haos` (HAOS has no cloud-init), and port forwards to the NetBird VM only: 443/tcp, 3478/udp, the TURN relay range
 
 ## 3. Firewall and base
@@ -153,9 +154,9 @@ NetBird, once the VM is up and pod-2's agent is not yet enrolled ([tofu/README.m
 2. **(hand)** Make the service user `tofu` and a PAT for it, put the PAT in `netbird_token` in `terraform.tfvars`
 3. **(hand)** Import the built-in policy: `tofu import netbird_policy.default <id>` (the id is in the dashboard URL of the `Default` policy). Target the import narrowly; if `data.netbird_peer.pod2` blocks it, use an `import {}` block in the stage 1 apply
 4. Stage 1, targeted apply of the groups, policies, router, resources and setup keys (the `-target=` list is in `tofu/README.md`)
-5. `tofu output -json netbird_setup_keys`, put the `routing` key in the vault as `vault_netbird_setup_key`, then `ansible-playbook playbooks/deploy-netbird-agent.yml`
+5. `tofu output -json netbird_setup_keys`, put the `routing` key in the vault as `vault_netbird_setup_key` (keys are one-off and live 1 day, a later re-enroll needs a fresh one with `-target='netbird_setup_key.this["routing"]' -replace=...`), then `ansible-playbook playbooks/deploy-netbird-agent.yml`
 6. Stage 2, targeted apply of `netbird_nameserver_group.lab` and `netbird_dns_settings.this`
-7. Enroll the devices with the `admin` and `household` keys, then add every peer id to `netbird_peers` in `private.yml` (pod-2 under `routing`) and run `tofu plan`, it must show no changes
+7. Enroll the devices with the `admin` and `household` keys (one device per key, a further device needs a fresh key from a targeted apply), then add every peer id to `netbird_peers` in `private.yml` (pod-2 under `routing`) and run `tofu plan`, it must show no changes
 
 - Edge only holds `dns_ip` while `dns_ip_host` in `network.yml` says `edge`. On a fresh lab it does from the start
 

@@ -8,14 +8,18 @@ A guide for taking over click-made NetBird objects with `tofu import`, e.g. on a
 - The PAT comes from step 2, so do that part first
 
 ```bash
-export NB=https://nb.<domain>/api NB_PAT=<token>   # shell only, not in a file
+export NB=https://nb.<domain>/api
+read -rs NB_PAT                                    # paste the token, nothing in history or argv
 d=<private_dir>/netbird-inventory; mkdir -p $d
 for r in peers groups policies posture-checks networks routes dns/nameservers dns/settings setup-keys users; do
-  curl -s -H "Authorization: Token $NB_PAT" $NB/$r > $d/${r//\//-}.json
+  printf 'header = "Authorization: Token %s"\n' "$NB_PAT" | curl -s -K - $NB/$r > $d/${r//\//-}.json
 done
 ```
 
-- The setup key list has the key names only, not the keys
+- `-K -` reads the header from stdin, so the token never shows in `ps`. `printf` is a builtin, so it isn't in argv either
+- In fish: `read -s -x NB_PAT` and `set -x NB https://nb.<domain>/api`
+
+- The setup key list has the key names only, not the keys. The keys are one-off, so the tofu ones are new and each device needs its own
 - Peer ids for `netbird_peers` and import ids come from `peers.json`, `groups.json` and so on
 
 ## 2. Service user and PAT
@@ -100,5 +104,5 @@ tofu import netbird_policy.default <id>
 tofu import netbird_nameserver_group.lab <id>
 ```
 
-- DNS settings have no import, and a setup key's plaintext can't be read back. Both are created by the apply, the setup keys are new ones
+- DNS settings have no import, and a setup key's plaintext can't be read back. Both are created by the apply, the setup keys are new one-off ones
 - Then `tofu plan`. It has to show no changes except those two. Fix `netbird.tf` or the dashboard until it does, never apply a plan that destroys a policy or a group

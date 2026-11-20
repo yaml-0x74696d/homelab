@@ -75,19 +75,22 @@ tofu apply
 - A full plan needs the VM up and a valid token. `data.netbird_peer.pod2` needs pod-2 enrolled, so the first apply is staged:
 
 ```bash
-tofu plan -out=/tmp/nb.plan \
+tofu plan -out=nb.plan \
   -target=netbird_policy.admin_lan -target=netbird_policy.household_web \
   -target=netbird_policy.vpn_dns_admin -target=netbird_policy.vpn_dns_household \
   -target=netbird_policy.default -target=netbird_network_router.lan \
   -target=netbird_network_resource.edge -target=netbird_network_resource.netbird \
   -target=netbird_network_resource.lan -target=netbird_setup_key.this
-tofu apply /tmp/nb.plan && rm /tmp/nb.plan
+tofu apply nb.plan; rm -f nb.plan
 # stage 2, once pod-2 is enrolled
-tofu plan -out=/tmp/nb.plan -target=netbird_nameserver_group.lab -target=netbird_dns_settings.this
-tofu apply /tmp/nb.plan && rm /tmp/nb.plan
+tofu plan -out=nb.plan -target=netbird_nameserver_group.lab -target=netbird_dns_settings.this
+tofu apply nb.plan; rm -f nb.plan
 ```
 
+- Plans are written inside `tofu/` (`*.plan` is gitignored) and removed right after, because a saved plan holds secrets in clear
+
 - `tofu output -json netbird_setup_keys` prints the keys, the `routing` one goes in the vault as `vault_netbird_setup_key`
+- The keys are one-off and expire after `netbird_setup_key_expiry_seconds` (1 day). A new device, or re-enrolling pod-2, needs a fresh key: `tofu apply -target='netbird_setup_key.this["routing"]' -replace='netbird_setup_key.this["routing"]'` (pick the group), then read it again
 - Adopting click-made objects: [docs/netbird-by-hand.md](../docs/netbird-by-hand.md)
 
 ## Related

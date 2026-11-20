@@ -27,7 +27,7 @@ The setup:
 - NetBird's built-in all-to-all policy is imported and disabled
 - A posture check sets the oldest client a household device may use (`netbird_min_client_version`), on `household-web` and `vpn-dns-household`
 - The nameserver group `lab` sends the lab domain to `dns-relay` on pod-2's overlay IP for `admin` and `household`. DNS management is off for `routing`
-- One reusable setup key per peer group, with `netbird_setup_key_expiry_seconds`, read with `tofu output -json netbird_setup_keys`
+- One one-off setup key per peer group, short-lived (`netbird_setup_key_expiry_seconds`, 1 day), read with `tofu output -json netbird_setup_keys`. A new device or a re-enrolled peer gets a fresh key from a targeted apply, for example `-target='netbird_setup_key.this["routing"]' -replace='netbird_setup_key.this["routing"]'`
 - The provider `netbirdio/netbird` is pinned to exactly 0.0.11 in `tofu/providers.tf`. The token is the PAT of the service user `tofu` (`netbird_token`)
 
 - Enforced by: NetBird's policy on the peers and the routing peer, the exact provider pin, and `tofu plan` showing anything changed in the dashboard
@@ -39,6 +39,7 @@ The setup:
 - Easier: the last network config that lived only in a database is in git
 
 - Harder: a full `tofu plan` needs the NetBird VM up and a valid PAT
+- Harder: every enrollment needs a fresh key from a targeted apply
 - Harder: a new peer needs its id added to `private.yml`, or the next plan removes it from its group
 
 - Accepted: the LAN still sees pod-2 for every peer, so the per-person audit trail of [0022](0022-central-logging-relp.md) is lost for VPN logins
