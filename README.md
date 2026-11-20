@@ -23,7 +23,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 | pve-1 | Small form factor PC | 8 GB | Running the edge VM, its WiFi card is the IoT AP (moved into CT 302) |
 | pve-2 | Small form factor PC | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Desktop PC, 1 SSD + 4 HDDs | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
-| ctl-1 | Single-board computer (Debian-based arm64 OS), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
+| ctl-1 | Single-board computer (arm64), SD card | little | Not in the cluster: Semaphore, always on, .100 |
 
 ## VM/LXC
 

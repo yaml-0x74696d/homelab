@@ -7,7 +7,7 @@ Status: Accepted
 - Every playbook ran by hand from ctl-0, my desktop, which is only on when I use it
 - Updates, AIDE checks and deploys should also run on a schedule, with a run history
 - I didn't want another VM in the cluster for it, and an unused single-board computer was lying around
-- ctl-1 has 1 GB RAM, a 16 GB SD card and an ARM CPU, so the PBS client (amd64 only) doesn't run there
+- ctl-1 is a small arm64 board with little RAM, so the PBS client (amd64 only) doesn't run there
 
 - Alternatives:
   - cron or systemd timers on ctl-0 (why not: ctl-0 is off most of the time)
