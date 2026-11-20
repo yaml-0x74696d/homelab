@@ -1,4 +1,4 @@
-# 40. Grafana dashboards as code, provisioned by Ansible
+# 41. Grafana dashboards as code, provisioned by Ansible
 
 Status: Accepted
 

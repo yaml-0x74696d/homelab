@@ -232,7 +232,7 @@ Prometheus for metrics, ntfy for alerts.
   - node-exporter on every VM and LXC but HAOS (its disk and uptime come from HA's System Monitor)
   - the ESP32 sensors, through mqtt-exporter
   - Gatus (`/metrics`, the check results)
-- Grafana shows dashboards on top of it: hosts, PVE and thin pools, sensors and lab health, as JSON in `apps/grafana/config/provisioning/dashboards/` ([ADR 0040](adr/0040-grafana-dashboards-as-code.md)). UI edits to them are reset by the next deploy
+- Grafana shows dashboards on top of it: hosts, PVE and thin pools, sensors and lab health, as JSON in `apps/grafana/config/provisioning/dashboards/` ([ADR 0041](adr/0041-grafana-dashboards-as-code.md)). UI edits to them are reset by the next deploy
 - Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
 - Gatus also takes pushed heartbeats: each backup host and the Semaphore runs of repo-pull, aide and update report in after a good run, and a missing one alerts. It queries Prometheus per PVE node for the thin pool fill and for the freshness of that data
 - Homepage is the start page: Gatus' summary on top, Proxmox stats for nodes, VMs and LXCs, and a tile per app generated from the apps map (`homepage:` block), with an up badge where the map has the app's port
