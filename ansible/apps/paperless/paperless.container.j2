@@ -28,6 +28,7 @@ Environment=PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://127.0.0.1:3000
 Environment=PAPERLESS_TIKA_ENDPOINT=http://127.0.0.1:9998
 # oidc via authentik (django-allauth), local login stays as break-glass
 Environment=PAPERLESS_APPS=allauth.socialaccount.providers.openid_connect
-HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000
+# localhost, django rejects 127.0.0.1 as host
+HealthCmd=curl -fsS -o /dev/null http://localhost:8000
 # first start runs the migrations before it listens
 HealthStartPeriod=3m
