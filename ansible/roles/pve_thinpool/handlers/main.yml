@@ -10,3 +10,4 @@
   ansible.builtin.systemd:
     name: pve-thinpool-metrics.service
     state: started
+  ignore_errors: "{{ ansible_check_mode }}"

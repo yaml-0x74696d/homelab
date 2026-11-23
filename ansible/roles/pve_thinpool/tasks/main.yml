@@ -53,3 +53,4 @@
     enabled: true
     state: started
     daemon_reload: "{{ pve_thinpool_units is changed }}"
+  ignore_errors: "{{ ansible_check_mode }}"   # --check writes no unit files
