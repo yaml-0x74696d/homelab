@@ -51,7 +51,7 @@ resource "netbird_network_router" "lan" {
   network_id  = netbird_network.lan.id
   peer_groups = [netbird_group.routing.id]
   masquerade  = true
-  metric      = 9999   # netbird's default
+  metric      = 9999 # netbird's default
   enabled     = true
 }
 
