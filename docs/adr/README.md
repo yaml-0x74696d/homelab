@@ -41,3 +41,4 @@ Format: status, context, decision, consequences.
 - [37. Actual Budget on pod-2, login only through Authentik](0037-actual-budget-on-pod-2.md)
 - [38. Linkding, Memos and Excalidraw on pod-3](0038-linkding-memos-excalidraw-on-pod-3.md)
 - [39. Syncthing between ctl-0 and ctl-1](0039-syncthing-between-ctl-0-and-ctl-1.md)
+- [40. What a VPN peer may reach is NetBird policy, in code](0040-netbird-policy-as-code.md)

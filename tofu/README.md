@@ -62,7 +62,39 @@ tofu apply
 - `vms.tf` has `agent { enabled = true }`, but a fresh Debian guest has no agent yet, so the first apply can hang waiting for it
 - for the first apply set it to `false`, then back to `true` after `vm-preparation.yml` (pod VMs) or nixos-anywhere (NetBird, edge) and apply again
 
+## 6. NetBird
+
+`netbird.tf` holds the VPN's groups, Network, policies, nameserver group and setup keys ([ADR 0040](../docs/adr/0040-netbird-policy-as-code.md)). The NetBird VM has to exist first.
+
+- Make a service user `tofu` (dashboard: Team, Service Users, role admin) and a personal access token for it, up to a year. Put it in `netbird_token`
+- The management API is LAN-only, so run it from the LAN or a VPN peer that can reach `nb.<domain>`
+- Group members are the peer ids in `netbird_peers` in `private.yml`
+- The built-in `Default` policy has to be imported once before the first apply
+- On a fresh lab import it narrowly: `tofu import -target=netbird_policy.default ...`. If `data.netbird_peer.pod2` blocks the import, use an `import {}` block in the stage-1 targeted apply instead
+- The `vpn_dns_*` policies are one policy per protocol (`["udp"]`, `["tcp"]`): the provider takes a single rule per policy. `-target=netbird_policy.vpn_dns_admin` covers both
+- A full plan needs the VM up and a valid token. `data.netbird_peer.pod2` needs pod-2 enrolled, so the first apply is staged:
+
+```bash
+tofu plan -out=nb.plan \
+  -target=netbird_policy.admin_lan -target=netbird_policy.household_web \
+  -target=netbird_policy.vpn_dns_admin -target=netbird_policy.vpn_dns_household \
+  -target=netbird_policy.default -target=netbird_network_router.lan \
+  -target=netbird_network_resource.edge -target=netbird_network_resource.netbird \
+  -target=netbird_network_resource.lan -target=netbird_setup_key.this
+tofu apply nb.plan; rm -f nb.plan
+# stage 2, once pod-2 is enrolled
+tofu plan -out=nb.plan -target=netbird_nameserver_group.lab -target=netbird_dns_settings.this
+tofu apply nb.plan; rm -f nb.plan
+```
+
+- Plans are written inside `tofu/` (`*.plan` is gitignored) and removed right after, because a saved plan holds secrets in clear
+
+- `tofu output -json netbird_setup_keys` prints the keys, the `routing` one goes in the vault as `vault_netbird_setup_key`
+- The keys are one-off and expire after `netbird_setup_key_expiry_seconds` (1 day). A new device, or re-enrolling pod-2, needs a fresh key: `tofu apply -target='netbird_setup_key.this["routing"]' -replace='netbird_setup_key.this["routing"]'` (pick the group), then read it again
+- Adopting click-made objects: [docs/netbird-by-hand.md](../docs/netbird-by-hand.md)
+
 ## Related
 
 - [ADR 0001: OpenTofu and cloud-init for VMs](../docs/adr/0001-tofu-and-cloud-init-for-vms.md)
 - [ADR 0005: prevent_destroy on stateful VMs](../docs/adr/0005-prevent-destroy-on-stateful-vms.md)
+- [ADR 0040: NetBird policy as code](../docs/adr/0040-netbird-policy-as-code.md)

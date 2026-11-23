@@ -16,6 +16,10 @@ Where things are kept in `tofu/`, where its values come from, and how a change i
 | the API token, the cloud-init password | `terraform.tfvars` (not in git) |
 | the image URL, the LXC template, datastores | `variables.tf` defaults |
 | the provider version, login | `providers.tf` |
+| a NetBird group, policy, route, nameserver group, setup key | `netbird.tf` |
+| the NetBird PAT | `terraform.tfvars` (not in git) |
+| who is in a NetBird group | `netbird_peers` in `private/private.yml` |
+| the oldest allowed NetBird client, setup key lifetime | `variables.tf` defaults |
 
 ## Folders
 
@@ -24,6 +28,7 @@ tofu/
 ├── providers.tf               provider pin, login (token, SSH for the disk import)
 ├── variables.tf               inputs: credentials, image, template, datastores
 ├── locals.tf                  group_vars read in, the guest maps
+├── netbird.tf                 NetBird groups, network, policies, DNS, setup keys
 ├── vms.tf                     cloud images, pod-1/2/3, netbird, edge, haos
 ├── lxc.tf                     storage, log, iot
 ├── terraform.tfvars.example   the keys for terraform.tfvars
@@ -35,7 +40,7 @@ tofu/
 
 ## Where the values come from
 
-- `locals.tf` reads `network`, `ports`, `hosts`, `storage` and `private/private.yml` with `yamldecode(file(...))`. The same files are read by Ansible and NixOS ([ADR 0007](adr/0007-group-vars-single-source-of-truth.md))
+- `locals.tf` reads `network`, `ports`, `hosts`, `storage`, `apps` and `private/private.yml` with `yamldecode(file(...))`. The same files are read by Ansible and NixOS ([ADR 0007](adr/0007-group-vars-single-source-of-truth.md))
 - Only what OpenTofu alone needs is kept here: sizes in the maps, credentials in tfvars. Nodes come from `guest_nodes`, `roles/reach` reads them too
 - One resource per kind, `for_each` over a map: a guest is added by adding a map entry (`pod` VMs, the image per node). netbird, edge and the LXCs differ too much and are written out
 
@@ -68,10 +73,13 @@ Weak to strong:
 
 ```
 tofu plan                                            # full, read-only, should say "No changes"
-tofu plan -target='proxmox_virtual_environment_container.iot' -out=/tmp/iot.plan
-tofu apply /tmp/iot.plan && rm /tmp/iot.plan
+tofu plan -target='proxmox_virtual_environment_container.iot' -out=iot.plan
+tofu apply iot.plan; rm -f iot.plan
 ```
 
+- Plans are written inside `tofu/` (`*.plan` is gitignored) and removed right after, because a saved plan holds secrets in clear
+
+- A full plan also asks the NetBird API, so it needs the NetBird VM up and a valid `netbird_token`
 - The full plan is safe and run often, the full apply never: only targeted plans are applied
 - `-out` makes the apply run exactly what was reviewed. The plan file holds `vm_password` unmasked, so it's removed right after
 - A guest that exists already is taken over with `tofu import`, then the code is fixed until the plan is empty

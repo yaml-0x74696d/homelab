@@ -189,6 +189,7 @@ The control plane:
 The routing:
 - pod-2 is the routing peer (`netbird_agent` role) and forwards traffic into the LAN
 - NetBird's DNS management is off for pod-2's group, so NetBird never takes port 53 on its routing peer ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-lan-dns-on-a-service-ip.md))
+- Policy groups: `admin` reaches the whole LAN, `household` only edge 443 and DNS ([ADR 0040](adr/0040-netbird-policy-as-code.md))
 - Peers talk to each other directly over WireGuard, the TURN relay is only a fallback
 
 The fallback:

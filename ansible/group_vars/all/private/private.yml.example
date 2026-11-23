@@ -51,3 +51,10 @@ syncthing_ctl0_id: ""
 homepage_weather_label: Home
 homepage_weather_latitude: 52.52
 homepage_weather_longitude: 13.40
+
+# netbird peer ids per group, tofu sets each group's members from these (tofu/netbird.tf).
+# ids: dashboard peer page, or `tofu state show`/the API. enrolling a peer doesn't add it here, the next plan would remove it
+netbird_peers:
+  admin: []
+  household: []
+  routing: []

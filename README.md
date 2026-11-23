@@ -42,7 +42,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 
 ## Stack
 
-- Proxmox (3 nodes) · OpenTofu (bpg/proxmox) · Ansible · Podman (rootless quadlets) · NixOS (NetBird VM, edge) · PBS · NetBird · Traefik · AdGuard Home · Authentik
+- Proxmox (3 nodes) · OpenTofu (bpg/proxmox + netbirdio/netbird) · Ansible · Podman (rootless quadlets) · NixOS (NetBird VM, edge) · PBS · NetBird · Traefik · AdGuard Home · Authentik
 
 ## What runs
 
@@ -131,6 +131,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - App ports: one ufw rule per port and source from `allow_from` in `apps.yml` (backends only answer edge, pod-2 and Homepage; Gatus' port also pod-1 and pod-3 for the heartbeats)
 - Podman apps: rootless, one svc user per app, no container socket anywhere
 - NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
+- VPN groups ([ADR 0040](docs/adr/0040-netbird-policy-as-code.md), `tofu/netbird.tf`): `household` reaches edge on 443 and the DNS relay only, `admin` the LAN, nothing else is allowed. The LAN still sees every peer as pod-2
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
 - Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden, Actual Budget and linkding), forward-auth for apps without SSO
 - TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN, except PVE, PBS and Cockpit (HTTPS with self-signed certs)
@@ -148,7 +149,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the pod VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
 - 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
-- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a single-board computer · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox · 0037 Actual Budget · 0038 linkding, Memos, Excalidraw · 0039 Syncthing ctl-0 ↔ ctl-1
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a single-board computer · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox · 0037 Actual Budget · 0038 linkding, Memos, Excalidraw · 0039 Syncthing ctl-0 ↔ ctl-1 · 0040 NetBird policy as code
 
 ## Future plans
 

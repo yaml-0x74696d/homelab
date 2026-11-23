@@ -4,6 +4,7 @@ locals {
   ports   = yamldecode(file("${path.module}/../ansible/group_vars/all/ports.yml"))
   hosts   = yamldecode(file("${path.module}/../ansible/group_vars/all/hosts.yml"))
   storage = yamldecode(file("${path.module}/../ansible/group_vars/all/storage.yml"))
+  apps    = yamldecode(file("${path.module}/../ansible/group_vars/all/apps.yml"))
 
   # per-lab values (domain, macs, disks), see private.yml.example next to it
   priv = yamldecode(file("${path.module}/../ansible/group_vars/all/private/private.yml"))
