@@ -45,6 +45,7 @@
     - pve-thinpool-metrics.service
     - pve-thinpool-metrics.timer
   register: pve_thinpool_units
+  notify: Run metrics once
 
 - name: Enable timer
   ansible.builtin.systemd:
@@ -52,10 +53,3 @@
     enabled: true
     state: started
     daemon_reload: "{{ pve_thinpool_units is changed }}"
-
-# the first file, before the next scrape
-- name: First run
-  ansible.builtin.systemd:
-    name: pve-thinpool-metrics.service
-    state: started
-  when: pve_thinpool_units is changed
