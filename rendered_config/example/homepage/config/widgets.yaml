@@ -7,6 +7,7 @@
       dateStyle: short
       timeStyle: short
       hourCycle: h23
+      timeZone: Europe/Berlin
 - search:
     provider: custom
     url: https://search.example.org/search?q=
