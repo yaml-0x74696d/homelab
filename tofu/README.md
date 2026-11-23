@@ -71,7 +71,7 @@ tofu apply
 - Group members are the peer ids in `netbird_peers` in `private.yml`
 - The built-in `Default` policy has to be imported once before the first apply
 - On a fresh lab import it narrowly: `tofu import -target=netbird_policy.default ...`. If `data.netbird_peer.pod2` blocks the import, use an `import {}` block in the stage-1 targeted apply instead
-- The `vpn_dns_*` policies have two rule blocks (udp, tcp). After creating them `tofu plan` must show no diff; if the server keeps only one rule per policy, split into one policy per protocol
+- The `vpn_dns_*` policies are one policy per protocol (`["udp"]`, `["tcp"]`): the provider takes a single rule per policy. `-target=netbird_policy.vpn_dns_admin` covers both
 - A full plan needs the VM up and a valid token. `data.netbird_peer.pod2` needs pod-2 enrolled, so the first apply is staged:
 
 ```bash

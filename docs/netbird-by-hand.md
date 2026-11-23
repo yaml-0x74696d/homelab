@@ -43,7 +43,7 @@ done
 
 - `admin-lan`: `admin` to `res-lan`, all protocols
 - `household-web`: `household` to `res-edge`, TCP 443
-- `vpn-dns-admin`, `vpn-dns-household`: the source group to `routing`, the `dns-relay` port (`apps.yml`), one rule for UDP and one for TCP
+- `vpn-dns-admin-udp`, `vpn-dns-admin-tcp`, `vpn-dns-household-udp`, `vpn-dns-household-tcp`: the source group to `routing`, the `dns-relay` port (`apps.yml`), one policy per protocol
 - After creating the DNS policies, `tofu plan` must show no diff. If the server keeps only one rule per policy, split them into one policy per protocol
 - A posture check with the minimum client version on the two household policies
 - No policy from `household` to `res-netbird`
@@ -98,8 +98,10 @@ tofu import netbird_network_resource.lan <network id>/<resource id>
 tofu import netbird_posture_check.household_client <id>
 tofu import netbird_policy.admin_lan <id>
 tofu import netbird_policy.household_web <id>
-tofu import netbird_policy.vpn_dns_admin <id>
-tofu import netbird_policy.vpn_dns_household <id>
+tofu import 'netbird_policy.vpn_dns_admin["udp"]' <id>
+tofu import 'netbird_policy.vpn_dns_admin["tcp"]' <id>
+tofu import 'netbird_policy.vpn_dns_household["udp"]' <id>
+tofu import 'netbird_policy.vpn_dns_household["tcp"]' <id>
 tofu import netbird_policy.default <id>
 tofu import netbird_nameserver_group.lab <id>
 ```

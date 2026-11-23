@@ -22,10 +22,10 @@ The setup:
 - One NetBird Network `lan` in `tofu/netbird.tf`, pod-2 as its router through the peer group `routing`, masquerade on
 - Resources are single hosts, each in its own resource-only group: `res-edge` (`edge_ip`/32), `res-netbird` (`netbird_ip`/32), `res-lan` (`lan_cidr`)
 - Peer groups `admin`, `household` and `routing`. Their members are the peer ids in `netbird_peers` in `private.yml`
-- Policies, one group per side: `admin-lan` (admin to the LAN), `household-web` (household to edge on `https_port` (443)), `vpn-dns-admin` and `vpn-dns-household` (the `dns-relay` port from `apps.yml`, UDP and TCP, to `routing`)
+- Policies, one group per side: `admin-lan` (admin to the LAN), `household-web` (household to edge on `https_port` (443)), `vpn-dns-admin-*` and `vpn-dns-household-*` (the `dns-relay` port from `apps.yml` to `routing`, one policy each for UDP and TCP)
 - No policy lets household reach the NetBird VM yet. The resource and its group exist for it
 - NetBird's built-in all-to-all policy is imported and disabled
-- A posture check sets the oldest client a household device may use (`netbird_min_client_version`), on `household-web` and `vpn-dns-household`
+- A posture check sets the oldest client a household device may use (`netbird_min_client_version`), on `household-web` and `vpn-dns-household-*`
 - The nameserver group `lab` sends the lab domain to `dns-relay` on pod-2's overlay IP for `admin` and `household`. DNS management is off for `routing`
 - One one-off setup key per peer group, short-lived (`netbird_setup_key_expiry_seconds`, 1 day), read with `tofu output -json netbird_setup_keys`. A new device or a re-enrolled peer gets a fresh key from a targeted apply, for example `-target='netbird_setup_key.this["routing"]' -replace='netbird_setup_key.this["routing"]'`
 - The provider `netbirdio/netbird` is pinned to exactly 0.0.11 in `tofu/providers.tf`. The token is the PAT of the service user `tofu` (`netbird_token`)

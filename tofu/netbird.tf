@@ -122,41 +122,38 @@ resource "netbird_policy" "household_web" {
   }
 }
 
-# dns relay on pod-2's overlay ip. split per source group: the posture check is per policy
+# dns relay on pod-2's overlay ip. split per source group: the posture check is per policy.
+# one policy per protocol: the provider takes a single rule per policy
 resource "netbird_policy" "vpn_dns_admin" {
-  name    = "vpn-dns-admin"
-  enabled = true
-  dynamic "rule" {
-    for_each = ["udp", "tcp"]
-    content {
-      name          = "dns-${rule.value}"
-      action        = "accept"
-      bidirectional = false
-      enabled       = true
-      protocol      = rule.value
-      ports         = [tostring(local.dns_relay_port)]
-      sources       = [netbird_group.admin.id]
-      destinations  = [netbird_group.routing.id]
-    }
+  for_each = toset(["udp", "tcp"])
+  name     = "vpn-dns-admin-${each.key}"
+  enabled  = true
+  rule {
+    name          = "dns-${each.key}"
+    action        = "accept"
+    bidirectional = false
+    enabled       = true
+    protocol      = each.key
+    ports         = [tostring(local.dns_relay_port)]
+    sources       = [netbird_group.admin.id]
+    destinations  = [netbird_group.routing.id]
   }
 }
 
 resource "netbird_policy" "vpn_dns_household" {
-  name                  = "vpn-dns-household"
+  for_each              = toset(["udp", "tcp"])
+  name                  = "vpn-dns-household-${each.key}"
   enabled               = true
   source_posture_checks = [netbird_posture_check.household_client.id]
-  dynamic "rule" {
-    for_each = ["udp", "tcp"]
-    content {
-      name          = "dns-${rule.value}"
-      action        = "accept"
-      bidirectional = false
-      enabled       = true
-      protocol      = rule.value
-      ports         = [tostring(local.dns_relay_port)]
-      sources       = [netbird_group.household.id]
-      destinations  = [netbird_group.routing.id]
-    }
+  rule {
+    name          = "dns-${each.key}"
+    action        = "accept"
+    bidirectional = false
+    enabled       = true
+    protocol      = each.key
+    ports         = [tostring(local.dns_relay_port)]
+    sources       = [netbird_group.household.id]
+    destinations  = [netbird_group.routing.id]
   }
 }
 
