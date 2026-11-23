@@ -1,0 +1,391 @@
+{
+  "uid": "lab-pve",
+  "title": "Proxmox and thin pool",
+  "tags": [
+    "lab"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "bargauge",
+      "title": "thin pool data %",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 6
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "{{ thinpool_data_metric }}{job=\"pve-hosts\"}",
+          "legendFormat": "{% raw %}{{instance}}{% endraw %} {% raw %}{{pool}}{% endraw %}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": {{ gatus_thinpool_max_pct }}
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "description": "red at the gatus alert level",
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient"
+      }
+    },
+    {
+      "id": 2,
+      "type": "bargauge",
+      "title": "thin pool metadata %",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 6
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "{{ thinpool_metadata_metric }}{job=\"pve-hosts\"}",
+          "legendFormat": "{% raw %}{{instance}}{% endraw %} {% raw %}{{pool}}{% endraw %}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": {{ gatus_thinpool_max_pct }}
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient"
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "thin pool data % over time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "{{ thinpool_data_metric }}{job=\"pve-hosts\"}",
+          "legendFormat": "{% raw %}{{instance}}{% endraw %} {% raw %}{{pool}}{% endraw %}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": {{ gatus_thinpool_max_pct }}
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "thin pool metadata % over time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "{{ thinpool_metadata_metric }}{job=\"pve-hosts\"}",
+          "legendFormat": "{% raw %}{{instance}}{% endraw %} {% raw %}{{pool}}{% endraw %}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": {{ gatus_thinpool_max_pct }}
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "cpu",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "100 - avg by (instance) (rate(node_cpu_seconds_total{job=\"pve-hosts\",mode=\"idle\"}[5m])) * 100",
+          "legendFormat": "{% raw %}{{instance}}{% endraw %}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "ram",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 14,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"pve-hosts\"} / node_memory_MemTotal_bytes{job=\"pve-hosts\"})",
+          "legendFormat": "{% raw %}{{instance}}{% endraw %}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "load (5m)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 14,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "node_load5{job=\"pve-hosts\"}",
+          "legendFormat": "{% raw %}{{instance}}{% endraw %}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ]
+}

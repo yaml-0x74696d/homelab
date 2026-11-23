@@ -1,0 +1,526 @@
+{
+  "uid": "lab-hosts",
+  "title": "Hosts overview",
+  "tags": [
+    "lab"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "host",
+        "label": "host",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "efkt8i31skjk0b"
+        },
+        "query": {
+          "query": "label_values(up{job=~\"node-exporter|pve-hosts\"}, instance)",
+          "refId": "v"
+        },
+        "definition": "label_values(up{job=~\"node-exporter|pve-hosts\"}, instance)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "sort": 1,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "now",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "100 - avg by (instance) (rate(node_cpu_seconds_total{job=~\"node-exporter|pve-hosts\",instance=~\"$host\",mode=\"idle\"}[5m])) * 100",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=~\"node-exporter|pve-hosts\",instance=~\"$host\"} / node_memory_MemTotal_bytes{job=~\"node-exporter|pve-hosts\",instance=~\"$host\"})",
+          "legendFormat": "",
+          "refId": "B",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "100 * (1 - node_filesystem_avail_bytes{job=~\"node-exporter|pve-hosts\",instance=~\"$host\",mountpoint=\"/\",fstype!~\"tmpfs|rootfs|overlay\"} / node_filesystem_size_bytes{job=~\"node-exporter|pve-hosts\",instance=~\"$host\",mountpoint=\"/\",fstype!~\"tmpfs|rootfs|overlay\"})",
+          "legendFormat": "",
+          "refId": "C",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "time() - node_boot_time_seconds{job=~\"node-exporter|pve-hosts\",instance=~\"$host\"}",
+          "legendFormat": "",
+          "refId": "D",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "cpu %|ram %|disk / %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 90
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "uptime"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          }
+        ]
+      },
+      "description": "one row per host, latest values",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "job": true
+            },
+            "renameByName": {
+              "Value #A": "cpu %",
+              "Value #B": "ram %",
+              "Value #C": "disk / %",
+              "Value #D": "uptime"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "cpu",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "100 - avg by (instance) (rate(node_cpu_seconds_total{job=~\"node-exporter|pve-hosts\",instance=~\"$host\",mode=\"idle\"}[5m])) * 100",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "ram",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 9,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=~\"node-exporter|pve-hosts\",instance=~\"$host\"} / node_memory_MemTotal_bytes{job=~\"node-exporter|pve-hosts\",instance=~\"$host\"})",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "disk /",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "100 * (1 - node_filesystem_avail_bytes{job=~\"node-exporter|pve-hosts\",instance=~\"$host\",mountpoint=\"/\",fstype!~\"tmpfs|rootfs|overlay\"} / node_filesystem_size_bytes{job=~\"node-exporter|pve-hosts\",instance=~\"$host\",mountpoint=\"/\",fstype!~\"tmpfs|rootfs|overlay\"})",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "uptime",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 17,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "time() - node_boot_time_seconds{job=~\"node-exporter|pve-hosts\",instance=~\"$host\"}",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "network in",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "sum by (instance) (rate(node_network_receive_bytes_total{job=~\"node-exporter|pve-hosts\",instance=~\"$host\",device!~\"lo|veth.*|cni.*|podman.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|vmbr.*\"}[5m]))",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "network out",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "efkt8i31skjk0b"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "efkt8i31skjk0b"
+          },
+          "expr": "sum by (instance) (rate(node_network_transmit_bytes_total{job=~\"node-exporter|pve-hosts\",instance=~\"$host\",device!~\"lo|veth.*|cni.*|podman.*|br-.*|fwbr.*|fwpr.*|fwln.*|tap.*|vmbr.*\"}[5m]))",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    }
+  ]
+}

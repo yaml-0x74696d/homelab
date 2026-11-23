@@ -1,0 +1,11 @@
+# managed by ansible (apps/grafana). the json next to this file is the source
+# allowUiUpdates: tinker in the ui, the next deploy resets it to git. save a keeper as json here
+apiVersion: 1
+providers:
+  - name: lab
+    folder: lab
+    type: file
+    disableDeletion: true   # a file that goes away leaves its dashboard in grafana
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

@@ -32,3 +32,7 @@ scrape_configs:
     scrape_interval: {{ prometheus_scrape_interval }}
     static_configs:
       - targets: ['{{ iot_lan_ip }}:{{ mqtt_exporter_port }}']
+
+  - job_name: 'gatus'
+    static_configs:
+      - targets: ['{{ addr(apps['gatus'].host, hostvars[apps['gatus'].host].ansible_host) }}:{{ apps['gatus'].port }}']

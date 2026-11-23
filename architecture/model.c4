@@ -313,6 +313,7 @@ model {
   // observability
   observability.prometheus -[scrape]-> observability.node-exporter "host metrics"
   observability.prometheus -[scrape]-> automation.mqtt-exporter "sensor metrics"
+  observability.prometheus -[scrape]-> observability.gatus "check results"
   observability.grafana -> observability.prometheus "queries"
   observability.gatus -[https]-> edge.traefik "probes every route"
   observability.gatus -> ntfy "down alerts"
