@@ -6,7 +6,7 @@ Status: Accepted
 
 - Several things need to reach my phone: failed backups, AIDE changes, logins on the PVE hosts, new images
 - Alerts must also work when I'm away, while nothing in the lab is reachable from the internet
-- A self-hosted ntfy stays LAN-only, but instant push on the iPhone needs a server that's reachable from the internet (Apple's push service, APNs)
+- A self-hosted ntfy stays LAN-only, but instant push on the phone needs a server that's reachable from the internet (the phone vendor's push service)
 
 - Alternatives:
   - Self-hosted ntfy exposed to the WAN (why not: one more service open to the internet)

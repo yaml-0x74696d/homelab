@@ -5,7 +5,7 @@ Status: Accepted
 ## Context
 
 - hostapd and DHCP ran on pve-1, bridged into the IoT net, so the node itself had an address there
-- The card (Intel AC 9560, CNVi) can move into another network namespace; tested, hostapd runs in the unprivileged CT
+- The node's wifi card can move into another network namespace; tested, hostapd runs in the unprivileged CT
 
 - Alternatives:
   - Keep the AP on pve-1, only DHCP onto the gateway (why not: pve-1 stays in the IoT net)

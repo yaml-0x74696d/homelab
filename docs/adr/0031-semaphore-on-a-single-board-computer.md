@@ -1,4 +1,4 @@
-# 31. Semaphore on a Raspberry Pi as the always-on runner
+# 31. Semaphore on a single-board computer as the always-on runner
 
 Status: Accepted
 
@@ -6,15 +6,15 @@ Status: Accepted
 
 - Every playbook ran by hand from ctl-0, my desktop, which is only on when I use it
 - Updates, AIDE checks and deploys should also run on a schedule, with a run history
-- I didn't want another VM in the cluster for it, and an unused Raspberry Pi 3 was lying around
-- The Pi has 1 GB RAM, a 16 GB SD card and an ARM CPU, so the PBS client (amd64 only) doesn't run there
+- I didn't want another VM in the cluster for it, and an unused single-board computer was lying around
+- ctl-1 is a small arm64 board with little RAM, so the PBS client (amd64 only) doesn't run there
 
 - Alternatives:
   - cron or systemd timers on ctl-0 (why not: ctl-0 is off most of the time)
   - AWX (why not: needs Kubernetes, see [0033](0033-no-kubernetes.md))
   - Rundeck (why not: a Java server, too heavy for 1 GB)
   - A VM in the cluster (why not: one more guest to run, and it goes down with the cluster it manages)
-  - Semaphore on the Pi (chosen)
+  - Semaphore on a single-board computer (chosen)
   - Keep running everything by hand (why not: nothing runs while ctl-0 is off)
   - Authentik forward-auth in front of the route (why not: Semaphore logs in through OIDC itself, a second login on top, and API tokens and webhooks can't follow the redirect)
 - Why Semaphore: open source, one Go binary with SQLite, an ARM64 image, schedules and run history in a web UI
@@ -22,7 +22,7 @@ Status: Accepted
 ## Decision
 
 The setup:
-- ctl-1 (`ctl1_ip`) is the Pi on Raspberry Pi OS Lite, bare metal outside tofu, in the `podman_hosts` group
+- ctl-1 (`ctl1_ip`) is a single-board computer on a Debian-based arm64 OS, bare metal outside tofu, in the `podman_hosts` group
 - `playbooks/ctl-preparation.yml` runs `vm_base`, `podman_base`, `roles/ctl_base` and `aide` on it
 - Semaphore is a rootless Podman app (`apps/semaphore`, [0021](0021-podman-quadlets.md)) with SQLite, behind Traefik as `semaphore.<domain>`
 - Login through Authentik OIDC ([0014](0014-authentik-as-idp.md)), plus a local `semaphore_admin_user` as break-glass
@@ -59,7 +59,7 @@ AIDE hashes:
 
 - Accepted: ctl-1 holds the AIDE hashes for all hosts, itself included. Root on ctl-1 could swap a database and its hash together. ctl-0's Syncthing versions (`.stversions`) are the cross-check, the copy itself follows ctl-1
 - Accepted: `aide_accept=yes` accepts what the run finds, without a second look before the swap
-- Accepted: no backup of the Pi. Projects and templates are quick to redo, the run history is lost with the card
+- Accepted: no backup of ctl-1. Projects and templates are quick to redo, the run history is lost with the card
 - Accepted: the SD card wears, so the journal is volatile and goes to the log LXC ([0022](0022-central-logging-relp.md))
 - Accepted: whoever can merge to `main` runs code as root on every Debian host within a day: `repo-pull` takes `main` at 11:45, `aide` runs from it at 13:15, `update` on Saturdays. Same guards as in [0035](0035-nixos-for-netbird-and-edge.md): PR only, the `checks` CI job, two-factor login
 

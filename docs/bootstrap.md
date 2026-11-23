@@ -148,7 +148,7 @@ cd ../ansible && ansible-playbook playbooks/deploy-netbird-agent.yml   # pod-2 i
 
 ## 5. ctl-1 (Semaphore)
 
-**(hand)** Flash Raspberry Pi OS Lite (64-bit): hostname `ctl-1`, user `admin_user` with the vault's `sudo_pass`, ssh on ([roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md)). Then:
+**(hand)** Flash a Debian trixie arm64 image: hostname `ctl-1`, user `admin_user` with the vault's `sudo_pass`, ssh on ([roles/ctl_base/README.md](../ansible/roles/ctl_base/README.md)). Then:
 
 ```bash
 cd ~/homelab/ansible

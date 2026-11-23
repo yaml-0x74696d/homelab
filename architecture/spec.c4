@@ -14,6 +14,7 @@ specification {
   element device   { notation "Device"; style { shape mobile; color muted } }
 
   relationship https { technology "HTTPS" }
+  relationship http  { technology "HTTP" }
   relationship oidc  { technology "OIDC"; line dashed; color indigo }
   relationship cifs  { technology "SMB 3.1.1"; line dashed; color amber }
   relationship scrape { technology "Prometheus"; line dotted; color teal }

@@ -38,7 +38,7 @@
 
 ## Time Machine
 
-- A share with `time_machine: true` gets `vfs_fruit` and `streams_xattr`. The Apple settings are set globally
+- A share with `time_machine: true` gets `vfs_fruit` and `streams_xattr`. Those settings are set globally
 - `fruit:time machine max size` caps the backup so it can't fill the pool (`tm_size`, default 1 TB)
 
 ## Settings

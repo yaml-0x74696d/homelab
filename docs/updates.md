@@ -6,7 +6,7 @@ What updates itself, what waits for a run, and how the pinned parts move. Times 
 
 | What | When | How | Reports |
 |---|---|---|---|
-| App images on a floating tag (`latest`, `stable`, `alpine`, ...) | Sun 13:00 | `podman auto-update` per svc user, rolls back when the new container fails its health check ([ADR 0021](adr/0021-podman-quadlets.md)) | ntfy: updated, rolled back, failed |
+| App images on a floating tag (`latest`, `stable`, ...) and the databases and caches on the tag of their major (`16-alpine`, `8-alpine`) | Sun 13:00 | `podman auto-update` per svc user, rolls back when the new container fails its health check ([ADR 0021](adr/0021-podman-quadlets.md)) | ntfy: updated, rolled back, failed |
 | Newer tags of pinned images | Sun 12:00 | `podman-new-tags` lists newer tags of the same shape (`16-alpine` → `17-alpine`) | ntfy, nothing is changed |
 | Security updates, pod VMs and LXCs | daily | unattended-upgrades, security origins only, no reboot ([ADR 0024](adr/0024-ansible-run-os-updates.md)) | |
 | NixOS VMs | netbird 03:00, edge 04:00 | `system.autoUpgrade`, reboots only inside their window, one after the other | |
@@ -31,7 +31,7 @@ Reboots, when the summary says `REBOOT due`:
 
 ## Pinned images
 
-Auto-update only refreshes the tag an app pins. `podman-new-tags` says when a newer one exists, the bump is a change in `group_vars/all/apps.yml` plus a deploy:
+Auto-update only refreshes the tag an app pins. Databases and caches update inside their major, and the app restarts with them. Immich's Postgres is the exception (`auto_update: false`). `podman-new-tags` says when a newer one exists, the bump is a change in `group_vars/all/apps.yml` plus a deploy:
 
 ```bash
 just deploy-app <app>
@@ -46,7 +46,7 @@ Images that need more than a tag change:
 - **Nextcloud** (`35-apache`): one major at a time, it refuses to skip. `start_timeout: 15min` covers `occ upgrade` on the first start
 - **Authentik**: one release series at a time, never down. Raise the tag on `authentik` and `authentik-worker` in `apps.yml`, then `just deploy authentik`. The wrapper refuses skipped series, downgrades and a nearly full thin pool, and waits for ready through edge ([ADR 0014](adr/0014-authentik-as-idp.md)). Add the new series to `authentik_series` in `app_settings.yml`
 - **Immich's Postgres** (vectorchord build): follow the Immich release notes, never plain Postgres
-- **Gotenberg** `8`, **Valkey** `8-alpine` / `9`: a major bump is a tag change, check the release notes first
+- **Gotenberg** `8`, **Redis** `8-alpine`, **Valkey** `8-alpine` / `9`: a major bump is a tag change, check the release notes first
 
 ## NixOS VMs by hand
 

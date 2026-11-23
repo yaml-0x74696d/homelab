@@ -18,7 +18,7 @@ homepage_metrics_refresh_ms: 30000   # prometheus widgets on the pod tiles
 # ha system monitor sensors for the haos tile, check the ids in ha (settings, entities)
 homepage_haos_disk_entity: sensor.system_monitor_disk_usage
 homepage_haos_boot_entity: sensor.system_monitor_uptime   # system monitor: when the vm booted
-homepage_semaphore_refresh_ms: 60000   # last semaphore run on its tile, the pi answers slowly
+homepage_semaphore_refresh_ms: 60000   # last semaphore run on its tile, ctl-1 answers slowly
 homepage_tabs:
   Home: [Status, Homecloud, Tools, Bookmarks]   # tab order and group order in it
   Infra: [Admin, Servers, VMs, LXCs]

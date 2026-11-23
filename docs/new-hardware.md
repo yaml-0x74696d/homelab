@@ -16,7 +16,7 @@ Where the hardware is written down, and what to change when a node is replaced, 
 | PBS datastore | a thin LV on pve-3's SSD, mounted at `/mnt/pbs` ([bootstrap step 1](bootstrap.md#1-proxmox-nodes)) |
 | Thin pool Authentik's deploy watches | `authentik_pool_node` / `authentik_pool_lv` in `playbooks/deploy-authentik.yml` |
 | IoT WiFi card | the node in `guest_nodes.iot`, passed into the IoT LXC ([ADR 0029](adr/0029-wifi-card-in-the-gateway.md)) |
-| ctl-1 (ARM, outside the cluster) | `podman_hosts`, no PBS client, static network config on the Pi itself |
+| ctl-1 (ARM, outside the cluster) | `podman_hosts`, no PBS client, static network config on the host itself |
 
 ## Before any change
 

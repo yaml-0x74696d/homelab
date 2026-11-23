@@ -16,4 +16,5 @@ Secret=homepage-services,type=mount,target=/app/config/services.yaml,mode=0400
 Secret=homepage-proxmox,type=mount,target=/app/config/proxmox.yaml,mode=0400
 Environment=HOMEPAGE_ALLOWED_HOSTS=home.{{ domain }}
 Environment=LOG_TARGETS=stdout
+Environment=TZ={{ timezone }}
 HealthCmd=wget -qO /dev/null http://127.0.0.1:3000/api/healthcheck

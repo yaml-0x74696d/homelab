@@ -1,7 +1,7 @@
 # ctl_base
 
 - What ctl-1 needs on top of `vm_base` + `podman_base`: static address, ufw, the git clone Semaphore runs from and a copy of the private overlay dir
-- ctl-1 is a Raspberry Pi 3 on Raspberry Pi OS Lite (trixie, 64-bit) outside the cluster, always on, running the Semaphore app (`apps/semaphore`)
+- ctl-1 is a single-board computer on a Debian-based arm64 OS (trixie) outside the cluster, always on, running the Semaphore app (`apps/semaphore`)
 
 ## Runs on
 
@@ -9,7 +9,7 @@
 
 ## First setup, by hand
 
-1. Raspberry Pi Imager: Raspberry Pi OS Lite (64-bit), hostname `ctl-1`, user `admin_user` with the vault's `sudo_pass`, ssh on
+1. Flash a Debian trixie arm64 image: hostname `ctl-1`, user `admin_user` with the vault's `sudo_pass`, ssh on
 2. From the controller, the key and a first run on the DHCP address:
    ```
    ssh-copy-id <admin_user>@<dhcp ip>
