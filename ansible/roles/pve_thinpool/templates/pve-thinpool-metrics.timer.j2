@@ -1,0 +1,9 @@
+[Unit]
+Description=thin pool fill for node-exporter
+
+[Timer]
+OnBootSec={{ pve_thinpool_interval }}
+OnUnitActiveSec={{ pve_thinpool_interval }}
+
+[Install]
+WantedBy=timers.target

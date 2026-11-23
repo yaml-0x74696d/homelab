@@ -1,0 +1,13 @@
+---
+argument_specs:
+  main:
+    short_description: Heartbeat to gatus once a scheduled playbook went through
+    options:
+      gatus_push_path:
+        type: str
+        required: true
+        description: Push path with {key} for the endpoint key (group_vars)
+      gatus_push_job:
+        type: str
+        required: true
+        description: Semaphore template name, the external endpoint is semaphore-<job> (gatus_semaphore_templates)

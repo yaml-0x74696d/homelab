@@ -6,7 +6,7 @@ apps:
     host: pod-2
     uid: 2010
     port: 3001
-    allow_from: [edge, netbird, homepage]
+    allow_from: [edge, netbird, homepage, pod-1, pod-3]   # pod-1/3: backup heartbeats
     secrets:
       - name: gatus-config
         template: config.yaml.j2

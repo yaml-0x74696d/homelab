@@ -84,7 +84,7 @@ ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   group_vars/<group>.yml  login per group (user, become)
   inventory.yml    hosts only: pod_vms, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent, appliances (haos)
-  roles/           aide, chrony, cronie, ctl_base, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, reach, rsyslog, samba, update, vm_base
+  roles/           aide, chrony, cronie, ctl_base, gatus_push, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, pve_thinpool, reach, rsyslog, samba, update, vm_base
   apps/<name>/     Quadlet units + templates per app
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NixOS VMs: netbird, edge (+ update.sh, aide-accept.sh)
@@ -128,7 +128,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - HAOS VM: PVE guest firewall, HA only from Traefik and Homepage, admins direct ([ADR 0030](docs/adr/0030-haos-vm-on-pve-3.md))
 - Cockpit on the pod VMs: only edge reaches port 9090 (ufw, `cockpit_allow_from`), served as `cockpit-pod-N.<domain>` behind Authentik forward-auth
 - SSH host keys: `accept-new` on both controllers (ctl-0, Semaphore), a changed key fails the run
-- App ports: one ufw rule per port and source from `allow_from` in `apps.yml` (backends only answer edge, pod-2 and Homepage)
+- App ports: one ufw rule per port and source from `allow_from` in `apps.yml` (backends only answer edge, pod-2 and Homepage; Gatus' port also pod-1 and pod-3 for the heartbeats)
 - Podman apps: rootless, one svc user per app, no container socket anywhere
 - NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
 - NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban

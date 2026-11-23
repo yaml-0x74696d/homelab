@@ -298,6 +298,7 @@ model {
   storage.pbs-client -> media.immich.pg "pg_dump"
   storage.pbs-client -> media.paperless.pg "pg_dump"
   storage.pbs-client -> ntfy "job alerts"
+  storage.pbs-client -[http]-> observability.gatus "heartbeat after a good run"
 
   // home automation
   automation.sensor -[mqtt]-> automation.mosquitto "publishes readings, gets commands"
@@ -314,6 +315,8 @@ model {
   observability.grafana -> observability.prometheus "queries"
   observability.gatus -[https]-> edge.traefik "probes every route"
   observability.gatus -> ntfy "down alerts"
+  observability.gatus -[http]-> observability.prometheus "thin pool fill"
+  ops.semaphore -[http]-> observability.gatus "heartbeat after a good run"
   observability.rsyslog -[relp]-> observability.log-server "forwards every log line"
 
   // operations

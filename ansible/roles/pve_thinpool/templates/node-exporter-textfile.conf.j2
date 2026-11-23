@@ -1,0 +1,4 @@
+# managed by ansible (roles/pve_thinpool)
+[Service]
+ExecStart=
+ExecStart=/usr/bin/prometheus-node-exporter $ARGS --collector.textfile.directory={{ pve_thinpool_textfile_dir }}

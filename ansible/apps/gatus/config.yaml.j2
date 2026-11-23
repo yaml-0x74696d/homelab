@@ -131,3 +131,67 @@ endpoints:
     alerts:
       - type: ntfy
 {% endif %}
+{# per pve node, from the node-exporter textfile (roles/pve_thinpool). prometheus labels the node instance="<ip>:<port>".
+   an empty result = the node or its collector is gone, a stale file = the timer stopped #}
+{% set prom = ('host.containers.internal' if apps.prometheus.host == apps[podman_app_name].host else hostvars[apps.prometheus.host].ansible_host) ~ ':' ~ apps.prometheus.port %}
+{% for h in groups['proxmox'] %}
+{% set node = 'instance="' ~ hostvars[h].ansible_host ~ ':' ~ node_exporter_port ~ '"' %}
+{% for kind, metric in [('data', thinpool_data_metric), ('metadata', thinpool_metadata_metric)] %}
+  - name: "{{ h }} thin pool {{ kind }}"
+    group: proxmox
+    url: "http://{{ prom }}/api/v1/query?query={{ ('max(' ~ metric ~ '{' ~ node ~ '})') | urlencode }}"
+    interval: {{ gatus_thinpool_interval }}
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY].data.result) > 0"
+      - "[BODY].data.result[0].value[1] < {{ gatus_thinpool_max_pct }}"
+{% if ntfy_url %}
+    alerts:
+      - type: ntfy
+{% endif %}
+{% endfor %}
+  - name: "{{ h }} thin pool metrics fresh"
+    group: proxmox
+    url: "http://{{ prom }}/api/v1/query?query={{ ('time() - max(node_textfile_mtime_seconds{' ~ node ~ ',file=~".*/' ~ (thinpool_file | replace('.', '\\\\.')) ~ '"})') | urlencode }}"
+    interval: {{ gatus_thinpool_interval }}
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY].data.result) > 0"
+      - "[BODY].data.result[0].value[1] < {{ gatus_thinpool_stale_max }}"
+{% if ntfy_url %}
+    alerts:
+      - type: ntfy
+{% endif %}
+{% endfor %}
+
+{# pushed from outside: no push within the heartbeat = failed. one miss alerts (the default needs a run of them), one push resolves.
+   gatus won't start with an empty token, so no token = no block #}
+{% if gatus_push_token | default('') %}
+external-endpoints:
+{% for h in groups['pod_vms'] %}
+  - name: "backup-{{ h }}"
+    group: {{ gatus_push_group }}
+    token: "{{ gatus_push_token }}"
+    heartbeat:
+      interval: {{ heartbeat_daily }}
+{% if ntfy_url %}
+    alerts:
+      - type: ntfy
+        failure-threshold: {{ gatus_heartbeat_threshold }}
+        success-threshold: {{ gatus_heartbeat_threshold }}
+{% endif %}
+{% endfor %}
+{% for t in gatus_semaphore_templates %}
+  - name: "semaphore-{{ t.name }}"
+    group: {{ gatus_push_group }}
+    token: "{{ gatus_push_token }}"
+    heartbeat:
+      interval: {{ t.heartbeat }}
+{% if ntfy_url %}
+    alerts:
+      - type: ntfy
+        failure-threshold: {{ gatus_heartbeat_threshold }}
+        success-threshold: {{ gatus_heartbeat_threshold }}
+{% endif %}
+{% endfor %}
+{% endif %}

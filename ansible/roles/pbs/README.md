@@ -22,6 +22,7 @@
   3. Dumps every database in `pbs_jobs`
   4. Pushes to PBS
   5. Wipes the staging folder
+  6. Pushes a heartbeat to Gatus (after `backup ok`)
 - The push sends these archives under the backup ID `<host>`:
   - `dumps.pxar`: the staging folder with the dumps
   - `podman-apps.pxar`: `podman_apps_root`, without the live database files, because the dumps replace them
@@ -52,6 +53,7 @@
 - The staging folder must be under `/var/backups/`, or the script refuses before it runs `rm -rf`
 - An `EXIT` trap wipes the staging folder even when the run fails
 - An `ERR` trap sends "backup failed" with the failing line to ntfy
+- The heartbeat is a `POST` to Gatus' backend port on pod-2, the token comes from `/etc/pbs.env`, not from the command line. A failed push is only logged, the backup stays ok. Gatus alerts when it stays away longer than `heartbeat_daily`
 - `TimeoutStartSec` (`pbs_timeout`) stops a stuck push (e.g. pve-3 only half up), so it can't hold the lock forever
 - The token `backup@pbs!client` has the `DatastoreBackup` role on `/datastore/homelab` only. It can add backups and restore its own (the three hosts share it), but not delete or prune
 
@@ -70,6 +72,10 @@
 | `pbs_timeout` | `1h` | Max run time |
 | `pbs_token_secret`, `pbs_fingerprint` | vault | Token secret and server fingerprint |
 | `pbs_ntfy_url`, `pbs_ntfy_token` | `ntfy_url`, `ntfy_token` | Where failure alerts go, empty = off |
+| `pbs_heartbeat_url`, `pbs_heartbeat_timeout` | `gatus_push_url`, `gatus_push_timeout` | Gatus' backend port on pod-2, seconds per push |
+| `pbs_heartbeat_path` | `gatus_push_path` | Push path, `{key}` is replaced by `pbs_heartbeat_key` |
+| `pbs_heartbeat_key` | `<gatus_push_group>_backup-<host>` | Key of the host's external endpoint in Gatus |
+| `pbs_heartbeat_token` | `gatus_push_token` (vault) | Push token, empty = no heartbeat in the script |
 | `pbs_staging_dir`, `ntfy_timeout` | group_vars | Shared with other roles |
 | `podman_apps_root`, `podman_svc_prefix` | group_vars | Shared with `roles/podman_app` |
 
