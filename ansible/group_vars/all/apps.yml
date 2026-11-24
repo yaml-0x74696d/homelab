@@ -508,9 +508,9 @@ infra_routes:
   - {host: pve-3, target: pve-3, port_var: pve_ui_port, scheme: https, insecure_tls: true}
   - {host: pbs, target: pve-3, port_var: pbs_port, scheme: https, insecure_tls: true}
   # cockpit on the pod vms, only edge reaches the port (cockpit_allow_from)
-  - {host: cockpit-pod-1, target: pod-1, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
-  - {host: cockpit-pod-2, target: pod-2, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
-  - {host: cockpit-pod-3, target: pod-3, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
+  - {host: pod-1, target: pod-1, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
+  - {host: pod-2, target: pod-2, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
+  - {host: pod-3, target: pod-3, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
   - host: dns     # adguard home's ui on edge
     target: edge
     middlewares: [authentik]

@@ -144,7 +144,7 @@ How a request from a browser reaches an app.
 
 - Plain HTTP on port 80 only redirects to HTTPS on 443
 - Every router comes from `apps.yml` (`routes` of each app plus `infra_routes`), built into Traefik's dynamic config on edge (`nixos/edge/traefik.nix`). There is no hand-written router file
-- Cockpit on each pod VM is served as `cockpit-pod-N.<domain>` through Traefik behind Authentik (`infra_routes`, backend HTTPS with `insecure_tls`). ufw allows its port from `cockpit_allow_from` (edge) only, `roles/vm_base` sets the origin and the proxy header in `cockpit.conf`
+- Cockpit on each pod VM is served as `pod-N.<domain>` through Traefik behind Authentik (`infra_routes`, backend HTTPS with `insecure_tls`). ufw allows its port from `cockpit_allow_from` (edge) only, `roles/vm_base` sets the origin and the proxy header in `cockpit.conf`
 - Every app port gets one ufw rule per source, from `allow_from` in `apps.yml`: edge, pod-2 (Prometheus, Gatus), Homepage and, for Gatus' heartbeats, pod-1 and pod-3; Gitea's ssh port: LAN and VPN
 
 ## Certificates

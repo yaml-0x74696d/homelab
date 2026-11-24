@@ -32,5 +32,5 @@ vm_base_services:
 vm_base_guest_agent: true
 vm_base_cockpit: true
 # behind the edge proxy: websocket origins cockpit accepts, header carrying the proxy's scheme
-vm_base_cockpit_origins: ["https://cockpit-{{ inventory_hostname }}.{{ domain }}"]
+vm_base_cockpit_origins: ["https://{{ inventory_hostname }}.{{ domain }}"]
 vm_base_cockpit_protocol_header: X-Forwarded-Proto
