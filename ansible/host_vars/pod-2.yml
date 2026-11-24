@@ -9,3 +9,6 @@ pbs_jobs:
 
 pbs_exclude:
   - prometheus/data                         # tsdb, bulky + recomputable (podman-apps.pxar)
+
+# netbird routing peer: strict rp_filter drops the tunnel's asymmetric return traffic
+vm_base_rp_filter: 2

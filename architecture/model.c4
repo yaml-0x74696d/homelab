@@ -217,6 +217,7 @@ model {
     }
     podman-updates = container "podman auto-update" { #ops; description "Auto-update with rollback + newer-tag check, per host" }
     chrony = container "chrony" { #ops; description "Time sync, per VM" }
+    cockpit = container "Cockpit" { #ops; technology "web console"; description "Admin console on the pod VMs, only edge reaches it" }
   }
 
   // people
@@ -234,6 +235,7 @@ model {
   admin -> ops.controller "runs playbooks + tofu"
   ops.controller -> apps.gitea "pulls the repo"
   ops.controller -> ops.proxmox "tofu: VMs + LXC"
+  ops.controller -[https]-> remote.netbird.mgmt "tofu: groups, policies, network"
   ops.controller -> ops.hosts "ansible: apps over ssh"
   admin -[https]-> ops.semaphore "runs + schedules playbooks"
   ops.semaphore -> github "pulls the repo (main)"
@@ -243,25 +245,26 @@ model {
   ops.controller -> ops.semaphore "copies vault, private.yml + overlays"
 
   // ingress
-  edge.traefik -[https]-> identity.authentik.server "forward-auth"
-  edge.traefik -[https]-> apps.vaultwarden "routes"
-  edge.traefik -[https]-> apps.gitea "routes"
-  edge.traefik -[https]-> apps.searxng.web "routes"
-  edge.traefik -[https]-> apps.homepage "routes"
-  edge.traefik -[https]-> apps.pdfcraft "routes"
-  edge.traefik -[https]-> apps.linkding "routes"
-  edge.traefik -[https]-> apps.memos "routes"
-  edge.traefik -[https]-> apps.excalidraw "routes, behind forward-auth"
-  edge.traefik -[https]-> media.nextcloud.web "routes"
-  edge.traefik -[https]-> media.immich.server "routes"
-  edge.traefik -[https]-> media.jellyfin "routes"
-  edge.traefik -[https]-> media.paperless.web "routes"
-  edge.traefik -[https]-> media.actual "routes"
-  edge.traefik -[https]-> observability.grafana "routes"
-  edge.traefik -[https]-> observability.gatus "routes"
-  edge.traefik -[https]-> observability.prometheus "routes"
-  edge.traefik -[https]-> automation.homeassistant "routes"
-  edge.traefik -[https]-> ops.semaphore "routes"
+  edge.traefik -[http]-> identity.authentik.server "forward-auth"
+  edge.traefik -[http]-> apps.vaultwarden "routes"
+  edge.traefik -[http]-> apps.gitea "routes"
+  edge.traefik -[http]-> apps.searxng.web "routes"
+  edge.traefik -[http]-> apps.homepage "routes"
+  edge.traefik -[http]-> apps.pdfcraft "routes"
+  edge.traefik -[http]-> apps.linkding "routes"
+  edge.traefik -[http]-> apps.memos "routes"
+  edge.traefik -[http]-> apps.excalidraw "routes, behind forward-auth"
+  edge.traefik -[http]-> media.nextcloud.web "routes"
+  edge.traefik -[http]-> media.immich.server "routes"
+  edge.traefik -[http]-> media.jellyfin "routes"
+  edge.traefik -[http]-> media.paperless.web "routes"
+  edge.traefik -[http]-> media.actual "routes"
+  edge.traefik -[http]-> observability.grafana "routes"
+  edge.traefik -[http]-> observability.gatus "routes"
+  edge.traefik -[http]-> observability.prometheus "routes"
+  edge.traefik -[http]-> automation.homeassistant "routes"
+  edge.traefik -[http]-> ops.semaphore "routes"
+  edge.traefik -[https]-> ops.cockpit "routes, behind forward-auth"
   edge.traefik -> cloudflare "ACME DNS-01 TXT records"
   edge.traefik -> letsencrypt "orders certificates"
   edge.ddns -> cloudflare "keeps A records current"
@@ -295,7 +298,8 @@ model {
   storage.pbs-client -> media.nextcloud.pg "pg_dump"
   storage.pbs-client -> media.immich.pg "pg_dump"
   storage.pbs-client -> media.paperless.pg "pg_dump"
-  storage.pbs -> ntfy "job alerts"
+  storage.pbs-client -> ntfy "job alerts"
+  storage.pbs-client -[http]-> observability.gatus "heartbeat after a good run"
 
   // home automation
   automation.sensor -[mqtt]-> automation.mosquitto "publishes readings, gets commands"
@@ -309,9 +313,12 @@ model {
   // observability
   observability.prometheus -[scrape]-> observability.node-exporter "host metrics"
   observability.prometheus -[scrape]-> automation.mqtt-exporter "sensor metrics"
+  observability.prometheus -[scrape]-> observability.gatus "check results"
   observability.grafana -> observability.prometheus "queries"
   observability.gatus -[https]-> edge.traefik "probes every route"
   observability.gatus -> ntfy "down alerts"
+  observability.gatus -[http]-> observability.prometheus "thin pool fill"
+  ops.semaphore -[http]-> observability.gatus "heartbeat after a good run"
   observability.rsyslog -[relp]-> observability.log-server "forwards every log line"
 
   // operations

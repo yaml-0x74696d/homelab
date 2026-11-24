@@ -8,7 +8,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 
 - Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), clickable (built by `.github/workflows/pages.yml`)
 - More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views); sensors and the IoT gateway: [docs/iot.md](docs/iot.md); where things go and which value wins: [Ansible](docs/ansible-layout.md), [OpenTofu](docs/tofu-layout.md), [Podman](docs/podman-layout.md), [NixOS](docs/nixos-layout.md)
-- Running it: [updates](docs/updates.md), [adding and removing apps](docs/apps.md), [troubleshooting](docs/troubleshooting.md), [new hardware](docs/new-hardware.md), from bare hardware: [bootstrap](docs/bootstrap.md)
+- Running it: [updates](docs/updates.md), [adding and removing apps](docs/apps.md), [troubleshooting](docs/troubleshooting.md), [new hardware](docs/new-hardware.md), [security](docs/security.md), from bare hardware: [bootstrap](docs/bootstrap.md)
 
 ## Overview
 
@@ -23,7 +23,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 | pve-1 | Small form factor PC | 8 GB | Running the edge VM, its WiFi card is the IoT AP (moved into CT 302) |
 | pve-2 | Small form factor PC | 8 GB | Running the NetBird VM and routing peer |
 | pve-3 | Desktop PC, 1 SSD + 4 HDDs | 16 GB | ~11 TB HDD in a mergerfs pool, running PBS |
-| ctl-1 | Raspberry Pi 3 (Raspberry Pi OS Lite), 16 GB SD | 1 GB | Not in the cluster: Semaphore, always on, .100 |
+| ctl-1 | Single-board computer (arm64), SD card | little | Not in the cluster: Semaphore, always on, .100 |
 
 ## VM/LXC
 
@@ -42,7 +42,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 
 ## Stack
 
-- Proxmox (3 nodes) · OpenTofu (bpg/proxmox) · Ansible · Podman (rootless quadlets) · NixOS (NetBird VM, edge) · PBS · NetBird · Traefik · AdGuard Home · Authentik
+- Proxmox (3 nodes) · OpenTofu (bpg/proxmox + netbirdio/netbird) · Ansible · Podman (rootless quadlets) · NixOS (NetBird VM, edge) · PBS · NetBird · Traefik · AdGuard Home · Authentik
 
 ## What runs
 
@@ -84,7 +84,7 @@ ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   group_vars/<group>.yml  login per group (user, become)
   inventory.yml    hosts only: pod_vms, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent, appliances (haos)
-  roles/           aide, chrony, cronie, ctl_base, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, reach, rsyslog, samba, update, vm_base
+  roles/           aide, chrony, cronie, ctl_base, gatus_push, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, pve_thinpool, reach, rsyslog, samba, update, vm_base
   apps/<name>/     Quadlet units + templates per app
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NixOS VMs: netbird, edge (+ update.sh, aide-accept.sh)
@@ -114,29 +114,15 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - From bare hardware, in order: [docs/bootstrap.md](docs/bootstrap.md)
 - OpenTofu: tfvars from the example, `tofu apply`
 - Ansible: `vm-preparation.yml`, then `site.yml` or one `deploy-<app>.yml`
-- ctl-1 (the Pi): admin user by hand (`roles/ctl_base/README.md`), then `ctl-preparation.yml`, `base.yml`, `deploy-app.yml -e app=semaphore`
+- ctl-1: admin user by hand (`roles/ctl_base/README.md`), then `ctl-preparation.yml`, `base.yml`, `deploy-app.yml -e app=semaphore`
 - Plain `ansible-playbook` is the main path; for an EE run copy `ansible-navigator.yml.example` → `ansible-navigator.yml` and mount the private folder
 - NixOS: nixos-anywhere once per VM, then `nixos/update.sh <netbird|edge>`. `nix flake check` needs builds (facts.nix), `--no-build` fails
 
 ## Security
 
-- WAN: only the NetBird VM is forwarded (443/tcp, 3478/udp, narrow TURN relay range); apps are LAN / VPN only
-- PVE firewall (`roles/pve_firewall`): cluster policy drop, NetBird VM fenced (inbound = what NetBird serves, egress to the LAN limited to routing peer + DNS/HTTPS + RELP to the log LXC); host lockdown layer written, off by default (lockout risk)
-- Pod VMs (`vm-preparation.yml` = `roles/vm_base` + ufw + Podman): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
-- LXCs (`roles/lxc_base`): SSH key-only (root by key, no passwords), fail2ban, unattended security updates, node_exporter
-- IoT gateway LXC: PVE guest firewall and ufw with the same inbound rules, from the IoT net only 1883 and 80 (firmware downloads), egress limited to DNS, RELP and HTTP/HTTPS; one shared MQTT user, no TLS (accepted risk, [ADR 0028](docs/adr/0028-iot-gateway-lxc.md))
-- HAOS VM: PVE guest firewall, HA only from Traefik and Homepage, admins direct ([ADR 0030](docs/adr/0030-haos-vm-on-pve-3.md))
-- App ports: one ufw rule per port and source from `allow_from` in `apps.yml` (backends only answer edge, pod-2 and Homepage)
-- Podman apps: rootless, one svc user per app, no container socket anywhere
-- NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
-- NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
-- Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden, Actual Budget and linkding), forward-auth for apps without SSO
-- TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN
-- AIDE on every host + the NixOS VMs: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
-- login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
-- Backups: PBS, scoped token (adds backups and restores its own, can't prune or delete), DB dumps before each run; a restore was rehearsed on 2026-11-08 ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
-- Irreplaceable files live outside the lab; the mergerfs pool has no parity and no backup (accepted)
-- Secrets: Ansible Vault; gitleaks on every commit and over the full history in CI
+- Only the NetBird VM is forwarded from the WAN, apps are LAN and VPN only
+- Authentik logins for the apps, rootless Podman, default-deny firewalls, AIDE, PBS backups, secrets in Ansible Vault
+- Threat model, trust zones, every control with the code or ADR that enforces it, and the accepted risks: [docs/security.md](docs/security.md)
 
 ## Decisions
 
@@ -146,7 +132,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 - 0011 Proxmox as hypervisor · 0012 no Kubernetes · 0013 PBS file-level backups · 0014 Authentik · 0015 TLS via DNS-01
 - 0016 Ansible Vault · 0017 SMB to the pod VMs · 0018 DOCKER-USER filtering · 0019 ntfy alerts · 0020 same checks locally + CI · 0021 Podman quadlets
 - 0022 central logging over RELP · 0023 chrony with NTS · 0024 OS updates through Ansible · 0025 Debian guests until x86-64-v3 · 0026 ufw as the guest firewall · 0027 Gatus from the apps map
-- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a Pi · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox · 0037 Actual Budget · 0038 linkding, Memos, Excalidraw · 0039 Syncthing ctl-0 ↔ ctl-1
+- 0028 IoT gateway LXC · 0029 WiFi card in the gateway · 0030 HAOS VM on pve-3 · 0031 Semaphore on a single-board computer · 0032 edge VM · 0033 no Kubernetes · 0034 TLS via DNS-01 · 0035 NixOS for NetBird + edge · 0036 AI assistant in a sandbox · 0037 Actual Budget · 0038 linkding, Memos, Excalidraw · 0039 Syncthing ctl-0 ↔ ctl-1 · 0040 NetBird policy as code · 0041 Grafana dashboards as code
 
 ## Future plans
 

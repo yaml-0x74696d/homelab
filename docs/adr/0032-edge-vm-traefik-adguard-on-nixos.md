@@ -41,6 +41,7 @@ AdGuard Home (`nixos/edge/adguard.nix`):
 - Upstreams Quad9 and Cloudflare over DoT and DoH, one blocklist (AdGuard DNS filter), query log kept 7 days
 - UI on localhost only, served as `dns.<domain>` behind Authentik, no AdGuard login
 - Break-glass when Authentik is down: `ssh -L 3000:127.0.0.1:3000 <admin_user>@<edge_ip>`, then `http://localhost:3000`. The SSH key is the lock, no AdGuard user (its hash would land in the world-readable nix store)
+- Accepted: sshd allows local forwarding for any target, so anyone holding an admin key can use edge as a jump host into the LAN
 
 Apps calling Authentik:
 - The pod VMs resolve through the router, which doesn't know the LAN names. Apps that call `auth.<domain>` themselves (OIDC discovery, tokens) pin it to edge: `AddHost=` in the Podman units, from `app_sources.edge`

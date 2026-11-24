@@ -5,6 +5,9 @@
 pve_api_token = "root@pam!terraform=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 vm_password   = "CHANGE_ME"   # must equal the ansible vault sudo_pass
 
+# PAT of the netbird service user "tofu" (dashboard, Team > Service Users), see README
+netbird_token = ""
+
 # only needed to (re)create the storage lxc (bind mounts) — the api denies that for tokens.
 # fill + temporarily disable 2fa for that run, then blank it again. blank for everything else.
 # pve_password = "CHANGE_ME"

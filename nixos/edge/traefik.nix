@@ -142,8 +142,8 @@ in
           http.redirections.entryPoint = { to = "websecure"; scheme = "https"; };
         };
         websecure = {
-          address = ":443";
-          # every router on 443 shares the one wildcard cert
+          address = ":${toString facts.https_port}";
+          # every router on the https port shares the one wildcard cert
           http.tls = {
             certResolver = "cloudflare";
             domains = [ { main = domain; sans = [ "*.${domain}" ]; } ];
@@ -170,6 +170,6 @@ in
 
   # lan + vpn peers (they arrive from the routing peer's lan ip)
   networking.firewall.extraInputRules = ''
-    ip saddr ${facts.lan_cidr} tcp dport { 80, 443 } accept
+    ip saddr ${facts.lan_cidr} tcp dport { 80, ${toString facts.https_port} } accept
   '';
 }

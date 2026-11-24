@@ -43,6 +43,9 @@ in
     rebootWindow = facts.edge_reboot_window;
   };
 
+  # adguard break-glass is an ssh -L (adr 0032); the base says no
+  services.openssh.settings.AllowTcpForwarding = lib.mkForce "local";
+
   zramSwap.enable = true;   # oom cushion, no disk swap; the upgrade builds on 1.5G
 
   # set to the release you first install; don't bump casually

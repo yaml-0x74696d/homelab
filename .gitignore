@@ -43,3 +43,9 @@ architecture/dist/
 
 # homepage background, personal (belongs in the private overlay, this catches a stray copy)
 ansible/apps/homepage/config/images/background.jpg
+
+# disk images, luks headers, json tfvars, netbird inventory (private)
+*.qcow2
+luks-header-*
+*.tfvars.json
+netbird-inventory/

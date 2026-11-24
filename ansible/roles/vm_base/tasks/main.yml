@@ -20,7 +20,17 @@
     name: "{{ item.key }}"
     value: "{{ item.value }}"
     state: present
+    sysctl_file: "{{ vm_base_sysctl_file }}"
     reload: true
+  loop: "{{ vm_base_sysctl | dict2items }}"
+
+# the old copies, so a manual `sysctl --system` can't put them back
+- name: Drop the keys from /etc/sysctl.conf
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    state: absent
+    sysctl_file: /etc/sysctl.conf
+    reload: false
   loop: "{{ vm_base_sysctl | dict2items }}"
 
 - name: Set login banner
@@ -72,6 +82,17 @@
     path: /etc/hosts
     regexp: '^127\.0\.1\.1\s'
     line: "127.0.1.1 {{ inventory_hostname }}"
+
+- name: Configure cockpit
+  ansible.builtin.copy:
+    dest: /etc/cockpit/cockpit.conf
+    mode: '0644'
+    content: |
+      [WebService]
+      Origins = {{ vm_base_cockpit_origins | join(' ') }}
+      ProtocolHeader = {{ vm_base_cockpit_protocol_header }}
+  when: vm_base_cockpit
+  notify: Stop cockpit
 
 - name: Enable and start services
   ansible.builtin.systemd:

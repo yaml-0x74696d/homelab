@@ -4,7 +4,7 @@ Status: Accepted
 
 ## Context
 
-- ctl-0 and ctl-1 share two things: the accepted AIDE hashes ([0009](0009-aide-with-manual-accept.md)) and the private config overlays (`<private_dir>/apps`, [0031](0031-semaphore-on-a-pi.md))
+- ctl-0 and ctl-1 share two things: the accepted AIDE hashes ([0009](0009-aide-with-manual-accept.md)) and the private config overlays (`<private_dir>/apps`, [0031](0031-semaphore-on-a-single-board-computer.md))
 - Both went over by hand: `scp` plus `sudo cp` for each accept on ctl-0, `rsync` back after each accept on ctl-1, an rsync task with `-t private-files` for the overlays
 - A forgotten copy turned Semaphore's `aide` run red on 2026-11-13: pve-2 and pve-3 were accepted on ctl-0 on the 12th, the hashes never reached ctl-1
 - Accepts happen on both sides, so both sides write
@@ -44,4 +44,4 @@ The setup:
 - Accepted: a deleted overlay file is gone on both sides, the versions on ctl-0 only cover the hashes
 - Accepted: the off-site copy of the overlays and hashes is up to a day behind
 
-- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0031](0031-semaphore-on-a-pi.md) (ctl-1)
+- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0031](0031-semaphore-on-a-single-board-computer.md) (ctl-1)

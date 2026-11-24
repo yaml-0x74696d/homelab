@@ -6,7 +6,7 @@ Status: Accepted
 
 - Several things need to reach my phone: failed backups, AIDE changes, logins on the PVE hosts, new images
 - Alerts must also work when I'm away, while nothing in the lab is reachable from the internet
-- A self-hosted ntfy stays LAN-only, but instant push on the iPhone needs a server that's reachable from the internet (Apple's push service, APNs)
+- A self-hosted ntfy stays LAN-only, but instant push on the phone needs a server that's reachable from the internet (the phone vendor's push service)
 
 - Alternatives:
   - Self-hosted ntfy exposed to the WAN (why not: one more service open to the internet)
@@ -32,7 +32,7 @@ Who sends:
 | `roles/login_notify` | SSH and PVE web logins on the Proxmox hosts |
 | `roles/podman_base` | Updated, rolled back and failed auto-updates, newer tags of pinned images |
 | `roles/update` | The summary of an `update.yml` run, or the host it stopped at |
-| Gatus (`apps/gatus`) | A route, host or scheduled Semaphore run that fails its check, and when it's back |
+| Gatus (`apps/gatus`) | A route, host or scheduled Semaphore run that fails its check, a backup or Semaphore run whose heartbeat stops, a thin pool over its limit, and when it's back |
 | NixOS VMs (netbird, edge) | AIDE results, through `/var/lib/secrets/aide/ntfy.env` |
 
 How sending works:

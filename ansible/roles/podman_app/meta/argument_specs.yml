@@ -78,7 +78,7 @@ argument_specs:
               image: {type: str, required: true, description: Fully qualified image without tag}
               tag: {type: str, required: true}
               user: {type: str, description: "User= in the container. required with container_uid (keep-id)"}
-              auto_update: {type: bool, default: true, description: "false for dbs: changes only on a tag bump + deploy"}
+              auto_update: {type: bool, default: true, description: "false: changes only on a tag bump + deploy (immich db)"}
               stop_timeout: {type: int, description: Seconds before the stop turns into a kill}
               healthcheck: {type: bool, default: true, description: "false: image can't run a HealthCmd (scratch), started once running"}
               no_new_privileges: {type: bool, default: true}

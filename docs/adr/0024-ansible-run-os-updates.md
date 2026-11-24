@@ -21,7 +21,7 @@ Status: Accepted
 ## Decision
 
 The setup:
-- `playbooks/update.yml` with `roles/update`, scheduled in Semaphore every Saturday 14:00 without ctl-1 ([0031](0031-semaphore-on-a-pi.md)), by hand from the controller when needed. ctl-1 itself updates from the controller
+- `playbooks/update.yml` with `roles/update`, scheduled in Semaphore every Saturday 14:00 without ctl-1 ([0031](0031-semaphore-on-a-single-board-computer.md)), by hand from the controller when needed. ctl-1 itself updates from the controller
 - Three plays, one host at a time (`serial: 1`): `lxc_containers`, then `pod_vms` and `podman_hosts`, then `proxmox`. Guests first, so a bad package shows up before a node gets it
 - Explicit groups, not `all`: the NixOS VMs update through Nix ([0035](0035-nixos-for-netbird-and-edge.md))
 - Before the plays, `roles/reach` checks every host. The part-time nodes and their guests (`part_time_nodes`, `guest_nodes` in `network.yml`) may be off: skipped, the run exits 0. Any other host that's down is skipped too, listed as DOWN, the run exits non-zero
@@ -57,4 +57,4 @@ How I hear about it:
 - Accepted: the weekly run is unattended. Its summary comes through ntfy, a failed run turns its Gatus check red ([0027](0027-gatus-generated-from-apps-map.md))
 
 - Later: the podman hosts update their images with `podman auto-update` ([0021](0021-podman-quadlets.md)). This run only covers the OS
-- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (image updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian guests), [0027](0027-gatus-generated-from-apps-map.md) (failed runs), [0031](0031-semaphore-on-a-pi.md) (scheduled runs), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS updates)
+- Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (image updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian guests), [0027](0027-gatus-generated-from-apps-map.md) (failed runs), [0031](0031-semaphore-on-a-single-board-computer.md) (scheduled runs), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS updates)

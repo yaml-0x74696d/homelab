@@ -11,10 +11,14 @@ vm_base_packages:
   - unattended-upgrades
   - needrestart
 
+# 1 strict, 2 loose: a routing peer needs 2 (asymmetric paths through the tunnel)
+vm_base_rp_filter: 1
+# debian 13 no longer reads /etc/sysctl.conf at boot, only sysctl.d
+vm_base_sysctl_file: /etc/sysctl.d/90-vm-base.conf
 vm_base_sysctl:
   net.ipv4.tcp_syncookies: 1
   net.ipv4.conf.all.accept_redirects: 0
-  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.conf.all.rp_filter: "{{ vm_base_rp_filter }}"
   kernel.randomize_va_space: 2
   fs.suid_dumpable: 0
   net.ipv4.conf.all.log_martians: 1
@@ -31,3 +35,6 @@ vm_base_services:
 # off on bare metal (ctl-1): no hypervisor to talk to, no ram for a web console
 vm_base_guest_agent: true
 vm_base_cockpit: true
+# behind the edge proxy: websocket origins cockpit accepts, header carrying the proxy's scheme
+vm_base_cockpit_origins: ["https://{{ inventory_hostname }}.{{ domain }}"]
+vm_base_cockpit_protocol_header: X-Forwarded-Proto

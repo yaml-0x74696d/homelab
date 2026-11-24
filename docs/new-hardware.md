@@ -16,7 +16,7 @@ Where the hardware is written down, and what to change when a node is replaced, 
 | PBS datastore | a thin LV on pve-3's SSD, mounted at `/mnt/pbs` ([bootstrap step 1](bootstrap.md#1-proxmox-nodes)) |
 | Thin pool Authentik's deploy watches | `authentik_pool_node` / `authentik_pool_lv` in `playbooks/deploy-authentik.yml` |
 | IoT WiFi card | the node in `guest_nodes.iot`, passed into the IoT LXC ([ADR 0029](adr/0029-wifi-card-in-the-gateway.md)) |
-| ctl-1 (ARM, outside the cluster) | `podman_hosts`, no PBS client, static network config on the Pi itself |
+| ctl-1 (ARM, outside the cluster) | `podman_hosts`, no PBS client, static network config on the host itself |
 
 ## Before any change
 
@@ -36,7 +36,7 @@ The new box takes over the old node's name, IP and guests.
 ## Add a node
 
 1. `pveN_ip` in `network.yml`, the host in `inventory.yml` (`proxmox`), Proxmox installed and joined
-2. PVE firewall and login-notify: `deploy-pve-firewall.yml`, `deploy-login-notify.yml` (both run on their own, not from `site.yml`)
+2. PVE firewall, login-notify and thin pool metrics: `deploy-pve-firewall.yml`, `deploy-login-notify.yml`, `deploy-pve-thinpool.yml` (all run on their own, not from `site.yml`)
 3. Monitoring: a Homepage tile in `apps/homepage/services.yaml.j2` (Servers) and a `pve-hosts` target in `apps/prometheus/config/prometheus.yml.j2`, both by hand. Gatus picks it up from the inventory
 4. Move guests onto it, see below
 5. A fourth node changes the quorum math: with 4 nodes, losing 2 stops the cluster. Use an odd count or a QDevice

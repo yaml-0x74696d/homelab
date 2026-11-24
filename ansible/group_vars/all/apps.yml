@@ -6,7 +6,7 @@ apps:
     host: pod-2
     uid: 2010
     port: 3001
-    allow_from: [edge, netbird, homepage]
+    allow_from: [edge, netbird, homepage, pod-1, pod-3]   # pod-1/3: backup heartbeats
     secrets:
       - name: gatus-config
         template: config.yaml.j2
@@ -148,7 +148,7 @@ apps:
         owner: 1001   # the image's semaphore user
       - path: aide    # accepted aide hashes, ctl-0 reads them back
         owner: 1001
-        mode: "0755"
+        mode: "0775"   # group bits = the acl mask, ctl_base gives syncthing write through it
     containers:
       - name: semaphore
         image: docker.io/semaphoreui/semaphore
@@ -192,12 +192,10 @@ apps:
         image: docker.io/library/postgres
         tag: 16-alpine
         user: "70:70"
-        auto_update: false
       - name: nextcloud-redis
         image: docker.io/library/redis
-        tag: alpine
+        tag: 8-alpine
         user: "999:1000"
-        auto_update: false
     homepage: {group: Homecloud, icon: sh-nextcloud}
     routes:
       - host: cloud
@@ -226,11 +224,10 @@ apps:
       - name: immich-db
         image: ghcr.io/immich-app/postgres
         tag: 14-vectorchord0.4.3-pgvectors0.2.0   # vector-enabled build, never plain postgres
-        auto_update: false
+        auto_update: false   # tag pins the extension versions, moves with immich's release notes
       - name: immich-redis
         image: docker.io/valkey/valkey
         tag: "9"
-        auto_update: false
     homepage: {group: Homecloud, icon: sh-immich}
     routes:
       - host: photo
@@ -289,12 +286,10 @@ apps:
         image: docker.io/library/postgres
         tag: 16-alpine
         user: "70:70"
-        auto_update: false
       - name: paperless-redis
         image: docker.io/library/redis
-        tag: alpine
+        tag: 8-alpine
         user: "999:1000"
-        auto_update: false
       - name: paperless-gotenberg
         image: docker.io/gotenberg/gotenberg
         tag: "8"
@@ -340,7 +335,6 @@ apps:
       - name: authentik-db
         image: docker.io/library/postgres
         tag: 16-alpine
-        auto_update: false
     homepage: {group: Admin, icon: sh-authentik}
     routes:
       - host: auth
@@ -407,7 +401,6 @@ apps:
       - name: searxng-redis
         image: docker.io/valkey/valkey
         tag: 8-alpine
-        auto_update: false
     homepage: {group: Tools, icon: sh-searxng, label: SearXNG}
     routes:
       - host: search
@@ -514,6 +507,10 @@ infra_routes:
   - {host: pve-2, target: pve-2, port_var: pve_ui_port, scheme: https, insecure_tls: true}
   - {host: pve-3, target: pve-3, port_var: pve_ui_port, scheme: https, insecure_tls: true}
   - {host: pbs, target: pve-3, port_var: pbs_port, scheme: https, insecure_tls: true}
+  # cockpit on the pod vms, only edge reaches the port (cockpit_allow_from)
+  - {host: pod-1, target: pod-1, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
+  - {host: pod-2, target: pod-2, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
+  - {host: pod-3, target: pod-3, port_var: cockpit_port, scheme: https, insecure_tls: true, middlewares: [authentik]}
   - host: dns     # adguard home's ui on edge
     target: edge
     middlewares: [authentik]

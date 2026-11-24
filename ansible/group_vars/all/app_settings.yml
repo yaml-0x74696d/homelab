@@ -18,7 +18,7 @@ homepage_metrics_refresh_ms: 30000   # prometheus widgets on the pod tiles
 # ha system monitor sensors for the haos tile, check the ids in ha (settings, entities)
 homepage_haos_disk_entity: sensor.system_monitor_disk_usage
 homepage_haos_boot_entity: sensor.system_monitor_uptime   # system monitor: when the vm booted
-homepage_semaphore_refresh_ms: 60000   # last semaphore run on its tile, the pi answers slowly
+homepage_semaphore_refresh_ms: 60000   # last semaphore run on its tile, ctl-1 answers slowly
 homepage_tabs:
   Home: [Status, Homecloud, Tools, Bookmarks]   # tab order and group order in it
   Infra: [Admin, Servers, VMs, LXCs]
@@ -55,10 +55,27 @@ gatus_data: /data                 # data dir inside the container
 gatus_db_file: data.db
 # scheduled semaphore templates: gatus alerts when a template's last run failed. ids from the ui's urls
 gatus_semaphore_templates:
-  - { name: repo-pull, id: 30 }
-  - { name: aide, id: 3 }
-  - { name: update, id: 32 }
+  - { name: repo-pull, id: 30, heartbeat: "{{ heartbeat_daily }}" }
+  - { name: aide, id: 3, heartbeat: "{{ heartbeat_daily }}" }
+  - { name: update, id: 32, heartbeat: "{{ heartbeat_weekly }}" }   # heartbeat: see the schedules in schedules.yml
 gatus_semaphore_interval: 10m
+
+# heartbeats: the backups and the semaphore runs push to gatus' port on pod-2 (the route has sso), gatus alerts
+# when a push stops (needs gatus 5.21). token: gatus_push_token (vault)
+gatus_push_url: "http://{{ hostvars[apps.gatus.host].ansible_host }}:{{ apps.gatus.port }}"
+gatus_push_group: heartbeats
+gatus_push_path: /api/v1/endpoints/{key}/external?success=true   # {key} = <group>_<name>
+gatus_push_timeout: 10            # seconds per push
+gatus_heartbeat_threshold: 1      # missed windows before ntfy, pushes before it resolves
+
+# thin pool fill: roles/pve_thinpool writes the metrics, gatus queries prometheus for them
+thinpool_data_metric: pve_thinpool_data_percent
+thinpool_metadata_metric: pve_thinpool_metadata_percent
+thinpool_file: thinpool.prom      # in node-exporter's textfile dir
+thinpool_interval_min: 5          # minutes between runs
+gatus_thinpool_max_pct: 85        # percent, per node
+gatus_thinpool_stale_max: "{{ 3 * thinpool_interval_min * 60 }}"   # seconds, three missed runs
+gatus_thinpool_interval: "{{ thinpool_interval_min }}m"
 
 # semaphore on ctl-1 (apps/semaphore, roles/ctl_base): a git clone, playbooks/repo-pull.yml updates it
 semaphore_repo_dir: "/home/{{ admin_user }}/homelab"
@@ -67,6 +84,7 @@ semaphore_repo_version: main
 # ctl-1's copy of the controller's private_dir, mounted at the same path (HOMELAB_PRIVATE_DIR)
 semaphore_private_dir: "/home/{{ admin_user }}/homelab-private"
 semaphore_aide_dir: /aide   # in the container, the aide hashes (AIDE_CHECKSUM_DIR)
+semaphore_known_hosts: /var/lib/semaphore/known_hosts   # in the container, on the rw data dir so it survives a recreate
 semaphore_admin_user: admin   # local break-glass next to authentik
 semaphore_project_id: 1       # the ui's only project
 
@@ -90,5 +108,7 @@ app_sources:
   edge: "{{ edge_ip }}"      # the live ingress: traefik on the edge vm
   netbird: "{{ pod2_ip }}"   # routing peer, remote traffic arrives masqueraded from it
   vpn: "{{ netbird_overlay_cidr }}"   # peers that talk to pod-2's overlay ip directly (dns-relay)
+  pod-1: "{{ pod1_ip }}"   # pbs pushes its heartbeat to gatus (pod-2 comes in as netbird)
+  pod-3: "{{ pod3_ip }}"
 # more ingress ips while two traefiks run side by side (firewall only), empty otherwise
 ingress_extra_sources: []

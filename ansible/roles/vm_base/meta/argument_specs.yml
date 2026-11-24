@@ -1,0 +1,36 @@
+---
+argument_specs:
+  main:
+    short_description: Baseline for every VM, hardening packages, sysctl, services, guest agent, cockpit
+    options:
+      vm_base_packages:
+        type: list
+        elements: str
+        description: Packages installed on every host
+      vm_base_rp_filter:
+        type: int
+        choices: [0, 1, 2]
+        description: net.ipv4.conf.all.rp_filter, 2 on a routing peer
+      vm_base_sysctl_file:
+        type: path
+        description: Where the sysctl keys persist
+      vm_base_sysctl:
+        type: dict
+        description: Sysctl keys and values applied on every host
+      vm_base_services:
+        type: list
+        elements: str
+        description: Services enabled and started
+      vm_base_guest_agent:
+        type: bool
+        description: Install the hypervisor guest agent, off on bare metal
+      vm_base_cockpit:
+        type: bool
+        description: Install cockpit, off on bare metal
+      vm_base_cockpit_origins:
+        type: list
+        elements: str
+        description: Websocket origins cockpit accepts behind the edge proxy
+      vm_base_cockpit_protocol_header:
+        type: str
+        description: Header carrying the proxy's scheme

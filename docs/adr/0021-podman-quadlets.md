@@ -32,7 +32,10 @@ Updates:
 - `AutoUpdate=registry` with a `podman-auto-update.timer` per user, weekly (Sunday 13:00, `podman_base_auto_update_time`) with a random delay
 - Every container has a `HealthCmd` and `Notify=healthy`, so an image that starts but doesn't work is rolled back. An image that can't run a check (`scratch`) is marked `healthcheck: false` in the map
 - A wrapper around `podman auto-update` (`roles/podman_base`) pushes updated, rolled back and failed units to ntfy. App down/up is Gatus' job, so there is no `OnFailure=`
-- A pinned tag (databases, Authentik) only gets rebuilds of that tag. A weekly check (`podman-new-tags`, `roles/podman_base`) lists each image's tags with `skopeo` and pushes newer ones to ntfy
+- A database or cache follows the tag of its major (`16-alpine`, `8-alpine`) and auto-updates like the apps: minor releases keep the data format, and the health check and rollback apply
+- A new major stays a tag bump by hand ([updates](../updates.md)). A weekly check (`podman-new-tags`, `roles/podman_base`) lists each image's tags with `skopeo` and pushes newer ones to ntfy
+- Immich's database is the exception (`auto_update: false`): its tag pins the extension versions
+- Authentik's own tag is pinned to an exact release series: it moves with its release notes, one series at a time via `just deploy authentik` ([updates](../updates.md))
 
 Secrets and access:
 - Secrets come from the vault as Podman secrets (`type=env` / `type=mount`), as a value or rendered into a config file, so no `.env` file sits on disk
@@ -63,8 +66,9 @@ Rollout:
 - Harder: keep-id needs a re-owned copy of every image it runs, so those images take twice the disk (paperless: about 7 GB more)
 
 - Accepted: an update can still break a service between two weekly runs. Health checks and rollback limit the damage, and ntfy reports it
+- Accepted: a database update restarts its app with it, Sunday midday, for up to a minute
 - Accepted: an in-place purge keeps the VM's history (old packages, cloud-init state) that a rebuild would clear
 
 - Replaces [0002](0002-generic-docker-app-role.md) (`docker_app` role) and [0006](0006-latest-images-notify-only.md) (`:latest` + Diun): every app runs as quadlets + `AutoUpdate`
 
-- Related: [0002](0002-generic-docker-app-role.md), [0006](0006-latest-images-notify-only.md), [0017](0017-smb-shares-to-docker-vms.md) (CIFS mounts), [0024](0024-ansible-run-os-updates.md) (OS updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian pod hosts), [0026](0026-ufw-as-guest-firewall.md) (firewall), [0027](0027-gatus-generated-from-apps-map.md) (gatus), [0031](0031-semaphore-on-a-pi.md) (Semaphore on ctl-1), [0033](0033-no-kubernetes.md) (why not K8s)
+- Related: [0002](0002-generic-docker-app-role.md), [0006](0006-latest-images-notify-only.md), [0017](0017-smb-shares-to-docker-vms.md) (CIFS mounts), [0024](0024-ansible-run-os-updates.md) (OS updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian pod hosts), [0026](0026-ufw-as-guest-firewall.md) (firewall), [0027](0027-gatus-generated-from-apps-map.md) (gatus), [0031](0031-semaphore-on-a-single-board-computer.md) (Semaphore on ctl-1), [0033](0033-no-kubernetes.md) (why not K8s)

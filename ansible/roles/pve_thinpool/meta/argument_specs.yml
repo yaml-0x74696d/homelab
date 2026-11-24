@@ -1,0 +1,20 @@
+---
+argument_specs:
+  main:
+    short_description: Thin pool fill as node-exporter textfile metrics, for gatus' check
+    options:
+      pve_thinpool_interval:
+        type: str
+        description: How often the timer runs (systemd time span)
+      pve_thinpool_textfile_dir:
+        type: str
+        description: node-exporter's textfile collector dir
+      pve_thinpool_file:
+        type: str
+        description: File name in that dir
+      pve_thinpool_data_metric:
+        type: str
+        description: Metric name of a pool's data percent
+      pve_thinpool_metadata_metric:
+        type: str
+        description: Metric name of a pool's metadata percent

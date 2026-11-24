@@ -27,3 +27,11 @@ pbs_backup_delay: 20m
 # podman (roles/podman_base): newer tags of pinned images first, then auto-update
 podman_new_tags_time: "Sun *-*-* 12:00:00"
 podman_auto_update_time: "Sun *-*-* 13:00:00"   # midday, someone is around to fix it
+
+# heartbeat windows (gatus alerts when a job's push is later than this): the schedule plus a margin.
+# semaphore's schedules are set in its ui (adr 0031): repo-pull and aide daily, update weekly (saturday).
+# gatus durations stop at hours
+heartbeat_daily_margin: 2         # hours, covers the timer delays and the run
+heartbeat_weekly_margin: 24
+heartbeat_daily: "{{ 24 + heartbeat_daily_margin }}h"
+heartbeat_weekly: "{{ 7 * 24 + heartbeat_weekly_margin }}h"

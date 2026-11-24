@@ -1,0 +1,13 @@
+---
+- name: Restart node-exporter
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    state: restarted
+    daemon_reload: true
+
+# the first file, before the next scrape
+- name: Run metrics once
+  ansible.builtin.systemd:
+    name: pve-thinpool-metrics.service
+    state: started
+  ignore_errors: "{{ ansible_check_mode }}"

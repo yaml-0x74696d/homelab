@@ -31,6 +31,7 @@ Two ways apps use it:
 - Forward-auth, for UIs that are only used in the browser
   - Traefik middleware `authentik` on edge (`nixos/edge/traefik.nix`) sends the request to the embedded outpost on pod-1 first
   - Used by the Traefik dashboard, Prometheus and the Vaultwarden admin page
+  - Cockpit on the pod VMs is reached only this way: through edge and forward-auth, port 9090 only from edge (`cockpit_allow_from`)
 
 Connecting apps:
 - Containers can't resolve internal names, so apps reach `auth.<domain>` through an `AddHost=` entry pointing at edge ([0032](0032-edge-vm-traefik-adguard-on-nixos.md))
@@ -47,6 +48,7 @@ Connecting apps:
 - Harder: OIDC is set up by hand for every app (provider + application in Authentik, client in the app)
 
 - Accepted: Authentik is a single point of failure for logins. That's why every app except Vaultwarden, Actual Budget and linkding keeps a local break-glass admin, and monitoring isn't fully behind it
+- Accepted: Cockpit needs two logins (Authentik, then PAM), and is out of reach while edge or Authentik is down. Break-glass: set `cockpit_allow_from` to `lan_cidr`, or use ssh
 - Accepted: with Authentik down, Vaultwarden takes no new logins. Clients that are already logged in keep their offline copy
 
 - Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird OIDC), [0034](0034-tls-via-dns-01.md) (TLS), [0002](0002-generic-docker-app-role.md) (app role), [0037](0037-actual-budget-on-pod-2.md) (Actual Budget, SSO only), [0038](0038-linkding-memos-excalidraw-on-pod-3.md) (linkding, SSO only)

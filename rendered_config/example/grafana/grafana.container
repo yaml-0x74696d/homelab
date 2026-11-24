@@ -4,6 +4,7 @@ Description=grafana
 [Container]
 Volume=/srv/apps/grafana/data:/var/lib/grafana
 Volume=/srv/apps/grafana/config/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+Volume=/srv/apps/grafana/config/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
 PublishPort=3000:3000
 Secret=grafana-admin-pass,type=env,target=GF_SECURITY_ADMIN_PASSWORD
 Secret=grafana-oidc-secret,type=env,target=GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET

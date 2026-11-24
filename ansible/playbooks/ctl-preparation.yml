@@ -1,5 +1,5 @@
 ---
-# ctl-1, the pi that runs semaphore. once by hand first: admin user, sudo, key (roles/ctl_base/README.md)
+# ctl-1, the host that runs semaphore. once by hand first: admin user, sudo, key (roles/ctl_base/README.md)
 - name: Provision ctl-1
   hosts: podman_hosts
   roles:

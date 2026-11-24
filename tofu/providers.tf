@@ -5,6 +5,11 @@ terraform {
       source  = "bpg/proxmox"
       version = "~> 0.66"
     }
+    # pinned exactly: 0.0.x, any bump can change behaviour
+    netbird = {
+      source  = "netbirdio/netbird"
+      version = "= 0.0.11"
+    }
   }
 }
 
@@ -25,4 +30,10 @@ provider "proxmox" {
     agent    = true
     username = "root"
   }
+}
+
+provider "netbird" {
+  # the client adds /api itself. the api is lan-only (nginx), so plan/apply run from the lan
+  management_url = "https://nb.${local.priv.domain}"
+  token          = var.netbird_token
 }

@@ -27,7 +27,7 @@
 ## Alert path
 
 - Outbound only: host → ntfy.sh → phone app. Nothing has to be reachable from the internet
-- A self-hosted ntfy would stay LAN-only, and instant push on the iPhone needs a public server
+- A self-hosted ntfy would stay LAN-only, and instant push on the phone needs a public server
 - The `pbs` and `aide` roles send to the same `ntfy_url` / `ntfy_token`
 
 ## Settings

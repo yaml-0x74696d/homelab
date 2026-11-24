@@ -1,0 +1,19 @@
+---
+# one heartbeat per run, from the first host left. a host that failed earlier leaves ansible_play_hosts short, so a bad run pushes nothing
+# on the gatus host itself: its port only lets in the lab hosts, not the controller
+- name: Push the heartbeat of {{ gatus_push_job }}
+  ansible.builtin.uri:
+    url: "http://localhost:{{ apps.gatus.port }}{{ gatus_push_path | replace('{key}', gatus_push_group ~ '_semaphore-' ~ gatus_push_job) }}"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ gatus_push_token | default('') }}"
+    timeout: "{{ gatus_push_timeout }}"
+  delegate_to: "{{ apps.gatus.host }}"
+  run_once: true
+  changed_when: false
+  no_log: true
+  when:
+    - not ansible_check_mode
+    - ansible_limit is not defined
+    - gatus_push_token | default('') | length > 0
+    - ansible_play_hosts | length == ansible_play_hosts_all | length

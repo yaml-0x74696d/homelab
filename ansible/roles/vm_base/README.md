@@ -17,7 +17,8 @@
 4. Login banner in `/etc/issue` + `/etc/issue.net`
 5. sshd: no root login, no passwords, no X11, `MaxAuthTries` + keepalive from group_vars
 6. auditd watches shadow, passwd, sudoers and sshd_config
-7. Timezone, hostname = inventory name (also `127.0.1.1` in `/etc/hosts`), then enables `vm_base_services`
+7. Cockpit (`/etc/cockpit/cockpit.conf`): the browser origin `https://<host>.<domain>` and `X-Forwarded-Proto`, since it sits behind Traefik. A change stops `cockpit.service`, the socket starts it again with the new config
+8. Timezone, hostname = inventory name (also `127.0.1.1` in `/etc/hosts`), then enables `vm_base_services`
 
 ## Settings
 
@@ -25,7 +26,11 @@
 |---|---|---|
 | `vm_base_packages` | see defaults | Package set |
 | `vm_base_sysctl` | see defaults | Kernel settings, name → value |
+| `vm_base_rp_filter` | 1 | Reverse path filter, 2 (loose) on pod-2, the netbird routing peer |
+| `vm_base_sysctl_file` | `/etc/sysctl.d/90-vm-base.conf` | Debian 13 no longer reads `/etc/sysctl.conf` at boot |
 | `vm_base_services` | auditd, fail2ban, apparmor, node_exporter | Enabled and started |
 | `vm_base_guest_agent` | true | Installs qemu-guest-agent. Off on bare metal (ctl-1) |
 | `vm_base_cockpit` | true | Installs cockpit and starts its socket. Off on ctl-1 |
+| `vm_base_cockpit_origins` | `https://<host>.<domain>` | Websocket origins cockpit accepts (`Origins`) |
+| `vm_base_cockpit_protocol_header` | X-Forwarded-Proto | Header telling cockpit the proxy spoke TLS (`ProtocolHeader`) |
 | `login_banner_text`, `ssh_*`, `timezone` | group_vars | Shared with the other hosts |

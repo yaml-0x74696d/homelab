@@ -51,6 +51,7 @@ Ansible also sets up a couple of services on the hosts themselves:
 | login-notify | All nodes |
 | pve_firewall | All nodes |
 | AIDE | All nodes |
+| pve_thinpool | All nodes |
 | mergerfs | pve-3 |
 
 - `update.yml` updates every apt host one at a time (LXCs, VMs, then the nodes), restarts stale services, re-baselines AIDE and reports pending reboots ([0024](adr/0024-ansible-run-os-updates.md))
@@ -143,7 +144,8 @@ How a request from a browser reaches an app.
 
 - Plain HTTP on port 80 only redirects to HTTPS on 443
 - Every router comes from `apps.yml` (`routes` of each app plus `infra_routes`), built into Traefik's dynamic config on edge (`nixos/edge/traefik.nix`). There is no hand-written router file
-- Every app port gets one ufw rule per source, from `allow_from` in `apps.yml`: edge, pod-2 (Prometheus, Gatus) and Homepage; Gitea's ssh port: LAN and VPN
+- Cockpit on each pod VM is served as `pod-N.<domain>` through Traefik behind Authentik (`infra_routes`, backend HTTPS with `insecure_tls`). ufw allows its port from `cockpit_allow_from` (edge) only, `roles/vm_base` sets the origin and the proxy header in `cockpit.conf`
+- Every app port gets one ufw rule per source, from `allow_from` in `apps.yml`: edge, pod-2 (Prometheus, Gatus), Homepage and, for Gatus' heartbeats, pod-1 and pod-3; Gitea's ssh port: LAN and VPN
 
 ## Certificates
 
@@ -187,6 +189,7 @@ The control plane:
 The routing:
 - pod-2 is the routing peer (`netbird_agent` role) and forwards traffic into the LAN
 - NetBird's DNS management is off for pod-2's group, so NetBird never takes port 53 on its routing peer ([ADR 0003](adr/0003-netbird-instead-of-port-forwards.md), [ADR 0010](adr/0010-lan-dns-on-a-service-ip.md))
+- Policy groups: `admin` reaches the whole LAN, `household` only edge 443 and DNS ([ADR 0040](adr/0040-netbird-policy-as-code.md))
 - Peers talk to each other directly over WireGuard, the TURN relay is only a fallback
 
 The fallback:
@@ -209,7 +212,7 @@ How a backup runs:
 - A random delay keeps the hosts from starting at the same time
 - First the databases are dumped (Postgres, SQLite `.backup`)
 - Then `/srv/apps` (`podman_apps_root`) goes up as one archive (`/opt/stacks` too, as long as a host still has it)
-- A failed run is pushed to ntfy
+- A failed run is pushed to ntfy, a good one sends a heartbeat to Gatus, which alerts when it stays away
 - The client's token can add backups and restore its own, not prune or delete them
 
 What's in and out:
@@ -225,17 +228,19 @@ Prometheus for metrics, ntfy for alerts.
 ![](img/observability.png)
 
 - Prometheus on pod-2 collects metrics from:
-  - the PVE hosts
+  - the PVE hosts, including the thin pools' fill (`roles/pve_thinpool`, node-exporter's textfile collector)
   - node-exporter on every VM and LXC but HAOS (its disk and uptime come from HA's System Monitor)
   - the ESP32 sensors, through mqtt-exporter
-- Grafana shows dashboards on top of it
+  - Gatus (`/metrics`, the check results)
+- Grafana shows dashboards on top of it: hosts, PVE and thin pools, sensors and lab health, as JSON in `apps/grafana/config/provisioning/dashboards/` ([ADR 0041](adr/0041-grafana-dashboards-as-code.md)). UI edits to them are reset by the next deploy
 - Gatus checks every route, host and PVE node and has a status page. Its checks are generated from `apps.yml` and the inventory
+- Gatus also takes pushed heartbeats: each backup host and the Semaphore runs of repo-pull, aide and update report in after a good run, and a missing one alerts. It queries Prometheus per PVE node for the thin pool fill and for the freshness of that data
 - Homepage is the start page: Gatus' summary on top, Proxmox stats for nodes, VMs and LXCs, and a tile per app generated from the apps map (`homepage:` block), with an up badge where the map has the app's port
 
 Alerts:
 - Podman apps: `podman auto-update` pulls and rolls back on a failed health check, a newer-tag check reports pinned images ([ADR 0021](adr/0021-podman-quadlets.md))
 - ntfy (an ntfy.sh topic) is the only alert channel ([ADR 0019](adr/0019-ntfy-single-alert-channel.md))
-- PBS, AIDE, login-notify and the image updates all send there
+- PBS, AIDE, login-notify, the image updates and Gatus all send there
 
 ## Logging and time
 
@@ -291,7 +296,7 @@ Deploying, from the controller:
 - `tofu apply` for the VMs and the LXCs
 - `ansible-playbook` for the hosts and the apps
 - `nixos/update.sh <netbird|edge>` for the NixOS VMs
-- Semaphore on ctl-1 (a Raspberry Pi outside the cluster) runs scheduled playbooks from a checkout copied over by hand
+- Semaphore on ctl-1 (a single-board computer outside the cluster) runs scheduled playbooks from a checkout copied over by hand
 
 Checking:
 - `just check` runs the same 22 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))

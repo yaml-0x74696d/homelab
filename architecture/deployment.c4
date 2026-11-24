@@ -15,6 +15,7 @@ deployment {
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
         instanceOf ops.chrony
+        instanceOf ops.cockpit
       }
       edge = vm "edge" {
         description "NixOS, Traefik + AdGuard Home from apps.yml"
@@ -55,6 +56,7 @@ deployment {
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
         instanceOf ops.chrony
+        instanceOf ops.cockpit
       }
       dmz = zone "DMZ" {
         #dmz
@@ -83,6 +85,7 @@ deployment {
         instanceOf observability.node-exporter
         instanceOf observability.rsyslog
         instanceOf ops.chrony
+        instanceOf ops.cockpit
       }
       haos = vm "haos" {
         description "Home Assistant OS, appliance"
@@ -103,7 +106,7 @@ deployment {
     }
 
     ctl1 = host "ctl-1" {
-      description "Raspberry Pi 3, Pi OS Lite, bare metal outside the cluster, 4c / 1G"
+      description "single-board computer, Debian arm64, bare metal outside the cluster, 4c / 1G"
       instanceOf ops.semaphore
       instanceOf ops.podman-updates
       instanceOf observability.node-exporter
