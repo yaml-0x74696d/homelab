@@ -148,7 +148,7 @@ apps:
         owner: 1001   # the image's semaphore user
       - path: aide    # accepted aide hashes, ctl-0 reads them back
         owner: 1001
-        mode: "0755"
+        mode: "0775"   # group bits = the acl mask, ctl_base gives syncthing write through it
     containers:
       - name: semaphore
         image: docker.io/semaphoreui/semaphore
