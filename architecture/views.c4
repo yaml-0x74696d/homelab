@@ -7,6 +7,21 @@ views {
       include edge, identity, remote, apps, media, automation, observability, storage
     }
     include cloudflare, letsencrypt, ntfy, router, github
+    // one edge per idea, the rest is in landscape and the flows
+    exclude apps -> identity, media -> identity, remote -> identity, observability -> identity
+    exclude storage -> identity, storage -> media, storage -> observability
+    exclude observability -> edge, admin -> apps, admin -> automation
+    autoLayout TopBottom
+  }
+
+  view landscape {
+    title "System landscape, every edge"
+    include household, admin, phone
+    group "Homelab" {
+      color slate
+      include edge, identity, remote, apps, media, automation, observability, storage
+    }
+    include cloudflare, letsencrypt, ntfy, router, github
     autoLayout TopBottom
   }
 

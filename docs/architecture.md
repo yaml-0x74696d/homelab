@@ -1,10 +1,10 @@
 # Architecture
 
-![System landscape](img/index.png)
+![System landscape](img/landscape.png)
 
-- The diagrams are generated from a LikeC4 model in `architecture/*.c4`, 21 views in total
+- The diagrams are generated from a LikeC4 model in `architecture/*.c4`, 24 views in total
 - `just c4` exports them as PNGs into `docs/img/`
-- Views: the landscape above, a deployment view (overview + one per node), one container view per system and 8 flows
+- Views: the landscape above with every edge, a short version of it for the README (`index`), a deployment view (overview + one per node), one container view per system and 10 flows
 
 ## Zones
 
