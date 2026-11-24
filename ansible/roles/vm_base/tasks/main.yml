@@ -20,7 +20,17 @@
     name: "{{ item.key }}"
     value: "{{ item.value }}"
     state: present
+    sysctl_file: "{{ vm_base_sysctl_file }}"
     reload: true
+  loop: "{{ vm_base_sysctl | dict2items }}"
+
+# the old copies, so a manual `sysctl --system` can't put them back
+- name: Drop the keys from /etc/sysctl.conf
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    state: absent
+    sysctl_file: /etc/sysctl.conf
+    reload: false
   loop: "{{ vm_base_sysctl | dict2items }}"
 
 - name: Set login banner

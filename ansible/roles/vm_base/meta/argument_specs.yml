@@ -7,6 +7,13 @@ argument_specs:
         type: list
         elements: str
         description: Packages installed on every host
+      vm_base_rp_filter:
+        type: int
+        choices: [0, 1, 2]
+        description: net.ipv4.conf.all.rp_filter, 2 on a routing peer
+      vm_base_sysctl_file:
+        type: path
+        description: Where the sysctl keys persist
       vm_base_sysctl:
         type: dict
         description: Sysctl keys and values applied on every host

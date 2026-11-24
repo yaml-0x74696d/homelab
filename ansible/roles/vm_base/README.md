@@ -26,6 +26,8 @@
 |---|---|---|
 | `vm_base_packages` | see defaults | Package set |
 | `vm_base_sysctl` | see defaults | Kernel settings, name → value |
+| `vm_base_rp_filter` | 1 | Reverse path filter, 2 (loose) on pod-2, the netbird routing peer |
+| `vm_base_sysctl_file` | `/etc/sysctl.d/90-vm-base.conf` | Debian 13 no longer reads `/etc/sysctl.conf` at boot |
 | `vm_base_services` | auditd, fail2ban, apparmor, node_exporter | Enabled and started |
 | `vm_base_guest_agent` | true | Installs qemu-guest-agent. Off on bare metal (ctl-1) |
 | `vm_base_cockpit` | true | Installs cockpit and starts its socket. Off on ctl-1 |

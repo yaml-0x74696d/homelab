@@ -165,8 +165,9 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 - Cause: no guest agent answering
 - Fix: power off inside the VM, then `qm start <vmid>`
 
-**`rp_filter` is back to strict after a reboot**
-- Known: the sysctl reverts at boot on the VMs. Check with `sysctl net.ipv4.conf.all.rp_filter` when routed traffic (NetBird) drops after a reboot
+**Routed NetBird traffic drops on pod-2**
+- Check: `cat /proc/sys/net/ipv4/conf/all/rp_filter` on pod-2, 0 or 2 is fine, 1 (strict) drops the tunnel's return traffic
+- Fix: `vm_base_rp_filter: 2` in `host_vars/pod-2.yml`, kept in `/etc/sysctl.d/90-vm-base.conf` across reboots
 
 ## Repo and checks
 
