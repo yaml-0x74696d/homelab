@@ -13,20 +13,21 @@ locals {
   }
 }
 
-# peer groups. members come from private.yml, so a plan shows a peer added by hand
+# peer groups. members come from private.yml, so a plan shows a peer added by hand.
+# sorted: the api returns them sorted, any other order is a diff on every plan
 resource "netbird_group" "admin" {
   name  = "admin"
-  peers = local.nb_peers.admin
+  peers = sort(local.nb_peers.admin)
 }
 
 resource "netbird_group" "household" {
   name  = "household"
-  peers = local.nb_peers.household
+  peers = sort(local.nb_peers.household)
 }
 
 resource "netbird_group" "routing" {
   name  = "routing"
-  peers = local.nb_peers.routing
+  peers = sort(local.nb_peers.routing)
 }
 
 # one resource-only group per target: peers and resources in one group hit provider bug #268
