@@ -98,3 +98,4 @@ tofu apply nb.plan; rm -f nb.plan
 - [ADR 0001: OpenTofu and cloud-init for VMs](../docs/adr/0001-tofu-and-cloud-init-for-vms.md)
 - [ADR 0005: prevent_destroy on stateful VMs](../docs/adr/0005-prevent-destroy-on-stateful-vms.md)
 - [ADR 0040: NetBird policy as code](../docs/adr/0040-netbird-policy-as-code.md)
+- [docs/netbird.md](../docs/netbird.md): onboarding a device, running the vpn

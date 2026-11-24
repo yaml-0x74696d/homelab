@@ -8,7 +8,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 
 - Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), clickable (built by `.github/workflows/pages.yml`)
 - More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views); sensors and the IoT gateway: [docs/iot.md](docs/iot.md); where things go and which value wins: [Ansible](docs/ansible-layout.md), [OpenTofu](docs/tofu-layout.md), [Podman](docs/podman-layout.md), [NixOS](docs/nixos-layout.md)
-- Running it: [updates](docs/updates.md), [adding and removing apps](docs/apps.md), [troubleshooting](docs/troubleshooting.md), [new hardware](docs/new-hardware.md), [security](docs/security.md), from bare hardware: [bootstrap](docs/bootstrap.md)
+- Running it: [updates](docs/updates.md), [adding and removing apps](docs/apps.md), [troubleshooting](docs/troubleshooting.md), [new hardware](docs/new-hardware.md), [security](docs/security.md), [netbird](docs/netbird.md), from bare hardware: [bootstrap](docs/bootstrap.md)
 
 ## Overview
 
