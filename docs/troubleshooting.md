@@ -72,6 +72,21 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 - Cause: the app already has a local account with the same email
 - Fix: log in locally and link the account in the app (Paperless: My profile, Connect)
 
+**A unit dies with exit 137 although the app answers**
+- Cause: the health check calls `127.0.0.1`, apps that check the Host header (Django: `DisallowedHost`) only accept the names they know, `localhost` among them
+- Check: `podman exec <container> curl -sS -o /dev/null -w '%{http_code}' http://localhost:<port>` against the same call with `127.0.0.1`
+- Fix: `HealthCmd=` with `localhost`
+
+**A value from `Environment=` arrives cut in two**
+- Cause: systemd splits `Environment=` at spaces, `A=-o B=c` becomes two variables
+- Check: `podman exec <container> env`
+- Fix: no space (`-oUserKnownHostsFile=...`) or quotes around the whole assignment (`Environment="A=b c"`)
+
+**A dir with ACLs loses write access after a deploy**
+- Cause: with ACLs the group bits of the mode are the ACL mask, a `mode:` without group write caps every ACL entry at read
+- Check: `getfacl <dir>`, the `#effective:` column
+- Fix: a `mode:` in `apps.yml` whose group bits cover the ACL entries (`0775` on Semaphore's `aide` dir)
+
 ## Moving data between hosts or apps
 
 **Owner mapping when copying data into a rootless app**
@@ -165,6 +180,11 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 - Cause: no guest agent answering
 - Fix: power off inside the VM, then `qm start <vmid>`
 
+**Hardening sysctls are back to the kernel defaults after a reboot**
+- Cause: Debian 13 no longer reads `/etc/sysctl.conf` at boot, only `/etc/sysctl.d/`
+- Check: `cat /proc/sys/kernel/kptr_restrict` (2 is set, 0 is the default)
+- Fix: `roles/vm_base` keeps them in `/etc/sysctl.d/90-vm-base.conf` (`vm_base_sysctl_file`), run `vm-preparation.yml`
+
 **Routed NetBird traffic drops on pod-2**
 - Check: `cat /proc/sys/net/ipv4/conf/all/rp_filter` on pod-2, 0 or 2 is fine, 1 (strict) drops the tunnel's return traffic
 - Fix: `vm_base_rp_filter: 2` in `host_vars/pod-2.yml`, kept in `/etc/sysctl.d/90-vm-base.conf` across reboots
@@ -205,6 +225,22 @@ The database hashes are the integrity anchor ([ADR 0009](adr/0009-aide-with-manu
 - On ctl-1 the dir has ACLs for `admin_user` (Syncthing) and Semaphore's container user, a copy by hand doesn't need `sudo` anymore
 - Renaming a host: rename `<host>.sha256` on both sides, then accept on that host
 - "database hash mismatch": the database changed outside an accept, or a copy is stale. Compare both copies first, then look at the host before accepting
+
+**One host's report holds a whole package update, its twin's doesn't**
+- Cause: `update.yml` accepts after an update only when the check right before was clean. A host with open changes carries the update into the next manual accept
+- Fix: accept soon after a deploy, so the next update lands on a clean baseline
+
+**Scratch work shows up in the report**
+- Cause: AIDE watches the admin's home. `podman` as the admin user creates `~/.local/share/containers`, a clone adds every file of it
+- Fix: scratch work in `/tmp`, remove leftovers before the accept
+
+**Expected entries**
+- `/etc/lvm/archive/*.vg` on the PVE nodes: LVM keeps a copy of the metadata on every volume change, backup snapshots included
+- `/var/backups/dpkg.*`: dpkg rotates them after installs
+- `ASYNC FAILED` before a report: AIDE exits 1-7 when it finds changes, the task only fails from 14
+
+**Accepting many hosts**
+- `aide-accept.yml` asks one host at a time (`serial: 1`). Each host writes its own `<host>.sha256`, so one run per host in parallel works: `aide-accept.yml -l <host>` in separate terminals
 
 ## Backups (PBS)
 
