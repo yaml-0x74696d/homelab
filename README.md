@@ -8,7 +8,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 
 - Interactive diagrams: [yaml-0x74696d.github.io/homelab](https://yaml-0x74696d.github.io/homelab/), clickable (built by `.github/workflows/pages.yml`)
 - More pictures: [docs/architecture.md](docs/architecture.md) (zones, flows, per-node views); sensors and the IoT gateway: [docs/iot.md](docs/iot.md); where things go and which value wins: [Ansible](docs/ansible-layout.md), [OpenTofu](docs/tofu-layout.md), [Podman](docs/podman-layout.md), [NixOS](docs/nixos-layout.md)
-- Running it: [updates](docs/updates.md), [adding and removing apps](docs/apps.md), [troubleshooting](docs/troubleshooting.md), [new hardware](docs/new-hardware.md), from bare hardware: [bootstrap](docs/bootstrap.md)
+- Running it: [updates](docs/updates.md), [adding and removing apps](docs/apps.md), [troubleshooting](docs/troubleshooting.md), [new hardware](docs/new-hardware.md), [security](docs/security.md), from bare hardware: [bootstrap](docs/bootstrap.md)
 
 ## Overview
 
@@ -120,26 +120,9 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 ## Security
 
-- WAN: only the NetBird VM is forwarded (443/tcp, 3478/udp, narrow TURN relay range); apps are LAN / VPN only
-- PVE firewall (`roles/pve_firewall`): cluster policy drop, NetBird VM fenced (inbound = what NetBird serves, egress to the LAN limited to routing peer + DNS/HTTPS + RELP to the log LXC); host lockdown layer written, off by default (lockout risk)
-- Pod VMs (`vm-preparation.yml` = `roles/vm_base` + ufw + Podman): ufw default deny, SSH key-only + rate-limited, no root login, auditd, AppArmor, fail2ban, sysctl hardening, unattended security updates
-- LXCs (`roles/lxc_base`): SSH key-only (root by key, no passwords), fail2ban, unattended security updates, node_exporter
-- IoT gateway LXC: PVE guest firewall and ufw with the same inbound rules, from the IoT net only 1883 and 80 (firmware downloads), egress limited to DNS, RELP and HTTP/HTTPS; one shared MQTT user, no TLS (accepted risk, [ADR 0028](docs/adr/0028-iot-gateway-lxc.md))
-- HAOS VM: PVE guest firewall, HA only from Traefik and Homepage, admins direct ([ADR 0030](docs/adr/0030-haos-vm-on-pve-3.md))
-- Cockpit on the pod VMs: only edge reaches port 9090 (ufw, `cockpit_allow_from`), served as `pod-N.<domain>` behind Authentik forward-auth
-- SSH host keys: `accept-new` on both controllers (ctl-0, Semaphore), a changed key fails the run
-- App ports: one ufw rule per port and source from `allow_from` in `apps.yml` (backends only answer edge, pod-2 and Homepage; Gatus' port also pod-1 and pod-3 for the heartbeats)
-- Podman apps: rootless, one svc user per app, no container socket anywhere
-- NixOS VMs (netbird, edge): nftables default-deny, SSH LAN-only, AppArmor, fail2ban, kernel sysctls, auto-upgrade with reboot window
-- VPN groups ([ADR 0040](docs/adr/0040-netbird-policy-as-code.md), `tofu/netbird.tf`): `household` reaches edge on 443 and the DNS relay only, `admin` the LAN, nothing else is allowed. The LAN still sees every peer as pod-2
-- NetBird dashboard + API LAN/VPN only: the WAN sees just the gRPC endpoints peers need; probes get a silent close (444) and a fail2ban ban
-- Identity: Authentik OIDC for the apps (local admin kept as break-glass, except Vaultwarden, Actual Budget and linkding), forward-auth for apps without SSO
-- TLS on every user-facing endpoint via Let's Encrypt DNS-01 (Cloudflare), no port 80 from the WAN; Traefik to the backends is plain HTTP on the LAN, except PVE, PBS and Cockpit (HTTPS with self-signed certs)
-- AIDE on every host + the NixOS VMs: daily check, ntfy alert with counts only, accept by hand, DB hash kept on the controller
-- login-notify: ntfy push on every SSH / Proxmox web login (PVE hosts)
-- Backups: PBS, scoped token (adds backups and restores its own, can't prune or delete), DB dumps before each run; a restore was rehearsed on 2026-11-08 ([docs/restore-rehearsal.md](docs/restore-rehearsal.md))
-- Irreplaceable files live outside the lab; the mergerfs pool has no parity and no backup (accepted)
-- Secrets: Ansible Vault; gitleaks on every commit and over the full history in CI
+- Only the NetBird VM is forwarded from the WAN, apps are LAN and VPN only
+- Authentik logins for the apps, rootless Podman, default-deny firewalls, AIDE, PBS backups, secrets in Ansible Vault
+- Threat model, trust zones, every control with the code or ADR that enforces it, and the accepted risks: [docs/security.md](docs/security.md)
 
 ## Decisions
 

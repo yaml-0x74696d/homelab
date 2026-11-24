@@ -31,7 +31,7 @@
       loop:
         - { rule: 'limit', port: "{{ ssh_port }}" }
         - { port: "{{ cockpit_port }}", src: "{{ cockpit_allow_from }}" }
-        - { port: "{{ node_exporter_port }}", proto: 'tcp' }
+        - { port: "{{ node_exporter_port }}", proto: 'tcp', src: "{{ prometheus_ip }}" }
 
     - name: Drop the old LAN-wide cockpit rule
       community.general.ufw:
@@ -42,6 +42,15 @@
         direction: in
         delete: true
       when: cockpit_allow_from != lan_cidr
+
+    - name: Drop the old LAN-wide node-exporter rule
+      community.general.ufw:
+        rule: allow
+        port: "{{ node_exporter_port }}"
+        proto: tcp
+        src: "{{ lan_cidr }}"
+        direction: in
+        delete: true
 
     - name: Enable ufw
       community.general.ufw:
