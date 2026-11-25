@@ -44,8 +44,7 @@ done
 - `admin-lan`: `admin` to `res-lan`, all protocols
 - `household-web`: `household` to `res-edge`, TCP 443
 - `vpn-dns-admin-udp`, `vpn-dns-admin-tcp`, `vpn-dns-household-udp`, `vpn-dns-household-tcp`: the source group to `routing`, the `dns-relay` port (`apps.yml`), one policy per protocol
-- After creating the DNS policies, `tofu plan` must show no diff. If the server keeps only one rule per policy, split them into one policy per protocol
-- A posture check with the minimum client version on the two household policies
+- A posture check with the minimum client version on the three household policies (`household-web`, both `vpn-dns-household-*`)
 - No policy from `household` to `res-netbird`
 
 ## 6. DNS

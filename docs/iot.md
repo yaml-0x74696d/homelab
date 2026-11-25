@@ -146,12 +146,12 @@ HA keeps the long-term history of every sensor (long-term statistics, hourly). P
 
 From scratch, e.g. after losing the LXC. Nothing on it needs a backup: config is in git, the broker keeps no state worth keeping, the firmware files are rebuilt in the ESPHome add-on.
 
-1. `macs.iot` in `private.yml`, `mqtt_password`, `wifi_ssid` and `wifi_pass` in the vault
+1. `macs.iot` in `private.yml`, `mqtt_password`, `mqtt_passwd_salt`, `wifi_ssid` and `wifi_pass` in the vault
 2. The LXC template on `iot_node`: `pveam download local debian-13-standard_13.6-1_amd64.tar.zst`
 3. `ansible-playbook playbooks/deploy-pve-firewall.yml`, so CT 302 never runs without its rules
 4. `tofu apply -target=proxmox_virtual_environment_container.iot`
 5. `ansible-playbook playbooks/base.yml -l iot` and `playbooks/login-banner.yml -l iot`
-6. `ansible-playbook playbooks/deploy-iot.yml`: first the WiFi card into the CT (raw `lxc.net` lines on `iot_node`, restarts the CT), then WiFi + DHCP, broker, exporter, OTA server, ufw. A rebuilt CT loses the raw lines, this puts them back
+6. `ansible-playbook playbooks/deploy-iot.yml`: first the WiFi card into the CT (raw `lxc.net` lines on `iot_node`, restarts the CT), then ufw, WiFi + DHCP, broker, exporter, OTA server. A rebuilt CT loses the raw lines, this puts them back
 7. Copy the current `.bin` and `.md5` files back to `/srv/firmware`
 8. `ansible-playbook playbooks/aide.yml -l iot`, last, so the baseline is the finished box
 9. `ansible-playbook playbooks/deploy-app.yml -e app=prometheus` and `-e app=gatus` if the address changed

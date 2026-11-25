@@ -26,7 +26,7 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 
 **A unit fails to start, the journal says `unhealthy` three times, then exit 137**
 - Cause: `HealthOnFailure=kill` (`roles/podman_app`, house rules) counts failed checks from the first second. A slow first start (migrations on an empty database) dies before it answers
-- Fix: `HealthStartPeriod=` in the container template, long enough for the migrations (Authentik `10m`, Nextcloud `10m`, the rest `3m`). Raise `start_timeout` in `apps.yml` too when the start takes longer than `podman_app_start_timeout` (5 min)
+- Fix: `HealthStartPeriod=` in the container template, long enough for the migrations (Authentik and Nextcloud `10m`; Immich, Jellyfin and Paperless `3m`). Raise `start_timeout` in `apps.yml` too when the start takes longer than `podman_app_start_timeout` (5 min)
 
 **`HealthStartPeriod=3min` is rejected**
 - Cause: podman wants Go durations
@@ -41,7 +41,7 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 - Fix: reach the host as `host.containers.internal` (Gatus and Homepage do that for the apps on their own host)
 
 **A container keeps answering for an IP its host no longer has**
-- Cause: pasta copies the host's addresses at container start. When an address leaves the host (the `.53` service IP moving to edge), the running container keeps it, and traffic to that IP stays inside the container (dns-relay answered SERVFAIL)
+- Cause: pasta copies the host's addresses at container start. When an address leaves the host (a service IP moving to another host), the running container keeps it, and traffic to that IP stays inside the container (dns-relay answered SERVFAIL)
 - Fix: restart the container after an IP moves
 
 **A container can't resolve `auth.<domain>` (OIDC discovery fails, Vaultwarden: "Failed to discover OpenID provider")**
@@ -91,7 +91,7 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 
 **Owner mapping when copying data into a rootless app**
 - Without `container_uid` (no keep-id): container root is `svc-<app>`, container uid `n` is `S + n - 1`
-- With `container_uid: c`: `c` is `svc-<app>`, `n < c` is `S + n`
+- With `container_uid: c`: `c` is `svc-<app>`, `n < c` is `S + n`, `n > c` is `S + n - 1`
 - `S` is the svc user's subuid start: `uid × 65536` (`grep svc-<app> /etc/subuid`)
 - Check the real owners of the source first: `sudo find <dir> -printf "%u:%g\n" | sort | uniq -c`
 - Example, Authentik (uid 2170, `S` = 142213120): postgres 70 → 142213189, authentik 1000 → 142214119
@@ -151,7 +151,7 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
   nix copy --to ssh://root@<host_ip> "$SYS"
   ssh root@<host_ip> "nix-env -p /nix/var/nix/profiles/system --set $SYS && $SYS/bin/switch-to-configuration switch"
   ```
-- Never Ctrl-C a switch on edge: it can stop between dropping and adding `.53`. If it happened: `systemctl start dns-ip` on edge, check with `dig @<dns_ip>`
+- Never Ctrl-C a switch on edge: it can stop while networkd reloads the LAN addresses, `.53` included. If it happened: `systemctl restart systemd-networkd` on edge, check with `dig @<dns_ip>`
 
 **Ansible run from `nixos/` fails on vault variables**
 - Cause: `ansible.cfg` and the vault password file are found relative to `ansible/`
@@ -173,7 +173,7 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 - Cause: cloud-init only runs again on a new instance-id, which needs a cold stop and start, not a reboot
 - Fix: `qm stop <vmid> && qm start <vmid>`. New SSH host keys follow, and a changed key fails the run on both controllers (AIDE accept on that host too):
   - ctl-0: `ssh-keygen -R <ip>`
-  - Semaphore, its `known_hosts` is in the container: `ssh ctl-1 'sudo -u svc-semaphore XDG_RUNTIME_DIR=/run/user/2060 podman exec semaphore ssh-keygen -R <ip> -f /var/lib/semaphore/known_hosts'`
+  - Semaphore, its `known_hosts` is in the container: `ssh ctl-1 'cd / && sudo -u svc-semaphore XDG_RUNTIME_DIR=/run/user/2060 podman exec semaphore ssh-keygen -R <ip> -f /var/lib/semaphore/known_hosts'`
 - PBS starts a new backup group `host/<new name>`, delete the old one in the PBS UI once it's not needed
 
 **`qm reboot` hangs**
@@ -181,7 +181,7 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 - Fix: power off inside the VM, then `qm start <vmid>`
 
 **Hardening sysctls are back to the kernel defaults after a reboot**
-- Cause: Debian 13 no longer reads `/etc/sysctl.conf` at boot, only `/etc/sysctl.d/`
+- Cause: Debian 13 reads only `/etc/sysctl.d/` at boot, not `/etc/sysctl.conf`
 - Check: `cat /proc/sys/kernel/kptr_restrict` (2 is set, 0 is the default)
 - Fix: `roles/vm_base` keeps them in `/etc/sysctl.d/90-vm-base.conf` (`vm_base_sysctl_file`), run `vm-preparation.yml`
 
@@ -193,11 +193,11 @@ ansible pod_vms -a 'apps ps'            # all pod VMs at once
 
 **`just check` fails at "rendered_config/example up to date"**
 - Cause: a template or `apps.yml` change renders new files, the hook writes them and fails once
-- Fix: `git add -A`, commit again
+- Fix: `git add -A rendered_config`, run `just check` again
 
 **`rendered_config/example` lost files (many `D` in `git status`)**
 - Cause: Ctrl-C during the render step of `just check`
-- Fix: `scripts/render_podman.sh example && git add -A rendered_config`, then `git status --short rendered_config` shows only real changes
+- Fix: `just render && git add -A rendered_config`, then `git status --short rendered_config` shows only real changes
 
 **Hooks report "files were modified by this hook" with nothing changed**
 - Cause: two `just check` runs at the same time
@@ -222,7 +222,7 @@ The database hashes are the integrity anchor ([ADR 0009](adr/0009-aide-with-manu
 - ctl-1 holds the reference, `/srv/apps/semaphore/aide/<host>.sha256`. Semaphore's accept runs write there
 - The controller's `ansible/aide/` and ctl-1's dir are kept the same by Syncthing, both ways. An accept on either side reaches the other within seconds
 - Not synced: Syncthing's GUI (`127.0.0.1:8384` on ctl-0) shows the folder's state. A `.sync-conflict-…` file means both sides changed the same hash, keep the one that matches the host's db
-- On ctl-1 the dir has ACLs for `admin_user` (Syncthing) and Semaphore's container user, a copy by hand doesn't need `sudo` anymore
+- On ctl-1 the dir has ACLs for `admin_user` (Syncthing) and Semaphore's container user, a copy by hand needs no `sudo`
 - Renaming a host: rename `<host>.sha256` on both sides, then accept on that host
 - "database hash mismatch": the database changed outside an accept, or a copy is stale. Compare both copies first, then look at the host before accepting
 
@@ -248,7 +248,7 @@ The database hashes are the integrity anchor ([ADR 0009](adr/0009-aide-with-manu
 - Cause: the database container isn't running (the app is stopped)
 - Fix: start the app, run again (`systemctl start pbs-backup.service`, it waits until done). An empty dump also fails the run on purpose
 
-**A run on a part-time node's guest fails**
+**Every run fails while pve-3 is off**
 - pve-3 holds the datastore. With pve-3 off, every run fails and pushes to ntfy
 
 ## Known open

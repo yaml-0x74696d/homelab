@@ -4,7 +4,7 @@
 - The Debian guests are created from a Debian cloud image, HAOS from its own image (step 3b)
 - cloud-init sets the IP, the admin user and the SSH key on the Debian guests
 - IPs, VMIDs, the admin user, the SSH key path and the pool paths come from `../ansible/group_vars/all/` (read in `locals.tf`), so OpenTofu and Ansible can't drift apart
-- Guest sizes, nodes and MACs are in the `vms` / `lxcs` maps in `locals.tf`
+- Guest sizes are in the `vms` / `lxcs` maps in `locals.tf`, nodes come from `guest_nodes` in `network.yml`, MACs from `macs` in `private.yml`
 
 ## 1. Login and storage
 
@@ -70,7 +70,7 @@ tofu apply
 - The management API is LAN-only, so run it from the LAN or a VPN peer that can reach `nb.<domain>`
 - Group members are the peer ids in `netbird_peers` in `private.yml`
 - The built-in `Default` policy has to be imported once before the first apply
-- On a fresh lab import it narrowly: `tofu import -target=netbird_policy.default ...`. If `data.netbird_peer.pod2` blocks the import, use an `import {}` block in the stage-1 targeted apply instead
+- On a fresh lab import only that one: `tofu import netbird_policy.default <id>` (the id is in the dashboard URL of `Default`). If `data.netbird_peer.pod2` blocks the import, use an `import {}` block in the stage-1 targeted apply instead
 - The `vpn_dns_*` policies are one policy per protocol (`["udp"]`, `["tcp"]`): the provider takes a single rule per policy. `-target=netbird_policy.vpn_dns_admin` covers both
 - A full plan needs the VM up and a valid token. `data.netbird_peer.pod2` needs pod-2 enrolled, so the first apply is staged:
 
