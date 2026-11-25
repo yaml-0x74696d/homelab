@@ -42,6 +42,6 @@
         group: root
         mode: "0644"
         content: |
-          # interactive logins only — don't break scp/rsync/sftp
+          # interactive logins only, don't break scp/rsync/sftp
           case $- in *i*) ;; *) return ;; esac
           command -v fastfetch >/dev/null && fastfetch

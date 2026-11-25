@@ -1,6 +1,5 @@
-# legacy-bios layout (seabios, matches the rest of the fleet — no ovmf/efi disk in tofu).
-# /dev/sda = the virtio-scsi disk. nixos-anywhere runs this to wipe + format the
-# debian bootstrap disk on first install.
+# legacy-bios layout (seabios like the rest of the fleet, no efi disk in tofu).
+# /dev/sda = the virtio-scsi disk, nixos-anywhere wipes + formats the debian bootstrap disk with it
 {
   disko.devices.disk.main = {
     device = "/dev/sda";

@@ -1,6 +1,6 @@
 # Adopting an existing NetBird dashboard
 
-A guide for taking over click-made NetBird objects with `tofu import`, e.g. on a rebuild or a second lab. The end state is `tofu/netbird.tf` ([ADR 0040](adr/0040-netbird-policy-as-code.md)). On a fresh lab skip this and follow [bootstrap step 7b](bootstrap.md#7b-netbird).
+Taking over click-made NetBird objects with `tofu import`, e.g. on a rebuild or a second lab. The end state is `tofu/netbird.tf` ([ADR 0040](adr/0040-netbird-policy-as-code.md)). On a fresh lab skip this and follow [bootstrap step 7b](bootstrap.md#7b-netbird).
 
 ## 1. Inventory
 

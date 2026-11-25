@@ -57,7 +57,7 @@ Secrets:
 
 ## Consequences
 
-- Easier: the whole OS is in git, a rollback is just the previous generation (`nixos-rebuild switch --rollback`)
+- Easier: the whole OS is in git, a rollback is the previous generation (`nixos-rebuild switch --rollback`)
 - Easier: hardening, AIDE, logging and time are written once for both VMs
 
 - Harder: a second deploy path next to Ansible, with Nix tooling on the controller and its own update script

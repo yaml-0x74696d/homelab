@@ -10,7 +10,7 @@ Status: Accepted
 
 - Alternatives:
   - Keep the state on the pool (why not: databases on CIFS are a bad idea, and Immich doesn't support network shares for its database)
-  - No guard, just read every plan carefully (why not: one wrong apply wipes the databases)
+  - No guard, read every plan carefully (why not: one wrong apply wipes the databases)
 
 ## Decision
 

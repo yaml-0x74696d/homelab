@@ -41,7 +41,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 | log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
 | iot | CT 302 | pve-1 | 1 | 512 MB + 256 MB swap | 8 GB | .152 + IoT `.50.10` on its WiFi card |
 
-- Specs can be found in `tofu/locals.tf`; IDs + IPs are in `ansible/group_vars/all/network.yml`
+- Specs in `tofu/locals.tf`, IDs + IPs in `ansible/group_vars/all/network.yml`
 
 ## What runs
 

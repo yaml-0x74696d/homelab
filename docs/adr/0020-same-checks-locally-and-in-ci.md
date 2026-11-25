@@ -14,7 +14,7 @@ Status: Accepted
   - A Makefile (why not: just is simpler, no tab/phony quirks)
   - lefthook (why not: smaller ecosystem than pre-commit, fewer ready-made hooks)
   - No checks (why not: the lint tools find real issues)
-- The pattern comes from khuedoan/homelab (CI just runs pre-commit) and onedr0p/home-ops (justfile, one CI workflow, actions pinned by SHA)
+- The pattern comes from khuedoan/homelab (CI only runs pre-commit) and onedr0p/home-ops (justfile, one CI workflow, actions pinned by SHA)
 - Why: one config, the same result locally and in CI
 
 ## Decision

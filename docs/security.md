@@ -204,4 +204,4 @@ Collected from the ADRs, one line each. The ADR has the reasoning.
 
 ## Reporting
 
-Found a problem? Open an issue on [GitHub](https://github.com/yaml-0x74696d/homelab/issues). Describe what and where (file and line), leave out working exploit details.
+Problems: open an issue on [GitHub](https://github.com/yaml-0x74696d/homelab/issues). Describe what and where (file and line), leave out working exploit details.

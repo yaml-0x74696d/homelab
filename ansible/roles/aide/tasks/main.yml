@@ -11,7 +11,7 @@
     dest: /etc/aide/aide.conf.d/98_homelab_excludes
     mode: '0644'
 
-- name: Old excludes file
+- name: Remove 99_homelab_excludes
   ansible.builtin.file:
     path: /etc/aide/aide.conf.d/99_homelab_excludes
     state: absent

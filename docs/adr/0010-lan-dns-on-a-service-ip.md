@@ -30,7 +30,7 @@ The server:
 
 ## Consequences
 
-- Easier: moving DNS, or adding a second resolver, just means moving the address. Clients never change
+- Easier: moving DNS, or adding a second resolver, means moving the address. Clients never change
 
 - Harder: the router needs local DNS set to `.53` and IPv6 RDNSS turned off, or clients go around the LAN DNS over IPv6
 

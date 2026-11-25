@@ -13,7 +13,7 @@ notify() {
   curl -fsS -m {{ ntfy_timeout }} "${hdr[@]}" -d "$1" "$URL" >/dev/null 2>&1 || true
 }
 
-# follow only NEW journal entries; alert on successful ssh + pve web logins
+# new entries only; alert on successful ssh + pve web logins
 journalctl -f -n0 -o short-iso 2>/dev/null | while IFS= read -r line; do
   case "$line" in
     *"Accepted "*" for "*)             notify "ssh: $line" ;;

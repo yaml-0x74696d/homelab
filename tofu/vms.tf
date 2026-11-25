@@ -90,8 +90,8 @@ resource "proxmox_virtual_environment_vm" "pod" {
   }
 }
 
-# netbird control plane — wan-facing netbird vm. this only builds the VM shell on the debian
-# cloud image for bootstrap; nixos-anywhere then wipes it and installs the flake in ../nixos.
+# netbird control plane, wan-facing. only the vm shell on the debian cloud image for bootstrap,
+# nixos-anywhere then wipes it and installs the flake in ../nixos.
 resource "proxmox_virtual_environment_vm" "netbird" {
   name      = "netbird"
   node_name = local.vms.netbird.node
@@ -313,7 +313,7 @@ resource "proxmox_virtual_environment_vm" "haos" {
   }
 }
 
-# the vms were docker-N before, renamed in place
+# docker-N -> pod-N, renamed in place
 moved {
   from = proxmox_virtual_environment_vm.docker["docker-1"]
   to   = proxmox_virtual_environment_vm.pod["pod-1"]

@@ -15,7 +15,7 @@
 ## How it works
 
 1. Checks the entry: `runtime: podman`, `state: present`, the right host (a `hosts:` entry: no port, routes, tiles or sources), unique container names, one named like the app and the rest `<name>-<role>`, `after`/`cifs` only naming what the entry has, `user` on every container with `container_uid`, a password per CIFS user, one source per secret, a template per container (+ `<name>.pod.j2` for a pod), known `allow_from` names (single-host apps only)
-2. Writes `svc-<name>:<uid*65536>:65536` to `/etc/subuid` and `/etc/subgid` **before** creating the user, so useradd doesn't add a second range. Then checks there's exactly one line each
+2. Writes `svc-<name>:<uid*65536>:65536` to `/etc/subuid` and `/etc/subgid` before creating the user, so useradd doesn't add a second range. Then checks there's exactly one line each
 3. Creates group + user `svc-<name>` with the map's `uid`: locked password, `nologin`, member of `svc-apps` (may read the ntfy env file) and of each `devices` entry's group on the host (`render` for `/dev/dri/renderD128`)
 4. Linger, then starts `user@<uid>.service`. A range change on an existing user runs `podman system migrate`
 5. Data dir `/srv/apps/<name>` (+ `dirs`), owned by `svc-<name>`. A dir with `owner: <uid>` belongs to that uid inside the container instead (host id `uid*65536 + owner - 1`, with keep-id see below), and the app dir becomes `0711` so the uid can pass through

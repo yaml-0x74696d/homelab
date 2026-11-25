@@ -3,7 +3,7 @@
 # the dynamic config is a real file under /etc that traefik watches: a route change is a
 # nixos-rebuild, no traefik restart.
 #
-# secret NOT in git: ${secretsDir}/cloudflare.env (CF_DNS_API_TOKEN=...), create before the first switch.
+# secret not in git: ${secretsDir}/cloudflare.env (CF_DNS_API_TOKEN=...), create before the first switch.
 { config, lib, pkgs, facts, ... }:
 let
   inherit (facts) domain;

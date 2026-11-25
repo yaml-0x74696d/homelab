@@ -17,7 +17,7 @@ provider "proxmox" {
   endpoint = local.pve_endpoint
   insecure = true # self-signed pve certs
 
-  # api token is exempt from 2fa — primary auth for plan/apply. null => fall back to user/pass.
+  # api token is exempt from 2fa, primary auth for plan/apply. null => fall back to user/pass.
   api_token = var.pve_api_token != "" ? var.pve_api_token : null
 
   # root@pam pw: only for the privileged ops the api won't do with a token (lxc bind mounts).

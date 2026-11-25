@@ -11,7 +11,7 @@ pbs_id: "{{ inventory_hostname }}"        # backup group id, one per host
 
 # staging dir + app dir: pbs_staging_dir / podman_apps_root in group_vars (aide excludes them too)
 
-# failure alerts → ntfy. uses the shared ntfy_url/ntfy_token from vault; empty = off.
+# failure alerts to ntfy, shared ntfy_url/ntfy_token from vault; empty = off
 pbs_ntfy_url: "{{ ntfy_url | default('') }}"
 pbs_ntfy_token: "{{ ntfy_token | default('') }}"
 

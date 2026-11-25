@@ -40,7 +40,7 @@ Public DNS:
 
 - Easier: real certificates for LAN-only names, and nothing on the WAN is needed to renew them
 - Easier: one wildcard certificate instead of one per router, fewer Let's Encrypt orders
-- Easier: certificates renew on their own, about 30 days before they expire. If `acme.json` gets lost, they're simply issued again
+- Easier: certificates renew on their own, about 30 days before they expire. If `acme.json` gets lost, they're issued again
 
 - Harder: the Cloudflare API token can edit DNS for the whole zone. It lives in the vault (`cf_token`), on edge, on the NetBird VM and as a Podman secret on pod-1 and pod-2 (cloudflare-ddns)
 - Harder: renewals depend on Cloudflare's API and public DNS

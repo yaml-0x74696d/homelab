@@ -1,15 +1,14 @@
 # netbird self-hosted control plane (native, no docker) via the nixpkgs server module.
 # tls: nginx + acme dns-01 (cloudflare). idp: authentik. stun/turn: coturn.
 #
-# secrets are NOT in git — the module reads them from files under ${secretsDir};
-# create them on the box before the first switch. clientId is not secret, it comes
-# from private.yml (netbird_oidc_client_id) once the authentik provider exists.
+# secrets not in git: the module reads them from files under ${secretsDir}, create them
+# before the first switch. clientId isn't secret, it comes from private.yml (netbird_oidc_client_id).
 { facts, ... }:
 let
   domain = "nb.${facts.domain}";
   authAppSlug = "netbird";
   authAuthority = "https://auth.${facts.domain}/application/o/${authAppSlug}/";
-  # authentik makes the token audience == the client id (public client — not a secret).
+  # authentik makes the token audience == the client id (public client, not a secret).
   clientId = facts.netbird_oidc_client_id;
   scopes = "openid profile email offline_access api";
   secretsDir = "/var/lib/secrets/netbird";
@@ -61,10 +60,9 @@ in
           RedirectURLs = [ "http://localhost:53000" ];
           DisablePromptLogin = true;   # authentik workaround (netbird #3654)
         };
-        # user/group sync DISABLED — authentik idp-manager machine-auth (client_credentials
-        # to the token endpoint) 405'd and broke login. users still auth via oidc; this only
-        # gates bulk user/group listing. re-enable with the correct /application/o/token/ +
-        # a client-credentials-capable service account once that's set up in authentik.
+        # user/group sync off: the idp-manager client_credentials call to authentik's token
+        # endpoint 405'd and broke login. oidc login still works, only bulk user/group listing is gone;
+        # re-enable needs /application/o/token/ + a client-credentials service account in authentik
         IdpManagerConfig = {
           ManagerType = "none";
           ClientConfig = {
@@ -148,10 +146,7 @@ in
     };
   };
 
-  # NOTE: extra mgmt/signal systemd sandboxing (SystemCallFilter etc.) was removed —
-  # it SIGSYS-killed netbird-mgmt during the OIDC https call. the module's own sandbox
-  # (ProtectSystem, MemoryDenyWriteExecute, RestrictNamespaces, …) stays. re-add later
-  # with SystemCallErrorNumber = "EPERM" + testing if you want it back.
+  # no extra SystemCallFilter on mgmt/signal, it SIGSYS-kills netbird-mgmt on the oidc https call
 
   # mgmt dies if authentik is unreachable at start; retry instead of giving up
   systemd.services.netbird-management = {

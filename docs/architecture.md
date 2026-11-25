@@ -6,7 +6,7 @@
 - `just c4` exports them as PNGs into `docs/img/`
 - Views: the landscape above with every edge, a short version of it for the README (`index`), a deployment view (overview + one per node), one container view per system and 10 flows
 
-In short:
+What runs where:
 - Three Proxmox nodes, each with one Debian pod VM that runs its apps as rootless Podman quadlets
 - Two NixOS VMs: edge (Traefik + AdGuard Home, routes and DNS names from `apps.yml`) and NetBird, the only box forwarded from the WAN
 - LXCs for the storage pool (Samba over mergerfs), the central logs and the IoT gateway, Home Assistant as an appliance VM
@@ -81,7 +81,7 @@ Each node runs one pod VM, grouped by what the apps need. Ingress and LAN DNS ru
 
 - Every app runs as a rootless Podman quadlet, no Docker. All three run the PBS client and AIDE
 - Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
-- pod-3 gets to run the heavy services, because pve-3 has the most RAM
+- pod-3 runs the heavy services, pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)
 
 How a VM is built:

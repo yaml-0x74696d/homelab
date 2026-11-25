@@ -29,7 +29,7 @@
     label: "{{ item.path }}"
   changed_when: false
 
-- name: Ensure pool mountpoint
+- name: Create pool mountpoint
   ansible.builtin.file:
     path: "{{ storage_pool_host }}"
     state: directory

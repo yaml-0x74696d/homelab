@@ -6,7 +6,7 @@ Status: Accepted
 
 - I run the lab alone, so nobody else looks at my changes
 - An AI assistant (Claude Code) gives a second pair of eyes and a fresh view, and takes over checks and drafts I would skip
-- What makes AI-assisted work safe is not the assistant, it's the checks in the pipeline and the review before anything lands
+- AI-assisted work is only as safe as the checks in the pipeline and the review before anything lands
 - Example: the unattended-upgrades config matched no Debian repository and passed every hook. A review found it, and the fix added a check that fails when no Debian-Security source exists (issue #32). A check only catches what someone thought to test, so the review stays
 - An assistant reads text from the web and the repo. Injected text or a plain mistake can steer it
 - ctl-0 holds the SSH keys and the vault
