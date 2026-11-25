@@ -70,6 +70,7 @@ From ctl-0, keys first, then the pool on pve-3 (the storage CT bind-mounts it):
 
 ```bash
 cd ~/homelab/ansible
+ssh-copy-id root@<pve1_ip>   # one node is enough, root's authorized_keys is cluster-wide
 ansible-playbook playbooks/push-keys.yml -l proxmox
 ansible-playbook playbooks/deploy-storage.yml -l pve-3
 ```
@@ -80,7 +81,8 @@ PBS on pve-3 as a host package ([ADR 0013](adr/0013-pbs-file-level-backups.md)):
 apt install proxmox-backup-server
 proxmox-backup-manager datastore create homelab /mnt/pbs
 proxmox-backup-manager user create backup@pbs
-proxmox-backup-manager user generate-token backup@pbs client   # secret into the vault
+proxmox-backup-manager user generate-token backup@pbs client   # secret into the vault as pbs_token_secret
+proxmox-backup-manager cert info | grep -i fingerprint     # into the vault as pbs_fingerprint
 # user and token both: a token only gets what its user has too
 proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id backup@pbs
 proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id 'backup@pbs!client'
@@ -92,7 +94,8 @@ proxmox-backup-manager acl update /datastore/homelab DatastoreBackup --auth-id '
 ## 2. Guests (OpenTofu)
 
 - LXC template and HAOS image: [tofu/README.md](../tofu/README.md), steps 3 and 3b
-- A fresh guest has no guest agent yet: `agent { enabled = false }` for the first apply, see step 5 there
+- A fresh guest has no guest agent yet: `agent { enabled = false }` for the first apply, back to `true` after step 3 (pod VMs) and step 4 (netbird, edge), see step 5 there
+- The storage CT needs `pve_password` with 2FA off for its run (bind mounts), see step 1 there
 - Applied guest by guest, the log LXC first, since every other host ships its logs there:
 
 ```bash
@@ -119,16 +122,16 @@ done
 
 ```bash
 cd ~/homelab/ansible
-ansible-playbook playbooks/push-keys.yml
+ansible-playbook playbooks/push-keys.yml -l '!ctl-1'   # ctl-1 comes in step 5
 ansible-playbook playbooks/deploy-pve-firewall.yml
 ansible-playbook playbooks/deploy-login-notify.yml
 ansible-playbook playbooks/deploy-pve-thinpool.yml
 ansible-playbook playbooks/vm-preparation.yml    # pod-N: vm_base, podman_base, ufw, aide
-ansible-playbook playbooks/base.yml              # cron, journald, rsyslog, chrony, lxc hardening
+ansible-playbook playbooks/base.yml -l '!ctl-1'  # cron, journald, rsyslog, chrony, lxc hardening
 ansible-playbook playbooks/deploy-storage.yml -l storage
 ```
 
-The first run to each host learns its SSH host key (`StrictHostKeyChecking=accept-new` in `ansible.cfg`), a later change fails the run. Semaphore keeps its own `known_hosts` on ctl-1 and learns the hosts again on its first runs. A rebuilt host needs the old key removed on both ([troubleshooting](troubleshooting.md#a-renamed-vm-keeps-its-old-hostname-or-ssh-keys)).
+The first run to each host learns its SSH host key (`StrictHostKeyChecking=accept-new` in `ansible.cfg`), a later change fails the run. Semaphore keeps its own `known_hosts` on ctl-1 and learns the hosts again on its first runs. A rebuilt host needs the old key removed on both ([troubleshooting](troubleshooting.md#proxmox-opentofu-vms), "A renamed VM keeps its old hostname").
 
 ## 4. NixOS VMs (netbird, edge)
 
@@ -145,7 +148,6 @@ grep -c "$(cut -d' ' -f2 ~/.ssh/id_ed25519.pub)" $SYS/etc/ssh/authorized_keys.d/
 S=$XDG_RUNTIME_DIR/$H-secrets
 nix run github:nix-community/nixos-anywhere -- --store-paths $DISKO $SYS --extra-files $S --chown /var/lib/secrets 0:0 -i ~/.ssh/id_ed25519 --target-host <admin_user>@<host ip>
 rm -rf $S; ssh-keygen -R <host ip>
-cd ../ansible && ansible-playbook playbooks/deploy-netbird-agent.yml   # pod-2 is the routing peer
 ```
 
 NetBird, once the VM is up and pod-2's agent is not yet enrolled ([tofu/README.md](../tofu/README.md#6-netbird), [ADR 0040](adr/0040-netbird-policy-as-code.md)):
@@ -186,7 +188,7 @@ ansible-playbook playbooks/site.yml
 - `site.yml` holds the order: Authentik before the apps that log in through it (ingress and DNS are already up on edge), storage before the CIFS apps on pod-3, the PBS client last
 - One app on its own: `deploy-app.yml -e app=<name>`, Authentik through `deploy-authentik.yml` (the same role plus its upgrade guards)
 - Gitea without a backup has no admin yet, create it once (values from the vault, `gitea_admin_*`):
-  `ssh pod-1 'cd / && sudo -u svc-gitea XDG_RUNTIME_DIR=/run/user/$(id -u svc-gitea) podman exec -u git gitea gitea admin user create --username <user> --email <email> --password <pw> --admin --must-change-password=false'`
+  `ssh -t pod-1 'cd / && sudo -u svc-gitea XDG_RUNTIME_DIR=/run/user/$(id -u svc-gitea) podman exec -u git gitea gitea admin user create --username <user> --email <email> --password <pw> --admin --must-change-password=false'`
 
 ## 7. Restore the data
 
@@ -253,8 +255,8 @@ Images (`tofu/variables.tf`):
 - All guests on a node move together: with `cpu = host`, an EL10 guest can only run on a node with x86-64-v3
 
 Packages and repos:
-- Every `ansible.builtin.apt` → `ansible.builtin.dnf` (or `package` where the name is the same): vm_base, podman_base, podman_app, cronie, chrony, aide, rsyslog, pbs, update, lxc_base, samba, mosquitto, mqtt_exporter, ota_server, iot_ap
-- `deb822_repository` → `yum_repository`, EPEL on (fail2ban, node_exporter, hostapd)
+- Every `ansible.builtin.apt` → `ansible.builtin.dnf` (or `package` where the name is the same): vm_base, podman_base, podman_app, cronie, chrony, aide, rsyslog, pbs, update, lxc_base, samba, mosquitto, mqtt_exporter, ota_server, iot_ap, netbird_agent
+- `deb822_repository` → `yum_repository` (pbs, netbird_agent), EPEL on (fail2ban, node_exporter, hostapd)
 - `ansible_facts['distribution_release']` in repo URLs (pbs)
 - `vm_base_packages`: `auditd` → `audit`, `libpam-pwquality` → `libpwquality`, `apparmor*` out, `unattended-upgrades` → `dnf-automatic`, `needrestart` → `dnf-utils`, `prometheus-node-exporter` → EPEL's `golang-github-prometheus-node-exporter` (other unit name)
 - PBS client: no EL package, only the static binary ([ADR 0013](adr/0013-pbs-file-level-backups.md))
