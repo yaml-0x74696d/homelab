@@ -12,8 +12,8 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 
 ## Overview
 
-- 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the WAN-facing VM declared in NixOS
-- Remote access through NetBird: the router forwards only to the NixOS VM, never directly to an app
+- 3 tools, 1 set of facts: provisioning through OpenTofu, configuration through Ansible, the two NixOS VMs (NetBird, edge) declared in NixOS
+- Remote access through NetBird: the router forwards only to the NetBird VM, never directly to an app
 - Every check runs the same locally and in CI: the pre-commit hooks (`just check`, the `apps.yml` schema included) and the Podman units through `quadlet -dryrun` (`just quadlet`)
 
 ## Hardware
@@ -34,6 +34,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 | pod-3 | VM 203 | pve-3 | 4 | 12 GB (8 GB) | 64 GB | .203 |
 | netbird | VM 250 | pve-2 | 2 | 2 GB (1 GB) | 20 GB | .250 |
 | edge | VM 200 | pve-1 | 1 | 1.5 GB (1.5 GB) | 16 GB | .200 (+ DNS service IP .53) |
+| haos | VM 210 | pve-3 | 2 | 3 GB (no balloon) | 32 GB | .210 |
 | storage | CT 300 | pve-3 | 2 | 1 GB + 512 MB swap | 24 GB | .150 |
 | log | CT 301 | pve-3 | 1 | 512 MB + 256 MB swap | 32 GB | .151 |
 | iot | CT 302 | pve-1 | 1 | 512 MB + 256 MB swap | 8 GB | .152 + IoT `.50.10` on its WiFi card |
@@ -91,14 +92,14 @@ nixos/           Flake for the NixOS VMs: netbird, edge (+ update.sh, aide-accep
 architecture/    LikeC4 model: landscape, containers, deployment, flows
 docs/            Architecture, ADRs, exported diagrams
 rendered_config/ Podman apps rendered with example values for review (just render, CI keeps it current)
-justfile         setup · lint · check · deploy · deploy-app · render · c4 · diagrams
+justfile         setup · lint · check · deploy · deploy-app · render · quadlet · c4 · diagrams
 ```
 
 ## Single source of truth
 
 - Ansible group_vars get read by OpenTofu (yamldecode) and Nix (facts.nix), so an IP only has to change in one place ([ADR 0007](docs/adr/0007-group-vars-single-source-of-truth.md))
-- `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `private/private.yml` with `yamldecode`
-- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `app_settings`, `apps`, `base`, `schedules`, `private/private.yml` YAML into JSON with yq-go
+- `tofu/locals.tf` reads `network.yml`, `ports.yml`, `hosts.yml`, `storage.yml`, `apps.yml`, `private/private.yml` with `yamldecode`
+- `nixos/facts.nix` turns `network`, `ports`, `hosts`, `app_settings`, `apps`, `base`, `schedules`, `private/private.yml` and `inventory.yml` into JSON with yq-go
 - `nixos/update.sh` + `aide-accept.sh` read the host IP (`netbird_ip`, `edge_ip`) from the same file
 - edge reads `apps.yml` too: every route becomes a Traefik router and an AdGuard rewrite ([nixos-layout](docs/nixos-layout.md#how-edge-builds-its-routes))
 - Ports: `port` in `apps.yml` → Podman units, Traefik routes, Gatus and Homepage checks, firewall
@@ -109,7 +110,7 @@ justfile         setup · lint · check · deploy · deploy-app · render · c4 
 
 - Copy `vault.yml.example` → `vault.yml`, create `ansible/.vault_pass`
 - Copy `private/private.yml.example` → `private/private.yml` and fill in your domain, macs, disk uuids, keys (gitignored, nothing secret)
-- `just setup` · `just check` · `just deploy <app>` · `just c4`
+- `just setup` · `just check` · `just deploy-app <app>` · `just c4`
 - Needs: just, pre-commit, Ansible, OpenTofu, Nix, Node, d2 (only for `just diagrams`) (the hooks install ansible-lint, yamllint, shellcheck, actionlint, zizmor, gitleaks)
 - From bare hardware, in order: [docs/bootstrap.md](docs/bootstrap.md)
 - OpenTofu: tfvars from the example, `tofu apply`

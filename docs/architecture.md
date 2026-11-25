@@ -26,7 +26,7 @@ The network is split into four zones.
 Three Proxmox nodes, each with one pod VM.
 
 **pve-1**: small form factor PC, 8 GB RAM
-- Runs pod-1 and the IoT gateway LXC, which holds pve-1's WiFi card
+- Runs pod-1, edge and the IoT gateway LXC, which holds pve-1's WiFi card
 
 ![](img/pve1.png)
 
@@ -67,7 +67,7 @@ Each node runs one pod VM, grouped by what the apps need. Ingress and LAN DNS ru
 | edge (VM 200) | pve-1 | Ingress and DNS (NixOS) | Traefik, AdGuard Home |
 | pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless, linkding, Memos, Excalidraw |
 
-- Every app runs as a rootless Podman quadlet, there is no Docker left; all three run the PBS client and AIDE
+- Every app runs as a rootless Podman quadlet, no Docker. All three run the PBS client and AIDE
 - Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
 - pod-3 gets to run the heavy services, because pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)
@@ -81,7 +81,7 @@ How a VM is built:
 Memory:
 - Guests start with their full RAM
 - The host can take memory back through ballooning, but never below a floor that covers real usage
-- The VMs have no disk swap (the NetBird VM has zram), the LXCs get a small swap
+- The VMs have no disk swap (the NixOS VMs have zram), the LXCs get a small swap
 
 How an LXC is built:
 - OpenTofu creates it unprivileged from the Debian 13 template, Proxmox writes the IP, root's SSH key and the hostname (no cloud-init)
@@ -113,7 +113,7 @@ The sharing:
 - Samba (SMB3) in the LXC shares it out
 - Shares: backups, iso, media, nextcloud, documents, photos, homelab and timemachine (capped at 1 TB)
 - Every share except homelab and timemachine (admin only) has its own service user, the group IDs count up from a base number
-- pod-3 mounts the shares it needs over CIFS under `/srv/<share>`, with the app's UID/GID
+- pod-3 mounts the shares its apps need over CIFS under `/srv/<path>` (`cifs_mount_root`, `path` from `apps.yml`), with the app's UID/GID
 - Databases never go on CIFS, they stay on the VM disk
 
 ## DNS
@@ -166,10 +166,10 @@ Authentik is the single login for the apps.
 
 - Authentik runs on pod-1 as one pod (server, worker and Postgres)
 - Its version is pinned and updated one release at a time (the tag in `apps.yml`, `authentik_series` in `app_settings.yml`, checked in `deploy-authentik.yml`)
-- Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, Actual Budget, linkding, Memos, NetBird
+- Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, Actual Budget, linkding, Memos, NetBird, Semaphore
 - Each of those apps keeps a local admin as a break-glass account, except Vaultwarden, Actual Budget and linkding (SSO only)
-- Apps without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, Prometheus, the Vaultwarden admin page
-- Containers can't resolve internal names: apps on pod-1 reach `auth.<domain>` through a network alias on Traefik, apps on pod-2/3 through an `extra_hosts` entry pointing at pod-1
+- UIs without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, AdGuard Home, Prometheus, the Gatus status page, the Vaultwarden admin page, Excalidraw and Cockpit. Which route gets it is `middlewares:` in `apps.yml`
+- Containers can't resolve internal names, so each app that logs in through Authentik pins `auth.<domain>` to edge with `AddHost=` (`app_sources.edge`)
 
 ## Remote access
 
@@ -211,13 +211,13 @@ How a backup runs:
 - Every pod VM has the PBS client (`roles/pbs`), started by a timer every evening at 20:00
 - A random delay keeps the hosts from starting at the same time
 - First the databases are dumped (Postgres, SQLite `.backup`)
-- Then `/srv/apps` (`podman_apps_root`) goes up as one archive (`/opt/stacks` too, as long as a host still has it)
+- Then `/srv/apps` (`podman_apps_root`) goes up as one archive
 - A failed run is pushed to ntfy, a good one sends a heartbeat to Gatus, which alerts when it stays away
-- The client's token can add backups and restore its own, not prune or delete them
+- The client's token can add backups and restore, not prune or delete. The three pod VMs share it
 
 What's in and out:
 - Which databases each host dumps is set in `pbs_jobs` in `host_vars/`
-- Left out: caches, query logs, the Prometheus TSDB and the MQTT broker state
+- Left out: Jellyfin's cache and transcodes, the Prometheus TSDB (`pbs_exclude`). edge, the LXCs and ctl-1 run no PBS client
 - Bulk media on the pool (photos, media, documents) isn't backed up; irreplaceable files are kept outside the lab
 - No VM images: a broken VM is rebuilt with OpenTofu + Ansible and the data restored ([ADR 0013](adr/0013-pbs-file-level-backups.md))
 
@@ -250,7 +250,7 @@ Every guest keeps its logs locally and sends them to the log LXC.
 - rsyslog forwards everything over RELP to the log LXC (CT 301 on pve-3), which writes `/var/log/remote/<host>/<program>.log` and keeps 90 days
 - A disk queue on each guest holds the messages while the log LXC is down
 - The log LXC only takes RELP from the known hosts (PVE firewall), the directory name comes from the sender's ip ([ADR 0022](adr/0022-central-logging-relp.md))
-- The NetBird VM does the same from `nixos/base/`, but journald pushes to rsyslog over the syslog socket, and there's no `cron` or `maillog`
+- The NixOS VMs (NetBird, edge) do the same from `nixos/base/logging.nix`, but journald pushes to rsyslog over the syslog socket, and there's no `cron` or `maillog`
 - The PVE nodes keep their own persistent journal
 
 Time:
@@ -296,11 +296,11 @@ Deploying, from the controller:
 - `tofu apply` for the VMs and the LXCs
 - `ansible-playbook` for the hosts and the apps
 - `nixos/update.sh <netbird|edge>` for the NixOS VMs
-- Semaphore on ctl-1 (a single-board computer outside the cluster) runs scheduled playbooks from a checkout copied over by hand
+- Semaphore on ctl-1 (a single-board computer outside the cluster) runs scheduled playbooks from a git clone of `main`, kept current by `repo-pull.yml`. Only `vault.yml` and `private.yml` are copied from the controller
 
 Checking:
-- `just check` runs the same 22 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
+- `just check` runs the same pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
 - They cover yamllint, ansible-lint (production profile), shellcheck, actionlint, zizmor, tofu fmt/validate, nix flake check, LikeC4 validate and gitleaks
-- Plus small checks for whitespace, private keys and file sizes
-- CI has two workflows: `ci.yml` runs the checks on pushes to main and testing and on every PR, `pages.yml` publishes the LikeC4 site when `architecture/` changes on main
+- Plus small checks for whitespace, private keys and file sizes, and the repo's own: `apps.yml` schema, wiring, rendered units, ADR and C4 checks
+- CI has three workflows: `ci.yml` runs the checks on pushes to main and testing and on every PR, `podman.yml` runs every unit through `quadlet -dryrun` on the same triggers, `pages.yml` publishes the LikeC4 site when `architecture/` changes on main
 - All GitHub Actions are pinned to a commit SHA

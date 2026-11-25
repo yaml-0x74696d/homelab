@@ -39,7 +39,7 @@ model {
       description "Wildcard cert via ACME DNS-01, routers built from apps.yml"
       style { icon tech:traefik-proxy }
     }
-    ddns = container "cloudflare-ddns" { description "Keeps the public A records current" }
+    ddns = container "cloudflare-ddns" { description "Keeps the public A and AAAA records current" }
     relay = container "dns-relay" {
       technology "CoreDNS"
       description "DNS for VPN clients on pod-2's overlay ip, forwards to the LAN DNS"
@@ -186,7 +186,7 @@ model {
     pbs-client = container "Backup client" {
       #ops
       technology "proxmox-backup-client + timer"
-      description "Nightly db dumps + config, data-only"
+      description "Evening db dumps + the app dirs, no VM images"
     }
   }
 
@@ -242,7 +242,7 @@ model {
   ops.semaphore -> ops.proxmox "ansible: pve nodes over ssh"
   ops.semaphore -> ops.hosts "ansible: apps over ssh"
   ops.controller -[sync]-> ops.semaphore "aide hashes + private overlays, both ways"
-  ops.controller -> ops.semaphore "copies vault, private.yml + overlays"
+  ops.controller -> ops.semaphore "copies vault.yml + private.yml"
 
   // ingress
   edge.traefik -[http]-> identity.authentik.server "forward-auth"
@@ -267,13 +267,13 @@ model {
   edge.traefik -[https]-> ops.cockpit "routes, behind forward-auth"
   edge.traefik -> cloudflare "ACME DNS-01 TXT records"
   edge.traefik -> letsencrypt "orders certificates"
-  edge.ddns -> cloudflare "keeps A records current"
+  edge.ddns -> cloudflare "keeps A/AAAA records current"
 
   // remote access
   remote.netbird.mgmt -[oidc]-> identity.authentik.server "login"
   remote.netbird -> cloudflare "ACME DNS-01"
   remote.router-peer -[wg]-> remote.netbird.signal "registers"
-  router -> remote.netbird "forwards 443 + STUN"
+  router -> remote.netbird "forwards 443, STUN + the TURN relay range"
 
   // sso
   apps.vaultwarden -[oidc]-> identity.authentik.server "login"
@@ -293,7 +293,7 @@ model {
   media.immich.server -[cifs]-> storage.samba "photo library"
   media.jellyfin -[cifs]-> storage.samba "media, read-only"
   media.paperless.web -[cifs]-> storage.samba "documents"
-  storage.pbs-client -> storage.pbs "nightly backup"
+  storage.pbs-client -> storage.pbs "evening backup"
   storage.pbs-client -> identity.authentik.pg "pg_dump"
   storage.pbs-client -> media.nextcloud.pg "pg_dump"
   storage.pbs-client -> media.immich.pg "pg_dump"

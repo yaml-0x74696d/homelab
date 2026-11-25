@@ -39,7 +39,7 @@ The zones themselves are in [architecture.md](architecture.md#zones).
 | Zone | Filtered by | Inbound |
 |---|---|---|
 | WAN → router | router port forwards | 443/tcp, 3478/udp and the narrow TURN relay range, to the NetBird VM only |
-| NetBird VM | nftables ([`nixos/base/hardening.nix`](../nixos/base/hardening.nix)) and the PVE guest firewall ([`roles/pve_firewall`](../ansible/roles/pve_firewall/README.md)) | 443, STUN/TURN, relay range. SSH from the LAN. Egress to the LAN limited to the routing peer, DNS/HTTPS on edge, RELP |
+| NetBird VM | nftables ([`nixos/base/hardening.nix`](../nixos/base/hardening.nix)) and the PVE guest firewall ([`roles/pve_firewall`](../ansible/roles/pve_firewall/README.md)) | 443, STUN/TURN, relay range. SSH from the LAN, node-exporter from Prometheus. Egress to the LAN limited to the routing peer, DNS/HTTPS on edge, RELP |
 | VPN | NetBird policies in [`tofu/netbird.tf`](../tofu/netbird.tf) | `admin`: the LAN. `household`: edge 443 and the DNS relay. Built-in all-to-all policy disabled |
 | edge | nftables ([`nixos/edge/`](../nixos/edge/)) | 80/443 and 53 from the LAN (VPN arrives as pod-2), SSH from the LAN, node-exporter from Prometheus |
 | Pod VMs | ufw, default deny ([`vm-preparation.yml`](../ansible/playbooks/vm-preparation.yml), [ADR 0026](adr/0026-ufw-as-guest-firewall.md)) | SSH rate-limited from the LAN, Cockpit from edge only (`cockpit_allow_from`), node-exporter from Prometheus only, each app port from its `allow_from` in `apps.yml` |
@@ -148,13 +148,13 @@ In transit:
 At rest:
 - The vault is encrypted with Ansible Vault, the controller's private folder sits on encrypted secure storage
 - Semaphore encrypts its key store (`semaphore_key_encryption`)
-- Node disks, guest disks, the pool and the PBS datastore are not encrypted at rest today
+- Node disks, guest disks, the pool and the PBS datastore are not encrypted at rest
 
 ## Supply chain and change control
 
 - GitHub Actions pinned to commit SHAs, each job with only the token permissions it needs (`contents: read` for the checks), `persist-credentials: false`, audited by zizmor ([`.github/workflows/`](../.github/workflows/))
 - pre-commit hooks pinned to commit SHAs
-- OpenTofu providers: `netbirdio/netbird` pinned exactly, `bpg/proxmox` within a minor range, both checked against the hashes in `tofu/.terraform.lock.hcl`
+- OpenTofu providers: `netbirdio/netbird` pinned exactly, `bpg/proxmox` at `~> 0.66` (any 0.x from 0.66 on), both checked against the hashes in `tofu/.terraform.lock.hcl`
 - NixOS: `nixos/flake.lock` in git, but the VMs move to the newest nixos-unstable every night ([ADR 0035](adr/0035-nixos-for-netbird-and-edge.md))
 - Images: fully qualified names (`scripts/check_wiring.py`), floating tags for apps, major tags for databases, Authentik one release series at a time ([updates.md](updates.md))
 - The same checks run locally (`just check`) and in CI: lint, `apps.yml` schema, wiring, ADR and C4 checks, gitleaks ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
