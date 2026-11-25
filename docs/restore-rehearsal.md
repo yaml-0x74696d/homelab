@@ -1,6 +1,6 @@
 # Restore rehearsal
 
-How a backup is proven to restore: take a fresh PBS snapshot, restore one Podman app and one compose app into a throwaway VM, check they start with their data, destroy the VM. Runs before every in-place rebuild of a Docker VM. What gets backed up is in [`roles/pbs/README.md`](../ansible/roles/pbs/README.md), the why in [ADR 0013](adr/0013-pbs-file-level-backups.md).
+How a backup is proven to restore: take a fresh PBS snapshot, restore one Podman app and one compose app into a throwaway VM, check they start with their data, destroy the VM. Runs before every in-place rebuild of a pod VM. What gets backed up is in [`roles/pbs/README.md`](../ansible/roles/pbs/README.md), the why in [ADR 0013](adr/0013-pbs-file-level-backups.md).
 
 ## The apps
 
@@ -11,7 +11,7 @@ How a backup is proven to restore: take a fresh PBS snapshot, restore one Podman
 | Archives | `podman-apps.pxar` + `dumps.pxar` | `apps.pxar` + `dumps.pxar` |
 | Tests | subuid ownership, quadlet deploy, SQLite swap | Postgres import into a fresh db, compose from the restored folder alone |
 
-- Grafana: pod-2 is the next rebuild, and it's the only Podman app whose data dir belongs to a uid inside the container (`472:0`), so a wrong owner shows right away
+- Grafana: its data dir belongs to a uid inside the container (`472:0`), so a wrong owner shows right away
 - Immich: the Postgres app with the most rows and the hardest import (vector extension). Paperless has no documents, so it would prove little
 - Other apps work the same way. The table under [Results](#results) says which ones were rehearsed
 
@@ -50,10 +50,10 @@ Built by hand with `qm` from the cloud image tofu already downloaded to every VM
 
 ### Make room
 
-pod-3 goes off: frees ~7 GB on pve-3, and the restore can't lean on the source. Nextcloud, Immich, Jellyfin and Paperless are down until step 7, Gatus alerts on them are expected.
+pod-3 goes off: frees ~7 GB on pve-3, and the restore can't lean on the source. pod-3's apps (Nextcloud, Immich, Jellyfin, Paperless, linkding, Memos, Excalidraw) are down until step 7, Gatus alerts on them are expected.
 
 ```bash
-qm shutdown 203 --timeout 180    # clean guest shutdown, docker stops the stacks
+qm shutdown 203 --timeout 180    # clean guest shutdown, the apps' user units stop
 ```
 
 ### Create
@@ -126,17 +126,16 @@ Same ports, uids and paths as prod are fine on a separate VM. What still has to 
 | OIDC | Authentik callbacks point at the prod names | log in with the local admin (break-glass) |
 | Grafana alerts | contact points in the restored `grafana.db`, public ntfy over 443 | alert execution off, see step 4 |
 | CIFS (Immich library) | `docker_app_cifs` in `deploy-immich.yml` | compose starts from the restored folder, the playbook isn't run, the paths stay empty local dirs |
-| Diun, docker-proxy | their own compose apps | not deployed |
 
 ### Base provisioning
 
-Controller, an inventory next to `inventory.yml` (group_vars only load from there). The throwaway is `restore` in `docker_hosts`, so it gets the same group_vars as pod-2:
+Controller, an inventory next to `inventory.yml` (group_vars only load from there). The throwaway is `restore` in `pod_vms`, so it gets the same group_vars as pod-2:
 
 ```yaml
 # ansible/inventory-restore.yml, listed in .git/info/exclude so it's never committed
 all:
   children:
-    docker_hosts:
+    pod_vms:
       hosts:
         restore:
           ansible_host: 192.168.178.199
@@ -268,7 +267,6 @@ sudo -u svc-<app> XDG_RUNTIME_DIR=/run/user/<uid> podman exec -i <app>-db \
 sudo systemctl --user -M svc-<app>@ start <app>-pod
 ```
 
-<!-- TODO(tim): pbs-backup.sh.j2 dumps postgres with `docker exec` only. a podman postgres job needs a podman path (as the svc user) before this can be rehearsed -->
 
 ## 5. Compose app: Immich
 

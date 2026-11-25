@@ -23,27 +23,28 @@
 8. AIDE: if the check in step 3 was clean and packages changed, `aide --update` and the new database is accepted (`roles/aide`, `tasks/accept.yml`)
 9. Records the result per host. The last play prints it and pushes it to ntfy, plus a line per host that was down (`reach_down`, `reach_skipped` from `roles/reach`)
 
-## Settings
-
-| Variable | Default | What |
-|---|---|---|
-| `update_cache_valid_time` | 3600 | Seconds before the apt cache is refreshed |
-| `update_conffile_dirs` | `[/etc]` | Where to look for new package configs |
-| `update_conffile_patterns` | dpkg-dist, dpkg-new, ucf-dist | What counts as one |
-| `update_check_kernel` | `true` | needrestart's kernel check. `false` on the LXCs, they run the node's kernel |
-| `update_check_quorum` | `false` | `true` in the pve play |
-| `update_quorum_retries`, `update_quorum_delay` | 6, 10 | Tries and seconds for the quorum check after the restarts |
-| `update_summary_hosts` | lxc_containers + pod_vms + podman_hosts + proxmox | Hosts the summary covers, in play order |
-| `update_aide_wait_retries`, `update_aide_wait_delay` | 60, 30 | How long to wait for a running daily AIDE check (tries, seconds) |
-| `update_ntfy_title` | homelab updates | ntfy title |
-| `update_ntfy_headers` | Title + Bearer `ntfy_token` if set | Headers for every ntfy push |
-
 ## Reading the summary
 
 - `REBOOT due`: new kernel or microcode, or `/run/reboot-required`. pve nodes: shut that node's guests down first
 - `stale`: services needrestart doesn't restart on its own (dbus, logind, ...). Reboot or restart by hand
 - `new conffiles`: we kept our config (`force-confold`), the package's version sits next to it. Merge by hand, then delete it
 - `aide review, was dirty before`: something changed before the upgrade. Not accepted, run `aide-accept.yml` and look first
+
+## Settings
+
+| Variable | Default | What |
+|---|---|---|
+| `update_cache_valid_time` | `3600` | Seconds before the apt cache is refreshed |
+| `update_conffile_dirs` | `[/etc]` | Where to look for new package configs |
+| `update_conffile_patterns` | dpkg-dist, dpkg-new, ucf-dist | What counts as one |
+| `update_check_kernel` | `true` | needrestart's kernel check. `false` on the LXCs, they run the node's kernel |
+| `update_check_quorum` | `false` | `true` in the pve play |
+| `update_quorum_retries`, `update_quorum_delay` | `6`, `10` | Tries and seconds for the quorum check after the restarts |
+| `update_summary_hosts` | lxc_containers + pod_vms + podman_hosts + proxmox | Hosts the summary covers, in play order |
+| `update_aide_wait_retries`, `update_aide_wait_delay` | `60`, `30` | How long to wait for a running daily AIDE check (tries, seconds) |
+| `update_ntfy_title` | `homelab updates` | ntfy title |
+| `update_ntfy_headers` | Title + Bearer `ntfy_token` if set | Headers for every ntfy push |
+| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings, an empty URL sends nothing |
 
 ## Notes
 
@@ -52,3 +53,8 @@
 - A failed host stops the run and pushes an alert plus the summary of the hosts done so far. The hosts after it aren't touched
 - A host that's down at the start doesn't stop the run. In `reach_optional_hosts` (the part-time nodes and their guests) it's `off, skipped` and the run exits 0. Any other is `DOWN, not updated` and the run exits non-zero
 - ntfy only gets counts. Service names and paths stay in the terminal (ntfy.sh is a public relay)
+
+## Related
+
+- [ADR 0024: OS updates through one Ansible run](../../../docs/adr/0024-ansible-run-os-updates.md)
+- `reach` role (the first play), `aide` role (the baseline step)

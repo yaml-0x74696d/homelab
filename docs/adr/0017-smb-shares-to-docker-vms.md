@@ -45,7 +45,7 @@ The clients (`cifs` in `apps.yml`, mounted by `roles/podman_app`):
   - Nextcloud uses `nobrl` (no SMB byte-range locks)
   - Nextcloud only sees the photos read-only (`ro`), because Immich owns that library
 
-- Enforced by: the Samba role first checks that `storage_root` really is a mount point, and `testparm -s` validates `smb.conf` before it's written
+- Enforced by: the Samba role first checks that `storage_root` is a mount point, and `testparm -s` validates `smb.conf` before it's written
 
 ## Consequences
 

@@ -9,17 +9,17 @@
 
 ## How it works
 
-- `/usr/local/sbin/pve-thinpool-metrics` runs `lvs`, keeps the thin pools (attr `t…`) and writes `thinpool_data_metric` and `thinpool_metadata_metric` per pool (labels `vg`, `pool`) to a temp file, then moves it over `thinpool.prom`
-- `pve-thinpool-metrics.timer` runs it every `pve_thinpool_interval`
-- A drop-in on `prometheus-node-exporter.service` adds `--collector.textfile.directory`, on top of the `ARGS` from `/etc/default`. The role stops if Debian's defaults file isn't there
-- Prometheus' `pve-hosts` job scrapes the metrics with the rest
-- Gatus (`apps/gatus/config.yaml.j2`): per node `<node> thin pool data`, `<node> thin pool metadata` and `<node> thin pool metrics fresh`, queried with `instance="<ip>:<node_exporter_port>"` (the `pve-hosts` job's label). The fresh check is `time() - node_textfile_mtime_seconds` of the file against `gatus_thinpool_stale_max`. No result at all fails every check. Gatus compares values as integers, so 85.9 passes a limit of 85
+1. `/usr/local/sbin/pve-thinpool-metrics` runs `lvs`, keeps the thin pools (attr `t…`) and writes `pve_thinpool_data_percent` and `pve_thinpool_metadata_percent` (`thinpool_*_metric`) per pool (labels `vg`, `pool`) to a temp file, then moves it over `thinpool.prom`
+2. `pve-thinpool-metrics.timer` runs it every `pve_thinpool_interval`
+3. A drop-in on `prometheus-node-exporter.service` adds `--collector.textfile.directory`, on top of the `ARGS` from `/etc/default`. The role stops if Debian's defaults file isn't there
+4. Prometheus' `pve-hosts` job scrapes the metrics with the rest
+5. Gatus (`apps/gatus/config.yaml.j2`): per node `<node> thin pool data`, `<node> thin pool metadata` and `<node> thin pool metrics fresh`, queried with `instance="<ip>:<node_exporter_port>"` (the `pve-hosts` job's label). The fresh check is `time() - node_textfile_mtime_seconds` of the file against `gatus_thinpool_stale_max`. No result at all fails every check. Gatus compares values as integers, so 85.9 passes a limit of 85
 
 ## Settings
 
 | Variable | Default | What |
 |---|---|---|
-| `pve_thinpool_interval` | `thinpool_interval_min` minutes (5) | Timer interval |
+| `pve_thinpool_interval` | `thinpool_interval_min` minutes (`5`) | Timer interval |
 | `pve_thinpool_textfile_dir` | `/var/lib/prometheus/node-exporter` | node-exporter's textfile dir, AIDE leaves it out |
 | `pve_thinpool_file` | `thinpool_file` (`thinpool.prom`) | File in that dir, the fresh check matches it |
 | `pve_thinpool_data_metric`, `pve_thinpool_metadata_metric` | `thinpool_*_metric` (group_vars) | Metric names, Gatus queries the same ones |

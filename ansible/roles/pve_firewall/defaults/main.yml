@@ -6,17 +6,17 @@ pve_firewall_host_enabled: false      # pve host mgmt lockdown (the lockout-risk
 pve_firewall_lan_cidr: "{{ lan_cidr }}"
 pve_firewall_gateway_ip: "{{ gateway_ip }}"
 
-# the netbird routing peers — the netbird vm must reach these FULLY (turn relay uses
-# arbitrary ports). rest of the lan stays dropped.
+# the netbird routing peers, the netbird vm reaches these in full (turn relay uses
+# arbitrary ports). rest of the lan stays dropped
 pve_firewall_routing_peers: "{{ groups['netbird_agent'] | map('extract', hostvars, 'ansible_host') | list }}"
 
 # lan hosts the netbird vm only needs dns + https on: the ingress (authentik, gitea), edge in the parallel run, the dns service ip
 pve_firewall_netbird_dns_https: "{{ [app_sources.edge, dns_ip] + ingress_extra_sources }}"
 
-# ssh (22) to the pve hosts — real shells only
+# ssh (22) to the pve hosts, real shells only
 pve_firewall_ssh_hosts: "{{ admin_hosts }}"
 
-# web ui (8006) — admins, ui-only devices + the infra callers (homepage widget, gatus)
+# web ui (8006): admins, ui-only devices + the infra callers (homepage widget, gatus)
 pve_firewall_ui_hosts: >-
   {{ admin_hosts + admin_ui_hosts + [{'ip': pod1_ip, 'c': 'homepage widget'},
      {'ip': hostvars[apps['gatus'].host].ansible_host, 'c': 'gatus'}] }}
@@ -59,8 +59,8 @@ pve_firewall_haos_callers:   # traefik + homepage's status dot, the same host un
   - { ip: "{{ hostvars[apps['homepage'].host].ansible_host }}", c: homepage }
 pve_firewall_haos_observer_port: 4357   # haos' supervisor health page
 
-# guests that must stay UNfiltered: their nic firewall bit is on, so the master switch
-# would default-DROP them unless we drop an explicit "enable: 0" per guest.
-# PRE-FLIGHT: add every other vmid that shows firewall=1 or it breaks.
+# guests that stay unfiltered: their nic firewall bit is on, so the master switch
+# default-drops them without an explicit "enable: 0" per guest.
+# add every other vmid that shows firewall=1 or it breaks
 # edge filters itself (nftables), like the pod vms with ufw
 pve_firewall_open_guests: ["{{ vmids.edge }}", "{{ vmids.pod1 }}", "{{ vmids.pod2 }}", "{{ vmids.pod3 }}", "{{ vmids.storage }}"]

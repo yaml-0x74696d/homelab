@@ -13,5 +13,5 @@ mqtt_exporter_cache_timeout: 5m   # a sensor silent this long drops out of /metr
 
 # mqtt_name = last topic part. the device lands in the `sensor` label
 mqtt_exporter_metrics:
-  - { prom_name: iot_temperature_celsius, mqtt_name: temperature, help: "Temperature in Celsius (DHT22)" }
-  - { prom_name: iot_humidity_percent, mqtt_name: humidity, help: "Relative humidity in percent (DHT22)" }
+  - { prom_name: iot_temperature_celsius, mqtt_name: temperature, help: "Temperature in Celsius" }
+  - { prom_name: iot_humidity_percent, mqtt_name: humidity, help: "Relative humidity in percent" }

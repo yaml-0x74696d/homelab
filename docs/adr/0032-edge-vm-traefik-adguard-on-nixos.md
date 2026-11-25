@@ -41,7 +41,6 @@ AdGuard Home (`nixos/edge/adguard.nix`):
 - Upstreams Quad9 and Cloudflare over DoT and DoH, one blocklist (AdGuard DNS filter), query log kept 7 days
 - UI on localhost only, served as `dns.<domain>` behind Authentik, no AdGuard login
 - Break-glass when Authentik is down: `ssh -L 3000:127.0.0.1:3000 <admin_user>@<edge_ip>`, then `http://localhost:3000`. The SSH key is the lock, no AdGuard user (its hash would land in the world-readable nix store)
-- Accepted: sshd allows local forwarding for any target, so anyone holding an admin key can use edge as a jump host into the LAN
 
 Apps calling Authentik:
 - The pod VMs resolve through the router, which doesn't know the LAN names. Apps that call `auth.<domain>` themselves (OIDC discovery, tokens) pin it to edge: `AddHost=` in the Podman units, from `app_sources.edge`
@@ -61,9 +60,10 @@ Updates:
 
 - Harder: edge is a single point for LAN DNS and every route, a broken switch takes both down (rollback is the previous generation)
 - Harder: autoUpgrade builds on a 1.5 GB VM, zram is the only cushion
-- Harder: the Cloudflare token now also lives on edge
+- Harder: the Cloudflare token also lives on edge
 
 - Accepted: changes made in the AdGuard UI are gone at the next restart, the UI is for looking
 - Accepted: a wildcard certificate covers every name under the domain, a stolen key would too
+- Accepted: sshd allows local forwarding for any target, so anyone holding an admin key can use edge as a jump host into the LAN
 
 - Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0005](0005-prevent-destroy-on-stateful-vms.md) (prevent_destroy), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0009](0009-aide-with-manual-accept.md) (AIDE), [0010](0010-lan-dns-on-a-service-ip.md) (service IP), [0014](0014-authentik-as-idp.md) (forward-auth), [0022](0022-central-logging-relp.md) (logging), [0027](0027-gatus-generated-from-apps-map.md) (apps map), [0034](0034-tls-via-dns-01.md) (DNS-01), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS)

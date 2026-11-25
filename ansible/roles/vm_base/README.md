@@ -11,9 +11,9 @@
 
 ## How it works
 
-1. Installs `vm_base_packages` (guest agent, cockpit, auditd, fail2ban, AppArmor, unattended-upgrades, needrestart, ...), and node_exporter without its recommends (they pull ipmitool + openipmi)
-2. unattended-upgrades: security origins only, no automatic reboot
-3. sysctl from `vm_base_sysctl` (syncookies, no redirects, rp_filter, no IPv6, ...)
+1. Installs `vm_base_packages` (auditd, fail2ban, AppArmor, unattended-upgrades, needrestart, ...), the guest agent and cockpit when on, and node_exporter without its recommends (they pull ipmitool + openipmi)
+2. unattended-upgrades: security origins only, no automatic reboot. Stops if apt has no Debian-Security source
+3. sysctl from `vm_base_sysctl` (syncookies, no redirects, rp_filter, no IPv6, ...), and the same keys removed from `/etc/sysctl.conf`
 4. Login banner in `/etc/issue` + `/etc/issue.net`
 5. sshd: no root login, no passwords, no X11, `MaxAuthTries` + keepalive from group_vars
 6. auditd watches shadow, passwd, sudoers and sshd_config
@@ -26,11 +26,16 @@
 |---|---|---|
 | `vm_base_packages` | see defaults | Package set |
 | `vm_base_sysctl` | see defaults | Kernel settings, name → value |
-| `vm_base_rp_filter` | 1 | Reverse path filter, 2 (loose) on pod-2, the netbird routing peer |
-| `vm_base_sysctl_file` | `/etc/sysctl.d/90-vm-base.conf` | Debian 13 no longer reads `/etc/sysctl.conf` at boot |
-| `vm_base_services` | auditd, fail2ban, apparmor, node_exporter | Enabled and started |
-| `vm_base_guest_agent` | true | Installs qemu-guest-agent. Off on bare metal (ctl-1) |
-| `vm_base_cockpit` | true | Installs cockpit and starts its socket. Off on ctl-1 |
+| `vm_base_rp_filter` | `1` | Reverse path filter, 2 (loose) on pod-2, the netbird routing peer |
+| `vm_base_sysctl_file` | `/etc/sysctl.d/90-vm-base.conf` | Debian 13 reads only `/etc/sysctl.d` at boot |
+| `vm_base_services` | auditd, fail2ban, apparmor, node_exporter | Enabled and started, plus `cockpit.socket` when `vm_base_cockpit` |
+| `vm_base_guest_agent` | `true` | Installs qemu-guest-agent. Off on bare metal (ctl-1) |
+| `vm_base_cockpit` | `true` | Installs cockpit and starts its socket. Off on ctl-1 |
 | `vm_base_cockpit_origins` | `https://<host>.<domain>` | Websocket origins cockpit accepts (`Origins`) |
-| `vm_base_cockpit_protocol_header` | X-Forwarded-Proto | Header telling cockpit the proxy spoke TLS (`ProtocolHeader`) |
+| `vm_base_cockpit_protocol_header` | `X-Forwarded-Proto` | Header telling cockpit the proxy spoke TLS (`ProtocolHeader`) |
 | `login_banner_text`, `ssh_*`, `timezone` | group_vars | Shared with the other hosts |
+
+## Related
+
+- [ADR 0024: OS updates through one Ansible run](../../../docs/adr/0024-ansible-run-os-updates.md)
+- `lxc_base` role (the LXC side), `podman_base` role (runs next)

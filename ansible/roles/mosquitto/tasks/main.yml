@@ -54,7 +54,7 @@
   diff: false
   ignore_errors: "{{ ansible_check_mode }}"   # no /etc/mosquitto before the package
 
-# left by older runs
+# no clear copy stays on disk
 - name: Remove clear credentials
   ansible.builtin.file:
     path: "{{ mosquitto_passwd_file }}.clear"

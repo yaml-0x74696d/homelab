@@ -6,7 +6,7 @@ Status: Accepted
 
 - I run the lab alone, so nobody else looks at my changes
 - An AI assistant (Claude Code) gives a second pair of eyes and a fresh view, and takes over checks and drafts I would skip
-- What makes AI-assisted work safe is not the assistant, it's the checks in the pipeline and the review before anything lands
+- AI-assisted work is only as safe as the checks in the pipeline and the review before anything lands
 - Example: the unattended-upgrades config matched no Debian repository and passed every hook. A review found it, and the fix added a check that fails when no Debian-Security source exists (issue #32). A check only catches what someone thought to test, so the review stays
 - An assistant reads text from the web and the repo. Injected text or a plain mistake can steer it
 - ctl-0 holds the SSH keys and the vault
@@ -24,6 +24,7 @@ Who does what:
 - Claude Code is a tool: it runs the checks, generates the C4 model, writes drafts I rewrite, and reviews my changes as a second pair of eyes
 
 The sandbox (its own VM, `claude`, VM 400 on pve-3):
+- VM 400 is set up by hand, outside tofu and the inventory
 - bubblewrap around the whole session: the home is read-only apart from its work folders, secrets and host sockets are hidden
 - No network interface. socat passes one unix socket into the sandbox, and that socket leads to tinyproxy on the VM
 - tinyproxy only allows an allowlist of hosts on port 443 and denies everything else. An nft table keeps tinyproxy itself away from the LAN

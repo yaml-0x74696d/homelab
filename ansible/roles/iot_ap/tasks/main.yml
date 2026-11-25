@@ -34,7 +34,7 @@
     state: directory
     mode: "0755"
 
-# was wifi-txpower.service on the node
+# hostapd drop-in, so the tx power is set on every start
 - name: Tx power after every start
   ansible.builtin.template:
     src: txpower.conf.j2

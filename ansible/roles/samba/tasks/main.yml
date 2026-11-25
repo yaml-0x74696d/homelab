@@ -103,7 +103,7 @@
     src: "{{ samba_lan }}"
     direction: in
   loop:
-    - { rule: limit, port: '22' }
+    - { rule: limit, port: "{{ ssh_port }}" }
     - { port: '445' }
     - { port: '139' }
   when: samba_manage_ufw

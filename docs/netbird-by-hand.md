@@ -1,6 +1,6 @@
 # Adopting an existing NetBird dashboard
 
-A guide for taking over click-made NetBird objects with `tofu import`, e.g. on a rebuild or a second lab. The end state is `tofu/netbird.tf` ([ADR 0040](adr/0040-netbird-policy-as-code.md)). On a fresh lab skip this and follow [bootstrap step 4](bootstrap.md).
+Taking over click-made NetBird objects with `tofu import`, e.g. on a rebuild or a second lab. The end state is `tofu/netbird.tf` ([ADR 0040](adr/0040-netbird-policy-as-code.md)). On a fresh lab skip this and follow [bootstrap step 7b](bootstrap.md#7b-netbird).
 
 ## 1. Inventory
 
@@ -24,9 +24,7 @@ done
 
 ## 2. Service user and PAT
 
-- Dashboard: Team, Service Users, new user `tofu`, role admin
-- Make a personal access token for it, lifetime up to a year
-- It goes in `netbird_token` in `terraform.tfvars`, nowhere else
+- Make the service user `tofu` and its token, into `netbird_token` in `terraform.tfvars`: [netbird.md, the tofu token](netbird.md#administration)
 
 ## 3. Groups
 
@@ -44,8 +42,7 @@ done
 - `admin-lan`: `admin` to `res-lan`, all protocols
 - `household-web`: `household` to `res-edge`, TCP 443
 - `vpn-dns-admin-udp`, `vpn-dns-admin-tcp`, `vpn-dns-household-udp`, `vpn-dns-household-tcp`: the source group to `routing`, the `dns-relay` port (`apps.yml`), one policy per protocol
-- After creating the DNS policies, `tofu plan` must show no diff. If the server keeps only one rule per policy, split them into one policy per protocol
-- A posture check with the minimum client version on the two household policies
+- A posture check with the minimum client version on the three household policies (`household-web`, both `vpn-dns-household-*`)
 - No policy from `household` to `res-netbird`
 
 ## 6. DNS

@@ -3,7 +3,7 @@
 pbs_on_calendar: "{{ pbs_backup_time }}"
 pbs_randomized_delay: "{{ pbs_backup_delay }}"
 
-# pbs target. the token adds backups and restores its own, no prune or delete (role DatastoreBackup on /datastore/homelab)
+# pbs target. the token adds backups and restores its own backups, no prune or delete (role DatastoreBackup on /datastore/homelab)
 pbs_datastore: homelab
 pbs_token_id: "backup@pbs!client"
 pbs_repository: "{{ pbs_token_id }}@{{ pve3_ip }}:{{ pbs_port }}:{{ pbs_datastore }}"
@@ -11,7 +11,7 @@ pbs_id: "{{ inventory_hostname }}"        # backup group id, one per host
 
 # staging dir + app dir: pbs_staging_dir / podman_apps_root in group_vars (aide excludes them too)
 
-# failure alerts → ntfy. uses the shared ntfy_url/ntfy_token from vault; empty = off.
+# failure alerts to ntfy, shared ntfy_url/ntfy_token from vault; empty = off
 pbs_ntfy_url: "{{ ntfy_url | default('') }}"
 pbs_ntfy_token: "{{ ntfy_token | default('') }}"
 

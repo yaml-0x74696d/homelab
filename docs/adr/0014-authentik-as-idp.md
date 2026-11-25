@@ -18,7 +18,7 @@ Status: Accepted
 ## Decision
 
 The setup:
-- Authentik on pod-1 (`apps/authentik`, `deploy-authentik.yml`): one Podman pod with server, worker and Postgres (`16-alpine`, no auto-update)
+- Authentik on pod-1 (`apps/authentik`, `deploy-authentik.yml`): one Podman pod with server, worker and Postgres (`16-alpine`, auto-updates inside 16 like every database, [0021](0021-podman-quadlets.md))
 - MFA is enforced in Authentik
 - Every app keeps a local admin as a break-glass account, except Vaultwarden (`SSO_ONLY=true`), Actual Budget (`ACTUAL_OPENID_ENFORCE`, [0037](0037-actual-budget-on-pod-2.md)) and linkding (`LD_DISABLE_LOGIN_FORM`, [0038](0038-linkding-memos-excalidraw-on-pod-3.md))
 - The version is pinned as the image tag in `group_vars/all/apps.yml`, the release series it may step through are `authentik_series` in `app_settings.yml`
@@ -30,7 +30,7 @@ Two ways apps use it:
   - NetBird logs in this way too (public PKCE client, [0003](0003-netbird-instead-of-port-forwards.md))
 - Forward-auth, for UIs that are only used in the browser
   - Traefik middleware `authentik` on edge (`nixos/edge/traefik.nix`) sends the request to the embedded outpost on pod-1 first
-  - Used by the Traefik dashboard, Prometheus and the Vaultwarden admin page
+  - Used by the Traefik dashboard, AdGuard Home's UI, Prometheus, Gatus' status page, Excalidraw, Cockpit and the Vaultwarden admin page
   - Cockpit on the pod VMs is reached only this way: through edge and forward-auth, port 9090 only from edge (`cockpit_allow_from`)
 
 Connecting apps:
@@ -51,4 +51,4 @@ Connecting apps:
 - Accepted: Cockpit needs two logins (Authentik, then PAM), and is out of reach while edge or Authentik is down. Break-glass: set `cockpit_allow_from` to `lan_cidr`, or use ssh
 - Accepted: with Authentik down, Vaultwarden takes no new logins. Clients that are already logged in keep their offline copy
 
-- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird OIDC), [0034](0034-tls-via-dns-01.md) (TLS), [0002](0002-generic-docker-app-role.md) (app role), [0037](0037-actual-budget-on-pod-2.md) (Actual Budget, SSO only), [0038](0038-linkding-memos-excalidraw-on-pod-3.md) (linkding, SSO only)
+- Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird OIDC), [0034](0034-tls-via-dns-01.md) (TLS), [0021](0021-podman-quadlets.md) (app role), [0037](0037-actual-budget-on-pod-2.md) (Actual Budget, SSO only), [0038](0038-linkding-memos-excalidraw-on-pod-3.md) (linkding, SSO only)

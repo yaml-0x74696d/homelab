@@ -27,36 +27,37 @@ Where the hardware is written down, and what to change when a node is replaced, 
 
 The new box takes over the old node's name, IP and guests.
 
-1. Install Proxmox, give it the old name and IP, join the cluster ([bootstrap step 1](bootstrap.md#1-proxmox-nodes)). Remove the old node from the cluster first (`pvecm delnode <name>` on a remaining node)
-2. If the CPU level differs (x86-64-v2 vs v3), every guest that will run on it has to match: `cpu = host` passes the node's CPU straight through
-3. Storage that lived on the old box (the pool disks, the PBS datastore on pve-3): new UUIDs into `storage_disks`, the datastore LV again
-4. Its guests: `tofu apply -target=...` per guest ([bootstrap step 2](bootstrap.md#2-guests-opentofu)), then base, apps and data restore (steps 3 to 7). The MACs in `private.yml` stay, so the DHCP leases do too
-5. AIDE baselines for the node and its guests (step 8)
+1. Install Proxmox, give it the old name and IP, join the cluster ([bootstrap step 1](bootstrap.md#1-proxmox-nodes)). Remove the old node from the cluster first, on a remaining node: `pvecm delnode <name>`, then its leftover dir `rm -r /etc/pve/nodes/<name>`, or the new node finds the old one's guests and certs there
+2. After the join: `pvecm updatecerts` on the new node. Remove the old host key on the controller (`ssh-keygen -R <ip>`) and in Semaphore's `known_hosts` ([troubleshooting](troubleshooting.md#proxmox-opentofu-vms), "A renamed VM keeps its old hostname")
+3. If the CPU level differs (x86-64-v2 vs v3), every guest that will run on it has to match: `cpu = host` passes the node's CPU straight through
+4. Storage that lived on the old box (the pool disks, the PBS datastore on pve-3): UUIDs of new disks into `storage_disks` (moved disks keep theirs), the datastore LV again
+5. Its guests: `tofu apply -target=...` per guest ([bootstrap step 2](bootstrap.md#2-guests-opentofu)), then base, apps and data restore (steps 3 to 7). The MACs in `private.yml` stay, so the DHCP leases do too
+6. AIDE baselines for the node and its guests (step 8)
 
 ## Add a node
 
 1. `pveN_ip` in `network.yml`, the host in `inventory.yml` (`proxmox`), Proxmox installed and joined
 2. PVE firewall, login-notify and thin pool metrics: `deploy-pve-firewall.yml`, `deploy-login-notify.yml`, `deploy-pve-thinpool.yml` (all run on their own, not from `site.yml`)
-3. Monitoring: a Homepage tile in `apps/homepage/services.yaml.j2` (Servers) and a `pve-hosts` target in `apps/prometheus/config/prometheus.yml.j2`, both by hand. Gatus picks it up from the inventory
-4. Move guests onto it, see below
+3. Monitoring: a Homepage tile in `apps/homepage/services.yaml.j2` (Servers) and a `pve-hosts` target in `apps/prometheus/config/prometheus.yml.j2`, both by hand. Gatus picks it up from the inventory on its next deploy (`just deploy-app gatus`)
+4. AIDE baseline: `ansible-playbook playbooks/aide.yml -l pve-N`, then move guests onto it, see below
 5. A fourth node changes the quorum math: with 4 nodes, losing 2 stops the cluster. Use an odd count or a QDevice
 
 ## Move a guest to another node
 
 1. Migrate it in Proxmox first: `qm migrate <vmid> <node>` (VM, offline unless shared storage), `pct migrate <vmid> <node> --restart` (LXC)
 2. Set its node in `guest_nodes`
-3. `tofu plan -target=...` for that guest has to show no replace. The guests have `prevent_destroy`, so a plan that wants to recreate one stops, fix the state, don't remove the guard ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md))
-4. Moving the IoT LXC means moving the WiFi card with it: `iot_node` follows `guest_nodes.iot`
+3. `tofu plan -target=...` for that guest has to show no replace. The VMs have `prevent_destroy`, so a plan that wants to recreate one stops, fix the state, don't remove the guard. The LXCs don't: never apply a plan that replaces one ([ADR 0005](adr/0005-prevent-destroy-on-stateful-vms.md))
+4. Moving the IoT LXC means moving the WiFi card with it: `iot_node` follows `guest_nodes.iot`, `iot_wifi_nic` if the card's name differs there
 
 ## Remove a node
 
 1. Move its guests away (above), or retire them
 2. Shut it down, `pvecm delnode <name>` on a remaining node
 3. Remove it from `inventory.yml`, `network.yml` (`pveN_ip`, `part_time_nodes`), `infra_routes` in `apps.yml` (its UI route), and the Homepage node tile in `apps/homepage/services.yaml.j2` (Servers)
-4. Gatus follows the inventory. Prometheus lists the nodes by hand (`pve-hosts` in `apps/prometheus/config/prometheus.yml.j2`). Edit, then `just deploy-app prometheus` and `just deploy-app gatus`
+4. Gatus follows the inventory. Prometheus lists the nodes by hand (`pve-hosts` in `apps/prometheus/config/prometheus.yml.j2`). Edit, then `just deploy-app prometheus`, `just deploy-app gatus` and `just deploy-app homepage`
 
 ## Resize a guest
 
 - RAM, balloon, cores: `tofu/locals.tf`, then a targeted apply. A RAM change needs a cold stop and start of the guest
 - Disk: grow only. `disk` in `tofu/locals.tf`, a targeted apply, then grow the partition and file system inside ([troubleshooting](troubleshooting.md#podman-apps))
-- `tofu/README.md` and the README's VM table list the sizes, keep them in step
+- The README's VM table lists the sizes, keep it in step

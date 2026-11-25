@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- The VMs (`pod_vms`), in `playbooks/base.yml`
+- The VMs and ctl-1 (`pod_vms`, `podman_hosts`), in `playbooks/base.yml`
 - Not the LXCs (they use the host's clock) and not the pve nodes (PVE ships its own chrony)
 
 ## How it works
@@ -22,10 +22,14 @@ Set in `group_vars/all/base.yml`, shared with `nixos/base`.
 | Variable | Default | What |
 |---|---|---|
 | `chrony_servers` | PTB ×3 + Cloudflare | NTS servers (the Debian pool has no NTS) |
-| `chrony_makestep_threshold` | 1 | Seconds of offset that get stepped instead of slewed |
-| `chrony_makestep_limit` | 3 | For how many updates after start stepping is allowed |
+| `chrony_makestep_threshold` | `1` | Seconds of offset that get stepped instead of slewed |
+| `chrony_makestep_limit` | `3` | For how many updates after start stepping is allowed |
 
 ## Notes
 
 - NTS needs outbound tcp/4460 for the key exchange, then udp/123
 - Check with `chronyc -N authdata` (NTS column) and `chronyc tracking`
+
+## Related
+
+- [ADR 0023: chrony with NTS for time sync](../../../docs/adr/0023-chrony-with-nts.md)

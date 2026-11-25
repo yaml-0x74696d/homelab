@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Check docs/adr against the house style. Usage: check_adr.py [repo-or-adr-dir]"""
+"""Check docs/adr against the house style. Usage: check_adr.py [repo-or-adr-dir]
+
+Every Consequences bullet carries a label: Easier, Harder, Accepted, Later, Related.
+"""
 import re
 import sys
 from pathlib import Path
@@ -8,7 +11,8 @@ STATUSES = ("Accepted", "Proposed", "Superseded")
 # superseded ones name their successor: "Status: Superseded by [0021](0021-....md)"
 SUPERSEDED_RE = re.compile(r"^ by \[(\d{4})\]\(\1-[^)]+\.md\)$")
 SECTIONS = ["Context", "Decision", "Consequences"]
-CONSEQUENCE_ORDER = ["Easier", "Harder", "Accepted"]
+# every Consequences bullet starts with one of these, in this order, Related last
+CONSEQUENCE_ORDER = ["Easier", "Harder", "Accepted", "Later"]
 FILE_RE = re.compile(r"^(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
 LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)#\s]+)(?:#[^)]*)?\)")
 BANNED = {"—": "em dash, use a comma, colon or new bullet", "–": "en dash outside a number range"}
@@ -93,8 +97,11 @@ def check_adr(path, num):
     seen = [k for l in cons for k in CONSEQUENCE_ORDER if l.startswith(f"- {k}:")]
     firsts = list(dict.fromkeys(seen))
     if firsts != [k for k in CONSEQUENCE_ORDER if k in firsts]:
-        err(name, f"consequence groups out of order {firsts}, want Easier, Harder, Accepted")
+        err(name, f"consequence groups out of order {firsts}, want {', '.join(CONSEQUENCE_ORDER)}")
     bullets = [l for l in cons if l.startswith("- ")]
+    for l in bullets:
+        if not any(l.startswith(f"- {k}:") for k in CONSEQUENCE_ORDER + ["Related"]):
+            err(name, f"consequence without a label ({', '.join(CONSEQUENCE_ORDER)}, Related), move it to Decision: {l}")
     if not bullets or not bullets[-1].startswith("- Related:"):
         err(name, "last Consequences bullet must be '- Related: ...'")
 

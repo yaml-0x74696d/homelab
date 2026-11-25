@@ -1,10 +1,19 @@
 # Architecture
 
-![System landscape](img/index.png)
+![System landscape](img/landscape.png)
 
-- The diagrams are generated from a LikeC4 model in `architecture/*.c4`, 21 views in total
+- The diagrams are generated from a LikeC4 model in `architecture/*.c4`, 24 views in total
 - `just c4` exports them as PNGs into `docs/img/`
-- Views: the landscape above, a deployment view (overview + one per node), one container view per system and 8 flows
+- Views: the landscape above with every edge, a short version of it for the README (`index`), a deployment view (overview + one per node), one container view per system and 10 flows
+
+What runs where:
+- Three Proxmox nodes, each with one Debian pod VM that runs its apps as rootless Podman quadlets
+- Two NixOS VMs: edge (Traefik + AdGuard Home, routes and DNS names from `apps.yml`) and NetBird, the only box forwarded from the WAN
+- LXCs for the storage pool (Samba over mergerfs), the central logs and the IoT gateway, Home Assistant as an appliance VM
+- Authentik logs into the apps, PBS backs up the app data, the VMs are rebuilt from code
+- Prometheus, Grafana and Gatus watch it, alerts go to ntfy
+
+Sections: [Zones](#zones) · [Nodes](#nodes) · [Compute](#compute) · [Storage](#storage) · [DNS](#dns) · [Request path](#request-path) · [Certificates](#certificates) · [Identity](#identity) · [Remote access](#remote-access) · [Backups](#backups) · [Monitoring](#monitoring) · [Logging and time](#logging-and-time) · [Home automation](#home-automation) · [Delivery](#delivery)
 
 ## Zones
 
@@ -26,7 +35,7 @@ The network is split into four zones.
 Three Proxmox nodes, each with one pod VM.
 
 **pve-1**: small form factor PC, 8 GB RAM
-- Runs pod-1 and the IoT gateway LXC, which holds pve-1's WiFi card
+- Runs pod-1, edge and the IoT gateway LXC, which holds pve-1's WiFi card
 
 ![](img/pve1.png)
 
@@ -60,16 +69,19 @@ Ansible also sets up a couple of services on the hosts themselves:
 
 Each node runs one pod VM, grouped by what the apps need. Ingress and LAN DNS run on their own NixOS VM, edge.
 
-| VM | Node | Purpose | Apps |
-|---|---|---|---|
-| pod-1 (VM 201) | pve-1 | Core | Authentik, Vaultwarden, Gitea, Homepage, SearXNG, pdfcraft, DDNS |
-| pod-2 (VM 202) | pve-2 | Monitoring | dns-relay, Prometheus, Grafana, Gatus, nginx, Actual Budget, DDNS |
-| edge (VM 200) | pve-1 | Ingress and DNS (NixOS) | Traefik, AdGuard Home |
-| pod-3 (VM 203) | pve-3 | Private cloud | Nextcloud, Immich, Jellyfin, Paperless, linkding, Memos, Excalidraw |
+- pod-1 (VM 201, pve-1): core, Authentik, Vaultwarden and the small everyday apps
+- pod-2 (VM 202, pve-2): monitoring, the VPN's dns-relay and routing peer, Actual Budget, the website
+- pod-3 (VM 203, pve-3): the home cloud (Nextcloud, Immich, Jellyfin, Paperless) on the storage pool, plus linkding, Memos, Excalidraw
+- edge (VM 200, pve-1): ingress and DNS on NixOS, Traefik and AdGuard Home
+- Full app list: [README](../README.md#what-runs)
 
-- Every app runs as a rootless Podman quadlet, there is no Docker left; all three run the PBS client and AIDE
+![](img/apps.png)
+
+![](img/media.png)
+
+- Every app runs as a rootless Podman quadlet, no Docker. All three run the PBS client and AIDE
 - Home Assistant runs as HAOS, an appliance VM on pve-3 (VM 210, `haos_ip`): it updates and configures itself inside, Ansible never logs in. It's off whenever pve-3 is
-- pod-3 gets to run the heavy services, because pve-3 has the most RAM
+- pod-3 runs the heavy services, pve-3 has the most RAM
 - The full per-node picture is in the deployment views under [Nodes](#nodes)
 
 How a VM is built:
@@ -81,7 +93,7 @@ How a VM is built:
 Memory:
 - Guests start with their full RAM
 - The host can take memory back through ballooning, but never below a floor that covers real usage
-- The VMs have no disk swap (the NetBird VM has zram), the LXCs get a small swap
+- The VMs have no disk swap (the NixOS VMs have zram), the LXCs get a small swap
 
 How an LXC is built:
 - OpenTofu creates it unprivileged from the Debian 13 template, Proxmox writes the IP, root's SSH key and the hostname (no cloud-init)
@@ -113,16 +125,20 @@ The sharing:
 - Samba (SMB3) in the LXC shares it out
 - Shares: backups, iso, media, nextcloud, documents, photos, homelab and timemachine (capped at 1 TB)
 - Every share except homelab and timemachine (admin only) has its own service user, the group IDs count up from a base number
-- pod-3 mounts the shares it needs over CIFS under `/srv/<share>`, with the app's UID/GID
+- pod-3 mounts the shares its apps need over CIFS under `/srv/<path>` (`cifs_mount_root`, `path` from `apps.yml`), with the app's UID/GID
 - Databases never go on CIFS, they stay on the VM disk
 
 ## DNS
 
-All name resolution goes through AdGuard Home on edge, on a fixed service IP.
+The LAN DNS is AdGuard Home on edge, on a fixed service IP.
 
 ![](img/name-resolution.png)
 
-- The router hands out `.53` as the only IPv4 DNS server
+![](img/edge.png)
+
+- The router hands out `.53` as the only IPv4 DNS server to DHCP clients
+- The two NixOS VMs ask `.53` first, the router is their fallback
+- The Debian guests (pod VMs, LXCs) ask the router (`dns` in `tofu/vms.tf`, `tofu/lxc.tf`), which doesn't know the LAN names. Containers that need one pin it with `AddHost=` ([Identity](#identity))
 - `.53` is a second IP on edge (`dns_ip_host: edge`, set by networkd), not the VM's own address
 - AdGuard Home blocks ads (AdGuard DNS filter) and answers the internal names (split horizon), upstream over DoT/DoH
 - Every routed name gets a rewrite to Traefik on edge (`.200`), generated from `apps.yml`, so a new app needs no DNS record of its own. Names that aren't routed go to public DNS
@@ -166,10 +182,10 @@ Authentik is the single login for the apps.
 
 - Authentik runs on pod-1 as one pod (server, worker and Postgres)
 - Its version is pinned and updated one release at a time (the tag in `apps.yml`, `authentik_series` in `app_settings.yml`, checked in `deploy-authentik.yml`)
-- Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, Actual Budget, linkding, Memos, NetBird
+- Apps that support OIDC log in through Authentik: Gitea, Nextcloud, Immich, Paperless, Vaultwarden, Grafana, Jellyfin, Actual Budget, linkding, Memos, NetBird, Semaphore
 - Each of those apps keeps a local admin as a break-glass account, except Vaultwarden, Actual Budget and linkding (SSO only)
-- Apps without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, Prometheus, the Vaultwarden admin page
-- Containers can't resolve internal names: apps on pod-1 reach `auth.<domain>` through a network alias on Traefik, apps on pod-2/3 through an `extra_hosts` entry pointing at pod-1
+- UIs without their own login sit behind Traefik's forward-auth (`authentik@file`): Traefik dashboard, AdGuard Home, Prometheus, the Gatus status page, the Vaultwarden admin page, Excalidraw and Cockpit. Which route gets it is `middlewares:` in `apps.yml`
+- Containers can't resolve internal names, so each app that logs in through Authentik pins `auth.<domain>` to edge with `AddHost=` (`app_sources.edge`)
 
 ## Remote access
 
@@ -211,13 +227,13 @@ How a backup runs:
 - Every pod VM has the PBS client (`roles/pbs`), started by a timer every evening at 20:00
 - A random delay keeps the hosts from starting at the same time
 - First the databases are dumped (Postgres, SQLite `.backup`)
-- Then `/srv/apps` (`podman_apps_root`) goes up as one archive (`/opt/stacks` too, as long as a host still has it)
+- Then `/srv/apps` (`podman_apps_root`) goes up as one archive
 - A failed run is pushed to ntfy, a good one sends a heartbeat to Gatus, which alerts when it stays away
-- The client's token can add backups and restore its own, not prune or delete them
+- What the client's token may do: [roles/pbs](../ansible/roles/pbs/README.md#safety)
 
 What's in and out:
 - Which databases each host dumps is set in `pbs_jobs` in `host_vars/`
-- Left out: caches, query logs, the Prometheus TSDB and the MQTT broker state
+- Left out: Jellyfin's cache and transcodes, the Prometheus TSDB (`pbs_exclude`). edge, the LXCs and ctl-1 run no PBS client
 - Bulk media on the pool (photos, media, documents) isn't backed up; irreplaceable files are kept outside the lab
 - No VM images: a broken VM is rebuilt with OpenTofu + Ansible and the data restored ([ADR 0013](adr/0013-pbs-file-level-backups.md))
 
@@ -250,7 +266,7 @@ Every guest keeps its logs locally and sends them to the log LXC.
 - rsyslog forwards everything over RELP to the log LXC (CT 301 on pve-3), which writes `/var/log/remote/<host>/<program>.log` and keeps 90 days
 - A disk queue on each guest holds the messages while the log LXC is down
 - The log LXC only takes RELP from the known hosts (PVE firewall), the directory name comes from the sender's ip ([ADR 0022](adr/0022-central-logging-relp.md))
-- The NetBird VM does the same from `nixos/base/`, but journald pushes to rsyslog over the syslog socket, and there's no `cron` or `maillog`
+- The NixOS VMs (NetBird, edge) do the same from `nixos/base/logging.nix`, but journald pushes to rsyslog over the syslog socket, and there's no `cron` or `maillog`
 - The PVE nodes keep their own persistent journal
 
 Time:
@@ -270,21 +286,11 @@ The sensors talk MQTT, their readings end up in Home Assistant and Prometheus. H
 
 ![](img/firmware-update.png)
 
-- Data flow: ESP32 → Mosquitto → mqtt-exporter → Prometheus/Grafana, Home Assistant subscribes too
-- Mosquitto, mqtt-exporter and the OTA server (nginx) run in the IoT gateway LXC (`iot`, CT 302), with a second leg on the LAN for the consumers ([ADR 0028](adr/0028-iot-gateway-lxc.md))
-- The IoT WiFi runs in the same LXC: pve-1's WiFi card is moved into it (raw `lxc.net` lines from `deploy-iot.yml`), hostapd and dnsmasq run there (`roles/iot_ap`). pve-1 only keeps the regulatory domain ([ADR 0029](adr/0029-wifi-card-in-the-gateway.md))
-- Both come from Debian's repo (`roles/mosquitto`, `roles/mqtt_exporter`, `deploy-iot.yml`): one shared MQTT user (password in the vault), no TLS, plain 1883. Accepted risk: anyone on the IoT WiFi with the password can read and fake every sensor
-- The exporter turns `home/<device>/temperature` and `humidity` into `iot_temperature_celsius` and `iot_humidity_percent`
-- LAN leg: two firewall layers with the same inbound rules, the PVE guest firewall (`iot.fw`) and ufw inside (ufw additionally answers ping): 1883 from Home Assistant's host, the exporter port and node_exporter from Prometheus' host, SSH
-- WiFi: ufw alone, only `on wlan0`: 1883 and 80 (firmware downloads) from the IoT net, 67/udp for DHCP. The card isn't a Proxmox NIC, so the PVE firewall never sees this traffic
-- Outbound on the LAN leg only DNS to the router, RELP to the log LXC and HTTP/HTTPS to the internet (`iot.fw`), the rest of the LAN is dropped
-- The IoT side has no gateway and no router option in DHCP, the LXC doesn't forward, nothing routes through it
-- A broken broker only exposes the broker, not pod-1's vault and SSO
-- Home Assistant's broker address is set in its MQTT integration (UI), not in the repo
-- Prometheus keeps 15 days; the long-term sensor history is Home Assistant's (long-term statistics, hourly)
-- Home Assistant runs as the HAOS VM on pve-3
-- The sensors run ESPHome (YAML, compiled in the ESPHome add-on) or my own C code, and only talk MQTT: readings out, commands in, Home Assistant through MQTT discovery, no ESPHome API
-- Firmware updates are pulled: I copy the `.bin` to `/srv/firmware` on the gateway, a "Flash from gateway" button in Home Assistant tells the device over MQTT, the device downloads it from `iot_ip:80` and reboots. Nothing connects into the IoT net
+- Data flow: ESP32 → Mosquitto → mqtt-exporter → Prometheus/Grafana, Home Assistant (the HAOS VM on pve-3) subscribes too
+- Mosquitto, mqtt-exporter, the OTA server (nginx) and the IoT WiFi (pve-1's card, hostapd + dnsmasq) run in the IoT gateway LXC (`iot`, CT 302), with a second leg on the LAN for the consumers ([ADR 0028](adr/0028-iot-gateway-lxc.md), [ADR 0029](adr/0029-wifi-card-in-the-gateway.md))
+- One shared MQTT user, no TLS, plain 1883. Accepted risk: anyone on the IoT WiFi with the password can read and fake every sensor
+- Two firewall layers on the LAN leg, ufw alone on the WiFi, nothing routes through the gateway ([iot.md](iot.md#firewall))
+- Firmware is pulled from the gateway, nothing connects into the IoT net. Prometheus keeps 15 days, the long-term history is Home Assistant's
 
 ## Delivery
 
@@ -296,11 +302,11 @@ Deploying, from the controller:
 - `tofu apply` for the VMs and the LXCs
 - `ansible-playbook` for the hosts and the apps
 - `nixos/update.sh <netbird|edge>` for the NixOS VMs
-- Semaphore on ctl-1 (a single-board computer outside the cluster) runs scheduled playbooks from a checkout copied over by hand
+- Semaphore on ctl-1 (a single-board computer outside the cluster) runs scheduled playbooks from a git clone of `main`, kept current by `repo-pull.yml`. Only `vault.yml` and `private.yml` are copied from the controller
 
 Checking:
-- `just check` runs the same 22 pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
+- `just check` runs the same pre-commit hooks as CI ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
 - They cover yamllint, ansible-lint (production profile), shellcheck, actionlint, zizmor, tofu fmt/validate, nix flake check, LikeC4 validate and gitleaks
-- Plus small checks for whitespace, private keys and file sizes
-- CI has two workflows: `ci.yml` runs the checks on pushes to main and testing and on every PR, `pages.yml` publishes the LikeC4 site when `architecture/` changes on main
+- Plus small checks for whitespace, private keys and file sizes, and the repo's own: `apps.yml` schema, wiring, rendered units, ADR and C4 checks
+- CI has three workflows: `ci.yml` runs the checks on pushes to main and testing and on every PR, `podman.yml` runs every unit through `quadlet -dryrun` on the same triggers, `pages.yml` publishes the LikeC4 site when `architecture/` changes on main
 - All GitHub Actions are pinned to a commit SHA

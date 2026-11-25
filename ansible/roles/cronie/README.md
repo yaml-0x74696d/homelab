@@ -5,7 +5,7 @@
 
 ## Runs on
 
-- All guests (`pod_vms`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
+- All guests and ctl-1 (`pod_vms`, `podman_hosts`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
 
 ## How it works
 
@@ -17,3 +17,7 @@
 - Jobs live in `/etc/crontab`, `/etc/cron.d/` and user crontabs
 - The service is `cronie.service`
 - Cron output goes to `/var/log/cron` (roles/rsyslog)
+
+## Related
+
+- `rsyslog` role (cron output goes to `/var/log/cron`)

@@ -22,6 +22,7 @@ Status: Accepted
 - Devices talk MQTT only and pull their firmware from the gateway when Home Assistant tells them to
 - Two firewall layers on the LAN leg: the PVE guest firewall and ufw, from the same lists
 - Only IoT-facing services go there, no apps
+- The WiFi side is amended by [0029](0029-wifi-card-in-the-gateway.md)
 
 - Enforced by: `iot.fw` (`roles/pve_firewall`) and ufw in the CT (`deploy-iot.yml`), the LAN rules built from the same lists
 
@@ -34,7 +35,5 @@ Status: Accepted
 - Accepted: anyone on the IoT WiFi with the password can read and fake every sensor, and trigger a flash of what the gateway serves
 - Accepted: MQTT crosses the LAN in plain text to Home Assistant
 - Accepted: no backup, config is in git and the broker state is disposable
-
-- The WiFi side is amended by [0029](0029-wifi-card-in-the-gateway.md)
 
 - Related: [0016](0016-ansible-vault-for-secrets.md) (the password), [0026](0026-ufw-as-guest-firewall.md) (ufw), [0029](0029-wifi-card-in-the-gateway.md) (the WiFi card)

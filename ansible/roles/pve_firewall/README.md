@@ -9,6 +9,15 @@
 - proxmox (`playbooks/deploy-pve-firewall.yml`, `gather_facts: false`)
 - The cluster-wide files are written once (`run_once`), `host.fw` once per node
 
+## How it works
+
+1. Touches each target file first, because `/etc/pve` is pmxcfs and `copy` can't create files there
+2. `cluster.fw` (once): master switch, default policy, ipsets, the `pve-mgmt` group
+3. One file each for the NetBird VM, the log LXC, the IoT gateway LXC and the HAOS VM (once)
+4. `enable: 0` for every guest in `pve_firewall_open_guests`
+5. `host.fw` on every node
+6. `pve-firewall compile` checks the result
+
 ## Files it manages
 
 | File | What |
@@ -21,8 +30,6 @@
 | `/etc/pve/firewall/<vmid>.fw` | `enable: 0` for each guest that stays open |
 | `/etc/pve/nodes/<node>/host.fw` | Host lockdown, uses `GROUP pve-mgmt` |
 
-- At the end, `pve-firewall compile` checks the result
-
 ## Cluster
 
 - Incoming is dropped by default (`policy_in: DROP`), outgoing is allowed (`policy_out: ACCEPT`)
@@ -34,7 +41,7 @@
 
 ## NetBird VM
 
-- In: 443, STUN/TURN on 3478 + 5349 (TCP+UDP), the narrowed TURN relay range (UDP), and SSH + ICMP from the LAN only
+- In: 443, STUN/TURN on 3478 + 5349 (TCP+UDP), the narrowed TURN relay range (UDP), node-exporter from Prometheus' host, and SSH + ICMP from the LAN only
 - Out: everything to the routing peers, because the TURN relay uses arbitrary ports
 - Out: DNS + HTTPS to `pve_firewall_netbird_dns_https`, DNS to the gateway, RELP to the log LXC
 - Out: the rest of the LAN is dropped, the internet is open
@@ -59,6 +66,18 @@
 - So `ha.<domain>` is the way in, and nothing on the LAN reaches the Supervisor or the add-on ports
 - Out stays open: MQTT to the gateway, the router integration, updates
 - LAN devices that fetch media from HA directly (Cast, TTS) are dropped too, they'd need a rule
+
+## Rollout
+
+Every guest's network card has `firewall=1`, so turning on the master switch drops traffic to all of them at once. That's why it goes in stages:
+
+1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird, the log LXC, the IoT LXC and HAOS goes into `pve_firewall_open_guests`
+2. Stage 0: both switches off, files written, check the compiled ruleset
+3. Stage 1: master switch on, so only NetBird, the log + IoT LXCs and HAOS are filtered
+4. Stage 2: host lockdown on one node, test SSH and `:8006` from an admin device, then the other nodes
+5. Stage 3: set both defaults to true, or a plain re-run turns them off again
+
+- Locked out? On the node's console run `pve-firewall stop`, or set `enable: 0` in the file
 
 ## Settings
 
@@ -89,24 +108,12 @@
 | `pve_firewall_haos_observer_port` | `4357` | The Supervisor's health page, admins only |
 | `pve_firewall_iot_mqtt_clients` | `mqtt_lan_clients` (`app_settings.yml`) | May reach the broker from the LAN |
 
-## Rollout
-
-Every guest's network card has `firewall=1`, so turning on the master switch drops traffic to all of them at once. That's why it goes in stages:
-
-1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird, the log LXC and the IoT LXC goes into `pve_firewall_open_guests`
-2. Stage 0: both switches off, files written, check the compiled ruleset
-3. Stage 1: master switch on, so only NetBird and the log + IoT LXCs are filtered
-4. Stage 2: host lockdown on one node, test SSH and `:8006` from an admin device, then the other nodes
-5. Stage 3: set both defaults to true, or a plain re-run turns them off again
-
-- Locked out? On the node's console run `pve-firewall stop`, or set `enable: 0` in the file
-
 ## Notes
 
 - The switches must match what's live, a re-run flips them
 - `/etc/pve` is pmxcfs: copy can't create files there and there's no atomic rename. So the role creates the file first, then templates it with `unsafe_writes`
 - pmxcfs sets fixed file modes and doesn't allow chmod, hence the `noqa` on the mode
-- If Authentik or Gitea move to another host, or the TURN relay needs another LAN peer, the NetBird egress needs a new OUT rule
+- The NetBird egress follows `app_sources.edge`, `dns_ip` and the `netbird_agent` group. Any other LAN target needs a new OUT rule
 
 ## Related
 

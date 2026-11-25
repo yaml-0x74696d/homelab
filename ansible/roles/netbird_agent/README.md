@@ -10,18 +10,18 @@
 
 ## How it works
 
-- If `/usr/bin/netbird` is missing, the role adds the official apt repo (deb822, key in `/etc/apt/keyrings/netbird.asc`) and installs it
-- If NetBird was already installed by hand, the repo step is skipped, because its own repo with `Signed-By` would clash
-- The `netbird` daemon is enabled and started
-- `net.ipv4.ip_forward=1` is saved as a sysctl, so it survives a reboot (NetBird also sets it at runtime)
-- If `/etc/netbird/config.json` is missing and a setup key is given, it runs `netbird up --management-url … --setup-key-file …` (`no_log`). The key goes in a 0600 temp file that is removed after, so it is not in argv
-- After enrollment the daemon reconnects on its own
-- Routes, DNS and ACLs are managed in `tofu/netbird.tf`
+1. If `/usr/bin/netbird` is missing, the role adds the official apt repo (deb822, key in `/etc/apt/keyrings/netbird.asc`) and installs it
+2. If NetBird was already installed by hand, the repo step is skipped, because its own repo with `Signed-By` would clash
+3. The `netbird` daemon is enabled and started
+4. `net.ipv4.ip_forward=1` is saved as a sysctl, so it survives a reboot (NetBird also sets it at runtime)
+5. If `/etc/netbird/config.json` is missing and a setup key is given, it runs `netbird up --management-url … --setup-key-file …` (`no_log`). The key goes in a 0600 temp file that is removed after, so it is not in argv
+6. After enrollment the daemon reconnects on its own
+7. Routes, DNS and ACLs are managed in `tofu/netbird.tf`
 
 ## Enrollment
 
 - Peers join with setup keys, not SSO. The IdP isn't reachable from the internet, so a fresh peer couldn't log in
-- The key comes from `tofu output -json netbird_setup_keys` (the `routing` key) and is stored as `vault_netbird_setup_key`. Keys are one-off and short-lived: re-enrolling pod-2 needs a fresh one, `tofu apply -target='netbird_setup_key.this["routing"]' -replace='netbird_setup_key.this["routing"]'`
+- The key is stored as `vault_netbird_setup_key`. Keys are one-off and short-lived: how to get one and how to re-enroll pod-2 is in [docs/netbird.md](../../../docs/netbird.md) (Administration, "Re-enrolling pod-2")
 - With an empty key, the role only installs NetBird and you enroll by hand
 
 ## Settings

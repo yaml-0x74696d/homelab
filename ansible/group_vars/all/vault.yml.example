@@ -53,6 +53,13 @@ pbs_fingerprint: "CHANGE_ME"
 
 vault_netbird_setup_key: "CHANGE_ME"
 
+# nixos vms' /var/lib/secrets (playbooks/nixos-secrets.yml). cloudflare.env takes cf_token, aide's ntfy.env ntfy_url/ntfy_token
+# store key: openssl rand -base64 32 on a fresh lab, else the live one (the netbird store is encrypted with it)
+vault_nixos_netbird_datastore_key: "CHANGE_ME"
+vault_nixos_netbird_idp_password: "CHANGE_ME"   # unused while IdpManagerConfig is off, the file has to exist
+vault_nixos_netbird_turn_secret: "CHANGE_ME"
+vault_nixos_netbird_turn_password: "CHANGE_ME"   # coturn's long-term credential
+
 # semaphore on ctl-1 (apps/semaphore). key: head -c32 /dev/urandom | base64, losing it locks the key store
 semaphore_admin_pass: "CHANGE_ME"
 semaphore_key_encryption: "CHANGE_ME"

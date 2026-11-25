@@ -1,5 +1,5 @@
 ---
-# /etc/pve is fuse (pmxcfs): ansible's copy module can't CREATE files here (only overwrite),
+# /etc/pve is fuse (pmxcfs): copy can't create files here (only overwrite),
 # and there's no atomic rename. so pre-touch each target, then template (unsafe_writes) fills it.
 # pmxcfs also fixes the file modes (no chmod), hence the noqa on mode.
 

@@ -1,5 +1,5 @@
-# managed by ansible (roles/pve_firewall) — do not hand-edit
-# host inbound default policy is inherited from cluster.fw policy_in (DROP).
+# managed by ansible (roles/pve_firewall). do not hand-edit
+# host inbound policy inherited from cluster.fw policy_in (DROP)
 [OPTIONS]
 
 enable: {{ 1 if pve_firewall_host_enabled else 0 }}

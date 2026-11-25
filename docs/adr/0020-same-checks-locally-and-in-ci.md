@@ -14,18 +14,14 @@ Status: Accepted
   - A Makefile (why not: just is simpler, no tab/phony quirks)
   - lefthook (why not: smaller ecosystem than pre-commit, fewer ready-made hooks)
   - No checks (why not: the lint tools find real issues)
-- The pattern comes from khuedoan/homelab (CI just runs pre-commit) and onedr0p/home-ops (justfile, one CI workflow, actions pinned by SHA)
+- The pattern comes from khuedoan/homelab (CI only runs pre-commit) and onedr0p/home-ops (justfile, one CI workflow, actions pinned by SHA)
 - Why: one config, the same result locally and in CI
 
 ## Decision
 
-The checks (`.pre-commit-config.yaml`, 22 hooks):
-- File hygiene: whitespace, end of file, line endings, private keys, shebangs
-- Large files: 500 KB in general, 1500 KB for `docs/img/`
-- Linters: yamllint, shellcheck, ansible-lint (production profile), `tofu fmt` + `validate`
-- Workflows: actionlint (syntax, expressions), zizmor (security)
-- Secrets: gitleaks
-- The slow hooks only run with `--hook-stage manual`: gitleaks over all commits, `nix flake check`, `likec4 validate`
+The checks:
+- Pre-commit hooks in `.pre-commit-config.yaml`, the list with what each one checks is in [checks](../checks.md)
+- The slow hooks only run with `--hook-stage manual`
 
 How to run them (`justfile`):
 - `just setup` installs the git hook and the Ansible collections

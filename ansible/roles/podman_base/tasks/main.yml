@@ -38,7 +38,7 @@
     dest: "{{ podman_base_apps_helper }}"
     mode: '0755'
 
-- name: Ensure user unit drop-in dirs
+- name: Create user unit drop-in dirs
   ansible.builtin.file:
     path: "/etc/systemd/user/{{ item }}.d"
     state: directory

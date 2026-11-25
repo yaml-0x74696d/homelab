@@ -16,6 +16,7 @@ Where things are kept in `nixos/`, where the values come from, and how the two N
 | AdGuard Home: upstreams, blocklist, query log | `edge/adguard.nix` |
 | firewall, SSH, sysctls, fail2ban, auto-upgrade | `base/hardening.nix` (service ports in the host's modules) |
 | AIDE rules | `base/aide.nix` |
+| node_exporter, who may scrape it | `base/metrics.nix` |
 | nixpkgs, disko versions | `flake.lock` (`nix flake update`) |
 
 ## Folders
@@ -25,7 +26,7 @@ nixos/
 ├── flake.nix         inputs (nixpkgs, disko, private), one nixosConfiguration per host folder
 ├── flake.lock        pinned input versions
 ├── facts.nix         group_vars YAML → one attrset (facts), plus host_ips from the inventory
-├── base/             modules every NixOS host shares: time, logging, hardening, AIDE, disk layout, fastfetch
+├── base/             modules every NixOS host shares: time, logging, hardening, AIDE, node_exporter, disk layout, fastfetch
 ├── netbird/          NetBird control plane: configuration.nix imports the rest
 ├── edge/             Traefik + AdGuard Home: configuration.nix imports the rest
 ├── update.sh         bump, build, switch, check (one host per run)
@@ -47,7 +48,7 @@ nixos/
 
 - Every `apps.<name>.routes` entry becomes a router and a service: `Host(<host>.<domain>)` (+ `PathPrefix` with `path`), backend `http://<host ip>:<route port or app port>`, the route's `middlewares`
 - Every `infra_routes` entry with a `target` does too: `scheme://<target ip>:<ports.yml[port_var]>`, `insecure_tls` skips the backend's cert check. `target: edge` means something on edge itself (the Traefik dashboard, the AdGuard UI)
-- Entries without a `target` are only served by pod-1's Traefik until the cutover
+- An entry without a `target` is skipped: no router, no rewrite
 - AdGuard Home gets a rewrite to `edge_ip` for the same hosts
 - A middleware name that `traefik.nix` doesn't define fails the build
 - The result is `/etc/traefik/dynamic.yml`, a copied file Traefik watches, so a route change doesn't restart Traefik
@@ -77,7 +78,9 @@ cd nixos && nix flake check           # what pre-commit and CI run
 - `update.sh` builds first, so a renamed option fails before anything is switched
 - Rollback: `ssh root@<host> nixos-rebuild switch --rollback`
 - Each VM is installed once with nixos-anywhere, OpenTofu only makes the empty VM ([ADR 0035](adr/0035-nixos-for-netbird-and-edge.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md))
-- Secrets go on the box by hand before the first switch: `/var/lib/secrets/netbird/`, `/var/lib/secrets/edge/cloudflare.env`, `/var/lib/secrets/aide/ntfy.env`
+- Secrets come from the vault: `ansible/playbooks/nixos-secrets.yml` writes the tree nixos-anywhere copies on the install ([bootstrap step 4](bootstrap.md#4-nixos-vms-netbird-edge)). A changed secret: run it again and copy that one file onto the box (root, `0600`)
+- The files, all root `0600`: `/var/lib/secrets/netbird/` (`datastore-key`, `idp-svc-password`, `turn-secret`, `turn-password`, `cloudflare.env`), `/var/lib/secrets/edge/cloudflare.env`, `/var/lib/secrets/aide/ntfy.env`
+- autoUpgrade (`base/hardening.nix`) builds `main` of the public repo with the copy of `private.yml` in `/etc/homelab-private`. A change on `testing` only sticks after the merge, a `private.yml` change needs an `update.sh` run
 - autoUpgrade: netbird 03:00 to 04:00, edge 04:00 to 04:45, never both at once (`group_vars/all/schedules.yml`)
 
 ## Conventions

@@ -187,7 +187,7 @@
   when: podman_app_subid is changed and not podman_app_user_new
   changed_when: true
 
-- name: Ensure the apps root
+- name: Create the apps root
   ansible.builtin.file:
     path: "{{ podman_apps_root }}"
     state: directory
@@ -196,7 +196,7 @@
 # owner = a uid inside the container, mapped to the host id of the svc user's range. the app dir is then
 # passable (0711) so that uid gets through it to its own dir without listing it.
 # keep-id puts container_uid on svc-<name> and shifts the uids above it down by one
-- name: Ensure data dirs for {{ podman_app_name }}
+- name: Create data dirs for {{ podman_app_name }}
   ansible.builtin.file:
     path: "{{ podman_app_dir }}{{ ('/' + item.path) if item.path else '' }}"
     state: directory
@@ -222,7 +222,7 @@
     state: present
   when: podman_app_entry.cifs | default([]) | length > 0
 
-- name: Ensure the cifs credentials dir
+- name: Create the cifs credentials dir
   ansible.builtin.file:
     path: "{{ podman_app_cifs_creds_dir }}"
     state: directory
@@ -290,7 +290,7 @@
   # a fresh fstab line has no unit yet in --check
   when: not (ansible_check_mode and podman_app_fstab is changed)
 
-- name: Ensure quadlet dirs for {{ podman_app_name }}
+- name: Create quadlet dirs for {{ podman_app_name }}
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory

@@ -22,7 +22,7 @@
 
 - `category.create=mfs`: new files go to the disk with the most free space
 - `minfreespace=20G`: a disk with less than 20 GB free gets no new files
-- Also: `cache.files=partial`, `dropcacheonclose=true`, `use_ino`, `allow_other`
+- Also: `cache.files=partial`, `dropcacheonclose=true`, `use_ino`, `allow_other`, `fsname=mergerfs`
 
 ## Settings
 

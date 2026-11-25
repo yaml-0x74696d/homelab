@@ -35,7 +35,7 @@ The source:
 
 How each tool reads it:
 - Ansible: as normal group_vars, the inventory's `ansible_host` points at the `*_ip` variables
-- OpenTofu: `tofu/locals.tf` reads network/ports/hosts/storage/private with `yamldecode(file(...))`, and the VM specs (`vms`/`lxcs` maps) are built on top
+- OpenTofu: `tofu/locals.tf` reads network/ports/hosts/storage/apps/private with `yamldecode(file(...))`, and the VM specs (`vms`/`lxcs` maps) are built on top
 - Nix: `nixos/facts.nix` turns network/ports/hosts/app_settings/apps/base/schedules/private into JSON with yq-go at build time (import from derivation). Every module gets the result as `specialArgs.facts`
 - Shell: `nixos/update.sh` and `aide-accept.sh` read `<host>_ip` (`netbird_ip`, `edge_ip`) with `nix run nixpkgs#yq-go`
 

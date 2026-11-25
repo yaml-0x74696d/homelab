@@ -9,8 +9,8 @@
 
 ## How it works
 
-1. Installs `lxc_base_packages` (fail2ban, unattended-upgrades, needrestart, curl), and node_exporter without its recommends (they pull ipmitool + openipmi)
-2. unattended-upgrades: `vm_base`'s file (`tasks_from: unattended_upgrades`), security origins only, no automatic reboot
+1. Installs `lxc_base_packages` (fail2ban, python3-systemd, unattended-upgrades, needrestart, curl), and node_exporter without its recommends (they pull ipmitool + openipmi)
+2. unattended-upgrades: `vm_base`'s file (`tasks_from: unattended_upgrades`), security origins only, no automatic reboot. Stops if apt has no Debian-Security source
 3. sshd drop-in `/etc/ssh/sshd_config.d/10-homelab.conf`, checked with `sshd -t`: root by key only (Ansible logs in as root here), no passwords, no X11, `MaxAuthTries` + keepalive from group_vars. A drop-in, because the first value sshd reads wins
 4. fail2ban: the `sshd` jail on the journal (`backend = systemd`)
 5. node_exporter listens on the LXC's LAN address only (`ARGS` in `/etc/default/prometheus-node-exporter`), never on the IoT leg. A drop-in spaces its restarts, since it can start before that address is up
@@ -24,10 +24,12 @@
 | `lxc_base_packages` | see defaults | Package set |
 | `lxc_base_services` | fail2ban, node_exporter | Enabled and started |
 | `lxc_base_node_exporter_listen` | `ansible_host:node_exporter_port` | node_exporter's listen address |
-| `lxc_base_node_exporter_restart_sec` | 5 | Seconds between node_exporter restarts at boot |
+| `lxc_base_node_exporter_restart_sec` | `5` | Seconds between node_exporter restarts at boot |
 | `lxc_base_ufw` | `false` | `true` on the LXCs that filter with ufw (storage, iot) |
 | `prometheus_ip` | `app_settings.yml` | Source of the node_exporter rule |
 | `timezone`, `ssh_*` | group_vars | Shared with `vm_base` |
+| `lxc_base_ufw_rules_comment` | required (`tasks_from: ufw_rules`) | Tag on every rule, the stale check only looks at these |
+| `lxc_base_ufw_rules` | required (`tasks_from: ufw_rules`) | `{port, proto, src, iface}` list, `iface` optional |
 
 ## Notes
 
@@ -35,3 +37,8 @@
 - `--check` on a fresh CT: tasks that need the packages are `ignore_errors` in check mode
 - Prometheus scrapes every LXC in the `node-exporter` job (`apps/prometheus/config/prometheus.yml.j2`)
 - In an unprivileged CT node_exporter sees lxcfs' view: CPU and memory are the CT's, some disk and network numbers are the host's
+
+## Related
+
+- [ADR 0024: OS updates through one Ansible run](../../../docs/adr/0024-ansible-run-os-updates.md)
+- `vm_base` role (the VM side), `playbooks/base.yml`

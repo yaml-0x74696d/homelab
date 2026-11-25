@@ -49,11 +49,32 @@
 - The check script is mode `0700`, because it holds the ntfy token
 - The `<host>.sha256` files are specific to each host, so they're gitignored and live in the offsite-synced private folder
 
+## Hashes and sync
+
+- ctl-1 holds the reference, `/srv/apps/semaphore/aide/<host>.sha256`. Semaphore's accept runs write there
+- The controller's `ansible/aide/` and ctl-1's dir are kept the same by Syncthing, both ways. An accept on either side reaches the other within seconds
+- Not synced: Syncthing's GUI (`127.0.0.1:8384` on ctl-0) shows the folder's state. A `.sync-conflict-…` file means both sides changed the same hash, keep the one that matches the host's db
+- On ctl-1 the dir has ACLs for `admin_user` (Syncthing) and Semaphore's container user, a copy by hand needs no `sudo`
+- Renaming a host: rename `<host>.sha256` on both sides, then accept on that host
+- "database hash mismatch": the database changed outside an accept, or a copy is stale. Compare both copies first, then look at the host before accepting
+
+## Accepting many hosts
+
+- `aide-accept.yml` asks one host at a time (`serial: 1`). Each host writes its own `<host>.sha256`, so one run per host in parallel works: `aide-accept.yml -l <host>` in separate terminals
+
+## Excluded paths
+
+- All hosts: `/run` (tmpfs), ansible's temp dirs and payloads, `.cache` in the admin's and root's home, `aide.db.new`, `/var/log` (every line is on the log LXC already, see [ADR 0022](../../../docs/adr/0022-central-logging-relp.md)), `/var/lib/rsyslog`, apt's caches and lists, PackageKit's db, node-exporter's textfiles
+- pod_vms: root and rootless podman storage, `/dev/shm`, the svc users' ansible payloads, `podman_apps_root` (`/srv/apps`, app data), the CIFS mount root, the PBS staging folder, cloud-init state (`/var/lib/cloud`, `/var/tmp/cloud-init`), `/dev/disk/by-uuid` (the cloud-init ISO gets a dated UUID)
+- podman_hosts: root and rootless podman storage, `/dev/shm`, the svc users' ansible payloads, `podman_apps_root`, and on ctl-1 the Semaphore checkout (`semaphore_repo_dir`, kept current by `playbooks/repo-pull.yml`) and its `private_dir` copy (`semaphore_private_dir`, synced by `roles/ctl_base`), Syncthing's index db
+- proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, state pve rebuilds itself (`/var/lib/lxc`, `/var/cache/lxc`, lxcfs, corosync, `/var/lib/proxmox-backup`, `/var/lib/pve-firewall`, replication state, smartmontools, `/etc/issue`, `76pveproxy` from `datacenter.cfg`), all of `/dev`, and on pve-3 the pool, its disks and the PBS datastore
+- lxc_containers: `/dev/.lxc` (procfs), the pool bind mount, `/var/lib/mosquitto` (broker persistence)
+
 ## Settings
 
 | Variable | Default | What |
 |---|---|---|
-| `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to 30 min | When the check runs (group_vars `schedules.yml`, shared with NixOS) |
+| `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to `30min` | When the check runs (group_vars `schedules.yml`, shared with NixOS) |
 | `aide_excludes_common` | see below | Excludes on every host |
 | `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
 | `aide_login_homes` | admin home, `/root` | Homes with history files on the `VarFile` rule (see Notes) |
@@ -61,19 +82,11 @@
 | `aide_content_files` | `/etc/hosts`, netbird's `99-netbird.conf` + `state.json` | Rewritten with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
 | `aide_var_dirs` | `/etc/apt/apt.conf.d`, `/etc/ssh/ssh_config.d`, `/var/lib/netbird` | Dirs whose files get replaced: owner and mode watched, times not (`VarDir`). Added and removed files still show |
 | `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids`, dnsmasq leases | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
-| `aide_run_timeout` / `aide_run_poll` | 3600 s / 30 s | Limits for `--init` and `--update` |
-| `aide_check_nice` / `aide_check_io_class` | 19 / idle | Priority of the check |
-| `aide_report_lines` | 150 | Diff lines shown on accept |
+| `aide_run_timeout` / `aide_run_poll` | `3600` s / `30` s | Limits for `--init` and `--update` |
+| `aide_check_nice` / `aide_check_io_class` | `19` / `idle` | Priority of the check |
+| `aide_report_lines` | `150` | Diff lines shown on accept |
 | `aide_checksum_dir` | `$AIDE_CHECKSUM_DIR`, else `ansible/aide` | Where the hashes are stored on the controller. Semaphore sets the env var to its rw volume on ctl-1, the reference copy. On ctl-0 `ansible/aide` is a gitignored symlink into the offsite-synced private folder, pulled from ctl-1 (`roles/ctl_base`) |
 | `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the check still runs, but nothing is pushed |
-
-## Excluded paths
-
-- All hosts: `/run` (tmpfs), ansible's temp dirs and payloads, `.cache` in the admin's and root's home, `aide.db.new`, `/var/log` (every line is on the log LXC already, see [ADR 0022](../../../docs/adr/0022-central-logging-relp.md)), `/var/lib/rsyslog`, apt's caches and lists, PackageKit's db, node-exporter's textfiles
-- pod_vms: root and rootless podman storage, `/dev/shm`, the svc users' ansible payloads, `podman_apps_root` (`/srv/apps`, app data), the CIFS mount root, the PBS staging folder, cloud-init state (`/var/lib/cloud`, `/var/tmp/cloud-init`), `/dev/disk/by-uuid` (the cloud-init ISO gets a dated UUID)
-- podman_hosts: root and rootless podman storage, `/dev/shm`, the svc users' ansible payloads, `podman_apps_root`, and on ctl-1 the Semaphore checkout (`semaphore_repo_dir`, kept current by `playbooks/repo-pull.yml`) and its `private_dir` copy (`semaphore_private_dir`, synced by `roles/ctl_base`)
-- proxmox: `/etc/pve` (pmxcfs), `/var/lib/pve-cluster`, rrdcached, `/var/lib/vz`, state pve rebuilds itself (`/var/lib/lxc`, `/var/cache/lxc`, lxcfs, corosync, `/var/lib/proxmox-backup`, `/var/lib/pve-firewall`, replication state, smartmontools, `/etc/issue`, `76pveproxy` from `datacenter.cfg`), all of `/dev`, and on pve-3 the pool, its disks and the PBS datastore
-- lxc_containers: `/dev/.lxc` (procfs), the pool bind mount, `/var/lib/mosquitto` (broker persistence)
 
 ## Notes
 

@@ -7,6 +7,21 @@ views {
       include edge, identity, remote, apps, media, automation, observability, storage
     }
     include cloudflare, letsencrypt, ntfy, router, github
+    // one edge per idea, the rest is in landscape and the flows
+    exclude apps -> identity, media -> identity, remote -> identity, observability -> identity
+    exclude storage -> identity, storage -> media, storage -> observability
+    exclude observability -> edge, admin -> apps, admin -> automation
+    autoLayout TopBottom
+  }
+
+  view landscape {
+    title "System landscape, every edge"
+    include household, admin, phone
+    group "Homelab" {
+      color slate
+      include edge, identity, remote, apps, media, automation, observability, storage
+    }
+    include cloudflare, letsencrypt, ntfy, router, github
     autoLayout TopBottom
   }
 
@@ -94,7 +109,7 @@ views "Flows" {
   dynamic view request {
     title "Request to an app without SSO (forward-auth)"
     variant sequence
-    household -> edge.adguard "prometheus.domain?"
+    household -> edge.adguard "prom.domain?"
     household <- edge.adguard "LAN ip of traefik"
     household -> edge.traefik "https"
     edge.traefik -> identity.authentik.server "forward-auth: session valid?"
@@ -189,22 +204,20 @@ views "Flows" {
   }
 
   dynamic view backup {
-    title "Nightly backup"
+    title "Evening backup"
     variant sequence
     storage.pbs-client -> media.immich.pg "pg_dump"
-    storage.pbs-client -> storage.pbs "uploads dumps + config"
+    storage.pbs-client -> storage.pbs "uploads dumps + app dirs"
     storage.pbs-client -> ntfy "job result"
   }
 
   dynamic view delivery {
     title "Deploying a change"
     variant sequence
-    admin -> apps.gitea "pushes the repo"
+    admin -> github "pushes the repo"
     admin -> ops.controller "runs a playbook"
-    ops.controller -> apps.gitea "pulls the repo"
     ops.controller -> ops.proxmox "tofu apply: VMs + LXC"
     ops.controller -> ops.hosts "ansible: renders + starts apps"
-    admin -> github "pushes the repo"
     ops.semaphore -> github "pulls the repo (main)"
     ops.semaphore -> ops.hosts "ansible: renders + starts apps"
   }

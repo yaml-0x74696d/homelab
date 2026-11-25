@@ -1,6 +1,6 @@
 ---
 # what pbs backs up on pod-2 (see roles/pbs).
-# prometheus tsdb is skipped on purpose — bulky, recomputable, config already in git.
+# prometheus tsdb is skipped on purpose: bulky, recomputable, config already in git.
 pbs_jobs:
   - { name: grafana, type: sqlite, path: grafana/data/grafana.db }
   - { name: gatus, type: sqlite, path: "gatus/data/{{ gatus_db_file }}" }

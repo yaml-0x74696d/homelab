@@ -2,7 +2,7 @@
 # managed by ansible (roles/pbs). data-only backup: dump the dbs, then push
 # dumps + flat app config to pbs. live db files are excluded (dumps replace them).
 set -Eeuo pipefail
-umask 077                 # dumps hold vault/sso secrets — keep them root-only
+umask 077                 # dumps hold vault/sso secrets, root-only
 
 STAGING="{{ pbs_staging_dir }}"
 APPS="{{ podman_apps_root }}"   # one dir per app, skipped if missing (a host without apps)
@@ -16,7 +16,7 @@ notify() {
 {% elif pbs_ntfy_url %}
   curl -fsS -m {{ ntfy_timeout }} -H "Title: pbs backup" -d "$1" "{{ pbs_ntfy_url }}" || true
 {% else %}
-  :   # alerts off — pbs_ntfy_url unset
+  :   # alerts off, pbs_ntfy_url unset
 {% endif %}
 }
 fail()   { log "FAILED: $*"; notify "$(hostname -s): backup failed — $*"; exit 1; }
@@ -31,7 +31,7 @@ case "$STAGING" in /var/backups/*) ;; *) fail "refusing unexpected STAGING=$STAG
 trap 'rm -rf "$STAGING"' EXIT   # never leave plaintext dumps behind, even on failure
 rm -rf "$STAGING"; install -d -m 0700 "$STAGING"
 
-# ---- consistent point-in-time db dumps ----
+# point-in-time db dumps
 {% for j in pbs_jobs %}
 {% if j.type == 'postgres' %}
 log "dump postgres {{ j.name }}"
@@ -44,7 +44,7 @@ as "{{ podman_svc_prefix }}{{ j.app }}" podman exec {{ j.container }} \
 {% elif j.type == 'sqlite' %}
 if [ -f "$APPS/{{ j.path }}" ]; then
   log "dump sqlite {{ j.name }}"
-  # online .backup — safe against a live writer, unlike cp
+  # online .backup, safe against a live writer unlike cp
   sqlite3 "$APPS/{{ j.path }}" ".backup '$STAGING/{{ j.name }}.db'" || fail "sqlite {{ j.name }}"
   [ -s "$STAGING/{{ j.name }}.db" ] || fail "sqlite {{ j.name }} wrote an empty file"
 else
@@ -53,7 +53,7 @@ fi
 {% endif %}
 {% endfor %}
 
-# ---- push. exclude the live dbs we just dumped + anything disposable ----
+# push. exclude the live dbs we just dumped + anything disposable
 EXCLUDES=(
 {% for j in pbs_jobs %}
 {% if j.type == 'sqlite' %}
@@ -70,7 +70,7 @@ EXCLUDES=(
 )
 
 ARCHIVES=(dumps.pxar:"$STAGING")
-# name kept from the docker days, so the snapshots stay one series
+# fixed archive names, so the snapshots stay one series
 if [ -d "$APPS" ]; then ARCHIVES+=(podman-apps.pxar:"$APPS"); fi
 
 log "push snapshot"

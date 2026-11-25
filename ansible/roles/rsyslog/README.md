@@ -6,8 +6,8 @@
 
 ## Runs on
 
-- All guests (`pod_vms`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
-- The NetBird VM gets the same from `nixos/base/logging.nix`, edge follows
+- All guests and ctl-1 (`pod_vms`, `podman_hosts`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
+- The NixOS VMs (netbird, edge) get the same from `nixos/base/logging.nix`
 
 ## How it works
 
@@ -24,16 +24,22 @@
 |---|---|---|
 | `rsyslog_mode` | `client` | `server` on the log LXC |
 | `rsyslog_server`, `rsyslog_relp_port` | `log_ip`, `log_relp_port` | Where clients send to |
-| `rsyslog_journal_rate_interval` / `_burst` | 600 / 20000 | imjournal rate limit |
+| `rsyslog_journal_rate_interval` / `_burst` | `600` / `20000` | imjournal rate limit |
 | `rsyslog_queue_max_disk` | `1g` | Disk cap for the client queue (`group_vars/all/base.yml`) |
-| `rsyslog_resume_interval` | 30 | Seconds between reconnects (`group_vars/all/base.yml`) |
-| `rsyslog_local_rotate` | 4 | Weeks of local files on each host (`group_vars/all/base.yml`) |
+| `rsyslog_resume_interval` | `30` | Seconds between reconnects (`group_vars/all/base.yml`) |
+| `rsyslog_local_rotate` | `4` | Weeks of local files on each host (`group_vars/all/base.yml`) |
 | `rsyslog_remote_dir` | `/var/log/remote` | Where the server writes |
-| `rsyslog_remote_retention` | 90 | Days kept on the server |
-| `rsyslog_server_queue_size` | 50000 | Server queue, in messages |
+| `rsyslog_remote_retention` | `90` | Days kept on the server |
+| `rsyslog_server_queue_size` | `50000` | Server queue, in messages |
 | `rsyslog_server_hosts` | inventory IPs + `netbird_ip`, `edge_ip` | Sender IP → host directory on the server |
 
 ## Notes
 
 - Plain text on the LAN, no TLS. The log LXC only accepts RELP from known hosts (roles/pve_firewall, `log.fw`)
 - fail2ban reads the journal (`backend = systemd`), so it doesn't care about the file layout
+
+## Related
+
+- [ADR 0022: central logging with rsyslog over RELP](../../../docs/adr/0022-central-logging-relp.md)
+- `nixos/base/logging.nix` (the NixOS VMs)
+- `pve_firewall` role (`log.fw`, RELP only from known hosts)

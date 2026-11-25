@@ -45,4 +45,4 @@ The NixOS VMs (netbird, edge):
 - Accepted: agenix/sops for the NixOS VMs is still open
 - Accepted: whoever gets into the secure storage has the vault and its password together
 
-- Related: [0002](0002-generic-docker-app-role.md) (`.env.j2` pattern), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS secrets), [0039](0039-syncthing-between-ctl-0-and-ctl-1.md) (hashes + overlays)
+- Related: [0021](0021-podman-quadlets.md) (Podman secrets), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS secrets), [0039](0039-syncthing-between-ctl-0-and-ctl-1.md) (hashes + overlays)

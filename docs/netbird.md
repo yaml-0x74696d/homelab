@@ -17,6 +17,8 @@ How a device joins the VPN, what it may reach, and how the VPN is run. Groups, p
 
 ## Onboarding a device
 
+Commands run in `tofu/` on the controller, then on the device.
+
 Devices join with a one-off setup key, not with a login: the IdP isn't reachable from the internet ([`roles/netbird_agent`](../ansible/roles/netbird_agent/README.md#enrollment)).
 
 1. A fresh key for the device's group, on the controller in `tofu/`:
@@ -46,6 +48,8 @@ A household device that stays without access runs an older client than `netbird_
 
 ## Administration
 
+Commands run in `tofu/` on the controller, the dashboard steps in a browser.
+
 **Moving a device to another group**
 - Move its id in `netbird_peers` (`private.yml`), then a targeted apply of the two groups
 
@@ -55,7 +59,7 @@ A household device that stays without access runs an older client than `netbird_
 3. Delete the peer in the dashboard (Peers). In this order, or the group still points at a peer that's gone
 
 **Re-enrolling pod-2**
-- A fresh `routing` key (onboarding step 1), into the vault as `vault_netbird_setup_key`, then `ansible-playbook playbooks/deploy-netbird-agent.yml`. The role enrolls only when `/etc/netbird/config.json` is missing
+- A fresh `routing` key ([onboarding step 1](#onboarding-a-device), group `routing`), into the vault as `vault_netbird_setup_key`, then `ansible-playbook playbooks/deploy-netbird-agent.yml`. The role enrolls only when `/etc/netbird/config.json` is missing
 - pod-2's peer name has to stay `pod-2`: `data.netbird_peer.pod2` finds its overlay IP by that name for the nameserver group
 
 **Checking for changes made in the dashboard**
@@ -68,8 +72,8 @@ tofu plan $(tofu state list | grep '^netbird_' | sed 's/\[.*//' | sort -u | sed 
 - Objects made by hand that aren't in the code don't show up here, look at the dashboard's group and policy lists
 
 **The tofu token**
-- The PAT of the service user `tofu` lives up to a year (`netbird_token` in `terraform.tfvars`)
-- Rotate it before it runs out: dashboard, Team, Service Users, `tofu`, new token, into `terraform.tfvars`, then delete the old one
+- Creation: dashboard, Team, Service Users, new user `tofu`, role admin. Make a personal access token for it, up to a year, and put it in `netbird_token` in `terraform.tfvars`, nowhere else
+- It lives up to a year. Rotate it before it runs out: dashboard, Team, Service Users, `tofu`, new token, into `terraform.tfvars`, then delete the old one
 
 **Changing what a group may reach**
 - A change in `tofu/netbird.tf`, a PR, then a targeted `plan` and `apply` of the policy. ADR 0040 says which rules are intended
@@ -80,6 +84,8 @@ tofu plan $(tofu state list | grep '^netbird_' | sed 's/\[.*//' | sort -u | sed 
 - Raise `netbird_min_client_version` when old clients should stop getting in, then a targeted apply of `netbird_posture_check.household_client`
 
 ## Troubleshooting
+
+Checks run in the dashboard, `tofu/` on the controller, or on the device.
 
 **A device is connected but reaches nothing**
 - Check its group in the dashboard. No group means its id is missing in `netbird_peers`

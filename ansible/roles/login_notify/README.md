@@ -6,23 +6,23 @@
 ## Runs on
 
 - proxmox (`playbooks/deploy-login-notify.yml`)
-- The pod VMs aren't covered, `hosts: all` in the playbook would add them
+- Only the pve nodes. Another group goes into `hosts:` in the playbook (not `all`: haos has no login)
 
 ## How it works
 
-- Installs `/usr/local/sbin/login-notify` (mode `0750`) and `login-notify.service`
-- The script runs `journalctl -f -n0`, so it only follows new journal lines, nothing from before it started
-- It looks for two kinds of lines:
+1. Installs `/usr/local/sbin/login-notify` (mode `0750`) and `login-notify.service`
+2. The script runs `journalctl -f -n0`, so it only follows new journal lines, nothing from before it started
+3. It looks for two kinds of lines:
 
-  | Journal line | Alert |
-  |---|---|
-  | `Accepted … for …` (sshd) | `ssh — <line>` |
-  | `pvedaemon[…] successful auth` | `pve web ui — <line>` |
+   | Journal line | Alert |
+   |---|---|
+   | `Accepted … for …` (sshd) | `ssh: <line>` |
+   | `pvedaemon[…] successful auth` | `pve web ui: <line>` |
 
-- The alert is sent with curl to `ntfy_url`, with a bearer token if `ntfy_token` is set
-- The script uses `set -uo pipefail` without `-e`, so a failed curl or a journal hiccup doesn't kill the watcher
-- The service has `Restart=always` and `NoNewPrivileges=yes`
-- A handler restarts the service when the script or the unit changes
+4. The alert is sent with curl to `ntfy_url`, with a bearer token if `ntfy_token` is set
+5. The script uses `set -uo pipefail` without `-e`, so a failed curl or a journal hiccup doesn't kill the watcher
+6. The service has `Restart=always` and `NoNewPrivileges=yes`
+7. A handler restarts the service when the script or the unit changes
 
 ## Alert path
 
@@ -34,7 +34,7 @@
 
 | Variable | Default | What |
 |---|---|---|
-| `login_notify_restart_sec` | 10 | Seconds before systemd restarts the watcher |
+| `login_notify_restart_sec` | `10` | Seconds before systemd restarts the watcher |
 | `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the daemon runs but stays quiet |
 
 - The match patterns are in `templates/login-notify.sh.j2`

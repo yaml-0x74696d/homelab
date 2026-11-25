@@ -5,7 +5,7 @@ pbs_jobs:
   - { name: nextcloud, type: postgres, container: nextcloud-db, data_dir: nextcloud/database, app: nextcloud }
   - { name: immich, type: postgres, container: immich-db, data_dir: immich/postgres, app: immich }
   - { name: paperless, type: postgres, container: paperless-db, data_dir: paperless/database, app: paperless }
-  # jellyfin has no dump tool; .backup its db (everything is in jellyfin.db since 10.11)
+  # jellyfin has no dump tool; .backup its db (everything is in jellyfin.db)
   - { name: jellyfin, type: sqlite, path: jellyfin/config/data/jellyfin.db }
   - { name: linkding, type: sqlite, path: linkding/data/db.sqlite3 }
   - { name: memos, type: sqlite, path: memos/data/memos_prod.db }

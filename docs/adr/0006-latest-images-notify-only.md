@@ -35,6 +35,8 @@ How an update happens:
 - A normal redeploy never pulls a newer image (`docker_app_compose_pull: policy`)
 - Updates are done by hand, one app at a time: `docker compose pull && up -d`, check that `ps` shows it healthy, then the next one
 - pod-1 is busy, so its apps are updated off-peak
+- Rollback: pin the previous tag in the compose file, or restore from PBS
+- The podman apps use `AutoUpdate=registry` with rollback instead ([0021](0021-podman-quadlets.md)), this ADR covers the compose apps until their cutover
 
 - Enforced by: `docker_app_compose_pull: policy` (a redeploy never pulls), and Diun can only notify
 
@@ -47,8 +49,5 @@ How an update happens:
 
 - Accepted: not reproducible by tag. Two hosts can run different builds of the same "latest"
 - Accepted: a bad release shows up on the next manual pull, not at 3am
-
-- Rollback: pin the previous tag in the compose file, or restore from PBS
-- The podman apps use `AutoUpdate=registry` with rollback instead ([0021](0021-podman-quadlets.md)), this ADR covers the compose apps until their cutover
 
 - Related: [0002](0002-generic-docker-app-role.md) (`docker_app` role), [0021](0021-podman-quadlets.md) (Podman auto-update), `roles/pbs` (rollback path)

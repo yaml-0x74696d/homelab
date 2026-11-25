@@ -39,7 +39,7 @@ The zones themselves are in [architecture.md](architecture.md#zones).
 | Zone | Filtered by | Inbound |
 |---|---|---|
 | WAN → router | router port forwards | 443/tcp, 3478/udp and the narrow TURN relay range, to the NetBird VM only |
-| NetBird VM | nftables ([`nixos/base/hardening.nix`](../nixos/base/hardening.nix)) and the PVE guest firewall ([`roles/pve_firewall`](../ansible/roles/pve_firewall/README.md)) | 443, STUN/TURN, relay range. SSH from the LAN. Egress to the LAN limited to the routing peer, DNS/HTTPS on edge, RELP |
+| NetBird VM | nftables ([`nixos/base/hardening.nix`](../nixos/base/hardening.nix)) and the PVE guest firewall ([`roles/pve_firewall`](../ansible/roles/pve_firewall/README.md)) | 443, STUN/TURN, relay range. SSH from the LAN, node-exporter from Prometheus. Egress to the LAN limited to the routing peer, DNS/HTTPS on edge, RELP |
 | VPN | NetBird policies in [`tofu/netbird.tf`](../tofu/netbird.tf) | `admin`: the LAN. `household`: edge 443 and the DNS relay. Built-in all-to-all policy disabled |
 | edge | nftables ([`nixos/edge/`](../nixos/edge/)) | 80/443 and 53 from the LAN (VPN arrives as pod-2), SSH from the LAN, node-exporter from Prometheus |
 | Pod VMs | ufw, default deny ([`vm-preparation.yml`](../ansible/playbooks/vm-preparation.yml), [ADR 0026](adr/0026-ufw-as-guest-firewall.md)) | SSH rate-limited from the LAN, Cockpit from edge only (`cockpit_allow_from`), node-exporter from Prometheus only, each app port from its `allow_from` in `apps.yml` |
@@ -132,7 +132,7 @@ Podman apps ([ADR 0021](adr/0021-podman-quadlets.md), [podman-layout.md](podman-
 - A failed run alerts through ntfy, a missing heartbeat through Gatus
 - The token has `DatastoreBackup` on one datastore only. The three hosts share it
 - No VM images: VMs are rebuilt from code and the data restored ([bootstrap.md](bootstrap.md))
-- A restore was rehearsed into a throwaway VM, with counts compared ([restore-rehearsal.md](restore-rehearsal.md))
+- The restore rehearsal is written up in [restore-rehearsal.md](restore-rehearsal.md), a run on Podman only is due
 - Backups are not client-side encrypted. The datastore sits on the node's own disk
 
 ## Encryption
@@ -148,13 +148,13 @@ In transit:
 At rest:
 - The vault is encrypted with Ansible Vault, the controller's private folder sits on encrypted secure storage
 - Semaphore encrypts its key store (`semaphore_key_encryption`)
-- Node disks, guest disks, the pool and the PBS datastore are not encrypted at rest today
+- Node disks, guest disks, the pool and the PBS datastore are not encrypted at rest
 
 ## Supply chain and change control
 
 - GitHub Actions pinned to commit SHAs, each job with only the token permissions it needs (`contents: read` for the checks), `persist-credentials: false`, audited by zizmor ([`.github/workflows/`](../.github/workflows/))
 - pre-commit hooks pinned to commit SHAs
-- OpenTofu providers: `netbirdio/netbird` pinned exactly, `bpg/proxmox` within a minor range, both checked against the hashes in `tofu/.terraform.lock.hcl`
+- OpenTofu providers: `netbirdio/netbird` pinned exactly, `bpg/proxmox` at `~> 0.66` (any 0.x from 0.66 on), both checked against the hashes in `tofu/.terraform.lock.hcl`
 - NixOS: `nixos/flake.lock` in git, but the VMs move to the newest nixos-unstable every night ([ADR 0035](adr/0035-nixos-for-netbird-and-edge.md))
 - Images: fully qualified names (`scripts/check_wiring.py`), floating tags for apps, major tags for databases, Authentik one release series at a time ([updates.md](updates.md))
 - The same checks run locally (`just check`) and in CI: lint, `apps.yml` schema, wiring, ADR and C4 checks, gitleaks ([ADR 0020](adr/0020-same-checks-locally-and-in-ci.md))
@@ -198,10 +198,10 @@ Collected from the ADRs, one line each. The ADR has the reasoning.
 | Authentik is a single point of failure for logins | [0014](adr/0014-authentik-as-idp.md) |
 | Bulk media on the pool has no parity and no backup | [0004](adr/0004-mergerfs-instead-of-zfs.md), [0013](adr/0013-pbs-file-level-backups.md) |
 | The PBS token can't prune, retention is set by hand on the server | [0013](adr/0013-pbs-file-level-backups.md) |
-| No backup of ctl-1 | [0031](adr/0031-semaphore-on-a-single-board-computer.md) |
+| edge, the LXCs and ctl-1 have no PBS backup, they are rebuilt from code | [0013](adr/0013-pbs-file-level-backups.md), [0031](adr/0031-semaphore-on-a-single-board-computer.md) |
 | An image update can break a service between two weekly runs | [0021](adr/0021-podman-quadlets.md) |
 | Podman runs under AppArmor, not SELinux | [0025](adr/0025-debian-guests-until-x86-64-v3.md) |
 
 ## Reporting
 
-Found a problem? Open an issue on [GitHub](https://github.com/yaml-0x74696d/homelab/issues). Describe what and where (file and line), leave out working exploit details.
+Problems: open an issue on [GitHub](https://github.com/yaml-0x74696d/homelab/issues). Describe what and where (file and line), leave out working exploit details.

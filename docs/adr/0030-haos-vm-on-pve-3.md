@@ -19,6 +19,7 @@ Status: Accepted
 - No cloud-init in HAOS: the IP is a router DHCP reservation on the MAC OpenTofu pins
 - The PVE guest firewall (`haos.fw`) only lets Traefik and Homepage reach HA's port, the admin hosts also reach it and the Observer directly
 - Behind Traefik: the trusted proxies are set in HA's UI (Settings → Network), HA keeps them in `.storage/http` and ignores an `http:` block in the YAML
+- Backup: one vzdump snapshot job for VM 210 to the `pbs` storage, set up by hand in the PVE UI (Datacenter, Backup), the first Saturday of the month at 15:00. Retention comes from the storage config. The guest agent freezes the fs, HA's own backups aren't used
 
 - Enforced by: `haos.fw` from `roles/pve_firewall` (`deploy-pve-firewall.yml`)
 
@@ -26,8 +27,7 @@ Status: Accepted
 
 - Easier: add-ons and HA's own updates, pve-1 has room for edge
 - Harder: HA's config isn't in git, a rebuild means a restore
-- Backup: one vzdump snapshot job for VM 210 to the `pbs` storage, set up by hand in the PVE UI (Datacenter, Backup), the first Saturday of the month at 15:00. Retention comes from the storage config. The guest agent freezes the fs, HA's own backups aren't used
-- Harder: that job isn't in code, a rebuilt cluster needs it set up again by hand
+- Harder: the vzdump job isn't in code, a rebuilt cluster needs it set up again by hand
 - Harder: the trusted proxies change by hand when Traefik moves (edge)
 - Accepted: HA and its automations are off while pve-3 is off
 - Accepted: on the first Saturday of a month the vzdump can overlap the weekly `update.yml` ([0024](0024-ansible-run-os-updates.md)) while it updates pve-3

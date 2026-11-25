@@ -34,6 +34,6 @@ Status: Superseded by [0033](0033-no-kubernetes.md)
 
 - Accepted: a dead node means its apps are down until they're restored from PBS. There's no automatic failover
 
-- K8s stays a learning topic outside the lab
+- Later: K8s stays a learning topic outside the lab
 
 - Related: [0002](0002-generic-docker-app-role.md) (app role), [0011](0011-proxmox-as-hypervisor.md) (OpenShift), [0021](0021-podman-quadlets.md) (quadlets)

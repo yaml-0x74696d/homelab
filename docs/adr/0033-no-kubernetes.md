@@ -33,6 +33,6 @@ Status: Accepted
 
 - Accepted: a dead node means its apps are down until they're restored from PBS. There's no automatic failover
 
-- Later: k3s on a rented server (Hetzner) as a learning cluster outside the lab
+- Later: k3s on a rented server as a learning cluster outside the lab
 
 - Related: [0011](0011-proxmox-as-hypervisor.md) (OpenShift), [0012](0012-no-kubernetes.md) (superseded), [0021](0021-podman-quadlets.md) (quadlets)

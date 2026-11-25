@@ -40,6 +40,7 @@ What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/pod-{1,2,3}.
 | pod-2 | Grafana, Gatus, Actual Budget (SQLite) |
 | pod-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin, linkding, Memos (SQLite) |
 
+- Exception: HAOS gets a monthly vzdump ([0030](0030-haos-vm-on-pve-3.md))
 - Enforced by: the timer runs on its own, and a failed run or an empty dump sends an ntfy alert (`ERR` trap)
 
 ## Consequences
@@ -52,6 +53,6 @@ What each host backs up (`pbs_jobs` and `pbs_exclude` in `host_vars/pod-{1,2,3}.
 
 - Accepted: bulk media on the CIFS pool (photos, media, documents, Nextcloud files) is not backed up
 - Accepted: the Prometheus TSDB is skipped. It's bulky, and losing old metrics is fine
-- Accepted: the token can add backups and restore its own, but not prune or delete. Pruning and garbage collection are set by hand on the server
+- Accepted: the token can add backups and restore the backups it owns, but not prune or delete. pod-1/2/3 share it, so each can read the others' backups. Pruning and garbage collection are set by hand on the server
 
-- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (rebuild from code), [0004](0004-mergerfs-instead-of-zfs.md) (pool not backed up), [0005](0005-prevent-destroy-on-stateful-vms.md) (recovery path), [0019](0019-ntfy-single-alert-channel.md) (alerts), [0037](0037-actual-budget-on-pod-2.md) (Actual's sync log), [0038](0038-linkding-memos-excalidraw-on-pod-3.md) (linkding, Memos)
+- Related: [0001](0001-tofu-and-cloud-init-for-vms.md) (rebuild from code), [0004](0004-mergerfs-instead-of-zfs.md) (pool not backed up), [0005](0005-prevent-destroy-on-stateful-vms.md) (recovery path), [0019](0019-ntfy-single-alert-channel.md) (alerts), [0030](0030-haos-vm-on-pve-3.md) (HAOS vzdump), [0037](0037-actual-budget-on-pod-2.md) (Actual's sync log), [0038](0038-linkding-memos-excalidraw-on-pod-3.md) (linkding, Memos)

@@ -30,3 +30,7 @@
 - AIDE watches `/srv/firmware`: every upload shows up in the next check, accept it with `aide-accept.yml -l iot`
 - Test from the gateway: `curl -sI http://<iot_ip>/<device>.bin` (200), `curl -sI http://<iot_ip>/` (404)
 - Logs: `journalctl -u nginx`
+
+## Related
+
+- [ADR 0028: IoT gateway LXC](../../../docs/adr/0028-iot-gateway-lxc.md)

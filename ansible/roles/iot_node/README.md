@@ -28,9 +28,15 @@ The hook: left alone, a stopped CT hands the card back minutes later (with its n
 | `iot_node_ct_stop_timeout` | `60` | Seconds `pct shutdown` waits before the restart |
 | `iot_node_hook_wait` | `30` | Seconds the pre-start hook waits for the card to come back |
 | `iot_node_ct_lines` | see defaults | The raw LXC lines |
+| `iot_lan_ip`, `ssh_port` | group_vars | Where the restart handler waits for SSH |
 
 ## Notes
 
 - A tofu rebuild of the CT drops the raw lines, the next `deploy-iot.yml` puts them back
 - No `#` markers in `/etc/pve`: Proxmox moves comment lines into the guest's description
 - CT won't start (`Failed to retrieve ifindex`): see "Check it" in `docs/iot.md`
+
+## Related
+
+- [ADR 0029: the IoT WiFi card moves into the gateway LXC](../../../docs/adr/0029-wifi-card-in-the-gateway.md)
+- `iot_ap` role (the WiFi inside the CT)

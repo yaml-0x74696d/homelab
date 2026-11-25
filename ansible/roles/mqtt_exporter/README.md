@@ -35,9 +35,14 @@
 | `mqtt_exporter_device_regex`, `mqtt_exporter_metric_regex` | see defaults | Device and metric name from the topic |
 | `mqtt_exporter_cache_timeout` | `5m` | A sensor silent this long drops out of `/metrics` |
 | `mqtt_exporter_metrics` | temperature, humidity | Topic part → metric name + help |
-| `mqtt_exporter_port` | 9641 (`ports.yml`) | Scraped by Prometheus (`iot_sensors` job) |
+| `mqtt_exporter_port` | `9641` (`ports.yml`) | Scraped by Prometheus (`iot_sensors` job) |
 
 ## Notes
 
 - `/etc/default/...` and the yaml are Debian conffiles, `update.yml` reports them when an upgrade ships new ones
 - Test: `curl -s <iot_lan_ip>:9641/metrics | grep iot_`
+
+## Related
+
+- [ADR 0028: IoT gateway LXC](../../../docs/adr/0028-iot-gateway-lxc.md)
+- `mosquitto` role (the broker)
