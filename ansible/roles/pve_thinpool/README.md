@@ -9,7 +9,7 @@
 
 ## How it works
 
-- `/usr/local/sbin/pve-thinpool-metrics` runs `lvs`, keeps the thin pools (attr `t…`) and writes `thinpool_data_metric` and `thinpool_metadata_metric` per pool (labels `vg`, `pool`) to a temp file, then moves it over `thinpool.prom`
+- `/usr/local/sbin/pve-thinpool-metrics` runs `lvs`, keeps the thin pools (attr `t…`) and writes `pve_thinpool_data_percent` and `pve_thinpool_metadata_percent` (`thinpool_*_metric`) per pool (labels `vg`, `pool`) to a temp file, then moves it over `thinpool.prom`
 - `pve-thinpool-metrics.timer` runs it every `pve_thinpool_interval`
 - A drop-in on `prometheus-node-exporter.service` adds `--collector.textfile.directory`, on top of the `ARGS` from `/etc/default`. The role stops if Debian's defaults file isn't there
 - Prometheus' `pve-hosts` job scrapes the metrics with the rest

@@ -1,11 +1,11 @@
 # podman_base
 
-- What a VM needs before its first rootless Podman app: Podman and auto-update with ntfy
+- What a host needs before its first rootless Podman app: Podman and auto-update with ntfy
 - Per-app parts (svc users, subuid ranges, linger, quadlets, secrets, app firewall rules) are `podman_app`'s job
 
 ## Runs on
 
-- `pod_vms`, in `playbooks/vm-preparation.yml` after `roles/vm_base`
+- `pod_vms` (`playbooks/vm-preparation.yml`) and `podman_hosts` (`playbooks/ctl-preparation.yml`), after `roles/vm_base`
 
 ## How it works
 
@@ -56,9 +56,7 @@
 
 ## Notes
 
-
 - `crun`, not `runc`: Docker's `containerd.io` conflicts with Debian's `runc` package
-
-- Loopback is always accepted, so apps on the same VM reach each other's ports (the VM is the trust boundary, see the Podman plan)
+- Loopback is always accepted, so apps on the same VM reach each other's ports (the VM is the trust boundary)
 - No firewall here: ufw stays the host firewall (`vm-preparation.yml`), `roles/podman_app` adds each app's rules. firewalld is out on Debian: cloud-init conflicts with it (Debian #1025618, a boot ordering cycle)
 - Published rootless ports are plain host sockets (pasta), so ufw filters them directly. No `DOCKER-USER` workaround

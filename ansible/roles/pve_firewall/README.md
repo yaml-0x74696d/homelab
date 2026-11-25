@@ -34,7 +34,7 @@
 
 ## NetBird VM
 
-- In: 443, STUN/TURN on 3478 + 5349 (TCP+UDP), the narrowed TURN relay range (UDP), and SSH + ICMP from the LAN only
+- In: 443, STUN/TURN on 3478 + 5349 (TCP+UDP), the narrowed TURN relay range (UDP), node-exporter from Prometheus' host, and SSH + ICMP from the LAN only
 - Out: everything to the routing peers, because the TURN relay uses arbitrary ports
 - Out: DNS + HTTPS to `pve_firewall_netbird_dns_https`, DNS to the gateway, RELP to the log LXC
 - Out: the rest of the LAN is dropped, the internet is open
@@ -93,9 +93,9 @@
 
 Every guest's network card has `firewall=1`, so turning on the master switch drops traffic to all of them at once. That's why it goes in stages:
 
-1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird, the log LXC and the IoT LXC goes into `pve_firewall_open_guests`
+1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird, the log LXC, the IoT LXC and HAOS goes into `pve_firewall_open_guests`
 2. Stage 0: both switches off, files written, check the compiled ruleset
-3. Stage 1: master switch on, so only NetBird and the log + IoT LXCs are filtered
+3. Stage 1: master switch on, so only NetBird, the log + IoT LXCs and HAOS are filtered
 4. Stage 2: host lockdown on one node, test SSH and `:8006` from an admin device, then the other nodes
 5. Stage 3: set both defaults to true, or a plain re-run turns them off again
 
@@ -106,7 +106,7 @@ Every guest's network card has `firewall=1`, so turning on the master switch dro
 - The switches must match what's live, a re-run flips them
 - `/etc/pve` is pmxcfs: copy can't create files there and there's no atomic rename. So the role creates the file first, then templates it with `unsafe_writes`
 - pmxcfs sets fixed file modes and doesn't allow chmod, hence the `noqa` on the mode
-- If Authentik or Gitea move to another host, or the TURN relay needs another LAN peer, the NetBird egress needs a new OUT rule
+- The NetBird egress follows `app_sources.edge`, `dns_ip` and the `netbird_agent` group. Any other LAN target needs a new OUT rule
 
 ## Related
 

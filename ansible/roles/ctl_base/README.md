@@ -17,12 +17,12 @@
    ```
    Then reboot ctl-1: it comes back on `ctl1_ip`. `vm_base` turns password logins off
 3. `base.yml -l ctl-1`, then `deploy-app.yml -e app=semaphore`
-4. `ctl-preparation.yml` clones `ctl_base_repo_url` (branch `ctl_base_repo_version`) copies the gitignored `ctl_base_private_files` from the controller's checkout and sets up Syncthing (below)
+4. `ctl-preparation.yml` clones `ctl_base_repo_url` (branch `ctl_base_repo_version`), copies the gitignored `ctl_base_private_files` from the controller's checkout and sets up Syncthing (below)
 5. AIDE hashes and overlays: Syncthing brings them over once ctl-0 is paired (below)
 
 ## How it works
 
-- Static address: a NetworkManager keyfile (`ctl_base_connection`) with address, gateway and DNS. With it in place NetworkManager no longer creates its in-memory "Wired connection 1". Never reloaded, so the address changes at the next boot
+- Static address: a NetworkManager keyfile (`ctl_base_connection`) with address, gateway and DNS. With it in place NetworkManager doesn't create its in-memory "Wired connection 1". Never reloaded, so the address changes at the next boot
 - DNS is the gateway only: the hosts are reached by IP, and `auth.<domain>` is pinned in the quadlet (`AddHost=`)
 - ufw: deny in, ssh rate-limited from the LAN, node-exporter from Prometheus only, Syncthing (`syncthing_port`) from the LAN. Semaphore's port comes from `podman_app` (`allow_from`)
 - The clone: `ctl-preparation.yml` clones once, after that `playbooks/repo-pull.yml` pulls (a Semaphore template). Vault password and tofu state never land on ctl-1, the vault password lives in Semaphore's key store
@@ -50,9 +50,9 @@ ctl-0 by hand, once:
 3. `syncthing device-id` (2.x, `--device-id` on 1.x) into `private.yml` as `syncthing_ctl0_id`, then `ansible-playbook playbooks/ctl-preparation.yml -l ctl-1 -t private-files,syncthing`
 4. GUI on `http://127.0.0.1:8384`, Settings → Connections: global discovery, local discovery, relays and NAT traversal off
 5. Add device: ctl-1's id (`ssh ctl-1 syncthing --device-id`, Debian ships 1.x), address `tcp://<ctl1_ip>:22000`
-6. Accept the two folders ctl-1 offers, with the paths from the table, "Ignore Permissions" on. On `homelab-aide`: File Versioning → Simple, so every overwritten hash stays in `.stversions` (ADR 0039)
+6. Accept the two folders ctl-1 offers, with the paths from the table, "Ignore Permissions" on. On `homelab-aide`: File Versioning → Simple, so every overwritten hash stays in `.stversions` ([ADR 0039](../../../docs/adr/0039-syncthing-between-ctl-0-and-ctl-1.md))
 7. `.stignore` with `.git` in `<private_dir>/apps`, Syncthing never syncs that file itself
-8. The off-site copy: `cp files/ctl-0/homelab-sync-copy.{service,timer} ~/.config/systemd/user/`, `~/.config/homelab-sync-copy.env` with `SYNC_COPY_DEST=<secure storage>/homelab/sync-copy`, then `systemctl --user enable --now homelab-sync-copy.timer`. Daily at 21:00, rsync mirrors `~/homelab-sync` into `<secure storage>/homelab/sync-copy`, one way, without Syncthing's own files. The secure storage keeps the versions
+8. The off-site copy: `cp ansible/roles/ctl_base/files/ctl-0/homelab-sync-copy.{service,timer} ~/.config/systemd/user/`, `~/.config/homelab-sync-copy.env` with `SYNC_COPY_DEST=<secure storage>/homelab/sync-copy`, then `systemctl --user enable --now homelab-sync-copy.timer`. Daily at 21:00, rsync mirrors `~/homelab-sync` into `<secure storage>/homelab/sync-copy`, one way, without Syncthing's own files. The secure storage keeps the versions
 
 ## Settings
 
@@ -74,6 +74,8 @@ ctl-0 by hand, once:
 | `ctl_base_syncthing_aide_dir` | `/srv/apps/semaphore/aide` | The synced hash dir |
 | `ctl_base_semaphore_uid` | subuid start + 1000 | Semaphore's container user on the host |
 | `ctl_base_vault_pass_dummy` | `ansible/.vault_pass` | Placeholder for `vault_password_file` |
+| `ctl_base_syncthing_api` | `http://127.0.0.1:8384/rest` | Syncthing's REST API, localhost only |
+| `ctl_base_syncthing_start_timeout` | `60` | Seconds to wait for Syncthing's first `config.xml` |
 
 ## Notes
 

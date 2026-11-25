@@ -28,6 +28,7 @@ The hook: left alone, a stopped CT hands the card back minutes later (with its n
 | `iot_node_ct_stop_timeout` | `60` | Seconds `pct shutdown` waits before the restart |
 | `iot_node_hook_wait` | `30` | Seconds the pre-start hook waits for the card to come back |
 | `iot_node_ct_lines` | see defaults | The raw LXC lines |
+| `iot_lan_ip`, `ssh_port` | group_vars | Where the restart handler waits for SSH |
 
 ## Notes
 

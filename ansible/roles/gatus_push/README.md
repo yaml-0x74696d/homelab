@@ -13,7 +13,7 @@
 ## How it works
 
 - `POST http://localhost:<gatus port><gatus_push_path>` with the key `<gatus_push_group>_semaphore-<job>`, with `Authorization: Bearer <gatus_push_token>`
-- The external endpoints are generated from `gatus_semaphore_templates` in `apps/gatus/config.yaml.j2`, the job name has to match the template name there
+- `apps/gatus/config.yaml.j2` generates the external endpoints from `gatus_semaphore_templates` (`app_settings.yml`), the job name has to match a name there
 - The task has `no_log`, the token is in the vault
 
 ## Settings

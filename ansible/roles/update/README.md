@@ -37,6 +37,7 @@
 | `update_aide_wait_retries`, `update_aide_wait_delay` | 60, 30 | How long to wait for a running daily AIDE check (tries, seconds) |
 | `update_ntfy_title` | homelab updates | ntfy title |
 | `update_ntfy_headers` | Title + Bearer `ntfy_token` if set | Headers for every ntfy push |
+| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings, an empty URL sends nothing |
 
 ## Reading the summary
 

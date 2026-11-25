@@ -2,7 +2,7 @@
 
 - Deploys one rootless Podman app from its entry in `group_vars/all/apps.yml` and its unit templates in `apps/<name>/`
 - One user per app (`svc-<name>`), quadlets in that user's `~/.config/containers/systemd/`, data in `/srv/apps/<name>`
-- Built so far: single- and multi-container apps (one pod), secrets, pool shares over CIFS, keep-id, devices. No per-app `.network` or init containers. The role refuses an entry that needs more
+- Built: single- and multi-container apps (one pod), secrets, pool shares over CIFS, keep-id, devices. No per-app `.network` or init containers. The role refuses an entry that needs more
 
 ## Runs on
 
@@ -26,7 +26,7 @@
    - `<container>.container`: rendered from `apps/<name>/<container>.container.j2` (volumes, ports, env, health)
    - a pod also gets `<name>.pod` from `apps/<name>/<name>.pod.j2` (ports, `AddHost=`) and `<name>.pod.d/50-map.conf` (`PodName=`, `UserNS=keep-id`)
 8. Config: `apps/<name>/config/` mirrored to `/srv/apps/<name>/config/`, `*.j2` rendered, the rest copied, files gone from the repo removed. With `private_dir` set (in `private.yml`), `<private_dir>/apps/<name>/config/` lays over it: plain files, no templates, a file there replaces the public one with the same path and is never shown in `--diff`. A set `private_dir` without `apps/` fails the deploy, a silent public-only run would drop the private files as stale. Owned by root and world-readable (worker uids land on subuids), so the app can't rewrite it; units mount it `:ro`. A change restarts the app
-9. ufw: one rule per port and `allow_from` source
+9. ufw: one rule per port and `allow_from` source, commented `podman <name>`. Rules with that comment the entry doesn't list are deleted
 10. Podman secrets as the user: the value from the vault variable or the rendered template, replaced only when the content differs (`podman secret inspect --showsecret`)
 11. Pulls the images as the user (so a pull never eats the start timeout), reloads + restarts on unit changes (a pod as a whole, `<name>-pod.service`), starts the units
 12. Enables the user's `podman-auto-update.timer` (schedule + ntfy wrapper from `roles/podman_base`), then `podman image prune -af`: every image the app doesn't run goes, old tags too. Each app has its own user, so this never touches another app's images
@@ -62,17 +62,17 @@ An app with more than one container runs as one pod:
 ```yaml
   paperless:
     host: pod-3
-    uid: 2110
+    uid: 2100
     container_uid: 1000           # keep-id: uid 1000 in the pod = svc-paperless on the host
     port: 8083
     allow_from: [edge, netbird]
     secrets:
       - name: paperless-db-pass
-        vault: paperless_pg_pass
+        vault: paperless_db_pass
     dirs:
       - path: data
       - path: database
-        owner: 999                # postgres in the container
+        owner: 70                 # postgres in the alpine image
     cifs:
       - share: documents
         user: paperless           # password: smb_passwords.paperless
@@ -87,11 +87,11 @@ An app with more than one container runs as one pod:
       - name: paperless-db
         image: docker.io/library/postgres
         tag: 16-alpine
-        user: "999:999"
+        user: "70:70"
       - name: paperless-redis
         image: docker.io/library/redis
         tag: 8-alpine
-        user: "999:999"
+        user: "999:1000"
     routes:
       - host: paperless
 ```
@@ -127,6 +127,8 @@ An app with more than one container runs as one pod:
 | `podman_app_cifs_vers` | `3.1.1` | SMB dialect of the pool mounts |
 | `podman_app_cifs_creds_dir` | `/etc/cifs` | `<share>.creds`, root-only |
 | `podman_app_pod` | more than one container | Whether the app runs as a pod |
+| `podman_app_render_dir` | `""` | `tasks/render.yml` only: one folder per app goes here |
+| `podman_app_user`, `_home`, `_dir`, `_src`, `_quadlet_dir`, `_config*` | built from the name | Paths and the config file list, not meant to be set |
 | `podman_apps_root` | `/srv/apps` (group_vars) | Data dirs, backed up by `roles/pbs` |
 | `cifs_mount_root`, `storage_ip` | `/srv`, CT 300 (group_vars) | Where the shares are mounted, the Samba server |
 | `podman_svc_prefix`, `podman_svc_group` | `svc-`, `svc-apps` (group_vars) | Shared with `roles/podman_base` and the aide excludes |

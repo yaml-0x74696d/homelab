@@ -27,8 +27,8 @@
 | media | Jellyfin and LAN clients |
 | nextcloud | Nextcloud |
 | documents | Paperless |
-| photos | Immich |
 | homelab | Admin only |
+| photos | Immich |
 | timemachine | Admin only |
 
 - `valid users` and `write list` are the share's group, with `force group` on every share
@@ -38,7 +38,7 @@
 
 ## Time Machine
 
-- A share with `time_machine: true` gets `vfs_fruit` and `streams_xattr`. Those settings are set globally
+- A share with `time_machine: true` gets `vfs objects = catia fruit streams_xattr`. Only `fruit:aapl` and `fruit:model` are in `[global]`
 - `fruit:time machine max size` caps the backup so it can't fill the pool (`tm_size`, default 1 TB)
 
 ## Settings
@@ -54,6 +54,7 @@
 | `samba_tm_size_default` | `1T` | Time Machine cap when a share sets no `tm_size` |
 | `samba_manage_ufw` | `true` | `false` leaves the firewall alone |
 | `samba_lan` | `lan_cidr` | The network that may connect |
+| `storage_root`, `admin_user`, `smb_passwords` | group_vars, vault | Pool mount in the CT, the admin user, SMB password per user |
 
 ## Notes
 

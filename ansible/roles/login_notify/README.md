@@ -6,7 +6,7 @@
 ## Runs on
 
 - proxmox (`playbooks/deploy-login-notify.yml`)
-- The pod VMs aren't covered, `hosts: all` in the playbook would add them
+- Only the pve nodes. Another group goes into `hosts:` in the playbook (not `all`: haos has no login)
 
 ## How it works
 

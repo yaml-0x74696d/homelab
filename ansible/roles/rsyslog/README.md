@@ -6,8 +6,8 @@
 
 ## Runs on
 
-- All guests (`pod_vms`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
-- The NetBird VM gets the same from `nixos/base/logging.nix`, edge follows
+- All guests and ctl-1 (`pod_vms`, `podman_hosts`, `lxc_containers`), in `playbooks/base.yml`. Not the pve nodes
+- The NixOS VMs (netbird, edge) get the same from `nixos/base/logging.nix`
 
 ## How it works
 

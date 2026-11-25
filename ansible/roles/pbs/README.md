@@ -40,9 +40,9 @@
 
 | Host | Databases | Left out |
 |---|---|---|
-| pod-1 | Authentik (Postgres), Gitea, Vaultwarden (SQLite) | – |
+| pod-1 | Authentik (Postgres), Gitea, Vaultwarden (SQLite) | nothing |
 | pod-2 | Grafana, Gatus, Actual Budget (SQLite) | Prometheus TSDB (bulky, old metrics aren't worth keeping) |
-| pod-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin (SQLite) | Jellyfin cache and transcodes |
+| pod-3 | Nextcloud, Immich, Paperless (Postgres), Jellyfin, Linkding, Memos (SQLite) | Jellyfin cache and transcodes |
 
 - The bulk data on the CIFS pool (photos, media, documents, files) isn't in here
 
@@ -55,7 +55,7 @@
 - An `ERR` trap sends "backup failed" with the failing line to ntfy
 - The heartbeat is a `POST` to Gatus' backend port on pod-2, the token comes from `/etc/pbs.env`, not from the command line. A failed push is only logged, the backup stays ok. Gatus alerts when it stays away longer than `heartbeat_daily`
 - `TimeoutStartSec` (`pbs_timeout`) stops a stuck push (e.g. pve-3 only half up), so it can't hold the lock forever
-- The token `backup@pbs!client` has the `DatastoreBackup` role on `/datastore/homelab` only. It can add backups and restore its own (the three hosts share it), but not delete or prune
+- The token `backup@pbs!client` has the `DatastoreBackup` role on `/datastore/homelab` only. It can add backups and restore the groups it owns. The three hosts share it, so each can restore all three. It can't delete or prune
 
 ## Settings
 
