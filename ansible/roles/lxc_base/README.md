@@ -24,7 +24,7 @@
 | `lxc_base_packages` | see defaults | Package set |
 | `lxc_base_services` | fail2ban, node_exporter | Enabled and started |
 | `lxc_base_node_exporter_listen` | `ansible_host:node_exporter_port` | node_exporter's listen address |
-| `lxc_base_node_exporter_restart_sec` | 5 | Seconds between node_exporter restarts at boot |
+| `lxc_base_node_exporter_restart_sec` | `5` | Seconds between node_exporter restarts at boot |
 | `lxc_base_ufw` | `false` | `true` on the LXCs that filter with ufw (storage, iot) |
 | `prometheus_ip` | `app_settings.yml` | Source of the node_exporter rule |
 | `timezone`, `ssh_*` | group_vars | Shared with `vm_base` |
@@ -37,3 +37,8 @@
 - `--check` on a fresh CT: tasks that need the packages are `ignore_errors` in check mode
 - Prometheus scrapes every LXC in the `node-exporter` job (`apps/prometheus/config/prometheus.yml.j2`)
 - In an unprivileged CT node_exporter sees lxcfs' view: CPU and memory are the CT's, some disk and network numbers are the host's
+
+## Related
+
+- [ADR 0024: OS updates through one Ansible run](../../../docs/adr/0024-ansible-run-os-updates.md)
+- `vm_base` role (the VM side), `playbooks/base.yml`

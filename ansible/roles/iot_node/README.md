@@ -35,3 +35,8 @@ The hook: left alone, a stopped CT hands the card back minutes later (with its n
 - A tofu rebuild of the CT drops the raw lines, the next `deploy-iot.yml` puts them back
 - No `#` markers in `/etc/pve`: Proxmox moves comment lines into the guest's description
 - CT won't start (`Failed to retrieve ifindex`): see "Check it" in `docs/iot.md`
+
+## Related
+
+- [ADR 0029: the IoT WiFi card moves into the gateway LXC](../../../docs/adr/0029-wifi-card-in-the-gateway.md)
+- `iot_ap` role (the WiFi inside the CT)

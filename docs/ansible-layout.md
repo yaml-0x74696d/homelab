@@ -21,13 +21,18 @@ Where things are kept in `ansible/`, and which value is used when a variable is 
 
 ```
 ansible/
+├── ansible.cfg          roles_path, collections_path, vault password file, ssh options
+├── requirements.yml     the collections, one major each, installed into collections/ (gitignored)
+├── .ansible-lint        lint rules
+├── ansible-navigator.yml.example  settings for the navigator container, the real file is gitignored
 ├── inventory.yml        hosts and groups only: proxmox, pod_vms, podman_hosts (ctl-1), lxc_containers, netbird_agent, appliances (never logged in to)
 ├── group_vars/all/      every shared variable, one topic per file
 ├── group_vars/<group>.yml  how a group is logged in to (user, become)
 ├── host_vars/<host>.yml what only one host has
 ├── playbooks/           what is run where: hosts are picked, roles are called
 ├── roles/<role>/        how something is installed
-└── apps/<app>/          what an app is made of
+├── apps/<app>/          what an app is made of
+└── aide/                accepted AIDE hashes, gitignored (a link into the synced private folder on the controller)
 ```
 
 - Standard Ansible: the inventory, `group_vars/`, `host_vars/`, the role layout, role vars prefixed with the role name (`podman_app_*`, checked by ansible-lint)
@@ -42,12 +47,57 @@ roles/podman_app/
 ├── templates/*.j2       Jinja templates
 ├── files/               static files copied as they are (scripts, so shellcheck sees them)
 ├── handlers/main.yml    restarts, only run on change
-├── meta/                galaxy info, inputs checked by argument_specs.yml
+├── meta/                galaxy info, types of the inputs in argument_specs.yml
 └── README.md            what is done, step by step, every variable
 ```
 
 - Defaults point at group_vars (`mosquitto_port: "{{ mqtt_port }}"`): the value is kept in one place, the role stays reusable
 - `vars/` isn't used: too strong to be overridden
+
+Every `README.md` has the same headings, in this order:
+
+```
+# <role>
+- what it does, what it leaves to others (2-3 bullets)
+
+## Runs on         hosts, the playbook, what has to be there first
+## How it works    numbered steps, in task order
+## <topic>         optional, one section per thing that needs more words
+## Settings        | Variable | Default | What |, defaults in backticks
+## Notes           gotchas, one line each
+## Related         ADRs and the code outside the role
+```
+
+Types and required inputs go in `meta/argument_specs.yml`, not in the README.
+
+## Playbooks
+
+Run from `ansible/`: `ansible-playbook playbooks/<file>`.
+
+| File | Hosts | What | How it's run |
+|---|---|---|---|
+| `site.yml` | what the imported ones pick | `base.yml`, every app, authentik, iot, storage, `deploy-pbs.yml`, in order | by hand |
+| `vm-preparation.yml` | `pod_vms` | `vm_base`, `podman_base`, ufw, AIDE | by hand, once per VM |
+| `ctl-preparation.yml` | `podman_hosts` | `vm_base`, `podman_base`, `ctl_base`, AIDE for ctl-1 | by hand, once |
+| `base.yml` | guests, VMs, ctl-1 | cron, journald, rsyslog, chrony, LXC hardening | by hand, from `site.yml` |
+| `deploy-app.yml` | the app's hosts | one Podman app, `-e app=<name>` | by hand, `just deploy-app` |
+| `deploy-authentik.yml` | `pod-1` | Authentik with guards: no skipped release series, no downgrade | by hand, from `site.yml` |
+| `deploy-iot.yml` | `proxmox`, `iot` | Wi-Fi card into the IoT LXC, broker, exporter, firmware server | by hand, from `site.yml` |
+| `deploy-storage.yml` | `pve-3`, `storage` | mergerfs pool, Samba shares | by hand, from `site.yml` |
+| `deploy-pbs.yml` | `pod_vms` | PBS backup client and timer | by hand, from `site.yml` |
+| `deploy-pve-firewall.yml` | `proxmox` | Proxmox firewall files | by hand |
+| `deploy-pve-thinpool.yml` | `proxmox` | thin pool metrics for node-exporter | by hand |
+| `deploy-login-notify.yml` | `proxmox` | ntfy alert on SSH and PVE web logins | by hand |
+| `deploy-netbird-agent.yml` | `netbird_agent` | NetBird peer on the LAN routing host | by hand |
+| `journald.yml` | `proxmox` | journal size cap | by hand |
+| `login-banner.yml` | all but `appliances` | fastfetch login banner | by hand |
+| `push-keys.yml` | all but `appliances` | admin and Semaphore keys into `authorized_keys` | by hand |
+| `aide.yml` | guests, VMs, nodes, ctl-1 | AIDE install, baseline, daily check, hash verify | by hand, Semaphore (daily) |
+| `aide-accept.yml` | same | review and accept changes, one host at a time | by hand, Semaphore with `aide_accept=yes` |
+| `update.yml` | same | OS updates one host at a time, no reboot, summary | Semaphore (weekly), by hand |
+| `repo-pull.yml` | `podman_hosts` | pulls Semaphore's checkout on ctl-1 | Semaphore (daily) |
+| `render-podman.yml` | `pod_vms`, `podman_hosts` | renders every app with example values, touches no host | `just render` |
+| `ci-validate-apps.yml` | `localhost` | `apps.yml` against the `podman_app` argument spec | pre-commit hook `apps-schema` |
 
 ## group_vars/all
 
@@ -119,4 +169,4 @@ For new and changed code:
 - Playbooks stay thin: hosts and order. Anything with more than a couple of tasks becomes a role with a README
 - A role with structured inputs (lists of dicts, entry points called from elsewhere) gets `meta/argument_specs.yml`
 - Login variables per group go in `group_vars/<group>.yml`, the inventory only lists hosts
-- A template or copy that holds a secret gets `diff: false` (or `no_log: true`), so `--diff` never prints it
+- A task or file that holds a secret gets `no_log: true` and `diff: false`. Never run `--diff` on one: it prints the old and new content, secrets included, into the terminal, CI logs and Semaphore's run history. If a value was printed anyway: change it in `vault.yml`, deploy the app again, and change it in the app itself where it holds a copy (database users, OIDC clients)

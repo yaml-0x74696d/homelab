@@ -17,3 +17,7 @@
 - Jobs live in `/etc/crontab`, `/etc/cron.d/` and user crontabs
 - The service is `cronie.service`
 - Cron output goes to `/var/log/cron` (roles/rsyslog)
+
+## Related
+
+- `rsyslog` role (cron output goes to `/var/log/cron`)

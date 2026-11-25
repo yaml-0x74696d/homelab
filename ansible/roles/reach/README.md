@@ -20,7 +20,7 @@
 
 | Variable | Default | What |
 |---|---|---|
-| `reach_timeout` | 30 | Seconds of retries before a host counts as down |
+| `reach_timeout` | `30` | Seconds of retries before a host counts as down |
 | `reach_optional_hosts` | `[]`, set in group_vars `hosts.yml` | Hosts that may be off: `part_time_nodes` and their guests from `guest_nodes` (`network.yml`, tofu places the guests from the same map) |
 
 ## Notes
@@ -30,3 +30,8 @@
 - Without this play, a `serial: 1` batch whose only host is down ends the whole playbook, so nothing after it runs
 - A host that goes down after this check still fails as unreachable
 - haos sits on pve-3 too, but Ansible never logs in there (`appliances`)
+
+## Related
+
+- [ADR 0024: OS updates through one Ansible run](../../../docs/adr/0024-ansible-run-os-updates.md)
+- `update`, `aide` roles (their playbooks start with this play)

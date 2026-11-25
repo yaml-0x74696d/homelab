@@ -34,3 +34,9 @@ The CT's address on `wlan0` (`iot_ip`) comes from LXC itself (`lxc.net.9.ipv4.ad
 
 - Test: `iw dev` in the CT shows `type AP` and the SSID, `journalctl -u hostapd -u dnsmasq` shows associations and leases
 - The ufw rules for the WiFi (`iot_net_ports` and DHCP, only `on wlan0`) are in the playbook, with the rest of the CT's ufw
+
+## Related
+
+- [ADR 0029: the IoT WiFi card moves into the gateway LXC](../../../docs/adr/0029-wifi-card-in-the-gateway.md)
+- [ADR 0028: IoT gateway LXC](../../../docs/adr/0028-iot-gateway-lxc.md)
+- `iot_node` role (the card), `playbooks/deploy-iot.yml`

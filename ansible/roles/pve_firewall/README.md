@@ -9,6 +9,15 @@
 - proxmox (`playbooks/deploy-pve-firewall.yml`, `gather_facts: false`)
 - The cluster-wide files are written once (`run_once`), `host.fw` once per node
 
+## How it works
+
+1. Touches each target file first, because `/etc/pve` is pmxcfs and `copy` can't create files there
+2. `cluster.fw` (once): master switch, default policy, ipsets, the `pve-mgmt` group
+3. One file each for the NetBird VM, the log LXC, the IoT gateway LXC and the HAOS VM (once)
+4. `enable: 0` for every guest in `pve_firewall_open_guests`
+5. `host.fw` on every node
+6. `pve-firewall compile` checks the result
+
 ## Files it manages
 
 | File | What |
@@ -20,8 +29,6 @@
 | `/etc/pve/firewall/<haos vmid>.fw` | The HAOS VM: HA's port from Traefik and Homepage, admins direct |
 | `/etc/pve/firewall/<vmid>.fw` | `enable: 0` for each guest that stays open |
 | `/etc/pve/nodes/<node>/host.fw` | Host lockdown, uses `GROUP pve-mgmt` |
-
-- At the end, `pve-firewall compile` checks the result
 
 ## Cluster
 
@@ -60,6 +67,18 @@
 - Out stays open: MQTT to the gateway, the router integration, updates
 - LAN devices that fetch media from HA directly (Cast, TTS) are dropped too, they'd need a rule
 
+## Rollout
+
+Every guest's network card has `firewall=1`, so turning on the master switch drops traffic to all of them at once. That's why it goes in stages:
+
+1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird, the log LXC, the IoT LXC and HAOS goes into `pve_firewall_open_guests`
+2. Stage 0: both switches off, files written, check the compiled ruleset
+3. Stage 1: master switch on, so only NetBird, the log + IoT LXCs and HAOS are filtered
+4. Stage 2: host lockdown on one node, test SSH and `:8006` from an admin device, then the other nodes
+5. Stage 3: set both defaults to true, or a plain re-run turns them off again
+
+- Locked out? On the node's console run `pve-firewall stop`, or set `enable: 0` in the file
+
 ## Settings
 
 | Variable | Default | What |
@@ -88,18 +107,6 @@
 | `pve_firewall_haos_callers` | `app_sources.edge`, Homepage's host | May reach HA's port |
 | `pve_firewall_haos_observer_port` | `4357` | The Supervisor's health page, admins only |
 | `pve_firewall_iot_mqtt_clients` | `mqtt_lan_clients` (`app_settings.yml`) | May reach the broker from the LAN |
-
-## Rollout
-
-Every guest's network card has `firewall=1`, so turning on the master switch drops traffic to all of them at once. That's why it goes in stages:
-
-1. Pre-flight: list the guests with the firewall bit (`qm config` / `pct config` piped to `grep firewall=1`). Every one except NetBird, the log LXC, the IoT LXC and HAOS goes into `pve_firewall_open_guests`
-2. Stage 0: both switches off, files written, check the compiled ruleset
-3. Stage 1: master switch on, so only NetBird, the log + IoT LXCs and HAOS are filtered
-4. Stage 2: host lockdown on one node, test SSH and `:8006` from an admin device, then the other nodes
-5. Stage 3: set both defaults to true, or a plain re-run turns them off again
-
-- Locked out? On the node's console run `pve-firewall stop`, or set `enable: 0` in the file
 
 ## Notes
 

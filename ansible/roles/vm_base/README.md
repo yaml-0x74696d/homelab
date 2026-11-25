@@ -26,11 +26,16 @@
 |---|---|---|
 | `vm_base_packages` | see defaults | Package set |
 | `vm_base_sysctl` | see defaults | Kernel settings, name → value |
-| `vm_base_rp_filter` | 1 | Reverse path filter, 2 (loose) on pod-2, the netbird routing peer |
+| `vm_base_rp_filter` | `1` | Reverse path filter, 2 (loose) on pod-2, the netbird routing peer |
 | `vm_base_sysctl_file` | `/etc/sysctl.d/90-vm-base.conf` | Debian 13 reads only `/etc/sysctl.d` at boot |
 | `vm_base_services` | auditd, fail2ban, apparmor, node_exporter | Enabled and started, plus `cockpit.socket` when `vm_base_cockpit` |
-| `vm_base_guest_agent` | true | Installs qemu-guest-agent. Off on bare metal (ctl-1) |
-| `vm_base_cockpit` | true | Installs cockpit and starts its socket. Off on ctl-1 |
+| `vm_base_guest_agent` | `true` | Installs qemu-guest-agent. Off on bare metal (ctl-1) |
+| `vm_base_cockpit` | `true` | Installs cockpit and starts its socket. Off on ctl-1 |
 | `vm_base_cockpit_origins` | `https://<host>.<domain>` | Websocket origins cockpit accepts (`Origins`) |
-| `vm_base_cockpit_protocol_header` | X-Forwarded-Proto | Header telling cockpit the proxy spoke TLS (`ProtocolHeader`) |
+| `vm_base_cockpit_protocol_header` | `X-Forwarded-Proto` | Header telling cockpit the proxy spoke TLS (`ProtocolHeader`) |
 | `login_banner_text`, `ssh_*`, `timezone` | group_vars | Shared with the other hosts |
+
+## Related
+
+- [ADR 0024: OS updates through one Ansible run](../../../docs/adr/0024-ansible-run-os-updates.md)
+- `lxc_base` role (the LXC side), `podman_base` role (runs next)

@@ -12,20 +12,20 @@
 
 ## How it works
 
-- Adds the `pbs-client` apt repo (deb822, Proxmox release key) and installs `proxmox-backup-client` and `sqlite3`
-- `/etc/pbs.env` (mode `0600`) holds the repository, the token secret and the server fingerprint
-- Checks that each Podman postgres job names a Podman app (`app`), whose svc user it dumps as
-- Installs `/usr/local/sbin/pbs-backup`, `pbs-backup.service` and a `.timer`
-- Each run:
-  1. Takes a lock
-  2. Creates a fresh staging folder
-  3. Dumps every database in `pbs_jobs`
-  4. Pushes to PBS
-  5. Wipes the staging folder
-  6. Pushes a heartbeat to Gatus (after `backup ok`)
-- The push sends these archives under the backup ID `<host>`:
-  - `dumps.pxar`: the staging folder with the dumps
-  - `podman-apps.pxar`: `podman_apps_root`, without the live database files, because the dumps replace them
+1. Adds the `pbs-client` apt repo (deb822, Proxmox release key) and installs `proxmox-backup-client` and `sqlite3`
+2. `/etc/pbs.env` (mode `0600`) holds the repository, the token secret and the server fingerprint
+3. Checks that each Podman postgres job names a Podman app (`app`), whose svc user it dumps as
+4. Installs `/usr/local/sbin/pbs-backup`, `pbs-backup.service` and a `.timer`
+5. Each run:
+   1. Takes a lock
+   2. Creates a fresh staging folder
+   3. Dumps every database in `pbs_jobs`
+   4. Pushes to PBS
+   5. Wipes the staging folder
+   6. Pushes a heartbeat to Gatus (after `backup ok`)
+6. The push sends these archives under the backup ID `<host>`:
+   - `dumps.pxar`: the staging folder with the dumps
+   - `podman-apps.pxar`: `podman_apps_root`, without the live database files, because the dumps replace them
 
 ## Dump types
 
@@ -57,6 +57,11 @@
 - `TimeoutStartSec` (`pbs_timeout`) stops a stuck push (e.g. pve-3 only half up), so it can't hold the lock forever
 - The token `backup@pbs!client` has the `DatastoreBackup` role on `/datastore/homelab` only. It can add backups and restore the groups it owns. The three hosts share it, so each can restore all three. It can't delete or prune
 
+## Server side (by hand, not in this role)
+
+- Pruning and garbage collection are set in the PBS UI: GC daily, keep 7 daily / 4 weekly / 3 monthly
+- With privilege separation, the user and the token both need the ACL. The token only gets what both have
+
 ## Settings
 
 | Variable | Default | What |
@@ -78,11 +83,6 @@
 | `pbs_heartbeat_token` | `gatus_push_token` (vault) | Push token, empty = no heartbeat in the script |
 | `pbs_staging_dir`, `ntfy_timeout` | group_vars | Shared with other roles |
 | `podman_apps_root`, `podman_svc_prefix` | group_vars | Shared with `roles/podman_app` |
-
-## Server side (by hand, not in this role)
-
-- Pruning and garbage collection are set in the PBS UI: GC daily, keep 7 daily / 4 weekly / 3 monthly
-- With privilege separation, the user and the token both need the ACL. The token only gets what both have
 
 ## Notes
 

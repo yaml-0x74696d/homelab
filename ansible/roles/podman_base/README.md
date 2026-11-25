@@ -60,3 +60,9 @@
 - Loopback is always accepted, so apps on the same VM reach each other's ports (the VM is the trust boundary)
 - No firewall here: ufw stays the host firewall (`vm-preparation.yml`), `roles/podman_app` adds each app's rules. firewalld is out on Debian: cloud-init conflicts with it (Debian #1025618, a boot ordering cycle)
 - Published rootless ports are plain host sockets (pasta), so ufw filters them directly. No `DOCKER-USER` workaround
+
+## Related
+
+- [ADR 0021: Podman quadlets instead of Docker](../../../docs/adr/0021-podman-quadlets.md)
+- [ADR 0019: ntfy.sh as the single alert channel](../../../docs/adr/0019-ntfy-single-alert-channel.md)
+- `podman_app` role (one app)
