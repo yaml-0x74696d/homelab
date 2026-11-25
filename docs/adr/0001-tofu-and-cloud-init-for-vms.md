@@ -39,6 +39,8 @@ Guest details:
 - The LXCs have no ballooning, they get a small `swap` instead
 - MACs are fixed in `private.yml` (`macs`), which pins the DHCP leases
 - NixOS finds the NetBird VM's network card by that MAC
+- The NetBird VM is only a Debian shell here, nixos-anywhere replaces the OS afterwards ([0035](0035-nixos-for-netbird-and-edge.md))
+- Stateful VMs are protected with `prevent_destroy` ([0005](0005-prevent-destroy-on-stateful-vms.md))
 
 - Enforced by: `tofu plan` shows any drift, and anything changed by hand is reverted on the next apply
 
@@ -59,8 +61,5 @@ Guest details:
 - Accepted: the image is downloaded once per node, because `local` is not shared storage
 - Accepted: settings changed by hand get reverted unless they are declared (e.g. discard/ssd, without them the thin pool fills up)
 - Accepted: a `--privsep 0` token has full control of the cluster. It only lives in the git-ignored `terraform.tfvars` and can be revoked
-
-- Stateful VMs are protected with `prevent_destroy` ([0005](0005-prevent-destroy-on-stateful-vms.md))
-- The NetBird VM is only a Debian shell here, nixos-anywhere replaces the OS afterwards ([0035](0035-nixos-for-netbird-and-edge.md))
 
 - Related: [0005](0005-prevent-destroy-on-stateful-vms.md) (prevent_destroy), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0011](0011-proxmox-as-hypervisor.md) (Proxmox), [0025](0025-debian-guests-until-x86-64-v3.md) (guest OS), [0026](0026-ufw-as-guest-firewall.md) (cloud-init vs firewalld), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS on the NetBird VM)

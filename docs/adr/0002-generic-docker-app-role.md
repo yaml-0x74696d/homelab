@@ -39,6 +39,7 @@ Rules:
 - Secrets flow: vault → `.env.j2` (mode `0600`) → `${VAR}` in compose, so the compose files stay plain YAML
 - App-specific values go in the `vars:` block at the top of the deploy playbook (tags, UIDs, healthcheck timings, paths)
 - Databases stay on local volumes, only bulk data goes on the CIFS pool
+- The mounts use `mfsymlinks,nofail,_netdev`, so the host still boots when the storage CT is down
 
 - Enforced by: ansible-lint (production profile) in `just check` and CI, and the deploy playbooks only set vars for the one role
 
@@ -52,7 +53,5 @@ Rules:
 - Harder: the CIFS UID/GID must match the container's user, or writes fail (Nextcloud 33, Paperless 1000)
 
 - Accepted: files are found and copied one by one instead of copying the whole folder. That's slower for apps with many icons, but `.j2` sources never end up on the host
-
-- The mounts use `mfsymlinks,nofail,_netdev`, so the host still boots when the storage CT is down
 
 - Related: [0004](0004-mergerfs-instead-of-zfs.md) (pool), [0006](0006-latest-images-notify-only.md) (image updates), [0007](0007-group-vars-single-source-of-truth.md) (shared vars)

@@ -20,6 +20,7 @@ The service IP:
 - Clients use `dns_ip` (`192.168.178.53`), an extra address on the host that runs DNS, the router hands it out as the only IPv4 DNS server
 - `dns_ip_host` in `network.yml` names that host, only that host adds the address. Today edge, through networkd ([0032](0032-edge-vm-traefik-adguard-on-nixos.md))
 - A move: the old host drops the address first, the new one adds it, then a gratuitous ARP by hand (`arping -U`, [troubleshooting](../troubleshooting.md)) so the LAN's caches follow at once
+- Other config points at `dns_ip` too: the NixOS VMs' resolvers and their OpenTofu bootstrap
 
 The server:
 - AdGuard Home on edge, rewrites and blocklist from the flake ([0032](0032-edge-vm-traefik-adguard-on-nixos.md))
@@ -34,7 +35,4 @@ The server:
 - Harder: the router needs local DNS set to `.53` and IPv6 RDNSS turned off, or clients go around the LAN DNS over IPv6
 
 - Accepted: one resolver, no HA yet. If edge is down, DNS in the LAN is down, because `.53` is the only DNS server the router hands out
-
-- Other config points at `dns_ip` too: the NixOS VMs' resolvers and their OpenTofu bootstrap
-
 - Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0007](0007-group-vars-single-source-of-truth.md) (shared vars), [0032](0032-edge-vm-traefik-adguard-on-nixos.md) (AdGuard Home on edge)

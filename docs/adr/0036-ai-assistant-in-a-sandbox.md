@@ -24,6 +24,7 @@ Who does what:
 - Claude Code is a tool: it runs the checks, generates the C4 model, writes drafts I rewrite, and reviews my changes as a second pair of eyes
 
 The sandbox (its own VM, `claude`, VM 400 on pve-3):
+- VM 400 is set up by hand, outside tofu and the inventory
 - bubblewrap around the whole session: the home is read-only apart from its work folders, secrets and host sockets are hidden
 - No network interface. socat passes one unix socket into the sandbox, and that socket leads to tinyproxy on the VM
 - tinyproxy only allows an allowlist of hosts on port 443 and denies everything else. An nft table keeps tinyproxy itself away from the LAN

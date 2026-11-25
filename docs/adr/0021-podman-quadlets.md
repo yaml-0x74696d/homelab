@@ -47,12 +47,11 @@ Storage:
 - Services that use CIFS paths wait for the share: `ExecStartPre=/usr/bin/ls <path>` (the access triggers the automount), then `ExecStartPre=/usr/bin/findmnt -t cifs <path>`, + `Restart=on-failure` with backoff (an assert never triggers `Restart=`, and autofs alone counts as a mountpoint)
 - `UserNS=keep-id` maps the container's UID onto `svc-<app>` (gid = uid, on the pod for a pod), and every container then sets `User=`
 
-Rollout:
-- The host OS stays Debian 13
-- The VMs are called `pod-N` and keep their VMID, IP and MAC
-- A VM moves app by app. Once its last compose app runs on Podman, Docker is purged in place (no rebuild)
-- A rebuild from tofu stays the disaster path and only happens after a restore rehearsal worked
+Hosts:
+- The pod VMs (`pod_vms`) run Debian 13 and rootless Podman only, Docker is purged in place (no rebuild)
+- A rebuild from tofu stays the disaster path
 
+- Replaces [0002](0002-generic-docker-app-role.md) (`docker_app` role) and [0006](0006-latest-images-notify-only.md) (`:latest` + Diun): every app runs as quadlets + `AutoUpdate`
 - Enforced by: `argument_specs` on every deploy, `scripts/check_wiring.py` and ansible-lint in pre-commit (so `just check` and CI)
 
 ## Consequences
@@ -68,7 +67,5 @@ Rollout:
 - Accepted: an update can still break a service between two weekly runs. Health checks and rollback limit the damage, and ntfy reports it
 - Accepted: a database update restarts its app with it, Sunday midday, for up to a minute
 - Accepted: an in-place purge keeps the VM's history (old packages, cloud-init state) that a rebuild would clear
-
-- Replaces [0002](0002-generic-docker-app-role.md) (`docker_app` role) and [0006](0006-latest-images-notify-only.md) (`:latest` + Diun): every app runs as quadlets + `AutoUpdate`
 
 - Related: [0002](0002-generic-docker-app-role.md), [0006](0006-latest-images-notify-only.md), [0017](0017-smb-shares-to-docker-vms.md) (CIFS mounts), [0024](0024-ansible-run-os-updates.md) (OS updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian pod hosts), [0026](0026-ufw-as-guest-firewall.md) (firewall), [0027](0027-gatus-generated-from-apps-map.md) (gatus), [0031](0031-semaphore-on-a-single-board-computer.md) (Semaphore on ctl-1), [0033](0033-no-kubernetes.md) (why not K8s)
