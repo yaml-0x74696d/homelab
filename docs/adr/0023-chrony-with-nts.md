@@ -17,7 +17,7 @@ Status: Accepted
 
 ## Decision
 
-- chrony on every VM (`roles/chrony`, `playbooks/base.yml`, NixOS VMs: `nixos/base/time.nix`), sources only with `iburst nts`
+- chrony on every VM and ctl-1 (`roles/chrony`, `playbooks/base.yml`, NixOS VMs: `nixos/base/time.nix`), sources only with `iburst nts`
 - Servers (`chrony_servers` in `group_vars/all/base.yml`): `ptbtime1/2/3.ptb.de` (PTB, stratum 1) and `time.cloudflare.com`
 - `makestep 1 3` steps the clock on the first updates after boot or a VM resume, `rtcsync` keeps the RTC in step
 - The NixOS VMs keep the module's `rtcautotrim`, the Debian VMs use `rtcsync`

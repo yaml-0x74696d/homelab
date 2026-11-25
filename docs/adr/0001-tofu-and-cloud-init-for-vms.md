@@ -34,10 +34,10 @@ Guest details:
 - The storage LXC comes from the `debian-13-standard` template: unprivileged, nesting on, the pool bind-mounted
 - Disks use `virtio-scsi-single` with iothread
 - `discard = "on"` and `ssd = true` let the guest's trim free blocks in the thin pool
-- Ballooning: each VM has a floor (`floating`) below its full RAM (`dedicated`)
-- The floors are set at or above measured usage, because the VMs have no disk swap (the NetBird VM only has zram)
+- Ballooning: the pod VMs and the NetBird VM have a floor (`floating`) below their full RAM (`dedicated`). edge keeps its full RAM, HAOS has no ballooning
+- The floors are set at or above measured usage, because the VMs have no disk swap (the NetBird VM and edge only have zram)
 - The LXCs have no ballooning, they get a small `swap` instead
-- MACs are fixed and follow the VMID (`BC:24:11:…`), which pins the DHCP leases
+- MACs are fixed in `private.yml` (`macs`), which pins the DHCP leases
 - NixOS finds the NetBird VM's network card by that MAC
 
 - Enforced by: `tofu plan` shows any drift, and anything changed by hand is reverted on the next apply

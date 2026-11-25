@@ -40,7 +40,7 @@ The setup:
 - Harder: one more service on each controller, and ctl-0's half is set up by hand
 - Harder: both sides changing the same hash at once gives a `.sync-conflict` file to sort out
 
-- Accepted: root on either controller can rewrite the other's hashes and overlays through the sync. ctl-0's copy is no longer an independent cross-check, its `.stversions` history is
+- Accepted: root on either controller can rewrite the other's hashes and overlays through the sync. ctl-0's copy is not an independent cross-check, its `.stversions` history is
 - Accepted: a deleted overlay file is gone on both sides, the versions on ctl-0 only cover the hashes
 - Accepted: the off-site copy of the overlays and hashes is up to a day behind
 

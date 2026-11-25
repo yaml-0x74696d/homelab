@@ -9,7 +9,7 @@ Status: Accepted
 
 - Alternatives:
   - Keep the AP on pve-1, only DHCP onto the gateway (why not: pve-1 stays in the IoT net)
-  - A VM with the card passed through, e.g. OpenWrt (why not: CNVi has no clean reset, a whole VM for an AP)
+  - A VM with the card passed through, e.g. OpenWrt (why not: the onboard card has no clean reset, a whole VM for an AP)
   - A separate AP device (why not: one more box with its own firmware)
 - Why: pve-1 drops out of the IoT net completely, WiFi and gateway become one box
 

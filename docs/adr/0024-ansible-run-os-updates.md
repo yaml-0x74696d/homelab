@@ -46,7 +46,7 @@ How I hear about it:
 
 - Easier: one command updates every apt host and ends with a to-do list
 - Easier: no false reboot flags, and stale services get restarted instead of running on until the next reboot
-- Easier: an upgrade no longer means one AIDE accept per host
+- Easier: an upgrade needs no AIDE accept per host
 
 - Harder: needrestart restarts pve services on the nodes too (pveproxy, pvedaemon, the HA services)
 
@@ -56,5 +56,5 @@ How I hear about it:
 - Accepted: a host that's down at the start doesn't stop the run, the others still get updated. A failure during an update still stops it
 - Accepted: the weekly run is unattended. Its summary comes through ntfy, a failed run turns its Gatus check red ([0027](0027-gatus-generated-from-apps-map.md))
 
-- Later: the podman hosts update their images with `podman auto-update` ([0021](0021-podman-quadlets.md)). This run only covers the OS
+- The podman hosts update their images with `podman auto-update` ([0021](0021-podman-quadlets.md)). This run only covers the OS
 - Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0019](0019-ntfy-single-alert-channel.md) (ntfy), [0021](0021-podman-quadlets.md) (image updates), [0025](0025-debian-guests-until-x86-64-v3.md) (Debian guests), [0027](0027-gatus-generated-from-apps-map.md) (failed runs), [0031](0031-semaphore-on-a-single-board-computer.md) (scheduled runs), [0035](0035-nixos-for-netbird-and-edge.md) (NixOS updates)

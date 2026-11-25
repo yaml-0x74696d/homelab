@@ -19,13 +19,13 @@ Status: Accepted
 
 ## Decision
 
-The checks (`.pre-commit-config.yaml`, 22 hooks):
+The checks (`.pre-commit-config.yaml`, 26 hooks):
 - File hygiene: whitespace, end of file, line endings, private keys, shebangs
 - Large files: 500 KB in general, 1500 KB for `docs/img/`
 - Linters: yamllint, shellcheck, ansible-lint (production profile), `tofu fmt` + `validate`
 - Workflows: actionlint (syntax, expressions), zizmor (security)
 - Secrets: gitleaks
-- The slow hooks only run with `--hook-stage manual`: gitleaks over all commits, `nix flake check`, `likec4 validate`
+- The slow hooks only run with `--hook-stage manual`: gitleaks over all commits, `render-podman`, the `apps.yml` schema play, `nix flake check`, `likec4 validate`, `check-c4`
 
 How to run them (`justfile`):
 - `just setup` installs the git hook and the Ansible collections

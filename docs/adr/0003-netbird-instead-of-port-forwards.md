@@ -38,7 +38,7 @@ The routing:
 - The nameserver group `lab` is in `tofu/netbird.tf` too
 
 The DMZ firewall (`roles/pve_firewall`, `netbird.fw.j2`):
-- In: 443, TURN, the relay range, and SSH/ICMP from the LAN only
+- In: 443, TURN, the relay range, SSH/ICMP from the LAN only, node-exporter from Prometheus only
 - Out: everything to the routing peers, DNS + HTTPS to edge, DNS to the gateway, RELP to the log LXC
 - The rest of the LAN is dropped, the internet is open
 

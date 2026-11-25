@@ -19,7 +19,7 @@ Status: Accepted
 
 The setup:
 - One NixOS flake in `nixos/`, with `nixosConfigurations.netbird` and `nixosConfigurations.edge`
-- Shared modules in `nixos/base/`: `hardening.nix`, `aide.nix`, `logging.nix`, `time.nix`, `disko.nix`
+- Shared modules in `nixos/base/`: `hardening.nix`, `aide.nix`, `logging.nix`, `time.nix`, `metrics.nix` (node-exporter, Prometheus only), `disko.nix`
 - nixpkgs unstable, for the `services.netbird.server` module
 - NetBird runs natively, no containers: management, signal and dashboard from the nixpkgs module, coturn for STUN/TURN, nginx with ACME DNS-01 ([0034](0034-tls-via-dns-01.md))
 

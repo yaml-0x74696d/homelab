@@ -47,6 +47,6 @@ The setup:
 - Accepted: a young provider, with its bug #268 (peers and resources in one group) worked around by the split groups
 - Accepted: the provider has no registry signature, only the hashes in the lock file
 - Accepted: the setup keys are plaintext in the local state
-- Accepted: household devices reach every route on edge:443, the admin routes (pve, pbs, dns, traefik, pod-N for cockpit) included. Only the Authentik login stands between them, and Traefik cannot tell household from admin because VPN traffic arrives masqueraded as pod-2
+- Accepted: household devices reach every route on edge:443, the admin routes (pve, pbs, dns, traefik, pod-N for cockpit) included. Only a login stands between them (Authentik, or PVE/PBS's own login on pve-N and pbs), and Traefik cannot tell household from admin because VPN traffic arrives masqueraded as pod-2
 
 - Related: [0003](0003-netbird-instead-of-port-forwards.md) (NetBird), [0001](0001-tofu-and-cloud-init-for-vms.md) (OpenTofu), [0022](0022-central-logging-relp.md) (logging)

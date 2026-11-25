@@ -23,7 +23,7 @@ Rootless, one user per app:
 - The UIDs are fixed in the apps map
 
 Apps as quadlets:
-- A new `podman_app` role renders quadlet units from Jinja templates (`*.container.j2`, `*.pod.j2`)
+- The `podman_app` role renders quadlet units from Jinja templates (`*.container.j2`, `*.pod.j2`)
 - Apps with more than one container get one `.pod`: its containers talk over 127.0.0.1, the main one is named like the app, the rest `<app>-<role>`
 - One central apps map in `group_vars/all/apps.yml` describes each app: host, uid, units, secrets, dirs, cifs, `allow_from`, routes
 - The playbooks stay thin
@@ -50,7 +50,7 @@ Storage:
 Rollout:
 - The host OS stays Debian 13
 - The VMs are called `pod-N` and keep their VMID, IP and MAC
-- A VM moves app by app. Once its last compose app runs on Podman, Docker is purged in place (no rebuild); all pod VMs are in `pod_vms` now
+- A VM moves app by app. Once its last compose app runs on Podman, Docker is purged in place (no rebuild)
 - A rebuild from tofu stays the disaster path and only happens after a restore rehearsal worked
 
 - Enforced by: `argument_specs` on every deploy, `scripts/check_wiring.py` and ansible-lint in pre-commit (so `just check` and CI)
