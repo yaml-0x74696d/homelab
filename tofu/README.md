@@ -66,7 +66,7 @@ tofu apply
 
 `netbird.tf` holds the VPN's groups, Network, policies, nameserver group and setup keys ([ADR 0040](../docs/adr/0040-netbird-policy-as-code.md)). The NetBird VM has to exist first.
 
-- Make a service user `tofu` (dashboard: Team, Service Users, role admin) and a personal access token for it, up to a year. Put it in `netbird_token`
+- Make the service user `tofu` and its token, put it in `netbird_token`: [netbird.md, the tofu token](../docs/netbird.md#administration)
 - The management API is LAN-only, so run it from the LAN or a VPN peer that can reach `nb.<domain>`
 - Group members are the peer ids in `netbird_peers` in `private.yml`
 - The built-in `Default` policy has to be imported once before the first apply
@@ -90,7 +90,7 @@ tofu apply nb.plan; rm -f nb.plan
 - Plans are written inside `tofu/` (`*.plan` is gitignored) and removed right after, because a saved plan holds secrets in clear
 
 - `tofu output -json netbird_setup_keys` prints the keys, the `routing` one goes in the vault as `vault_netbird_setup_key`
-- The keys are one-off and expire after `netbird_setup_key_expiry_seconds` (1 day). A new device, or re-enrolling pod-2, needs a fresh key: `tofu apply -target='netbird_setup_key.this["routing"]' -replace='netbird_setup_key.this["routing"]'` (pick the group), then read it again
+- The keys are one-off and expire after `netbird_setup_key_expiry_seconds`. A new device, or re-enrolling pod-2, needs a fresh key: [netbird.md, onboarding step 1](../docs/netbird.md#onboarding-a-device)
 - Adopting click-made objects: [docs/netbird-by-hand.md](../docs/netbird-by-hand.md)
 
 ## Related
