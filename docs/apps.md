@@ -23,6 +23,10 @@ Every app is an entry in `ansible/group_vars/all/apps.yml` plus a folder `ansibl
 9. **Edge**: the new route and its DNS rewrite come from `apps.yml`. Edge builds from the default branch every night, or now: `nixos/update.sh edge`
 10. **Afterwards**: Gatus and Homepage pick the app up from `apps.yml` on their next deploy (`just deploy-app gatus`, `just deploy-app homepage`). OIDC: a provider and application in Authentik, the client ID and secret into the vault. AIDE accept on the host: `ansible-playbook playbooks/aide-accept.yml -l <host>`
 
+What `just deploy-app` does (step 8):
+
+![](img/deploy-app.svg)
+
 ## Change an app
 
 - Any change to its entry, units, config or secrets: `just deploy-app <name>`. The role restarts the app only when something changed

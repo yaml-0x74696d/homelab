@@ -132,7 +132,7 @@ Podman apps ([ADR 0021](adr/0021-podman-quadlets.md), [podman-layout.md](podman-
 - A failed run alerts through ntfy, a missing heartbeat through Gatus
 - The token has `DatastoreBackup` on one datastore only. The three hosts share it
 - No VM images: VMs are rebuilt from code and the data restored ([bootstrap.md](bootstrap.md))
-- A restore was rehearsed into a throwaway VM, with counts compared ([restore-rehearsal.md](restore-rehearsal.md))
+- The restore rehearsal is written up in [restore-rehearsal.md](restore-rehearsal.md), a run on Podman only is due
 - Backups are not client-side encrypted. The datastore sits on the node's own disk
 
 ## Encryption
@@ -198,7 +198,7 @@ Collected from the ADRs, one line each. The ADR has the reasoning.
 | Authentik is a single point of failure for logins | [0014](adr/0014-authentik-as-idp.md) |
 | Bulk media on the pool has no parity and no backup | [0004](adr/0004-mergerfs-instead-of-zfs.md), [0013](adr/0013-pbs-file-level-backups.md) |
 | The PBS token can't prune, retention is set by hand on the server | [0013](adr/0013-pbs-file-level-backups.md) |
-| No backup of ctl-1 | [0031](adr/0031-semaphore-on-a-single-board-computer.md) |
+| edge, the LXCs and ctl-1 have no PBS backup, they are rebuilt from code | [0013](adr/0013-pbs-file-level-backups.md), [0031](adr/0031-semaphore-on-a-single-board-computer.md) |
 | An image update can break a service between two weekly runs | [0021](adr/0021-podman-quadlets.md) |
 | Podman runs under AppArmor, not SELinux | [0025](adr/0025-debian-guests-until-x86-64-v3.md) |
 

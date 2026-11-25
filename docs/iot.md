@@ -20,6 +20,7 @@ Every device runs ESPHome (YAML) or my own C code. Either way it only ever opens
 | Firmware | pulled from `http://192.168.50.10/<device>.bin`, only when told to |
 
 - `<device>` becomes the `sensor` label in Prometheus, so it has to be unique and stay the same
+- The exporter turns `home/<device>/temperature` and `humidity` into `iot_temperature_celsius` and `iot_humidity_percent`
 - ESPHome devices have no `api:` and no push OTA, nothing on them listens
 - From the IoT net the gateway answers on 1883, 80 and DHCP only (ufw on `wlan0`), and nothing routes on to the LAN or the internet. The gateway is the only other address in the IoT net, no node is in it
 - The password is the same on every device, so changing it means reflashing all of them
@@ -142,9 +143,17 @@ The broker is set in the UI, not in the repo:
 
 HA keeps the long-term history of every sensor (long-term statistics, hourly). Prometheus keeps 15 days.
 
+## Firewall
+
+- LAN leg: two layers with the same inbound rules, the PVE guest firewall (`iot.fw`, `roles/pve_firewall`) and ufw inside (`deploy-iot.yml`): 1883 from Home Assistant's host, the exporter port and node_exporter from Prometheus' host, SSH and ping from the LAN
+- Outbound on the LAN leg only DNS to the router, RELP to the log LXC and HTTP/HTTPS to the internet (`iot.fw`), the rest of the LAN is dropped
+- WiFi: ufw alone, only `on wlan0`, the ports above. The card isn't a Proxmox NIC, so the PVE firewall never sees this traffic
+- The IoT side gets no router option in DHCP and the LXC doesn't forward, so nothing routes through it
+- A broken broker only exposes the broker, not pod-1's vault and SSO
+
 ## Build the gateway
 
-From scratch, e.g. after losing the LXC. Nothing on it needs a backup: config is in git, the broker keeps no state worth keeping, the firmware files are rebuilt in the ESPHome add-on.
+From scratch, e.g. after losing the LXC. Everything on it comes from Debian's repo (`roles/iot_ap`, `roles/mosquitto`, `roles/mqtt_exporter`, `roles/ota_server`). Nothing on it needs a backup: config is in git, the broker keeps no state worth keeping, the firmware files are rebuilt in the ESPHome add-on.
 
 1. `macs.iot` in `private.yml`, `mqtt_password`, `mqtt_passwd_salt`, `wifi_ssid` and `wifi_pass` in the vault
 2. The LXC template on `iot_node`: `pveam download local debian-13-standard_13.6-1_amd64.tar.zst`
