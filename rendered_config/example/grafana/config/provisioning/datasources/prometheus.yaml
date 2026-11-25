@@ -1,4 +1,4 @@
-# managed by ansible (apps/grafana). uid kept from the click-made one, dashboards point at it
+# managed by ansible (apps/grafana). dashboards point at this uid
 apiVersion: 1
 datasources:
   - name: prometheus

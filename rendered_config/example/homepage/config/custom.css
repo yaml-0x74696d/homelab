@@ -20,7 +20,7 @@ html, body {
     --fg-strong: #ffffff;
 }
 
-/* text was red (theme-*), now grey; red stays for accents */
+/* text is grey, red stays for accents (overrides theme-*) */
 [class*="text-theme-"] { color: var(--fg) !important; }
 
 .bg-theme-500, .bg-theme-600 { background-color: var(--accent) !important; }
