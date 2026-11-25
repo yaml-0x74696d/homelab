@@ -15,7 +15,8 @@ Where a Podman app is described in the repo, where its files land on the host, a
 | a secret's value | `group_vars/all/vault.yml` or a template in `apps/<app>/` |
 | house rules for every app (restart, health, start timeout) | `roles/podman_app/templates/10-homelab.conf.j2` |
 | how map fields become unit keys | `roles/podman_app/templates/50-map.conf.j2` |
-| the auto-update time, the ntfy wrapper | `roles/podman_base/defaults/main.yml` |
+| the auto-update and new-tags times | `group_vars/all/schedules.yml` |
+| the ntfy wrapper | `roles/podman_base/templates/podman-auto-update-ntfy.sh.j2` |
 | `podman_apps_root`, the svc prefix and group | `group_vars/all/app_settings.yml` |
 
 ## In the repo
@@ -28,7 +29,7 @@ ansible/
 │   ├── <app>.pod.j2             only with more than one container
 │   ├── <secret>.j2              a secret built from a template
 │   └── config/                  mirrored to the host
-├── roles/podman_base/           once per VM: podman, auto-update, the apps helper
+├── roles/podman_base/           once per host: podman, auto-update, new-tags check, the apps helper
 ├── roles/podman_app/            one app: user, units, config, secrets, firewall
 └── playbooks/deploy-app.yml     -e app=<app>
 rendered_config/example/<app>/   what the role writes, with example values
@@ -90,7 +91,7 @@ git diff rendered_config/
 - Every app is rendered with the example values into `rendered_config/example/`, vault values show as `<vault:name>`
 - CI fails when the folder is stale
 - `just quadlet` (CI: `.github/workflows/podman.yml`) runs every rendered app through `quadlet -dryrun -user` in Debian trixie (`scripts/check_quadlet.sh`). The `apps-schema` hook (`just check`) runs every Podman entry in `apps.yml` through `validate_argument_spec` against `roles/podman_app/meta/argument_specs.yml` (`playbooks/ci-validate-apps.yml`)
-- Ports unique per host and >= 1024, uids unique and <= 65534, routes unique, images fully qualified: `scripts/check_wiring.py` (pre-commit)
+- Ports unique per host and >= 1024, uids unique and in 2000..65534, routes unique, images fully qualified: `scripts/check_wiring.py` (pre-commit)
 
 ## Conventions
 

@@ -16,6 +16,7 @@ Where things are kept in `nixos/`, where the values come from, and how the two N
 | AdGuard Home: upstreams, blocklist, query log | `edge/adguard.nix` |
 | firewall, SSH, sysctls, fail2ban, auto-upgrade | `base/hardening.nix` (service ports in the host's modules) |
 | AIDE rules | `base/aide.nix` |
+| node_exporter, who may scrape it | `base/metrics.nix` |
 | nixpkgs, disko versions | `flake.lock` (`nix flake update`) |
 
 ## Folders
@@ -25,7 +26,7 @@ nixos/
 ├── flake.nix         inputs (nixpkgs, disko, private), one nixosConfiguration per host folder
 ├── flake.lock        pinned input versions
 ├── facts.nix         group_vars YAML → one attrset (facts), plus host_ips from the inventory
-├── base/             modules every NixOS host shares: time, logging, hardening, AIDE, disk layout, fastfetch
+├── base/             modules every NixOS host shares: time, logging, hardening, AIDE, node_exporter, disk layout, fastfetch
 ├── netbird/          NetBird control plane: configuration.nix imports the rest
 ├── edge/             Traefik + AdGuard Home: configuration.nix imports the rest
 ├── update.sh         bump, build, switch, check (one host per run)
@@ -47,7 +48,7 @@ nixos/
 
 - Every `apps.<name>.routes` entry becomes a router and a service: `Host(<host>.<domain>)` (+ `PathPrefix` with `path`), backend `http://<host ip>:<route port or app port>`, the route's `middlewares`
 - Every `infra_routes` entry with a `target` does too: `scheme://<target ip>:<ports.yml[port_var]>`, `insecure_tls` skips the backend's cert check. `target: edge` means something on edge itself (the Traefik dashboard, the AdGuard UI)
-- Entries without a `target` are only served by pod-1's Traefik until the cutover
+- An entry without a `target` is skipped: no router, no rewrite
 - AdGuard Home gets a rewrite to `edge_ip` for the same hosts
 - A middleware name that `traefik.nix` doesn't define fails the build
 - The result is `/etc/traefik/dynamic.yml`, a copied file Traefik watches, so a route change doesn't restart Traefik

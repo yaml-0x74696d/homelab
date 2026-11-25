@@ -8,8 +8,8 @@ Where things are kept in `tofu/`, where its values come from, and how a change i
 |---|---|
 | a guest's cores, RAM, disk | `vms` / `lxcs` map in `locals.tf` |
 | an IP, a VMID, a guest's node (`guest_nodes`) | `ansible/group_vars/all/network.yml` |
-| a MAC | `ansible/group_vars/all/private/private.yml` |
-| the admin user, the SSH key path | `ansible/group_vars/all/hosts.yml` |
+| a MAC, the admin user | `ansible/group_vars/all/private/private.yml` |
+| the SSH key path | `ansible/group_vars/all/hosts.yml` |
 | a pool path, a bind mount | `ansible/group_vars/all/storage.yml` |
 | a VM's hardware, cloud-init, lifecycle | `vms.tf` |
 | an LXC's mounts, features, NICs | `lxc.tf` |
@@ -77,8 +77,7 @@ tofu plan -target='proxmox_virtual_environment_container.iot' -out=iot.plan
 tofu apply iot.plan; rm -f iot.plan
 ```
 
-- Plans are written inside `tofu/` (`*.plan` is gitignored) and removed right after, because a saved plan holds secrets in clear
-
+- Plans are written inside `tofu/` (`*.plan` is gitignored)
 - A full plan also asks the NetBird API, so it needs the NetBird VM up and a valid `netbird_token`
 - The full plan is safe and run often, the full apply never: only targeted plans are applied
 - `-out` makes the apply run exactly what was reviewed. The plan file holds `vm_password` unmasked, so it's removed right after
@@ -89,5 +88,5 @@ tofu apply iot.plan; rm -f iot.plan
 - A value that Ansible or NixOS also needs goes in group_vars and is read in `locals.tf`, never typed twice
 - A stateful guest gets `prevent_destroy`
 - A field that only counts at creation, or that another tool owns afterwards, goes in `ignore_changes` with a comment why
-- Root-only settings (LXC feature flags, bind mounts) are set on the node with `pct set`, the code is matched until the plan is empty
+- Root-only settings on an existing CT (feature flags, bind mounts) are set on the node with `pct set`, the code is matched until the plan is empty. A new CT with a bind mount needs `pve_password` for that one apply
 - `tofu fmt` and `tofu validate` run in pre-commit and CI
