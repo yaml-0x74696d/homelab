@@ -7,6 +7,9 @@ The whole lab from bare hardware, in order. Each step needs the one before it. S
 
 ## 0. Controller (ctl-0)
 
+- Tools for `just setup` and `just check`: git, just, python3 with pre-commit, ansible, opentofu, nix with flakes on. pre-commit fetches the linters itself (ansible-lint, shellcheck, gitleaks, likec4 on node). podman for `just quadlet`, d2 for `just diagrams`
+- The admin SSH key (`~/.ssh/id_ed25519`, `admin_ssh_pubkey_file`) comes from the secure storage, with the vault password
+
 Two folders outside the repo hold what git must not:
 
 ```
@@ -144,22 +147,16 @@ P=$(dirname "$(realpath ../ansible/group_vars/all/private/private.yml)")
 SYS=$(nix build --no-link --print-out-paths --override-input private path:$P .#nixosConfigurations.$H.config.system.build.toplevel)
 DISKO=$(nix build --no-link --print-out-paths --override-input private path:$P .#nixosConfigurations.$H.config.system.build.diskoScript)
 grep -c "$(cut -d' ' -f2 ~/.ssh/id_ed25519.pub)" $SYS/etc/ssh/authorized_keys.d/root   # 1, else the install locks you out
-# secrets as a tree in ram: /var/lib/secrets/<host>/..., /var/lib/secrets/aide/ntfy.env (docs/nixos-layout.md)
-S=$XDG_RUNTIME_DIR/$H-secrets
-nix run github:nix-community/nixos-anywhere -- --store-paths $DISKO $SYS --extra-files $S --chown /var/lib/secrets 0:0 -i ~/.ssh/id_ed25519 --target-host <admin_user>@<host ip>
+# the secrets from the vault as one tree per host, in ram: /var/lib/secrets/<host>/..., /var/lib/secrets/aide/ntfy.env
+S=$XDG_RUNTIME_DIR/nixos-secrets
+(cd ../ansible && ansible-playbook playbooks/nixos-secrets.yml -e secrets_dir=$S)
+nix run github:nix-community/nixos-anywhere -- --store-paths $DISKO $SYS --extra-files $S/$H --chown /var/lib/secrets 0:0 -i ~/.ssh/id_ed25519 --target-host <admin_user>@<host ip>
 rm -rf $S; ssh-keygen -R <host ip>
 ```
 
-NetBird, once the VM is up and pod-2's agent is not yet enrolled ([tofu/README.md](../tofu/README.md#6-netbird), [ADR 0040](adr/0040-netbird-policy-as-code.md)):
-
-1. **(hand)** Open `https://nb.<domain>` and log in as the owner (first login through Authentik)
-2. **(hand)** Make the service user `tofu` and a PAT for it, put the PAT in `netbird_token` in `terraform.tfvars`
-3. **(hand)** Import the built-in policy: `tofu import netbird_policy.default <id>` (the id is in the dashboard URL of the `Default` policy). Target the import narrowly; if `data.netbird_peer.pod2` blocks it, use an `import {}` block in the stage 1 apply
-4. Stage 1, targeted apply of the groups, policies, router, resources and setup keys (the `-target=` list is in `tofu/README.md`)
-5. `tofu output -json netbird_setup_keys`, put the `routing` key in the vault as `vault_netbird_setup_key` (keys are one-off and live 1 day, a later re-enroll needs a fresh one with `-target='netbird_setup_key.this["routing"]' -replace=...`), then `ansible-playbook playbooks/deploy-netbird-agent.yml`
-6. Stage 2, targeted apply of `netbird_nameserver_group.lab` and `netbird_dns_settings.this`
-7. Enroll the devices with the `admin` and `household` keys (one device per key, a further device needs a fresh key from a targeted apply), then add every peer id to `netbird_peers` in `private.yml` (pod-2 under `routing`) and run `tofu plan`, it must show no changes
-
+- `nixos-secrets.yml` takes the values from the vault (`vault_nixos_*`, `cf_token`, `ntfy_url`, `ntfy_token`), the paths are the ones in [docs/nixos-layout.md](nixos-layout.md#deploy)
+- Once, while the old VMs still run: copy their live files into the vault with `ansible-vault edit group_vars/all/vault.yml`, through the clipboard, never onto the screen: `ssh root@<host ip> cat /var/lib/secrets/netbird/datastore-key | wl-copy`. The datastore key has to be the live one, the NetBird store is encrypted with it
+- NetBird itself is set up in step 7b, once Authentik is back
 - Edge only holds `dns_ip` while `dns_ip_host` in `network.yml` says `edge`. On a fresh lab it does from the start
 
 ## 5. ctl-1 (Semaphore)
@@ -178,14 +175,21 @@ ansible-playbook playbooks/push-keys.yml   # semaphore's key onto every host (AD
 
 - Syncthing on ctl-1 comes with `ctl-preparation.yml` (tag `syncthing`), it pairs once `syncthing_ctl0_id` is in `private.yml`. Then ctl-0's half from step 0, and `ctl-preparation.yml -l ctl-1 -t private-files,syncthing` once more
 
+Semaphore by hand, in its UI (its own database, no backup, [ADR 0031](adr/0031-semaphore-on-a-single-board-computer.md)):
+- **(hand)** Key store: the vault password and an SSH key for Semaphore. Its public key into `semaphore_ssh_pubkey` in `private.yml` before the `push-keys.yml` run above
+- **(hand)** The project, then the templates: `repo-pull`, `aide`, `update`, and `aide-accept` with the survey var `aide_accept`
+- **(hand)** Schedules: `repo-pull` daily 11:45, `aide` daily 13:15, `update` Saturday 14:00 with `--limit 'all:!ctl-1'`. They live in the UI only
+- **(hand)** A guest-role user and its API token for Gatus (`semaphore_gatus_token` in the vault), the template ids into `gatus_semaphore_templates` in `app_settings.yml`
+
 ## 6. Apps
 
 ```bash
 cd ~/homelab/ansible
-ansible-playbook playbooks/site.yml
+ansible-playbook playbooks/site.yml --skip-tags pbs_timer
 ```
 
 - `site.yml` holds the order: Authentik before the apps that log in through it (ingress and DNS are already up on edge), storage before the CIFS apps on pod-3, the PBS client last
+- The PBS client comes without its timer, so no evening run pushes empty apps before step 7
 - One app on its own: `deploy-app.yml -e app=<name>`, Authentik through `deploy-authentik.yml` (the same role plus its upgrade guards)
 - Gitea without a backup has no admin yet, create it once (values from the vault, `gitea_admin_*`):
   `ssh -t pod-1 'cd / && sudo -u svc-gitea XDG_RUNTIME_DIR=/run/user/$(id -u svc-gitea) podman exec -u git gitea gitea admin user create --username <user> --email <email> --password <pw> --admin --must-change-password=false'`
@@ -220,6 +224,19 @@ sudo systemctl --user -M svc-<app>@ start <app>-pod
 
 - A single-container app (no db) only needs the stop, the `rsync` and a start of `<app>`
 - **(hand)** HAOS: restore VM 210 from its vzdump in the PVE UI, then add the vzdump job again (Datacenter, Backup, first Saturday 15:00, [ADR 0030](adr/0030-haos-vm-on-pve-3.md)). HA's trusted proxies come back with it
+- When every app is back, the backup timer: `ansible-playbook playbooks/deploy-pbs.yml --tags pbs_timer`
+
+## 7b. NetBird
+
+Once Authentik is back and before pod-2's agent is enrolled. Commands in `tofu/`, the agent from `ansible/` ([tofu/README.md](../tofu/README.md#6-netbird), [ADR 0040](adr/0040-netbird-policy-as-code.md)):
+
+1. **(hand)** Open `https://nb.<domain>` and log in as the owner (first login through Authentik)
+2. **(hand)** The service user `tofu` and its PAT in `netbird_token` in `terraform.tfvars` ([netbird.md, the tofu token](netbird.md#administration))
+3. **(hand)** Import the built-in policy: `tofu import netbird_policy.default <id>` (the id is in the dashboard URL of the `Default` policy). Target the import narrowly; if `data.netbird_peer.pod2` blocks it, use an `import {}` block in the stage 1 apply
+4. Stage 1, targeted apply of the groups, policies, router, resources and setup keys (the `-target=` list is in `tofu/README.md`)
+5. The `routing` setup key into the vault, then `deploy-netbird-agent.yml` ([netbird.md, re-enrolling pod-2](netbird.md#administration))
+6. Stage 2, targeted apply of `netbird_nameserver_group.lab` and `netbird_dns_settings.this`
+7. Enroll the devices with the `admin` and `household` keys ([netbird.md, onboarding](netbird.md#onboarding-a-device)), then add every peer id to `netbird_peers` in `private.yml` (pod-2 under `routing`) and run `tofu plan`, it must show no changes
 
 ## 8. AIDE baselines
 

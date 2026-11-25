@@ -27,11 +27,12 @@ Where the hardware is written down, and what to change when a node is replaced, 
 
 The new box takes over the old node's name, IP and guests.
 
-1. Install Proxmox, give it the old name and IP, join the cluster ([bootstrap step 1](bootstrap.md#1-proxmox-nodes)). Remove the old node from the cluster first (`pvecm delnode <name>` on a remaining node)
-2. If the CPU level differs (x86-64-v2 vs v3), every guest that will run on it has to match: `cpu = host` passes the node's CPU straight through
-3. Storage that lived on the old box (the pool disks, the PBS datastore on pve-3): UUIDs of new disks into `storage_disks` (moved disks keep theirs), the datastore LV again
-4. Its guests: `tofu apply -target=...` per guest ([bootstrap step 2](bootstrap.md#2-guests-opentofu)), then base, apps and data restore (steps 3 to 7). The MACs in `private.yml` stay, so the DHCP leases do too
-5. AIDE baselines for the node and its guests (step 8)
+1. Install Proxmox, give it the old name and IP, join the cluster ([bootstrap step 1](bootstrap.md#1-proxmox-nodes)). Remove the old node from the cluster first, on a remaining node: `pvecm delnode <name>`, then its leftover dir `rm -r /etc/pve/nodes/<name>`, or the new node finds the old one's guests and certs there
+2. After the join: `pvecm updatecerts` on the new node. Remove the old host key on the controller (`ssh-keygen -R <ip>`) and in Semaphore's `known_hosts` ([troubleshooting](troubleshooting.md#proxmox-opentofu-vms), "A renamed VM keeps its old hostname")
+3. If the CPU level differs (x86-64-v2 vs v3), every guest that will run on it has to match: `cpu = host` passes the node's CPU straight through
+4. Storage that lived on the old box (the pool disks, the PBS datastore on pve-3): UUIDs of new disks into `storage_disks` (moved disks keep theirs), the datastore LV again
+5. Its guests: `tofu apply -target=...` per guest ([bootstrap step 2](bootstrap.md#2-guests-opentofu)), then base, apps and data restore (steps 3 to 7). The MACs in `private.yml` stay, so the DHCP leases do too
+6. AIDE baselines for the node and its guests (step 8)
 
 ## Add a node
 

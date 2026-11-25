@@ -78,7 +78,9 @@ cd nixos && nix flake check           # what pre-commit and CI run
 - `update.sh` builds first, so a renamed option fails before anything is switched
 - Rollback: `ssh root@<host> nixos-rebuild switch --rollback`
 - Each VM is installed once with nixos-anywhere, OpenTofu only makes the empty VM ([ADR 0035](adr/0035-nixos-for-netbird-and-edge.md), [ADR 0032](adr/0032-edge-vm-traefik-adguard-on-nixos.md))
-- Secrets go on the box by hand before the first switch: `/var/lib/secrets/netbird/`, `/var/lib/secrets/edge/cloudflare.env`, `/var/lib/secrets/aide/ntfy.env`
+- Secrets come from the vault: `ansible/playbooks/nixos-secrets.yml` writes the tree nixos-anywhere copies on the install ([bootstrap step 4](bootstrap.md#4-nixos-vms-netbird-edge)). A changed secret: run it again and copy that one file onto the box (root, `0600`)
+- The files, all root `0600`: `/var/lib/secrets/netbird/` (`datastore-key`, `idp-svc-password`, `turn-secret`, `turn-password`, `cloudflare.env`), `/var/lib/secrets/edge/cloudflare.env`, `/var/lib/secrets/aide/ntfy.env`
+- autoUpgrade (`base/hardening.nix`) builds `main` of the public repo with the copy of `private.yml` in `/etc/homelab-private`. A change on `testing` only sticks after the merge, a `private.yml` change needs an `update.sh` run
 - autoUpgrade: netbird 03:00 to 04:00, edge 04:00 to 04:45, never both at once (`group_vars/all/schedules.yml`)
 
 ## Conventions

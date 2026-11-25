@@ -73,6 +73,7 @@
   notify: Reload systemd
 
 - name: Enable timer
+  tags: [pbs_timer]   # bootstrap skips it until the restore is done
   ansible.builtin.systemd:
     name: pbs-backup.timer
     enabled: true
