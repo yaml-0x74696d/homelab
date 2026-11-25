@@ -11,3 +11,16 @@ argument_specs:
         type: str
         required: true
         description: Semaphore template name, the external endpoint is semaphore-<job> (gatus_semaphore_templates)
+      gatus_push_group:
+        type: str
+        required: true
+        description: Gatus endpoint group of the heartbeats (group_vars)
+      gatus_push_timeout:
+        type: int
+        required: true
+        description: Seconds the push may take (group_vars)
+      gatus_push_token:
+        type: str
+        default: ""
+        no_log: true
+        description: Gatus push token (vault), empty = no push

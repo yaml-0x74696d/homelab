@@ -112,7 +112,7 @@ in
   # one public web port; the coturn module opens its own (3478/5349 + relay range)
   networking.firewall.allowedTCPPorts = [ 443 ];
 
-  # acme dns-01 via cloudflare — no http-01, no port 80. reuses the ddns CF token.
+  # acme dns-01 via cloudflare, no http-01, no port 80. reuses the ddns CF token.
   security.acme = {
     acceptTerms = true;
     defaults.email = acmeEmail;

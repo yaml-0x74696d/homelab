@@ -15,7 +15,7 @@ ctl_base_private_files:
   - ansible/group_vars/all/vault.yml
   - ansible/group_vars/all/private/private.yml
 # the controller's overlays (<private_dir>/apps), synced both ways with syncthing and mounted into semaphore.
-# only apps/: private_dir also holds the vault password, keys and tofu state, those never leave the controller
+# only apps/ goes over: the vault password, keys and tofu state stay in the secure storage on the controller
 ctl_base_private_dir: "{{ semaphore_private_dir }}"
 ctl_base_private_excludes: [.git]   # syncthing's .stignore
 # ansible.cfg's vault_password_file has to exist. the real password comes from semaphore's key store, ansible tries both

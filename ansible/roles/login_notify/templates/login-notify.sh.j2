@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# managed by ansible (roles/login-notify). phone alert on ssh / pve-web login.
+# managed by ansible (roles/login_notify). phone alert on ssh / pve-web login.
 set -uo pipefail        # not -e: a transient curl/journal hiccup must not kill the watcher
 
 URL="{{ ntfy_url | default('') }}"
@@ -16,7 +16,7 @@ notify() {
 # follow only NEW journal entries; alert on successful ssh + pve web logins
 journalctl -f -n0 -o short-iso 2>/dev/null | while IFS= read -r line; do
   case "$line" in
-    *"Accepted "*" for "*)             notify "ssh — $line" ;;
-    *"pvedaemon["*"successful auth"*)  notify "pve web ui — $line" ;;
+    *"Accepted "*" for "*)             notify "ssh: $line" ;;
+    *"pvedaemon["*"successful auth"*)  notify "pve web ui: $line" ;;
   esac
 done

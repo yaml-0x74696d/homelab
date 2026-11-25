@@ -70,7 +70,7 @@ EXCLUDES=(
 )
 
 ARCHIVES=(dumps.pxar:"$STAGING")
-# name kept from the docker days, so the snapshots stay one series
+# fixed archive names, so the snapshots stay one series
 if [ -d "$APPS" ]; then ARCHIVES+=(podman-apps.pxar:"$APPS"); fi
 
 log "push snapshot"

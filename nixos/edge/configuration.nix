@@ -1,7 +1,7 @@
 { facts, lib, ... }:
 let
   lanPrefix = lib.last (lib.splitString "/" facts.lan_cidr);
-  # the dns service ip (adr 0010) joins once pod-2 has dropped it
+  # the dns service ip (adr 0010) is held when dns_ip_host is edge
   holdsDnsIp = facts.dns_ip_host == "edge";
 in
 {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # review + accept aide changes on a nixos vm and record the db hash. run from ctl-0.
 # usage: aide-accept.sh <netbird|edge> [ssh target]
-# first run builds the baseline. ansible/aide/<host>.sha256 is gitignored, back it up with the vault.
+# first run builds the baseline. ansible/aide is a symlink into ~/homelab-sync (syncthing), the <host>.sha256 files stay out of git.
 set -euo pipefail
 
 NAME=${1:?usage: $0 <netbird|edge> [ssh target]}
