@@ -2,13 +2,13 @@
 # every app container on this host and the newest tag upstream, one json object per line.
 # run by roles/app_versions through the script module, nothing stays on the host.
 #   app-versions <host> <svc prefix> <svc group> <lookup timeout>
+# status: current, update (a floating tag moved upstream), newer (a pinned tag has a newer one), unknown
 set -uo pipefail
 cd /   # the svc users can't enter the caller's dir
 
 HOST=$1 PREFIX=$2 GROUP=$3 TIMEOUT=$4
 LABEL=org.opencontainers.image.version
-# floating tags (latest, release, alpine) are compared against plain releases only
-RELEASE_RE='^v?[0-9]+(\.[0-9]+){1,2}$'
+RELEASE_RE='[0-9]+(\.[0-9]+){1,2}'
 
 users() { getent group "$GROUP" | cut -d: -f4 | tr , '\n' | grep -v '^$' | sort; }
 as() { local u=$1; shift; sudo -u "$u" XDG_RUNTIME_DIR="/run/user/$(id -u "$u")" "$@"; }
@@ -18,33 +18,37 @@ lookup() {
   [ -n "${tags[$1]+x}" ] && return
   tags[$1]=$(skopeo list-tags --command-timeout "$TIMEOUT" "docker://$1" </dev/null 2>/dev/null | jq -r '.Tags[]') || tags[$1]=""
 }
+digest() { skopeo inspect --no-tags --command-timeout "$TIMEOUT" --format '{{.Digest}}' "docker://$1" </dev/null 2>/dev/null; }
 
 # podman and skopeo get /dev/null, or they eat the loop's input
 for u in $(users); do
   while read -r name id ref; do
     repo=${ref%:*} tag=${ref##*:}
     # | not a space: an empty label would shift the date into running
-    IFS="|" read -r running created < <(as "$u" podman image inspect --format "{{index .Labels \"$LABEL\"}}|{{.Created}}" "$id" </dev/null)
+    IFS="|" read -r running created digests < <(as "$u" podman image inspect \
+      --format "{{index .Labels \"$LABEL\"}}|{{.Created}}|{{range .RepoDigests}}{{.}} {{end}}" "$id" </dev/null)
     [ "$running" = "<no value>" ] && running=""
-
-    # pinned: same shape as the tag, 16-alpine finds 17-alpine, not 17-bookworm
-    if [[ $tag =~ [0-9] ]]; then
-      re="^$(sed -E 's/[].[*^$+?(){}|\\/]/\\&/g; s/[0-9]+/[0-9]+/g' <<<"$tag")\$"
-      have=$tag
-    else
-      re=$RELEASE_RE
-      have=$running
-    fi
     lookup "$repo"
-    newest=$(grep -E "$re" <<<"${tags[$repo]}" | sort -V | tail -1)
-
     status=unknown
-    if [ -n "$newest" ] && [ -n "$have" ]; then
-      a=${have#v} b=${newest#v}
-      if [ "$a" != "$b" ] && [ "$(printf '%s\n%s\n' "$a" "$b" | sort -V | tail -1)" = "$b" ]; then
-        status=behind
-      else
-        status=current
+
+    if [[ $tag =~ [0-9] ]]; then
+      # pinned: same shape as the tag, 16-alpine finds 17-alpine, not 17-bookworm
+      re="^$(sed -E 's/[].[*^$+?(){}|\\/]/\\&/g; s/[0-9]+/[0-9]+/g' <<<"$tag")\$"
+      newest=$(grep -E "$re" <<<"${tags[$repo]}" | sort -V | tail -1)
+      if [ -n "$newest" ]; then
+        if [ "$(printf '%s\n%s\n' "$tag" "$newest" | sort -V | tail -1)" = "$tag" ]; then status=current; else status=newer; fi
+      fi
+    else
+      # floating: newest release with the same suffix (alpine -> 1.2.3-alpine), else plain releases
+      newest=$(grep -E "^v?$RELEASE_RE-$tag\$" <<<"${tags[$repo]}" | sort -V | tail -1)
+      [ -n "$newest" ] || newest=$(grep -E "^v?$RELEASE_RE\$" <<<"${tags[$repo]}" | sort -V | tail -1)
+      if remote=$(digest "$ref") && [ -n "$remote" ]; then
+        if [[ " $digests " == *"@$remote "* ]]; then status=current; else status=update; fi
+      fi
+      # no label: the running image is the newest release if their digests match
+      if [ -z "$running" ] && [ -n "$newest" ] && remote=$(digest "$repo:$newest") && [ -n "$remote" ] \
+         && [[ " $digests " == *"@$remote "* ]]; then
+        running=$newest
       fi
     fi
 

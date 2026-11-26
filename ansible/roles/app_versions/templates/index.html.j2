@@ -1,5 +1,6 @@
 #jinja2: lstrip_blocks: True
 {% set rows = ansible_play_hosts | map('extract', hostvars, ['app_versions_list', 'stdout_lines']) | flatten | map('from_json') | list %}
+{% set label = {'current': 'current', 'update': 'update waiting', 'newer': 'newer tag', 'unknown': '?'} %}
 {% set missing = ansible_play_hosts_all | difference(ansible_play_hosts) | sort %}
 <!doctype html>
 <html lang="en">
@@ -7,6 +8,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>versions</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23141414'/%3E%3Cpath d='M4 4l4 8 4-8' fill='none' stroke='%23ee0000' stroke-width='2'/%3E%3C/svg%3E">
   <style>
     body { margin: 0; padding: 1.5rem 1rem; background: #141414; color: #cccccc;
            font-family: system-ui, sans-serif; }
@@ -16,19 +18,19 @@
     table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
     th, td { text-align: left; padding: .3rem .9rem .3rem 0; white-space: nowrap; }
     th { color: #888888; font-weight: 500; border-bottom: 1px solid #333333; }
-    tr.behind td.newest { color: #ee0000; }
-    tr.unknown td.newest { color: #888888; }
+    tr.update td.status, tr.newer td.status { color: #ee0000; }
+    tr.unknown td.status { color: #888888; }
   </style>
 </head>
 <body>
   <h1>versions</h1>
-  <p>built {{ now(utc=true, fmt='%Y-%m-%d %H:%M') }} UTC, {{ rows | selectattr('status', 'eq', 'behind') | list | length }} behind
+  <p>built {{ now(utc=true, fmt='%Y-%m-%d %H:%M') }} UTC, {{ rows | selectattr('status', 'in', ['update', 'newer']) | list | length }} behind
 {%- if missing %}, no data from {{ missing | join(', ') }}{% endif %}</p>
   <div class="wrap">
   <table>
-    <tr><th>app</th><th>host</th><th>container</th><th>image</th><th>tag</th><th>running</th><th>built</th><th>newest</th></tr>
+    <tr><th>app</th><th>host</th><th>container</th><th>image</th><th>tag</th><th>running</th><th>built</th><th>newest</th><th>status</th></tr>
 {% for r in rows | sort(attribute='app,container') %}
-    <tr class="{{ r.status }}"><td>{{ r.app }}</td><td>{{ r.host }}</td><td>{{ r.container }}</td><td>{{ r.repo }}</td><td>{{ r.tag }}</td><td>{{ r.running or '-' }}</td><td>{{ r.built }}</td><td class="newest">{{ r.newest or '?' }}</td></tr>
+    <tr class="{{ r.status }}"><td>{{ r.app }}</td><td>{{ r.host }}</td><td>{{ r.container }}</td><td>{{ r.repo }}</td><td>{{ r.tag }}</td><td>{{ r.running or '-' }}</td><td>{{ r.built }}</td><td>{{ r.newest or '?' }}</td><td class="status">{{ label[r.status] }}</td></tr>
 {% endfor %}
   </table>
   </div>
