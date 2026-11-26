@@ -108,6 +108,25 @@ repos:
         pass_filenames: false
         stages: [manual]
 
+      # the Settings table of every role README, from argument_specs and defaults
+      - id: gen-role-settings
+        name: role README Settings tables
+        language: python
+        additional_dependencies: [pyyaml==6.0.2]
+        entry: python3 scripts/gen_role_settings.py
+        files: ^(ansible/roles/|scripts/gen_role_settings)
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: gen-role-settings-check
+        name: role README Settings tables up to date
+        language: python
+        additional_dependencies: [pyyaml==6.0.2]
+        entry: python3 scripts/gen_role_settings.py --check
+        files: ^(ansible/roles/|scripts/gen_role_settings)
+        pass_filenames: false
+        stages: [manual]
+
       # every podman entry in apps.yml against podman_app's argument_specs
       - id: apps-schema
         name: apps.yml against the podman_app schema

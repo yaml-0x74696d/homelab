@@ -63,10 +63,12 @@ Every `README.md` has the same headings, in this order:
 ## Runs on         hosts, the playbook, what has to be there first
 ## How it works    numbered steps, in task order
 ## <topic>         optional, one section per thing that needs more words
-## Settings        | Variable | Default | What |, defaults in backticks
+## Settings        generated table | Variable | Default | What |, between the settings markers
 ## Notes           gotchas, one line each
 ## Related         ADRs and the code outside the role
 ```
+
+The Settings table is generated, don't edit it. It sits between `<!-- settings:start -->` and `<!-- settings:end -->` and comes from `meta/argument_specs.yml` (name, description) and `defaults/main.yml` (default). A role without argument_specs gets its rows from `defaults/main.yml`, the trailing comment (or the comment right above) is the description. Fix a row in those files, then run `python3 scripts/gen_role_settings.py` (the pre-commit hook does too). Vars that live in group_vars and not in the role go in a line of prose under the table.
 
 Types and required inputs go in `meta/argument_specs.yml`, not in the README.
 

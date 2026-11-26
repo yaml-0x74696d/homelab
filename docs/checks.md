@@ -45,6 +45,8 @@ Stage: commit = on every commit, `just lint` and `just check`. manual = only `ju
 | `shellcheck-templates` | `*.sh.j2` rendered with dummy vars, then shellcheck | `scripts/shellcheck_templates.py` | commit |
 | `render-podman` | renders `rendered_config/example`. If a file changed, the hook fails: `git add` it and commit again | `scripts/render_podman.sh fix` | commit |
 | `render-podman-check` | `rendered_config/example` matches what the templates render, nothing is written to git | `scripts/render_podman.sh check` | manual |
+| `gen-role-settings` | writes the Settings table of every role README from `meta/argument_specs.yml` and `defaults/main.yml`. If a README changed, the hook fails: `git add` it and commit again | `scripts/gen_role_settings.py` | commit |
+| `gen-role-settings-check` | the Settings tables are up to date, nothing is written | `scripts/gen_role_settings.py --check` | manual |
 | `apps-schema` | every Podman entry in `apps.yml` against `podman_app`'s argument_specs | `playbooks/ci-validate-apps.yml` | manual |
 | `nix-flake-check` | `nix flake check` in `nixos/` | | manual |
 | `likec4-validate` | the LikeC4 model parses | | manual |
