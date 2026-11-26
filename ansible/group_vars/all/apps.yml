@@ -57,7 +57,7 @@ apps:
       - name: nginx
         image: docker.io/library/nginx
         tag: alpine
-    homepage: {group: Tools, icon: sh-nginx, label: Web}
+    homepage: {group: Tools, icon: sh-nginx, label: Versions, path: /versions/}
     routes:
       - host: web
 
