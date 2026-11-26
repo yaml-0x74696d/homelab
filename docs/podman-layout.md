@@ -15,7 +15,7 @@ Where a Podman app is described in the repo, where its files land on the host, a
 | a secret's value | `group_vars/all/vault.yml` or a template in `apps/<app>/` |
 | house rules for every app (restart, health, start timeout) | `roles/podman_app/templates/10-homelab.conf.j2` |
 | how map fields become unit keys | `roles/podman_app/templates/50-map.conf.j2` |
-| the auto-update and new-tags times | `group_vars/all/schedules.yml` |
+| the auto-update time | `group_vars/all/schedules.yml` |
 | the ntfy wrapper | `roles/podman_base/templates/podman-auto-update-ntfy.sh.j2` |
 | `podman_apps_root`, the svc prefix and group | `group_vars/all/app_settings.yml` |
 
@@ -29,7 +29,7 @@ ansible/
 │   ├── <app>.pod.j2             only with more than one container
 │   ├── <secret>.j2              a secret built from a template
 │   └── config/                  mirrored to the host
-├── roles/podman_base/           once per host: podman, auto-update, new-tags check, the apps helper
+├── roles/podman_base/           once per host: podman, auto-update, the apps helper
 ├── roles/podman_app/            one app: user, units, config, secrets, firewall
 └── playbooks/deploy-app.yml     -e app=<app>
 rendered_config/example/<app>/   what the role writes, with example values

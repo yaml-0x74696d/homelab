@@ -24,8 +24,7 @@ aide_check_delay: 30min
 pbs_backup_time: "*-*-* 20:00:00"
 pbs_backup_delay: 20m
 
-# podman (roles/podman_base): newer tags of pinned images first, then auto-update
-podman_new_tags_time: "Sun *-*-* 12:00:00"
+# podman auto-update (roles/podman_base)
 podman_auto_update_time: "Sun *-*-* 13:00:00"   # midday, someone is around to fix it
 
 # heartbeat windows (gatus alerts when a job's push is later than this): the schedule plus a margin.

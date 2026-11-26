@@ -7,7 +7,6 @@ What updates itself, what waits for a run, and how the pinned parts move. Times 
 | What | When | How | Reports |
 |---|---|---|---|
 | App images on a floating tag (`latest`, `stable`, ...) and the databases and caches on the tag of their major (`16-alpine`, `8-alpine`) | Sun 13:00 | `podman auto-update` per svc user, rolls back when the new container fails its health check ([ADR 0021](adr/0021-podman-quadlets.md)) | ntfy: updated, rolled back, failed |
-| Newer tags of pinned images | Sun 12:00 | `podman-new-tags` lists newer tags of the same shape (`16-alpine` → `17-alpine`) | ntfy, nothing is changed |
 | Security updates, pod VMs, ctl-1 and LXCs | daily | unattended-upgrades, security origins only, no reboot ([ADR 0024](adr/0024-ansible-run-os-updates.md)) | |
 | NixOS VMs | netbird 03:00, edge 04:00 | `system.autoUpgrade`, reboots only inside their window, one after the other | |
 | Home Assistant OS | in HA | HA's own updates, Ansible never logs in | HA |
@@ -31,7 +30,7 @@ Reboots, when the summary says `REBOOT due`:
 
 ## Pinned images
 
-Auto-update only refreshes the tag an app pins. Databases and caches update inside their major, and the app restarts with them. Immich's Postgres is the exception (`auto_update: false`). `podman-new-tags` says when a newer one exists, the bump is a change in `group_vars/all/apps.yml` plus a deploy:
+Auto-update only refreshes the tag an app pins. Databases and caches update inside their major, and the app restarts with them. Immich's Postgres is the exception (`auto_update: false`). The versions page (`web.<domain>/versions/`, `roles/app_versions`) says when a newer one exists, the bump is a change in `group_vars/all/apps.yml` plus a deploy:
 
 ```bash
 just deploy-app <app>
