@@ -35,11 +35,11 @@
 
 - name: Reboot due on {{ inventory_hostname }}?
   vars:
-    nr: "{{ node_reboot_nr.stdout | default('') }}"
-    ksta: "{{ nr | regex_findall('NEEDRESTART-KSTA: (\\d)') | first | default(0) }}"
-    ucsta: "{{ nr | regex_findall('NEEDRESTART-UCSTA: (\\d)') | first | default(0) }}"
+    node_reboot_nr_out: "{{ node_reboot_nr.stdout | default('') }}"
+    node_reboot_ksta: "{{ node_reboot_nr_out | regex_findall('NEEDRESTART-KSTA: (\\d)') | first | default(0) }}"
+    node_reboot_ucsta: "{{ node_reboot_nr_out | regex_findall('NEEDRESTART-UCSTA: (\\d)') | first | default(0) }}"
   ansible.builtin.set_fact:
     node_reboot_due: >-
       {{ node_reboot_file.stat.exists | default(false)
-         or ksta | int > 1 or ucsta | int > 1
+         or node_reboot_ksta | int > 1 or node_reboot_ucsta | int > 1
          or node_reboot_nr_el.rc | default(0) == 1 }}

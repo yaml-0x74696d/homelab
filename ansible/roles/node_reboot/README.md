@@ -14,9 +14,9 @@
 
 1. Debian: a reboot is due if `/var/run/reboot-required` exists, or needrestart reports a newer kernel or microcode (the same test as `REBOOT due` in the update summary, Debian writes no reboot-required file for a kernel). EL: `needs-restarting -r` exits 1. Read-only, so `--check` shows what a run would reboot
 2. Not due: nothing happens to the host
-3. Before: the failed units are noted. pve nodes: `pvesh` lists the running guests with `onboot` set, and quorum must be `Yes` (`roles/update`, `tasks/quorum.yml`)
-4. `ansible.builtin.reboot`, waits until ssh answers again. pve stops its guests itself while it shuts down and starts the `onboot` ones after boot
-5. After, pve nodes: quorum again, then every noted guest has to run. All hosts: systemd leaves `starting`, and no unit may have failed that wasn't failed before. Pod VMs: every app's user manager has to be `running`, which with `Notify=healthy` means every container passed its health check
+3. Before: the failed units are noted. pve nodes: quorum must be `Yes` (`roles/update`, `tasks/quorum.yml`) and the other nodes must still hold it without this one (`Total votes - 1 >= Quorum`, so no node reboots while another is down). `pvesh` lists the running guests and their `onboot` flag
+4. `ansible.builtin.reboot`, waits until ssh answers again. pve stops its guests itself while it shuts down and starts the `onboot` ones after boot. A host that drops off after that counts as failed (`ignore_unreachable` plus a final ping), so the alert still goes out
+5. After, pve nodes: quorum again, then every `onboot` guest has to run, and the running guests without `onboot` are started again. All hosts: systemd leaves `starting`, and no unit may have failed that wasn't failed before. Pod VMs, and after a node reboot the pod VMs on that node (`guest_nodes`): every app's user manager has to be `running`, which with `Notify=healthy` means every container passed its health check
 6. The last play prints one line per host and pushes it to ntfy, host names only. A failed host pushes an alert and the summary so far, the hosts after it keep their reboot for the next run
 
 ## Settings
@@ -38,7 +38,7 @@
 
 ## Notes
 
-- A guest that was running without `onboot` doesn't come back by itself: the run says which, start it by hand
+- A guest that was running without `onboot` doesn't come back by itself: the run starts it again and its id is in the summary. One that was off stays off
 - Gatus isn't asked: it can be down itself (pod-2), the checks above are on the host. Look at Gatus once after the run
 - Guests go down twice when their node reboots after them: that's the order, a bad kernel shows on the guests first
 - pod-1 takes SSO down for a minute, pod-2 the VPN routing and DNS for VPN clients, pve-1 edge (LAN DNS and every route), pod-1 and the IoT gateway

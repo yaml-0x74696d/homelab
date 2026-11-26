@@ -13,7 +13,9 @@
   vars:
     node_reboot_lines: |-
       {% for r in node_reboot_done %}
-      {{ r.host }}: {{ 'rebooted' if r.rebooted else 'no reboot due' }}{{ ', %d guests back' % r.guests if r.guests }}
+      {{ r.host }}: {{ 'rebooted' if r.rebooted else 'no reboot due' }}
+      {{- ', %d guests back' % r.guests if r.guests }}
+      {{- ', no onboot, started again: ' ~ r.started | join(' ') if r.started }}
       {% endfor %}
       {% for h in node_reboot_down %}
       {{ h }}: DOWN, not rebooted

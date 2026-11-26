@@ -36,8 +36,8 @@
     # one scan gives the report and the new db. read-only apart from aide.db.new, so also in --check
     - name: Diff against baseline on {{ inventory_hostname }}
       ansible.builtin.command: aide --config=/etc/aide/aide.conf --update
-      register: aide_update
-      failed_when: aide_update.rc >= 14
+      register: aide_auto_accept_update
+      failed_when: aide_auto_accept_update.rc >= 14
       changed_when: false
       check_mode: false
       async: "{{ aide_run_timeout }}"
@@ -55,29 +55,29 @@
              + (['--removed-ok'] if aide_auto_accept_removed else [])
              + aide_auto_accept_ignore | map('regex_replace', '^', '--ignore=') | list }}
       args:
-        stdin: "{{ aide_update.stdout }}"
-      register: aide_auto_check
+        stdin: "{{ aide_auto_accept_update.stdout }}"
+      register: aide_auto_accept_report
       changed_when: false
       check_mode: false
-      when: aide_update.rc != 0
+      when: aide_auto_accept_update.rc != 0
 
     - name: Swap in new baseline on {{ inventory_hostname }}
       ansible.builtin.include_role:
         name: aide
         tasks_from: accept
       when:
-        - aide_update.rc != 0
-        - (aide_auto_check.stdout | from_json).accept
+        - aide_auto_accept_update.rc != 0
+        - (aide_auto_accept_report.stdout | from_json).accept
 
     - name: Record result for {{ inventory_hostname }}
       vars:
         aide_auto_accept_check: >-
-          {{ (aide_auto_check.stdout | from_json) if aide_update.rc != 0
+          {{ (aide_auto_accept_report.stdout | from_json) if aide_auto_accept_update.rc != 0
              else {'accept': false, 'reasons': [], 'paths': 0, 'packages': []} }}
       ansible.builtin.set_fact:
         aide_auto_accept_result:
           host: "{{ inventory_hostname }}"
-          state: "{{ 'clean' if aide_update.rc == 0 else 'accepted' if aide_auto_accept_check.accept else 'review' }}"
+          state: "{{ 'clean' if aide_auto_accept_update.rc == 0 else 'accepted' if aide_auto_accept_check.accept else 'review' }}"
           paths: "{{ aide_auto_accept_check.paths }}"
           packages: "{{ aide_auto_accept_check.packages }}"
           reasons: "{{ aide_auto_accept_check.reasons }}"

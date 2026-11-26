@@ -9,13 +9,27 @@
     update_quorum_delay: 0
   when: node_reboot_pve
 
+# Total votes = the members up now. with this node gone the rest still has to reach the quorum
+- name: Quorum survives the reboot of {{ inventory_hostname }}
+  vars:
+    node_reboot_votes: "{{ update_quorum_check.stdout | regex_search('Total votes:\\s+(\\d+)', '\\1') | first | int }}"
+    node_reboot_quorum: "{{ update_quorum_check.stdout | regex_search('Quorum:\\s+(\\d+)', '\\1') | first | int }}"
+  ansible.builtin.assert:
+    that: node_reboot_votes | int - 1 >= node_reboot_quorum | int
+    fail_msg: >-
+      {{ node_reboot_votes }} votes up, quorum is {{ node_reboot_quorum }}: rebooting {{ inventory_hostname }}
+      would take the cluster below it (is another node down?). nothing was rebooted here
+    quiet: true
+  when: node_reboot_pve
+
+# no module lists failed units, hence the command
 - name: Units already failed on {{ inventory_hostname }}
-  ansible.builtin.command: systemctl --failed --no-legend --plain --no-pager
+  ansible.builtin.command: systemctl --failed --no-legend --plain --no-pager   # noqa: command-instead-of-module
   register: node_reboot_failed_before
   changed_when: false
   check_mode: false
 
-# pve stops them while it shuts down and starts the onboot ones again. only those are waited for
+# pve stops them while it shuts down and starts the onboot ones again. the others are started after
 - name: Look at the guests of {{ inventory_hostname }}
   when: node_reboot_pve
   block:
@@ -28,11 +42,11 @@
 
     - name: Collect the running guests on {{ inventory_hostname }}
       vars:
-        qemu: "{{ node_reboot_list.results[0].stdout | from_json | selectattr('status', 'eq', 'running') | list }}"
-        lxc: "{{ node_reboot_list.results[1].stdout | from_json | selectattr('status', 'eq', 'running') | list }}"
+        node_reboot_qemu: "{{ node_reboot_list.results[0].stdout | from_json | selectattr('status', 'eq', 'running') | list }}"
+        node_reboot_lxc: "{{ node_reboot_list.results[1].stdout | from_json | selectattr('status', 'eq', 'running') | list }}"
       ansible.builtin.set_fact:
         node_reboot_running: >-
-          {{ (qemu | map('combine', {'type': 'qemu'}) | list) + (lxc | map('combine', {'type': 'lxc'}) | list) }}
+          {{ (node_reboot_qemu | map('combine', {'type': 'qemu'}) | list) + (node_reboot_lxc | map('combine', {'type': 'lxc'}) | list) }}
 
     - name: Read the onboot flag of each running guest on {{ inventory_hostname }}
       ansible.builtin.command: "pvesh get /nodes/{{ inventory_hostname }}/{{ item.type }}/{{ item.vmid }}/config --output-format json"
@@ -43,13 +57,14 @@
       loop_control:
         label: "{{ item.name | default(item.vmid) }}"
 
-    - name: Note the guests to wait for on {{ inventory_hostname }}
+    - name: Sort the guests by onboot on {{ inventory_hostname }}
+      vars:
+        node_reboot_pairs: "{{ node_reboot_running | zip(node_reboot_config.results | map(attribute='stdout') | map('from_json')) | list }}"
       ansible.builtin.set_fact:
-        node_reboot_guests: >-
-          {{ node_reboot_running | zip(node_reboot_config.results | map(attribute='stdout') | map('from_json'))
-             | selectattr('1.onboot', 'defined') | selectattr('1.onboot', 'eq', 1) | map('first') | list }}
+        node_reboot_guests: "{{ node_reboot_pairs | selectattr('1.onboot', 'defined') | selectattr('1.onboot', 'eq', 1) | map('first') | list }}"
+        node_reboot_manual: "{{ node_reboot_pairs | rejectattr('1.onboot', 'eq', 1) | map('first') | list }}"
 
-    - name: Guests that won't come back by themselves
+    - name: Guests without onboot on {{ inventory_hostname }}
       ansible.builtin.debug:
-        msg: "no onboot, start by hand: {{ node_reboot_running | map(attribute='vmid') | difference(node_reboot_guests | map(attribute='vmid')) | list }}"
-      when: (node_reboot_running | length) != (node_reboot_guests | length)
+        msg: "no onboot, started again after the reboot: {{ node_reboot_manual | map(attribute='vmid') | list }}"
+      when: node_reboot_manual | length > 0

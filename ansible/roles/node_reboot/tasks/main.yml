@@ -1,6 +1,8 @@
 ---
 # one host: reboot it if it needs one, wait until it is whole again. a failure stops the run
-- name: Reboot {{ inventory_hostname }} if due
+- name: Reboot if due on {{ inventory_hostname }}
+  # a host that drops off mid-way counts as failed, so the rescue below still fires
+  ignore_unreachable: true
   block:
     - name: Look for a due reboot on {{ inventory_hostname }}
       ansible.builtin.include_tasks: check.yml
@@ -11,13 +13,13 @@
         - name: Note the state before on {{ inventory_hostname }}
           ansible.builtin.include_tasks: before.yml
 
-        - name: Reboot {{ inventory_hostname }} now
+        - name: Reboot now on {{ inventory_hostname }}
           ansible.builtin.reboot:
             reboot_timeout: "{{ node_reboot_timeout }}"
             boot_time_command: "{{ node_reboot_boot_time_command | default(omit, true) }}"
             msg: reboot by ansible (playbooks/reboot.yml)
 
-        - name: Wait until {{ inventory_hostname }} is whole again
+        - name: Wait until whole again on {{ inventory_hostname }}
           ansible.builtin.include_tasks: after.yml
 
     - name: Record result for {{ inventory_hostname }}
@@ -26,6 +28,7 @@
           host: "{{ inventory_hostname }}"
           rebooted: "{{ node_reboot_due }}"
           guests: "{{ node_reboot_guests | default([]) | length }}"
+          started: "{{ node_reboot_started | default([]) | map(attribute='vmid') | list }}"
 
   rescue:
     - name: Alert on failed reboot of {{ inventory_hostname }}

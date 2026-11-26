@@ -9,7 +9,7 @@
     update_quorum_delay: "{{ node_reboot_quorum_delay }}"
   when: node_reboot_pve
 
-- name: Wait for the guests of {{ inventory_hostname }} to run
+- name: Wait for the onboot guests to run on {{ inventory_hostname }}
   ansible.builtin.command: "pvesh get /nodes/{{ inventory_hostname }}/{{ item.type }}/{{ item.vmid }}/status/current --output-format json"
   register: node_reboot_guest_state
   changed_when: false
@@ -23,8 +23,38 @@
     label: "{{ item.name | default(item.vmid) }}"
   when: node_reboot_pve
 
+# they ran before, so they run after. started one at a time, after the ones pve brought up
+- name: Start the guests without onboot on {{ inventory_hostname }}
+  ansible.builtin.command: "pvesh create /nodes/{{ inventory_hostname }}/{{ item.type }}/{{ item.vmid }}/status/start"
+  register: node_reboot_start
+  changed_when: true
+  failed_when: false
+  loop: "{{ node_reboot_manual | default([]) }}"
+  loop_control:
+    label: "{{ item.name | default(item.vmid) }}"
+  when: node_reboot_pve
+
+- name: Wait for the started guests to run on {{ inventory_hostname }}
+  ansible.builtin.command: "pvesh get /nodes/{{ inventory_hostname }}/{{ item.type }}/{{ item.vmid }}/status/current --output-format json"
+  register: node_reboot_manual_state
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  until: node_reboot_manual_state.rc == 0 and (node_reboot_manual_state.stdout | from_json).status == 'running'
+  retries: "{{ node_reboot_wait_retries }}"
+  delay: "{{ node_reboot_wait_delay }}"
+  loop: "{{ node_reboot_manual | default([]) }}"
+  loop_control:
+    label: "{{ item.name | default(item.vmid) }}"
+  when: node_reboot_pve
+
+- name: Note the started guests on {{ inventory_hostname }}
+  ansible.builtin.set_fact:
+    node_reboot_started: "{{ node_reboot_manual | default([]) }}"
+
+# no module reads the overall state or lists failed units, hence the commands
 - name: Wait for systemd on {{ inventory_hostname }}
-  ansible.builtin.command: systemctl is-system-running
+  ansible.builtin.command: systemctl is-system-running   # noqa: command-instead-of-module
   register: node_reboot_state
   changed_when: false
   failed_when: false
@@ -35,34 +65,43 @@
 
 # one failed unit from before the reboot doesn't stop the run, a new one does
 - name: Units failed after on {{ inventory_hostname }}
-  ansible.builtin.command: systemctl --failed --no-legend --plain --no-pager
+  ansible.builtin.command: systemctl --failed --no-legend --plain --no-pager   # noqa: command-instead-of-module
   register: node_reboot_failed_after
   changed_when: false
   check_mode: false
 
 - name: No new failed units on {{ inventory_hostname }}
   vars:
-    before: "{{ node_reboot_failed_before.stdout_lines | map('trim') | map('split', ' ') | map('first') | list }}"
-    after: "{{ node_reboot_failed_after.stdout_lines | map('trim') | map('split', ' ') | map('first') | list }}"
+    node_reboot_units_before: "{{ node_reboot_failed_before.stdout_lines | map('trim') | map('split', ' ') | map('first') | list }}"
+    node_reboot_units_after: "{{ node_reboot_failed_after.stdout_lines | map('trim') | map('split', ' ') | map('first') | list }}"
   ansible.builtin.assert:
-    that: (after | difference(before)) | length == 0
-    fail_msg: "failed since the reboot: {{ after | difference(before) }}"
+    that: (node_reboot_units_after | difference(node_reboot_units_before)) | length == 0
+    fail_msg: "failed since the reboot: {{ node_reboot_units_after | difference(node_reboot_units_before) }}"
     quiet: true
 
-# every container has Notify=healthy: the user manager is only "running" once they all are
-- name: Wait for the apps on {{ inventory_hostname }}
-  ansible.builtin.command: "systemctl --user -M {{ podman_svc_prefix }}{{ item.key }}@ is-system-running"
-  register: node_reboot_app
-  changed_when: false
-  failed_when: false
-  check_mode: false
-  until: node_reboot_app.stdout == 'running'
-  retries: "{{ node_reboot_wait_retries }}"
-  delay: "{{ node_reboot_wait_delay }}"
-  loop: "{{ apps | dict2items }}"
+- name: Wait for the apps of {{ inventory_hostname }}
+  ansible.builtin.include_tasks: apps_wait.yml
+  vars:
+    node_reboot_vm: "{{ inventory_hostname }}"
+  when: inventory_hostname in groups['pod_vms']
+
+# the vms on a node went down and up with it: their apps too. a vm that is off for other reasons isn't waited for
+- name: Wait for the pod vms of {{ inventory_hostname }}
+  ansible.builtin.include_tasks: apps_wait.yml
+  loop: "{{ guest_nodes | dict2items | selectattr('value', 'eq', inventory_hostname) | map(attribute='key') | intersect(groups['pod_vms']) | list }}"
   loop_control:
-    label: "{{ item.key }}"
+    loop_var: node_reboot_vm
   when:
-    - inventory_hostname in groups['pod_vms']
-    - item.value.state | default('present') == 'present'
-    - item.value.host | default('') == inventory_hostname or inventory_hostname in item.value.hosts | default([])
+    - node_reboot_pve
+    - node_reboot_vm in groups['reachable'] | default([])
+
+# the host could have dropped off again (ignore_unreachable): then this fails and the rescue fires
+- name: Ping {{ inventory_hostname }}
+  ansible.builtin.ping:
+  register: node_reboot_ping
+
+- name: Still reachable, {{ inventory_hostname }}
+  ansible.builtin.assert:
+    that: not node_reboot_ping.unreachable | default(false) and node_reboot_ping.ping | default('') == 'pong'
+    fail_msg: "{{ inventory_hostname }} dropped off after the reboot"
+    quiet: true
