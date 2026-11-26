@@ -1,0 +1,34 @@
+---
+# move an app's postgres to a higher major, after its tag was raised in group_vars/all/apps.yml:
+#   ansible-playbook playbooks/postgres-major.yml -e app=nextcloud          (--check = checks and the plan, nothing is touched)
+# the old db has to be running: it is dumped first. the old data dir is kept, the run prints how to delete it
+# hosts: can't read group_vars, so the play spans every app host and drops the others before facts
+- name: Postgres major
+  hosts: pod_vms:podman_hosts
+  become: true
+  gather_facts: false
+
+  pre_tasks:
+    - name: Check the app is a podman app
+      ansible.builtin.assert:
+        that:
+          - app is defined
+          - app in apps
+          - apps[app].runtime | default('podman') == 'podman'
+          - apps[app].host is defined
+          - apps[app].host in groups['pod_vms'] + groups['podman_hosts']
+        fail_msg: "{{ app | default('-e app=<name> missing') }}: not in apps.yml, not a podman app, or not on one host of its own"
+        quiet: true
+      run_once: true
+
+    - name: Only the app's host
+      ansible.builtin.meta: end_host
+      when: inventory_hostname != apps[app].host
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+  roles:
+    - role: postgres_major
+      vars:
+        postgres_major_app: "{{ app }}"

@@ -1,0 +1,14 @@
+---
+# the new tag is in apps.yml, the old postgres still runs. see README for the order and why
+- name: Check before anything is touched
+  ansible.builtin.include_tasks: preflight.yml
+
+- name: Plan for {{ postgres_major_app }}
+  ansible.builtin.debug:
+    msg: >-
+      {{ postgres_major_app }}: postgres {{ postgres_major_old }} -> {{ postgres_major_new }}, {{ postgres_major_tables_before }} tables,
+      data dir {{ postgres_major_data_dir }} moves to {{ postgres_major_aside }}
+
+- name: Move {{ postgres_major_app }} to postgres {{ postgres_major_new }}
+  ansible.builtin.include_tasks: migrate.yml
+  when: not ansible_check_mode

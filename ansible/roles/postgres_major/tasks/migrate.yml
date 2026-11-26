@@ -1,0 +1,196 @@
+---
+# the app's units apart from the db, and the db's own
+- name: Name the units
+  ansible.builtin.set_fact:
+    postgres_major_app_units: "{{ apps[postgres_major_app].containers | map(attribute='name') | reject('eq', postgres_major_db) | list }}"
+    postgres_major_dump: "{{ postgres_major_work }}/{{ postgres_major_app }}-pg{{ postgres_major_old }}.sql"
+
+# the app stops first, so nothing is written between the dump and the swap. the old db keeps running for the dump.
+# a failure in here moves nothing: the old db and its data dir are untouched, the app is started again
+- name: Dump the old db
+  block:
+    - name: Stop the app units of {{ postgres_major_app }}
+      ansible.builtin.systemd_service:
+        name: "{{ item }}.service"
+        state: stopped
+        scope: user
+      loop: "{{ postgres_major_app_units }}"
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+
+    - name: Folder for the dump
+      ansible.builtin.file:
+        path: "{{ postgres_major_work }}"
+        state: directory
+        owner: "{{ postgres_major_user }}"
+        mode: '0700'   # the dump holds everything the app stores
+
+    # stderr and the end marker stay in files, a failed statement can quote data
+    - name: Dump {{ postgres_major_db }}
+      ansible.builtin.shell: |
+        set -o pipefail
+        umask 077
+        podman exec {{ postgres_major_db }} sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' \
+          > {{ postgres_major_dump }} 2> {{ postgres_major_work }}/dump.log
+        tail -n 3 {{ postgres_major_dump }} | grep -q 'PostgreSQL database dump complete'
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+      changed_when: true
+
+    - name: Stop {{ postgres_major_db }}
+      ansible.builtin.systemd_service:
+        name: "{{ postgres_major_db }}.service"
+        state: stopped
+        scope: user
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+
+  rescue:
+    - name: Start the db again
+      ansible.builtin.systemd_service:
+        name: "{{ postgres_major_db }}.service"
+        state: started
+        scope: user
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+
+    - name: Start the app again
+      ansible.builtin.systemd_service:
+        name: "{{ item }}.service"
+        state: started
+        scope: user
+      loop: "{{ postgres_major_app_units }}"
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+
+    - name: Stop, nothing was moved
+      ansible.builtin.fail:
+        msg: "'{{ ansible_failed_task.name }}' failed. {{ postgres_major_app }} runs on the old postgres again, nothing was moved. log: {{ postgres_major_work }}/dump.log"
+
+# from here the old data dir is only reachable under its new name, a failure leaves the state as it is
+- name: Swap and import
+  block:
+    - name: Move the old data dir aside
+      ansible.builtin.command: "mv {{ postgres_major_data_dir }} {{ postgres_major_aside }}"
+      args:
+        removes: "{{ postgres_major_data_dir }}"
+        creates: "{{ postgres_major_aside }}"
+
+    # the role makes the empty dir again (dirs:), writes the unit with the new tag and starts all of the app.
+    # the app comes up on the empty db, as in the restore after a rebuild (docs/bootstrap.md, step 7)
+    - name: Deploy the new tag
+      ansible.builtin.include_role:
+        name: podman_app
+      vars:
+        podman_app_name: "{{ postgres_major_app }}"
+        podman_app_entry: "{{ apps[postgres_major_app] }}"
+
+    - name: Stop the app units again
+      ansible.builtin.systemd_service:
+        name: "{{ item }}.service"
+        state: stopped
+        scope: user
+      loop: "{{ postgres_major_app_units }}"
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+
+    - name: Wait for the new postgres
+      ansible.builtin.command:
+        argv:
+          - podman
+          - exec
+          - "{{ postgres_major_db }}"
+          - sh
+          - -c
+          - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+      register: postgres_major_ready
+      changed_when: false
+      until: postgres_major_ready.rc == 0
+      retries: "{{ postgres_major_ready_retries }}"
+      delay: "{{ postgres_major_ready_delay }}"
+
+    # one transaction: a failed import leaves the new db empty, not half full
+    - name: Import the dump
+      ansible.builtin.shell: >-
+        podman exec -i {{ postgres_major_db }} sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -q -v ON_ERROR_STOP=1 --single-transaction'
+        < {{ postgres_major_dump }} > {{ postgres_major_work }}/import.log 2>&1
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+      changed_when: true
+
+    - name: Read the new db
+      ansible.builtin.command:
+        argv:
+          - podman
+          - exec
+          - "{{ postgres_major_db }}"
+          - sh
+          - -c
+          - >-
+            psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c
+            "select current_setting('server_version_num')::int / 10000 || ' ' || count(*) from information_schema.tables
+            where table_schema not in ('pg_catalog','information_schema')"
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+      register: postgres_major_after
+      changed_when: false
+
+    - name: The new db has the right major and as many tables
+      ansible.builtin.assert:
+        that: postgres_major_after.stdout | trim == postgres_major_new ~ ' ' ~ postgres_major_tables_before
+        fail_msg: "new db says '{{ postgres_major_after.stdout | trim }}', wanted '{{ postgres_major_new }} {{ postgres_major_tables_before }}' (major, tables)"
+        quiet: true
+
+    - name: Start the app units
+      ansible.builtin.systemd_service:
+        name: "{{ item }}.service"
+        state: started
+        scope: user
+      loop: "{{ postgres_major_app_units }}"
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+
+    - name: Check the first route of {{ postgres_major_app }}
+      ansible.builtin.uri:
+        url: "https://{{ apps[postgres_major_app].routes[0].host }}.{{ domain }}{{ apps[postgres_major_app].routes[0].path | default('') }}"
+        follow_redirects: none
+        status_code: "{{ postgres_major_route_codes }}"
+      register: postgres_major_route
+      until: postgres_major_route.status in postgres_major_route_codes
+      retries: "{{ postgres_major_route_retries }}"
+      delay: "{{ postgres_major_route_delay }}"
+      delegate_to: localhost
+      become: false
+      when: apps[postgres_major_app].routes | default([]) | length > 0
+
+  rescue:
+    - name: Stop on a failed swap
+      ansible.builtin.fail:
+        msg: >-
+          '{{ ansible_failed_task.name }}' failed after the old data dir moved. the old data is in {{ postgres_major_aside }},
+          the dump in {{ postgres_major_dump }}, the import log in {{ postgres_major_work }}/import.log.
+          back: git checkout the old tag in apps.yml, stop the app, rm -rf the new {{ postgres_major_data_dir }},
+          mv {{ postgres_major_aside }} {{ postgres_major_data_dir }}, deploy-app.yml. forward: fix it and import the dump by hand (docs/bootstrap.md, step 7)
+
+- name: Old data dir to delete later
+  ansible.builtin.debug:
+    msg:
+      - "{{ postgres_major_app }} runs on postgres {{ postgres_major_new }}, {{ postgres_major_tables_before }} tables imported"
+      - "the old data dir and the dump are kept. after a few days, when the app has been used:"
+      - "ssh -t {{ inventory_hostname }} sudo rm -rf {{ postgres_major_aside }} {{ postgres_major_work }}"

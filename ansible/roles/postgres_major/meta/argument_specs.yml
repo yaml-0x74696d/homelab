@@ -1,0 +1,35 @@
+---
+argument_specs:
+  main:
+    short_description: Dump, swap the data dir, deploy the new tag, import, start the app
+    options:
+      postgres_major_app:
+        type: str
+        required: true
+        description: The app's key in apps.yml, its db container has the new tag already
+      postgres_major_images:
+        type: list
+        elements: str
+        description: Images that count as plain postgres, others are refused
+      postgres_major_pgdata_change:
+        type: int
+        description: First major whose image keeps PGDATA elsewhere, refused until the unit templates follow
+      postgres_major_dir:
+        type: str
+        description: Folder in the app's dir for the dump and the import log
+      postgres_major_ready_retries:
+        type: int
+        description: Tries until the new postgres answers
+      postgres_major_ready_delay:
+        type: int
+        description: Seconds between them
+      postgres_major_route_codes:
+        type: list
+        elements: int
+        description: Status codes that count as the app being up
+      postgres_major_route_retries:
+        type: int
+        description: Tries on the app's first route
+      postgres_major_route_delay:
+        type: int
+        description: Seconds between them

@@ -52,11 +52,13 @@ just deploy-app <app>
 ```
 
 Images that need more than a tag change:
-- **Postgres major** (`16-alpine` → `17-alpine`): the data dir doesn't open on a new major. Dump, start empty on the new tag, import:
-  1. `ssh -t pod-N sudo systemctl start pbs-backup.service` (fresh dump on PBS)
-  2. Stop the app, move `/srv/apps/<app>/database` aside
-  3. Bump the db tag, deploy: the db starts empty
-  4. Import the dump as in [bootstrap step 7](bootstrap.md#7-restore-the-data), start the app, then delete the old dir
+- **Postgres major** (`16-alpine` → `17-alpine`): the data dir doesn't open on a new major, so the data goes through a dump. Authentik, Nextcloud and Paperless:
+  1. Raise the db tag in `group_vars/all/apps.yml`, commit it, don't deploy
+  2. `ansible-playbook playbooks/postgres-major.yml -e app=<app>` (`--check` first shows the plan)
+  - It dumps the running old db with the app stopped, moves the data dir aside, deploys the new tag, imports, starts the app and asks its route. Downtime is the dump plus the import
+  - The old data dir and the dump are kept. The run prints the `rm -rf` for them, do it after a few days
+  - A fresh PBS dump first is still a good idea: `ssh -t pod-N sudo systemctl start pbs-backup.service`
+  - Majors from 18 on are refused until the db template follows the new PGDATA path. [`roles/postgres_major`](../ansible/roles/postgres_major/README.md)
 - **Nextcloud** (`35-apache`): one major at a time, it refuses to skip. `start_timeout: 15min` covers `occ upgrade` on the first start
 - **Authentik**: one release series at a time, never down. Raise the tag on `authentik` and `authentik-worker` in `apps.yml`, add the new series to `authentik_series` in `app_settings.yml`, then `just deploy authentik`. The wrapper refuses skipped series, downgrades and a nearly full thin pool, and waits for ready through edge ([ADR 0014](adr/0014-authentik-as-idp.md))
 - **Immich's Postgres** (vectorchord build): follow the Immich release notes, never plain Postgres
