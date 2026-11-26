@@ -20,15 +20,15 @@ The tag goes first, because `apps.yml` is the declared state: the playbook reads
 
 1. Checks, all read-only: one container on `docker.io/library/postgres`, its tag starts with a major, the running container is the old major and the new one is higher, the data dir is a `dirs:` entry of the app, the folder for the old dir doesn't exist yet. Counts the tables of the old db
 2. Stops the app's other containers, so nothing is written from here. The old db keeps running
-3. `pg_dump --clean --if-exists` from the running old container into `<app dir>/pg-major/<app>-pg<old>.sql` (mode `0700` folder). The file has to end with pg_dump's completion line
+3. `pg_dump --clean --if-exists` from the running old container into `<app dir>/pg-major/<app>-pg<old>.sql` (mode `0700` folder), and `pg_dumpall --roles-only` next to it as `…-roles.sql` (roles are cluster wide, pg_dump leaves them out). Both have to show their completion line in the last ten lines (pg_dump now ends with `\unrestrict` after it)
 4. Stops the old db, moves its data dir to `<dir>.pg<old>-<date>`
 5. Deploys through `roles/podman_app`: the empty data dir, the unit with the new tag, a start. The app comes up on the empty db, as in the restore after a rebuild ([bootstrap, step 7](../../../docs/bootstrap.md#7-restore-the-data)), then it is stopped again
-6. `pg_isready`, then `psql --single-transaction` with `ON_ERROR_STOP` imports the dump. A failed import leaves the new db empty
+6. `pg_isready`, then the roles are imported first, without the ones the new cluster already has (the `POSTGRES_USER`, whose password comes from the secret), then the dump. Both through `psql --single-transaction` with `ON_ERROR_STOP`, so a failed import leaves the new db empty
 7. Checks the new db: the major, and the same number of tables as before
 8. Starts the app and asks its first route (a redirect to the login counts)
 9. Prints how to delete the old dir and the dump
 
-A failure before step 4 starts the old db and the app again, nothing was moved. After step 4 it stops and prints how to go back or forward. Not resumable: the old db has to be running at the start.
+A failure before step 4 starts the old db and the app again, nothing was moved. After step 4 the app units are stopped, so nothing runs on an empty or half imported db, and it prints how to go back or forward. The deploy pruned the images the app didn't run, so going back pulls the old tag again. Not resumable: the old db has to be running at the start.
 
 ## Settings
 

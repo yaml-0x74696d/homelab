@@ -4,6 +4,7 @@
   ansible.builtin.set_fact:
     postgres_major_app_units: "{{ apps[postgres_major_app].containers | map(attribute='name') | reject('eq', postgres_major_db) | list }}"
     postgres_major_dump: "{{ postgres_major_work }}/{{ postgres_major_app }}-pg{{ postgres_major_old }}.sql"
+    postgres_major_roles: "{{ postgres_major_work }}/{{ postgres_major_app }}-pg{{ postgres_major_old }}-roles.sql"
 
 # the app stops first, so nothing is written between the dump and the swap. the old db keeps running for the dump.
 # a failure in here moves nothing: the old db and its data dir are untouched, the app is started again
@@ -33,7 +34,12 @@
         umask 077
         podman exec {{ postgres_major_db }} sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' \
           > {{ postgres_major_dump }} 2> {{ postgres_major_work }}/dump.log
-        tail -n 3 {{ postgres_major_dump }} | grep -q 'PostgreSQL database dump complete'
+        # pg_dump ends with \unrestrict after the completion comment, so look at the last lines
+        tail -n 10 {{ postgres_major_dump }} | grep -q 'PostgreSQL database dump complete'
+        # roles are cluster wide, pg_dump leaves them out but its OWNER TO lines need them
+        podman exec {{ postgres_major_db }} sh -c 'pg_dumpall -U "$POSTGRES_USER" --roles-only' \
+          > {{ postgres_major_roles }} 2>> {{ postgres_major_work }}/dump.log
+        tail -n 10 {{ postgres_major_roles }} | grep -q 'PostgreSQL database cluster dump complete'
       args:
         executable: /bin/bash
       become: true
@@ -72,7 +78,9 @@
 
     - name: Stop, nothing was moved
       ansible.builtin.fail:
-        msg: "'{{ ansible_failed_task.name }}' failed. {{ postgres_major_app }} runs on the old postgres again, nothing was moved. log: {{ postgres_major_work }}/dump.log"
+        msg: >-
+          '{{ ansible_failed_task.name }}' failed. {{ postgres_major_app }} runs on the old postgres again, nothing was moved.
+          log: {{ postgres_major_work }}/dump.log
 
 # from here the old data dir is only reachable under its new name, a failure leaves the state as it is
 - name: Swap and import
@@ -119,6 +127,24 @@
       until: postgres_major_ready.rc == 0
       retries: "{{ postgres_major_ready_retries }}"
       delay: "{{ postgres_major_ready_delay }}"
+
+    # the roles first, without the ones the new cluster has already (the POSTGRES_USER with the password from the secret)
+    - name: Import the roles
+      ansible.builtin.shell: |
+        set -o pipefail
+        podman exec {{ postgres_major_db }} sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "select rolname from pg_roles"' \
+          > {{ postgres_major_work }}/roles-existing.txt
+        awk 'NR == FNR { have[$0] = 1; next }
+             /^(CREATE|ALTER) ROLE / { name = $3; gsub(/[";]/, "", name); if (name in have) next }
+             { print }' {{ postgres_major_work }}/roles-existing.txt {{ postgres_major_roles }} \
+          | podman exec -i {{ postgres_major_db }} sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -q -v ON_ERROR_STOP=1 --single-transaction' \
+          > {{ postgres_major_work }}/roles-import.log 2>&1
+      args:
+        executable: /bin/bash
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+      changed_when: true
 
     # one transaction: a failed import leaves the new db empty, not half full
     - name: Import the dump
@@ -180,11 +206,24 @@
       when: apps[postgres_major_app].routes | default([]) | length > 0
 
   rescue:
+    # nothing should run on an empty or half imported db
+    - name: Stop the app units on a failed swap
+      ansible.builtin.systemd_service:
+        name: "{{ item }}.service"
+        state: stopped
+        scope: user
+      loop: "{{ postgres_major_app_units }}"
+      become: true
+      become_user: "{{ postgres_major_user }}"
+      environment: "{{ postgres_major_env }}"
+      failed_when: false
+
     - name: Stop on a failed swap
       ansible.builtin.fail:
         msg: >-
-          '{{ ansible_failed_task.name }}' failed after the old data dir moved. the old data is in {{ postgres_major_aside }},
-          the dump in {{ postgres_major_dump }}, the import log in {{ postgres_major_work }}/import.log.
+          '{{ ansible_failed_task.name }}' failed after the old data dir moved, the app is stopped. the old data is in {{ postgres_major_aside }},
+          the dump in {{ postgres_major_dump }} and {{ postgres_major_roles }}, the import logs in {{ postgres_major_work }}/.
+          the deploy pruned unused images, so the old tag is pulled again on the way back.
           back: git checkout the old tag in apps.yml, stop the app, rm -rf the new {{ postgres_major_data_dir }},
           mv {{ postgres_major_aside }} {{ postgres_major_data_dir }}, deploy-app.yml. forward: fix it and import the dump by hand (docs/bootstrap.md, step 7)
 

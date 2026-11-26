@@ -2,12 +2,12 @@
 # read-only, also runs in --check
 - name: Find the db container of {{ postgres_major_app }}
   vars:
-    pg: "{{ apps[postgres_major_app].containers | selectattr('image', 'match', '.*/postgres$') | list }}"
+    postgres_major_pg: "{{ apps[postgres_major_app].containers | selectattr('image', 'match', '.*/postgres$') | list }}"
   ansible.builtin.set_fact:
-    postgres_major_db: "{{ (pg | first).name | default('') }}"
-    postgres_major_image: "{{ (pg | first).image | default('') }}"
-    postgres_major_new_tag: "{{ (pg | first).tag | default('') | string }}"
-    postgres_major_found: "{{ pg | length }}"
+    postgres_major_db: "{{ (postgres_major_pg | first).name | default('') }}"
+    postgres_major_image: "{{ (postgres_major_pg | first).image | default('') }}"
+    postgres_major_new_tag: "{{ (postgres_major_pg | first).tag | default('') | string }}"
+    postgres_major_found: "{{ postgres_major_pg | length }}"
 
 - name: Only plain postgres, one container
   ansible.builtin.assert:
@@ -50,11 +50,11 @@
 
 - name: Read the versions
   vars:
-    parts: "{{ postgres_major_inspect.stdout | trim | split('|') }}"
+    postgres_major_parts: "{{ postgres_major_inspect.stdout | trim | split('|') }}"
   ansible.builtin.set_fact:
-    postgres_major_old_tag: "{{ parts[1].split(':')[-1] }}"
-    postgres_major_data_dir: "{{ parts[2] }}"
-    postgres_major_old: "{{ parts[1].split(':')[-1] | regex_search('^\\d+') }}"
+    postgres_major_old_tag: "{{ postgres_major_parts[1].split(':')[-1] }}"
+    postgres_major_data_dir: "{{ postgres_major_parts[2] }}"
+    postgres_major_old: "{{ postgres_major_parts[1].split(':')[-1] | regex_search('^\\d+') }}"
     postgres_major_new: "{{ postgres_major_new_tag | regex_search('^\\d+') }}"
 
 - name: Only forward, only where the unit templates fit
@@ -97,7 +97,9 @@
       - "{{ postgres_major_db }}"
       - sh
       - -c
-      - psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "select count(*) from information_schema.tables where table_schema not in ('pg_catalog','information_schema')"
+      - >-
+        psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c
+        "select count(*) from information_schema.tables where table_schema not in ('pg_catalog','information_schema')"
   become: true
   become_user: "{{ postgres_major_user }}"
   environment: "{{ postgres_major_env }}"
