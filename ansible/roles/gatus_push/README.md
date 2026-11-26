@@ -18,11 +18,15 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `gatus_push_job` | required | Template name: `repo-pull`, `aide` or `update` |
-| `gatus_push_group`, `gatus_push_path`, `gatus_push_timeout` | group_vars | Endpoint group, push path (`{key}` is the endpoint key), seconds the push may take |
-| `gatus_push_token` | vault | Push token, also in Semaphore's copy of the vault (`ctl-preparation.yml -l ctl-1 -t private-files`) |
+| `gatus_push_path` | required | Push path with {key} for the endpoint key (group_vars) |
+| `gatus_push_job` | required | Semaphore template name (`repo-pull`, `aide` or `update`), the external endpoint is semaphore-\<job> (gatus_semaphore_templates) |
+| `gatus_push_group` | required | Gatus endpoint group of the heartbeats (group_vars) |
+| `gatus_push_timeout` | required | Seconds the push may take (group_vars) |
+| `gatus_push_token` | `""` | Gatus push token (vault), also in Semaphore's copy of the vault (`ctl-preparation.yml -l ctl-1 -t private-files`). empty = no push |
+<!-- settings:end -->
 
 ## Related
 

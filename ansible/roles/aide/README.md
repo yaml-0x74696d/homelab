@@ -72,21 +72,27 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to `30min` | When the check runs (group_vars `schedules.yml`, shared with NixOS) |
-| `aide_excludes_common` | see below | Excludes on every host |
-| `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
-| `aide_login_homes` | admin home, `/root` | Homes with history files on the `VarFile` rule (see Notes) |
-| `aide_history_files` | bash, less, vim, python, wget history | Regex of the history file names in those homes |
-| `aide_content_files` | `/etc/hosts`, netbird's `99-netbird.conf` + `state.json` | Rewritten with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
-| `aide_var_dirs` | `/etc/apt/apt.conf.d`, `/etc/ssh/ssh_config.d`, `/var/lib/netbird` | Dirs whose files get replaced: owner and mode watched, times not (`VarDir`). Added and removed files still show |
-| `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids`, dnsmasq leases | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
-| `aide_run_timeout` / `aide_run_poll` | `3600` s / `30` s | Limits for `--init` and `--update` |
-| `aide_check_nice` / `aide_check_io_class` | `19` / `idle` | Priority of the check |
-| `aide_report_lines` | `150` | Diff lines shown on accept |
-| `aide_checksum_dir` | `$AIDE_CHECKSUM_DIR`, else `ansible/aide` | Where the hashes are stored on the controller. Semaphore sets the env var to its rw volume on ctl-1, the reference copy. On ctl-0 `ansible/aide` is a gitignored symlink into the offsite-synced private folder, pulled from ctl-1 (`roles/ctl_base`) |
-| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the check still runs, but nothing is pushed |
+| `aide_check_time` | - | systemd OnCalendar of the check, `*-*-* 12:00:00` (group_vars schedules.yml, shared with nixos) |
+| `aide_check_delay` | - | Random delay on top of it, up to `30min` (schedules.yml) |
+| `aide_check_nice` | `19` | Nice of the check |
+| `aide_check_io_class` | `idle` | IOSchedulingClass of the check |
+| `aide_run_timeout` | `3600` | Seconds --init may take |
+| `aide_run_poll` | `30` | Seconds between async polls |
+| `aide_checksum_dir` | see `defaults/main.yml` | Controller dir with the accepted db hashes, one \<host>.sha256 each. Default `$AIDE_CHECKSUM_DIR`, else `ansible/aide`. Semaphore sets the env var to its rw volume on ctl-1, the reference copy. On ctl-0 `ansible/aide` is a gitignored symlink into the offsite-synced private folder, pulled from ctl-1 (roles/ctl_base) |
+| `aide_excludes_common` | see `defaults/main.yml` | Excludes on every host |
+| `aide_excludes_by_group` | see `defaults/main.yml` | Excludes per inventory group, group name -> list of paths, rendered as `!<path>(/\|$)` |
+| `aide_login_homes` | `['/home/{{ admin_user }}', /root]` | Homes with history files on the VarFile rule (see Notes), default the admin home and /root |
+| `aide_history_files` | `\\.(bash_history\|lesshst\|viminfo\|python_history\|wget-hsts)` | Regex of the history file names in those homes |
+| `aide_var_files` | see `defaults/main.yml` | Files rewritten by design: only owner, mode and type watched (VarFile) |
+| `aide_content_files` | see `defaults/main.yml` | Rewritten with the same content: owner, mode and checksum watched, times not (ContentFile) |
+| `aide_var_dirs` | see `defaults/main.yml` | Dirs whose files get replaced: owner and mode watched, times not (VarDir). Added and removed files still show |
+| `aide_report_lines` | `150` | diff lines shown on accept |
+<!-- settings:end -->
+
+Also from group_vars: `ntfy_url`, `ntfy_token`, `ntfy_timeout`, the shared ntfy settings. With an empty URL the check still runs, but nothing is pushed.
 
 ## Notes
 

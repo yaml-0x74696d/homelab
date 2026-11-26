@@ -20,15 +20,17 @@ The CT's address on `wlan0` (`iot_ip`) comes from LXC itself (`lxc.net.9.ipv4.ad
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `iot_ap_interface` | `wlan0` | The card inside the CT |
-| `iot_ap_ssid` | `wifi_ssid` (vault) | The network name |
-| `iot_ap_passphrase` | `wifi_pass` (vault) | WPA2 passphrase |
+| `iot_ap_interface` | `wlan0` | the card inside the CT |
+| `iot_ap_ssid` | `wifi_ssid` | the network name (vault) |
+| `iot_ap_passphrase` | `wifi_pass` | WPA2 passphrase (vault) |
 | `iot_ap_channel` | `6` | 2.4 GHz channel |
-| `iot_ap_txpower` | `1300` | mBm (13 dBm) |
-| `iot_ap_dhcp_range` | `iot_dhcp_range` (`network.yml`) | First and last DHCP address |
-| `iot_ap_dhcp_lease` | `12h` | Lease time |
+| `iot_ap_txpower` | `1300` | mBm, 13 dBm: the flat, not the street |
+| `iot_ap_dhcp_range` | `iot_dhcp_range` | first and last DHCP address (network.yml) |
+| `iot_ap_dhcp_lease` | `12h` | lease time |
+<!-- settings:end -->
 
 ## Notes
 

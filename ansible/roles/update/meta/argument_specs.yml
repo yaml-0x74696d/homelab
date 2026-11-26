@@ -16,10 +16,10 @@ argument_specs:
         description: File patterns that count as one
       update_check_kernel:
         type: bool
-        description: needrestart's kernel check, false on the lxcs
+        description: needrestart's kernel check. `false` on the LXCs, they run the node's kernel
       update_check_quorum:
         type: bool
-        description: pvecm quorum check, true in the pve play
+        description: pvecm quorum check, `true` in the pve play
       update_quorum_retries:
         type: int
         description: Quorum tries after the restarts
@@ -37,14 +37,14 @@ argument_specs:
         description: ntfy title
       update_ntfy_headers:
         type: dict
-        description: Headers for every ntfy push
+        description: Headers for every ntfy push, Title + Bearer `ntfy_token` if set
   summary:
     short_description: Print and push the results of all hosts, once on the controller (update.yml, rescue)
     options:
       update_summary_hosts:
         type: list
         elements: str
-        description: Hosts the summary covers, in play order
+        description: Hosts the summary covers, in play order, default lxc_containers + pod_vms + podman_hosts + proxmox
       update_ntfy_headers:
         type: dict
         description: Headers for the push

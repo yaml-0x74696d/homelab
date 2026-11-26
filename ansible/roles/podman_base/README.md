@@ -42,17 +42,19 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `podman_base_packages` | see above | Package set |
-| `podman_base_wrapper` | `/usr/local/bin/podman-auto-update-ntfy` | The auto-update wrapper |
-| `podman_base_apps_helper` | `/usr/local/bin/apps` | The all-apps view |
+| `podman_base_packages` | see `defaults/main.yml` | podman's recommends on trixie are listed explicitly: rootless needs pasta, newuidmap and a user dbus |
 | `podman_base_ntfy_env` | `/etc/podman-ntfy.env` | ntfy settings for the wrapper |
-| `podman_base_auto_update_time` | `podman_auto_update_time` (`Sun *-*-* 13:00:00`) | One schedule for every svc user, set in `schedules.yml`. Upstream adds `RandomizedDelaySec=900` |
-| `podman_base_new_tags` | `/usr/local/bin/podman-new-tags` | The new-tags check |
-| `podman_base_new_tags_time` | `podman_new_tags_time` (`Sun *-*-* 12:00:00`) | When it runs, an hour before auto-update |
-| `podman_svc_group` | group_vars `app_settings.yml` | Shared with `roles/podman_app` |
-| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars / vault | Shared ntfy settings. With an empty URL nothing is pushed |
+| `podman_base_wrapper` | `/usr/local/bin/podman-auto-update-ntfy` | the auto-update wrapper |
+| `podman_base_apps_helper` | `/usr/local/bin/apps` | `apps ps` = every svc user's containers |
+| `podman_base_new_tags` | `/usr/local/bin/podman-new-tags` | the new-tags check |
+| `podman_base_auto_update_time` | `podman_auto_update_time` | one time for every svc user's podman-auto-update.timer, upstream adds RandomizedDelaySec=900 |
+| `podman_base_new_tags_time` | `podman_new_tags_time` | newer tags of pinned images, weekly, an hour before auto-update |
+<!-- settings:end -->
+
+Also from group_vars: `podman_svc_group` (app_settings.yml, shared with `roles/podman_app`), `ntfy_url`, `ntfy_token`, `ntfy_timeout` (shared ntfy settings, with an empty URL nothing is pushed).
 
 ## Notes
 

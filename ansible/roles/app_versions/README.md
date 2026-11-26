@@ -18,11 +18,13 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
 | `app_versions_web_host` | `apps.nginx.host` | Host whose nginx serves the page |
-| `app_versions_web_dir` | `<podman_apps_root>/nginx/versions` | Dir the page goes to |
-| `app_versions_lookup_timeout` | `60s` | skopeo timeout per tag list |
+| `app_versions_web_dir` | `{{ podman_apps_root }}/nginx/versions` | Dir the page is written to, nginx mounts it at /versions/ |
+| `app_versions_lookup_timeout` | `60s` | skopeo timeout per registry tag list (Go duration) |
+<!-- settings:end -->
 
 ## Related
 

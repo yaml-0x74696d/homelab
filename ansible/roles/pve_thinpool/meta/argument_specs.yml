@@ -5,16 +5,16 @@ argument_specs:
     options:
       pve_thinpool_interval:
         type: str
-        description: How often the timer runs (systemd time span)
+        description: How often the timer runs (systemd time span), `thinpool_interval_min` minutes (5)
       pve_thinpool_textfile_dir:
         type: str
-        description: node-exporter's textfile collector dir
+        description: node-exporter's textfile collector dir, AIDE leaves it out
       pve_thinpool_file:
         type: str
-        description: File name in that dir
+        description: File name in that dir (`thinpool.prom`), the fresh check matches it
       pve_thinpool_data_metric:
         type: str
-        description: Metric name of a pool's data percent
+        description: Metric name of a pool's data percent, Gatus queries the same one
       pve_thinpool_metadata_metric:
         type: str
-        description: Metric name of a pool's metadata percent
+        description: Metric name of a pool's metadata percent, Gatus queries the same one

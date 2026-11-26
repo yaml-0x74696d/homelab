@@ -19,11 +19,13 @@
 
 Set in `group_vars/all/base.yml`, shared with `nixos/base`.
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `chrony_servers` | PTB ×3 + Cloudflare | NTS servers (the Debian pool has no NTS) |
-| `chrony_makestep_threshold` | `1` | Seconds of offset that get stepped instead of slewed |
-| `chrony_makestep_limit` | `3` | For how many updates after start stepping is allowed |
+| `chrony_servers` | - | NTS servers, default PTB x3 + Cloudflare (the Debian pool has no NTS) |
+| `chrony_makestep_threshold` | - | Seconds of offset that get stepped instead of slewed, default 1 |
+| `chrony_makestep_limit` | - | For how many updates after start stepping is allowed, default 3 |
+<!-- settings:end -->
 
 ## Notes
 

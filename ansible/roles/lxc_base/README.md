@@ -19,17 +19,19 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `lxc_base_packages` | see defaults | Package set |
-| `lxc_base_services` | fail2ban, node_exporter | Enabled and started |
-| `lxc_base_node_exporter_listen` | `ansible_host:node_exporter_port` | node_exporter's listen address |
-| `lxc_base_node_exporter_restart_sec` | `5` | Seconds between node_exporter restarts at boot |
-| `lxc_base_ufw` | `false` | `true` on the LXCs that filter with ufw (storage, iot) |
-| `prometheus_ip` | `app_settings.yml` | Source of the node_exporter rule |
-| `timezone`, `ssh_*` | group_vars | Shared with `vm_base` |
-| `lxc_base_ufw_rules_comment` | required (`tasks_from: ufw_rules`) | Tag on every rule, the stale check only looks at these |
-| `lxc_base_ufw_rules` | required (`tasks_from: ufw_rules`) | `{port, proto, src, iface}` list, `iface` optional |
+| `lxc_base_packages` | see `defaults/main.yml` | Packages every LXC gets |
+| `lxc_base_services` | `[fail2ban, prometheus-node-exporter]` | Services enabled and started |
+| `lxc_base_node_exporter_listen` | `{{ ansible_host }}:{{ node_exporter_port }}` | node_exporter's listen address, the LAN address only |
+| `lxc_base_node_exporter_restart_sec` | `5` | Seconds between node_exporter restarts, so it outlasts the boot race for its address |
+| `lxc_base_ufw` | `false` | `true` on the LXCs that filter with ufw (storage, iot), they get the node-exporter rule |
+| `lxc_base_ufw_rules_comment` | required | Tag on every rule, the stale check only looks at these. Required for `tasks_from: ufw_rules` |
+| `lxc_base_ufw_rules` | required | `{port, proto, src, iface}` list, `iface` optional. Required for `tasks_from: ufw_rules` |
+<!-- settings:end -->
+
+Also from group_vars: `prometheus_ip` (app_settings.yml, source of the node_exporter rule), `timezone` and `ssh_*` (shared with `vm_base`).
 
 ## Notes
 

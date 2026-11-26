@@ -1,0 +1,15 @@
+---
+argument_specs:
+  main:
+    short_description: chrony with NTS servers only
+    options:
+      chrony_servers:
+        type: list
+        elements: str
+        description: NTS servers, default PTB x3 + Cloudflare (the Debian pool has no NTS)
+      chrony_makestep_threshold:
+        type: int
+        description: Seconds of offset that get stepped instead of slewed, default 1
+      chrony_makestep_limit:
+        type: int
+        description: For how many updates after start stepping is allowed, default 3

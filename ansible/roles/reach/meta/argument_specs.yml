@@ -9,4 +9,4 @@ argument_specs:
       reach_optional_hosts:
         type: list
         elements: str
-        description: Hosts that may be off without failing the run
+        description: "Hosts that may be off without failing the run, set in group_vars hosts.yml: `part_time_nodes` and their guests from `guest_nodes` (network.yml, tofu places the guests from the same map)"

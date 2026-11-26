@@ -13,10 +13,10 @@ podman_base_packages:
   - bsdextrautils   # column, for `apps ps`
   - skopeo          # tag lists for podman-new-tags
 
-podman_base_ntfy_env: /etc/podman-ntfy.env
-podman_base_wrapper: /usr/local/bin/podman-auto-update-ntfy
+podman_base_ntfy_env: /etc/podman-ntfy.env   # ntfy settings for the wrapper
+podman_base_wrapper: /usr/local/bin/podman-auto-update-ntfy   # the auto-update wrapper
 podman_base_apps_helper: /usr/local/bin/apps   # `apps ps` = every svc user's containers
-podman_base_new_tags: /usr/local/bin/podman-new-tags
+podman_base_new_tags: /usr/local/bin/podman-new-tags   # the new-tags check
 
 # one time for every svc user's podman-auto-update.timer, upstream adds RandomizedDelaySec=900
 podman_base_auto_update_time: "{{ podman_auto_update_time }}"

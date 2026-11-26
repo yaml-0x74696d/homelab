@@ -32,19 +32,24 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
 | `update_cache_valid_time` | `3600` | Seconds before the apt cache is refreshed |
 | `update_conffile_dirs` | `[/etc]` | Where to look for new package configs |
-| `update_conffile_patterns` | dpkg-dist, dpkg-new, ucf-dist | What counts as one |
+| `update_conffile_patterns` | `['*.dpkg-dist', '*.dpkg-new', '*.ucf-dist']` | File patterns that count as one |
 | `update_check_kernel` | `true` | needrestart's kernel check. `false` on the LXCs, they run the node's kernel |
-| `update_check_quorum` | `false` | `true` in the pve play |
-| `update_quorum_retries`, `update_quorum_delay` | `6`, `10` | Tries and seconds for the quorum check after the restarts |
-| `update_summary_hosts` | lxc_containers + pod_vms + podman_hosts + proxmox | Hosts the summary covers, in play order |
-| `update_aide_wait_retries`, `update_aide_wait_delay` | `60`, `30` | How long to wait for a running daily AIDE check (tries, seconds) |
+| `update_check_quorum` | `false` | pvecm quorum check, `true` in the pve play |
+| `update_quorum_retries` | `6` | Quorum tries after the restarts |
+| `update_quorum_delay` | `10` | Seconds between them |
+| `update_aide_wait_retries` | `60` | Tries while a daily aide check is running |
+| `update_aide_wait_delay` | `30` | Seconds between them |
 | `update_ntfy_title` | `homelab updates` | ntfy title |
-| `update_ntfy_headers` | Title + Bearer `ntfy_token` if set | Headers for every ntfy push |
-| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings, an empty URL sends nothing |
+| `update_ntfy_headers` | see `defaults/main.yml` | Headers for every ntfy push, Title + Bearer `ntfy_token` if set |
+| `update_summary_hosts` | see `defaults/main.yml` | Hosts the summary covers, in play order, default lxc_containers + pod_vms + podman_hosts + proxmox |
+<!-- settings:end -->
+
+Also from group_vars: `ntfy_url`, `ntfy_token`, `ntfy_timeout`, the shared ntfy settings, an empty URL sends nothing.
 
 ## Notes
 

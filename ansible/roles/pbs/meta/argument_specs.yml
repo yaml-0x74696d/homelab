@@ -5,10 +5,10 @@ argument_specs:
     options:
       pbs_on_calendar:
         type: str
-        description: systemd OnCalendar of the backup timer
+        description: systemd OnCalendar of the backup timer, `*-*-* 20:00:00` (schedules.yml)
       pbs_randomized_delay:
         type: str
-        description: Random delay so the hosts don't hit the datastore at once
+        description: Random delay, `20m`, so the three hosts don't start at once
       pbs_datastore:
         type: str
         description: Datastore on the PBS
@@ -17,10 +17,10 @@ argument_specs:
         description: API token, backup-only
       pbs_repository:
         type: str
-        description: Full repository string
+        description: Repository string, token@pve-3:port:datastore, built from the values above
       pbs_id:
         type: str
-        description: Backup group id, one per host
+        description: Backup group id, one per host (the hostname)
       pbs_ntfy_url:
         type: str
         description: ntfy topic for failures, empty = off
@@ -30,7 +30,7 @@ argument_specs:
         description: ntfy token
       pbs_heartbeat_url:
         type: str
-        description: Gatus' backend url the heartbeat is pushed to
+        description: Gatus' backend port on pod-2, the heartbeat is pushed there
       pbs_heartbeat_path:
         type: str
         description: Push path with {key} for the endpoint key
@@ -50,7 +50,7 @@ argument_specs:
       pbs_jobs:
         type: list
         elements: dict
-        description: Databases to dump before the push (host_vars)
+        description: "Databases to dump before the push, set in host_vars: `{name, type: postgres|sqlite, container?, path?, data_dir?, app?}`. sqlite `path` is under `podman_apps_root`, postgres needs `app` and runs `podman exec` as `svc-<app>`"
         options:
           name:
             type: str
@@ -76,4 +76,4 @@ argument_specs:
       pbs_exclude:
         type: list
         elements: str
-        description: Extra excludes for the flat archive
+        description: Extra excludes for `podman-apps.pxar`, set in host_vars

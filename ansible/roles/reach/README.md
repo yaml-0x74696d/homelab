@@ -18,10 +18,12 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `reach_timeout` | `30` | Seconds of retries before a host counts as down |
-| `reach_optional_hosts` | `[]`, set in group_vars `hosts.yml` | Hosts that may be off: `part_time_nodes` and their guests from `guest_nodes` (`network.yml`, tofu places the guests from the same map) |
+| `reach_timeout` | `30` | Seconds to keep retrying a host before it counts as down |
+| `reach_optional_hosts` | `[]` | Hosts that may be off without failing the run, set in group_vars hosts.yml: `part_time_nodes` and their guests from `guest_nodes` (network.yml, tofu places the guests from the same map) |
+<!-- settings:end -->
 
 ## Notes
 

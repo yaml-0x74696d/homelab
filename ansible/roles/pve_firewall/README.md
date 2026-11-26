@@ -81,32 +81,34 @@ Every guest's network card has `firewall=1`, so turning on the master switch dro
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
 | `pve_firewall_cluster_enabled` | `true` | Master switch. On means the NetBird VM, the log + IoT LXCs and the HAOS VM are filtered |
 | `pve_firewall_host_enabled` | `false` | Host management lockdown, the layer that can lock you out |
 | `pve_firewall_lan_cidr` | `lan_cidr` | The LAN |
 | `pve_firewall_gateway_ip` | `gateway_ip` | The router, DNS fallback for the NetBird VM |
-| `pve_firewall_open_guests` | edge, pod-1/2/3, storage | VMIDs that stay unfiltered |
-| `pve_firewall_routing_peers` | the `netbird_agent` group | Hosts the NetBird VM may reach fully |
-| `pve_firewall_netbird_dns_https` | `app_sources.edge`, `dns_ip`, `ingress_extra_sources` | Hosts the NetBird VM may reach on DNS + HTTPS (Traefik, the LAN DNS) |
-| `pve_firewall_ssh_hosts` | `admin_hosts` | Who may SSH into the nodes |
-| `pve_firewall_ui_hosts` | `admin_hosts` + `admin_ui_hosts` + pod-1 + pod-2 | Who may open the web UI (8006) |
-| `pve_firewall_node_ips` | pve-1/2/3 | The cluster nodes |
+| `pve_firewall_routing_peers` | see `defaults/main.yml` | Hosts the NetBird VM may reach fully, default the `netbird_agent` group |
+| `pve_firewall_netbird_dns_https` | `[app_sources.edge, dns_ip] + ingress_extra_sources` | LAN hosts the NetBird VM may reach on DNS and HTTPS only |
+| `pve_firewall_ssh_hosts` | `admin_hosts` | May SSH to the nodes |
+| `pve_firewall_ui_hosts` | see `defaults/main.yml` | Who may open the web UI (8006), default `admin_hosts` + `admin_ui_hosts` + pod-1 + pod-2 |
+| `pve_firewall_node_ips` | `['{{ pve1_ip }}', '{{ pve2_ip }}', '{{ pve3_ip }}']` | The nodes, for corosync and migration |
 | `pve_firewall_netbird_vmid` | `vmids.netbird` | The NetBird VM |
-| `pve_firewall_netbird_relay_range` | from `netbird_relay_ports` | TURN relay ports |
+| `pve_firewall_netbird_relay_range` | `{{ netbird_relay_ports.min }}:{{ netbird_relay_ports.max }}` | TURN relay ports, min:max |
 | `pve_firewall_netbird_turn_ports` | `[3478, 5349]` | STUN/TURN and TURN over TLS |
 | `pve_firewall_log_vmid` | `vmids.log` | The log LXC |
 | `pve_firewall_log_ip` | `log_ip` | The log LXC, target of the NetBird VM's RELP rule |
-| `pve_firewall_log_sources` | pod-1/2/3, storage, iot, netbird, edge, ctl-1 | Hosts that may send RELP to the log LXC |
-| `pve_firewall_log_port` | `log_relp_port` | The RELP port |
-| `pve_firewall_prometheus_ip` | `prometheus_ip` (`app_settings.yml`) | May scrape the log and IoT LXCs |
+| `pve_firewall_log_port` | `log_relp_port` | RELP port |
+| `pve_firewall_log_sources` | see `defaults/main.yml` | Hosts that may send RELP to the log LXC, default pod-1/2/3, storage, iot, netbird, edge, ctl-1 |
+| `pve_firewall_prometheus_ip` | `prometheus_ip` | May scrape the log and IoT LXCs |
 | `pve_firewall_iot_vmid` | `vmids.iot` | The IoT gateway LXC |
+| `pve_firewall_iot_mqtt_clients` | `mqtt_lan_clients` | May reach the broker from the LAN |
 | `pve_firewall_haos_vmid` | `vmids.haos` | The HAOS VM |
-| `pve_firewall_haos_port` | HA's `port` in `apps.yml` | HA's web port |
-| `pve_firewall_haos_callers` | `app_sources.edge`, Homepage's host | May reach HA's port |
+| `pve_firewall_haos_port` | `apps['homeassistant'].port` | HA's web port |
+| `pve_firewall_haos_callers` | see `defaults/main.yml` | May reach HA's port, default `app_sources.edge` and Homepage's host |
 | `pve_firewall_haos_observer_port` | `4357` | The Supervisor's health page, admins only |
-| `pve_firewall_iot_mqtt_clients` | `mqtt_lan_clients` (`app_settings.yml`) | May reach the broker from the LAN |
+| `pve_firewall_open_guests` | see `defaults/main.yml` | VMIDs that stay unfiltered, default edge, pod-1/2/3, storage |
+<!-- settings:end -->
 
 ## Notes
 

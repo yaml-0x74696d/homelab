@@ -56,26 +56,28 @@ ctl-0 by hand, once:
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `ctl_base_iface` | `eth0` | LAN interface |
+| `ctl_base_iface` | `eth0` | The LAN interface |
 | `ctl_base_connection` | `lan` | NetworkManager profile name |
-| `ctl_base_ip` | `ctl1_ip` | Static address, prefix from `lan_cidr` |
-| `ctl_base_dns` | `[gateway_ip]` | Resolvers, internet names only |
-| `ctl_base_repo_dir` | `semaphore_repo_dir` | The clone (`/home/<admin_user>/homelab`) |
+| `ctl_base_ip` | `ctl1_ip` | Static address, prefix from lan_cidr |
+| `ctl_base_dns` | `['{{ gateway_ip }}']` | Resolvers in the profile, internet names only |
+| `ctl_base_repo_dir` | `semaphore_repo_dir` | Git clone Semaphore runs from (`/home/<admin_user>/homelab`) |
 | `ctl_base_repo_url` | `semaphore_repo_url` | Repo to clone |
-| `ctl_base_repo_version` | `semaphore_repo_version` | Branch, `repo-pull.yml` follows it |
-| `ctl_base_repo_gid` | `apps.semaphore.uid` | svc-semaphore's gid |
-| `ctl_base_private_files` | `vault.yml`, `private.yml` | Gitignored files copied from the controller |
-| `ctl_base_private_dir` | `semaphore_private_dir` | ctl-1's copy (`/home/<admin_user>/homelab-private`) |
-| `ctl_base_private_excludes` | `[.git]` | Syncthing's `.stignore` in the overlays |
-| `ctl_base_syncthing_peer_id` | `syncthing_ctl0_id` | ctl-0's device id from `private.yml`, empty = no device or folders yet |
-| `ctl_base_syncthing_home` | `~<admin_user>/.local/state/syncthing` | Holds `config.xml` with the API key |
-| `ctl_base_syncthing_aide_dir` | `/srv/apps/semaphore/aide` | The synced hash dir |
-| `ctl_base_semaphore_uid` | subuid start + 1000 | Semaphore's container user on the host |
-| `ctl_base_vault_pass_dummy` | `ansible/.vault_pass` | Placeholder for `vault_password_file` |
-| `ctl_base_syncthing_api` | `http://127.0.0.1:8384/rest` | Syncthing's REST API, localhost only |
-| `ctl_base_syncthing_start_timeout` | `60` | Seconds to wait for Syncthing's first `config.xml` |
+| `ctl_base_repo_version` | `semaphore_repo_version` | Branch of the first clone, repo-pull.yml keeps following it |
+| `ctl_base_repo_gid` | `apps['semaphore'].uid` | Gid that may read the repo (svc-semaphore's) |
+| `ctl_base_private_files` | see `defaults/main.yml` | Gitignored files copied from the controller's checkout, relative to the repo root |
+| `ctl_base_private_dir` | `semaphore_private_dir` | ctl-1's copy of private_dir (`/home/<admin_user>/homelab-private`), readable by svc-semaphore, mounted into semaphore at the same path |
+| `ctl_base_private_excludes` | `[.git]` | Patterns syncthing ignores in the overlays (.stignore) |
+| `ctl_base_syncthing_peer_id` | `syncthing_ctl0_id \| default('')` | ctl-0's syncthing device id from private.yml. empty = syncthing runs without a device or folders |
+| `ctl_base_syncthing_home` | `/home/{{ admin_user }}/.local/state/syncthing` | Syncthing's state dir for the admin user, holds config.xml with the api key |
+| `ctl_base_syncthing_api` | `http://127.0.0.1:8384/rest` | Syncthing's rest api on ctl-1, localhost only |
+| `ctl_base_syncthing_start_timeout` | `60` | Seconds to wait for syncthing's first config.xml |
+| `ctl_base_syncthing_aide_dir` | `{{ podman_apps_root }}/semaphore/aide` | Semaphore's aide hash dir, synced with ctl-0's ansible/aide |
+| `ctl_base_semaphore_uid` | `apps['semaphore'].uid * 65536 + 1000` | Semaphore's container user as seen on the host, gets write access to the aide dir |
+| `ctl_base_vault_pass_dummy` | `ansible/.vault_pass` | Placeholder for ansible.cfg's vault_password_file, relative to the repo root |
+<!-- settings:end -->
 
 ## Notes
 

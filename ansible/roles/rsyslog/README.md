@@ -20,18 +20,21 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `rsyslog_mode` | `client` | `server` on the log LXC |
-| `rsyslog_server`, `rsyslog_relp_port` | `log_ip`, `log_relp_port` | Where clients send to |
-| `rsyslog_journal_rate_interval` / `_burst` | `600` / `20000` | imjournal rate limit |
-| `rsyslog_queue_max_disk` | `1g` | Disk cap for the client queue (`group_vars/all/base.yml`) |
-| `rsyslog_resume_interval` | `30` | Seconds between reconnects (`group_vars/all/base.yml`) |
-| `rsyslog_local_rotate` | `4` | Weeks of local files on each host (`group_vars/all/base.yml`) |
-| `rsyslog_remote_dir` | `/var/log/remote` | Where the server writes |
-| `rsyslog_remote_retention` | `90` | Days kept on the server |
-| `rsyslog_server_queue_size` | `50000` | Server queue, in messages |
-| `rsyslog_server_hosts` | inventory IPs + `netbird_ip`, `edge_ip` | Sender IP → host directory on the server |
+| `rsyslog_mode` | `client` | client = local files + relp to the log lxc; server = also receives (host_vars/log.yml) |
+| `rsyslog_server` | `log_ip` | where clients send to |
+| `rsyslog_relp_port` | `log_relp_port` | where clients send to |
+| `rsyslog_journal_rate_interval` | `600` | imjournal rate limit: seconds per interval |
+| `rsyslog_journal_rate_burst` | `20000` | imjournal rate limit: messages per interval before it drops |
+| `rsyslog_remote_dir` | `/var/log/remote` | server: where it writes |
+| `rsyslog_remote_retention` | `90` | server: days kept |
+| `rsyslog_server_queue_size` | `50000` | server queue, in messages |
+| `rsyslog_server_hosts` | see `defaults/main.yml` | source ip -> dir name; the dir comes from the connection, not from what the sender claims |
+<!-- settings:end -->
+
+Also from `group_vars/all/base.yml` (shared with nixos/base): `rsyslog_queue_max_disk` (`1g`, disk cap for the client queue), `rsyslog_resume_interval` (`30`, seconds between reconnects), `rsyslog_local_rotate` (`4`, weeks of local files on each host).
 
 ## Notes
 

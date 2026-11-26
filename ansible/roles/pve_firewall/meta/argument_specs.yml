@@ -5,20 +5,20 @@ argument_specs:
     options:
       pve_firewall_cluster_enabled:
         type: bool
-        description: Master switch, on = the guests with rules get filtered
+        description: Master switch. On means the NetBird VM, the log + IoT LXCs and the HAOS VM are filtered
       pve_firewall_host_enabled:
         type: bool
-        description: Host management lockdown
+        description: Host management lockdown, the layer that can lock you out
       pve_firewall_lan_cidr:
         type: str
         description: The LAN
       pve_firewall_gateway_ip:
         type: str
-        description: The router
+        description: The router, DNS fallback for the NetBird VM
       pve_firewall_routing_peers:
         type: list
         elements: str
-        description: NetBird routing peers the NetBird VM may reach fully
+        description: Hosts the NetBird VM may reach fully, default the `netbird_agent` group
       pve_firewall_netbird_dns_https:
         type: list
         elements: str
@@ -38,7 +38,7 @@ argument_specs:
       pve_firewall_ui_hosts:
         type: list
         elements: dict
-        description: May open the web UI
+        description: Who may open the web UI (8006), default `admin_hosts` + `admin_ui_hosts` + pod-1 + pod-2
         options: *hosts
       pve_firewall_node_ips:
         type: list
@@ -59,14 +59,14 @@ argument_specs:
         description: The log LXC
       pve_firewall_log_ip:
         type: str
-        description: The log LXC's address
+        description: The log LXC, target of the NetBird VM's RELP rule
       pve_firewall_log_port:
         type: raw
         description: RELP port
       pve_firewall_log_sources:
         type: list
         elements: str
-        description: May send RELP to the log LXC
+        description: Hosts that may send RELP to the log LXC, default pod-1/2/3, storage, iot, netbird, edge, ctl-1
       pve_firewall_prometheus_ip:
         type: str
         description: May scrape the log and IoT LXCs
@@ -87,7 +87,7 @@ argument_specs:
       pve_firewall_haos_callers:
         type: list
         elements: dict
-        description: May reach HA's port (Traefik, Homepage)
+        description: May reach HA's port, default `app_sources.edge` and Homepage's host
         options: *hosts
       pve_firewall_haos_observer_port:
         type: int
@@ -95,4 +95,4 @@ argument_specs:
       pve_firewall_open_guests:
         type: list
         elements: raw
-        description: Guests with the firewall bit on that stay unfiltered
+        description: VMIDs that stay unfiltered, default edge, pod-1/2/3, storage

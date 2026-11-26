@@ -11,7 +11,7 @@ argument_specs:
         description: Listen address, LAN only
       mqtt_exporter_port:
         type: int
-        description: Listen port (ports.yml), Prometheus scrapes it
+        description: Listen port (ports.yml, 9641), Prometheus scrapes it as the iot_sensors job
       mqtt_exporter_user:
         type: str
         description: MQTT login
@@ -34,7 +34,7 @@ argument_specs:
       mqtt_exporter_metrics:
         type: list
         elements: dict
-        description: Topic part -> metric
+        description: Topic part -> metric name + help, default temperature and humidity
         options:
           prom_name:
             type: str

@@ -10,27 +10,27 @@ argument_specs:
       vm_base_rp_filter:
         type: int
         choices: [0, 1, 2]
-        description: net.ipv4.conf.all.rp_filter, 2 on a routing peer
+        description: net.ipv4.conf.all.rp_filter, 1 = strict. 2 (loose) on pod-2, the netbird routing peer
       vm_base_sysctl_file:
         type: path
-        description: Where the sysctl keys persist
+        description: Where the sysctl keys persist, Debian 13 reads only /etc/sysctl.d at boot
       vm_base_sysctl:
         type: dict
         description: Sysctl keys and values applied on every host
       vm_base_services:
         type: list
         elements: str
-        description: Services enabled and started
+        description: Services enabled and started, plus `cockpit.socket` when `vm_base_cockpit`
       vm_base_guest_agent:
         type: bool
-        description: Install the hypervisor guest agent, off on bare metal
+        description: Installs qemu-guest-agent. Off on bare metal (ctl-1)
       vm_base_cockpit:
         type: bool
-        description: Install cockpit, off on bare metal
+        description: Installs cockpit and starts its socket. Off on ctl-1
       vm_base_cockpit_origins:
         type: list
         elements: str
-        description: Websocket origins cockpit accepts behind the edge proxy
+        description: Websocket origins cockpit accepts behind the edge proxy (`Origins`)
       vm_base_cockpit_protocol_header:
         type: str
-        description: Header carrying the proxy's scheme
+        description: Header telling cockpit the proxy spoke TLS (`ProtocolHeader`)

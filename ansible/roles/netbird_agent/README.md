@@ -26,11 +26,13 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `netbird_agent_mgmt_url` | `https://nb.{{ domain }}` | The management server |
-| `netbird_agent_setup_key` | `vault_netbird_setup_key`, or empty | One-off setup key from tofu |
-| `netbird_agent_enable_forwarding` | `true` | Keep IP forwarding on |
+| `netbird_agent_mgmt_url` | `https://nb.{{ domain }}` | the management server |
+| `netbird_agent_setup_key` | `vault_netbird_setup_key \| default('')` | one-off setup key, from `tofu output -json netbird_setup_keys`; empty = install only, enroll by hand |
+| `netbird_agent_enable_forwarding` | `true` | routing peer forwards lan traffic; netbird sets this too, we persist it |
+<!-- settings:end -->
 
 ## Notes
 

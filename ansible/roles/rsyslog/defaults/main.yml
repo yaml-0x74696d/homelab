@@ -1,19 +1,19 @@
 ---
 # client = local files + relp to the log lxc; server = also receives (host_vars/log.yml)
 rsyslog_mode: client
-rsyslog_server: "{{ log_ip }}"
-rsyslog_relp_port: "{{ log_relp_port }}"
+rsyslog_server: "{{ log_ip }}"   # where clients send to
+rsyslog_relp_port: "{{ log_relp_port }}"   # where clients send to
 
 # imjournal: messages per interval before it drops
-rsyslog_journal_rate_interval: 600   # seconds
-rsyslog_journal_rate_burst: 20000
+rsyslog_journal_rate_interval: 600   # imjournal rate limit: seconds per interval
+rsyslog_journal_rate_burst: 20000   # imjournal rate limit: messages per interval before it drops
 
 # queue, reconnect, local rotation: group_vars/all/base.yml (shared with nixos/base)
 
 # server
-rsyslog_remote_dir: /var/log/remote
-rsyslog_remote_retention: 90         # days
-rsyslog_server_queue_size: 50000     # messages
+rsyslog_remote_dir: /var/log/remote   # server: where it writes
+rsyslog_remote_retention: 90   # server: days kept
+rsyslog_server_queue_size: 50000   # server queue, in messages
 # source ip -> dir name; the dir comes from the connection, not from what the sender claims
 rsyslog_server_hosts: >-
   {{ dict(groups['all'] | map('extract', hostvars, 'ansible_host') | zip(groups['all']))

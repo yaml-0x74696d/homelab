@@ -18,17 +18,20 @@ The hook: left alone, a stopped CT hands the card back minutes later (with its n
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
 | `iot_node_ct` | `vmids.iot` | The gateway CT |
-| `iot_node_nic` | `iot_wifi_nic` (`network.yml`) | The card's name on the node |
+| `iot_node_nic` | `iot_wifi_nic` | The card's name on the node |
 | `iot_node_country` | `iot_wifi_country` | Regulatory domain |
-| `iot_node_ct_address` | `iot_ip` + prefix | The CT's address on the card, set by LXC |
+| `iot_node_ct_address` | `{{ iot_ip }}/{{ iot_cidr \| split('/') \| last }}` | The CT's address on the card, with prefix, set by LXC |
 | `iot_node_ct_start_timeout` | `120` | Seconds until SSH answers after a restart |
-| `iot_node_ct_stop_timeout` | `60` | Seconds `pct shutdown` waits before the restart |
+| `iot_node_ct_stop_timeout` | `60` | Seconds pct shutdown waits before the restart |
 | `iot_node_hook_wait` | `30` | Seconds the pre-start hook waits for the card to come back |
-| `iot_node_ct_lines` | see defaults | The raw LXC lines |
-| `iot_lan_ip`, `ssh_port` | group_vars | Where the restart handler waits for SSH |
+| `iot_node_ct_lines` | see `defaults/main.yml` | Raw lines in /etc/pve/lxc/\<ct>.conf, '\<key>: \<value>', the key finds the line to replace |
+<!-- settings:end -->
+
+Also from group_vars: `iot_lan_ip`, `ssh_port`, where the restart handler waits for SSH.
 
 ## Notes
 

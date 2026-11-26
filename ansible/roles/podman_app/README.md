@@ -128,22 +128,35 @@ Copying data into a rootless app: the files need the owner the container sees, i
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `podman_app_name`, `podman_app_entry` | set by `deploy-app.yml` | The app's key and entry |
-| `podman_app_private_dir` | `$HOMELAB_PRIVATE_DIR`, else `private_dir` | Root of the private config overlay. Semaphore sets the env var to its mount of ctl-1's copy (`roles/ctl_base`) |
-| `podman_app_subid_count` | `65536` | Size of each subuid/subgid range |
-| `podman_app_start_timeout` | `5min` | `TimeoutStartSec=` when the entry has no `start_timeout` |
-| `podman_app_stop_timeout` | `10` | `StopTimeout=` when a container has no `stop_timeout` |
-| `podman_app_restart_sec` / `_steps` / `_max_delay` | `30s` / `5` / `10min` | Retry forever with backoff |
-| `podman_app_cifs_vers` | `3.1.1` | SMB dialect of the pool mounts |
-| `podman_app_cifs_creds_dir` | `/etc/cifs` | `<share>.creds`, root-only |
-| `podman_app_pod` | more than one container | Whether the app runs as a pod |
-| `podman_app_render_dir` | `""` | `tasks/render.yml` only: one folder per app goes here |
-| `podman_app_user`, `_home`, `_dir`, `_src`, `_quadlet_dir`, `_config*` | built from the name | Paths and the config file list, not meant to be set |
-| `podman_apps_root` | `/srv/apps` (group_vars) | Data dirs, backed up by `roles/pbs` |
-| `cifs_mount_root`, `storage_ip` | `/srv`, CT 300 (group_vars) | Where the shares are mounted, the Samba server |
-| `podman_svc_prefix`, `podman_svc_group` | `svc-`, `svc-apps` (group_vars) | Shared with `roles/podman_base` and the aide excludes |
+| `podman_app_name` | `""` | The app's key in apps.yml, also the name of apps/\<name>/ and svc-\<name> |
+| `podman_app_entry` | `{}` | The app's entry in apps.yml |
+| `podman_app_private_dir` | see `defaults/main.yml` | Root of the private config overlay. Default `$HOMELAB_PRIVATE_DIR`, else `private_dir`. Semaphore sets the env var to its mount of ctl-1's copy (roles/ctl_base). empty = none |
+| `podman_app_user` | `{{ podman_svc_prefix }}{{ podman_app_name }}` | built from the name, not meant to be set |
+| `podman_app_home` | `/home/{{ podman_app_user }}` | built from the name, not meant to be set |
+| `podman_app_dir` | `{{ podman_apps_root }}/{{ podman_app_name }}` | built from the name, not meant to be set |
+| `podman_app_src` | `{{ playbook_dir }}/../apps/{{ podman_app_name }}` | built from the name, not meant to be set |
+| `podman_app_quadlet_dir` | `{{ podman_app_home }}/.config/containers/systemd` | built from the name, not meant to be set |
+| `podman_app_config_public` | see `defaults/main.yml` | apps/\<name>/config/ as filetree items (path relative, src, state, root), empty when the app has none |
+| `podman_app_private_src` | see `defaults/main.yml` | built from the name, not meant to be set |
+| `podman_app_config_private` | see `defaults/main.yml` | private config items, built from the name, not meant to be set |
+| `podman_app_config_own` | see `defaults/main.yml` | the public items the overlay doesn't replace, then everything |
+| `podman_app_config` | `podman_app_config_own + podman_app_config_private` | config file list, built from the name, not meant to be set |
+| `podman_app_render_dir` | `""` | render.yml only (playbooks/render-podman.yml): one folder per app goes here |
+| `podman_app_subid_count` | `65536` | subuid range = uid * count, so ranges never overlap while uids stay unique |
+| `podman_app_start_timeout` | `5min` | TimeoutStartSec= when the entry has no start_timeout, covers health start, images are pulled before |
+| `podman_app_stop_timeout` | `10` | StopTimeout= in seconds when a container has no stop_timeout, podman's own default |
+| `podman_app_restart_sec` | `30s` | retry forever with backoff (mount gate, crash loops), silent |
+| `podman_app_restart_steps` | `5` | retry forever with backoff: steps |
+| `podman_app_restart_max_delay` | `10min` | retry forever with backoff: longest delay |
+| `podman_app_cifs_vers` | `3.1.1` | smb dialect |
+| `podman_app_cifs_creds_dir` | `/etc/cifs` | \<share>.creds, root-only |
+| `podman_app_pod` | `podman_app_entry.containers \| default([]) \| length > 1` | more than one container = one pod: apps/\<name>/\<name>.pod.j2, \<name>-pod.service |
+<!-- settings:end -->
+
+Also from group_vars: `podman_apps_root` (`/srv/apps`, data dirs, backed up by `roles/pbs`), `cifs_mount_root` (`/srv`, where the shares are mounted), `storage_ip` (CT 300, the Samba server), `podman_svc_prefix` (`svc-`) and `podman_svc_group` (`svc-apps`), shared with `roles/podman_base` and the aide excludes.
 
 ## Notes
 

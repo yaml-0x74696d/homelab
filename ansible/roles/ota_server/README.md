@@ -17,12 +17,14 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `ota_server_package` | `nginx` | Package |
-| `ota_server_listen` | `iot_ip` | Listen address, IoT leg only |
-| `ota_server_port` | `ota_port` (80, `ports.yml`) | Listen port |
-| `ota_server_root` | `/srv/firmware` | Firmware dir |
+| `ota_server_package` | `nginx` | firmware downloads for the iot net, nothing else on this nginx |
+| `ota_server_listen` | `iot_ip` | iot leg only, never the lan |
+| `ota_server_port` | `ota_port` | listen port (ports.yml, 80) |
+| `ota_server_root` | `/srv/firmware` | .bin files, uploaded by hand (scp over the lan leg) |
+<!-- settings:end -->
 
 ## Notes
 
