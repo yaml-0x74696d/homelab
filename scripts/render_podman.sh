@@ -16,11 +16,11 @@ example | check | fix)
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     cd "$repo"
-    # names, modes and contents of what is rendered now, to see if the render changes anything
+    # names, exec bits (git tracks no other mode, umask must not matter) and contents of what is rendered now, to see if the render changes anything
     snapshot() {
         [ -d "$example_dir" ] || return 0
         cd "$example_dir"
-        find . -type f -printf '%p %m\n' | sort
+        find . -type f -perm -u+x -printf 'x %p\n' | sort
         find . -type f -print0 | sort -z | xargs -0 -r sha256sum
     }
     before=$(snapshot | sha256sum)
