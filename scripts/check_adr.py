@@ -11,7 +11,7 @@ from pathlib import Path
 STATUSES = ("Accepted", "Proposed", "Superseded")
 SECTIONS = ("Context", "Decision", "Consequences")
 FILE_RE = re.compile(r"^(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
-SUPERSEDED_RE = re.compile(r"^ by \[(\d{4})\]\((\d{4}-[^)]+\.md)\)$")
+SUPERSEDED_RE = re.compile(r"^ by \[(\d{4})\]\((\1-[^)]+\.md)\)$")
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)#\s]+)(?:#[^)]*)?\)")
 
 errors = []
@@ -41,7 +41,7 @@ def check_adr(path, num, adr_dir):
         sup = SUPERSEDED_RE.match(sm.group(2))
         if sm.group(1) == "Superseded":
             if not sup:
-                err(name, "Superseded must name its successor: ' by [NNNN](NNNN-....md)'")
+                err(name, "Superseded must name its successor: ' by [NNNN](NNNN-....md)', same number in text and link")
             elif not (adr_dir / sup.group(2)).exists():
                 err(name, f"successor {sup.group(2)} does not exist")
         elif sm.group(2).strip():
