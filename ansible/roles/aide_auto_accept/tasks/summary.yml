@@ -9,7 +9,7 @@
 - name: Why a host waits
   ansible.builtin.debug:
     msg: "{{ item.reasons[:aide_auto_accept_reason_lines] }}"
-  loop: "{{ aide_auto_done | selectattr('state', 'eq', 'review') | list }}"
+  loop: "{{ aide_auto_done | rejectattr('state', 'in', ['clean', 'accepted']) | list }}"
   loop_control:
     label: "{{ item.host }}"
 
@@ -17,6 +17,7 @@
   vars:
     aide_auto_accepted: "{{ aide_auto_done | selectattr('state', 'eq', 'accepted') | list }}"
     aide_auto_review: "{{ aide_auto_done | selectattr('state', 'eq', 'review') | list }}"
+    aide_auto_errors: "{{ aide_auto_done | selectattr('state', 'eq', 'error') | list }}"
     aide_auto_lines: |-
       {% for r in aide_auto_accepted %}
       {{ r.host }}: accepted, {{ r.paths }} paths, {{ r.packages | length }} packages
@@ -24,8 +25,11 @@
       {% for r in aide_auto_review %}
       {{ r.host }}: needs review, {{ r.reasons | length }} reasons, run aide-accept.yml -l {{ r.host }}
       {% endfor %}
+      {% for r in aide_auto_errors %}
+      {{ r.host }}: ERROR, nothing changed, see the run log
+      {% endfor %}
   # a day without changes says nothing
-  when: (aide_auto_accepted + aide_auto_review) | length > 0
+  when: (aide_auto_accepted + aide_auto_review + aide_auto_errors) | length > 0
   block:
     - name: Print summary
       ansible.builtin.debug:
@@ -42,3 +46,9 @@
       become: false
       no_log: true   # bearer token in the headers
       when: ntfy_url | default('') | length > 0
+
+    # the summary is out, now the run goes red like any failed host
+    - name: Fail on hosts with an error
+      ansible.builtin.fail:
+        msg: "{{ aide_auto_errors | map(attribute='host') | list }}: see Why a host waits above"
+      when: aide_auto_errors | length > 0

@@ -13,34 +13,39 @@
 ## How it works
 
 1. Checks the AIDE database against the recorded hash (`roles/aide`, `tasks/verify.yml`), a mismatch stops that host like everywhere else
-2. `aide --update`, one scan: report and new database. Exit 0 = nothing changed, done
-3. `files/aide-auto-accept-check` runs on the host (`python3 -c`, nothing is left behind) with the report on stdin and answers with json: accept yes or no, the reasons, the packages
-4. Yes: `roles/aide`'s `tasks/accept.yml` swaps the database in and writes the new hash on the controller, the same as `aide-accept.yml`
-5. No: nothing is touched, the new database is dropped on the next scan
-6. The last play prints every host that waited with its reasons, and pushes counts to ntfy. A day without changes sends nothing
+2. Pauses the `aide-check` timer and waits if a check is running, like `roles/update`. The timer starts again at the end, also after a failure
+3. `aide --update`, one scan: report and new database. Exit 0 = nothing changed, done
+4. `files/aide-auto-accept-check` runs on the host (`python3 -c`, nothing is left behind) with the report on stdin and `--since` = the accept time from the controller. It answers with json: accept yes or no, the reasons, the packages
+5. Yes: `roles/aide`'s `tasks/accept.yml` swaps the database in and writes the new hash and accept time on the controller, the same as `aide-accept.yml`
+6. No: nothing is touched, the new database is dropped on the next scan
+7. Anything that fails in steps 2 to 5 is recorded as `error` for that host, the run goes on with the others. The last play prints every host that waited or failed with its reasons, pushes counts to ntfy, then fails the run if a host had an error. A day without changes sends nothing
 
 ## The rules
 
 The checker takes the paths from the Added, Removed and Changed sections of the report. If they don't add up to the summary counts, or there are more than `aide_auto_accept_max_paths`, it refuses. Every path then has to pass:
 
-1. Owned by a package: `dpkg-query -S` / `rpm -qf` (a path through a merged-`/usr` link is retried with its dir resolved). A removed file has no owner, so its dir's owner has to explain it
-2. That package was installed or upgraded since the baseline. Time zero is the mtime of `/var/lib/aide/aide.db`, which is when the last accepted scan finished
-3. That package verifies clean: `dpkg --verify <pkg>` / `rpm -V <pkg>`. A package with no md5sums can't be verified, so it fails. A changed conffile counts as not clean, also one we template ourselves
-4. A changed directory only needs an owner from rule 2: its entries are in the report on their own
+1. Changed entries: the report's detailed section is read. Only content and times may differ (checksums, size, block count, mtime, ctime, atime, inode). A change of perm, uid, gid, link target, link count, ACL, xattr or SELinux label refuses the host, also on a directory. A changed path without a detail block refuses too
+2. Owned by a package: `dpkg-query -S` / `rpm -qf` (a path through a merged-`/usr` link is retried with its dir resolved). A file in `/var/lib/dpkg/info/<pkg>[:arch].<ext>` belongs to `<pkg>`
+3. That package was upgraded since the last accept, or installed since then from a configured repo. Debian: `apt-cache policy` lists the installed version with an origin other than `/var/lib/dpkg/status`. EL can't tell an install from an upgrade, so there every package needs a repo (`dnf repoquery --installed`, not `@commandline`)
+4. That package verifies clean: `dpkg --verify <pkg>` / `rpm -V <pkg>`. A package with no md5sums can't be verified, so it fails. A changed conffile counts as not clean, also one we template ourselves
+5. A removed file a package still owns is checked like any other path: the package is verified and the missing file fails it. A removed file nobody owns blocks the accept, unless `aide_auto_accept_removed` lets its dir's upgraded owner explain it
+6. A changed directory needs an upgraded owner (and rule 1), its entries are in the report on their own. dpkg's own dirs under `/var/lib/dpkg` only need a package upgraded since the last accept
 
-At least one package has to be verified, else there is nothing the accept rests on.
+At least one package has to be verified, else there is nothing the accept rests on. Without a recorded accept time (`<host>.accepted`, written by every accept) the host is refused: accept it once by hand.
 
-Where the "upgraded since" comes from:
+Where "upgraded since" comes from:
 - Debian: `/var/log/dpkg.log*`, rotated files included. dpkg writes it for every unpack, so it also catches `dpkg -i` and unattended-upgrades, which apt's `history.log` misses or splits over files. dpkg has no install time of its own, file mtimes under `/var/lib/dpkg/info` are touched too easily
 - EL: `INSTALLTIME` in the rpm database. It is a field of the package itself, no log to rotate away, and `dnf history` only knows what dnf did
+- Time zero: the accept time on the controller, not the mtime of `aide.db` on the host (root can set that)
 
 ## Settings
 
 | Variable | Default | What |
 |---|---|---|
 | `aide_auto_accept_max_paths` | `500` | More changed paths than this always wait for a person |
-| `aide_auto_accept_removed` | `true` | A removed path is explained by an upgraded owner of its dir. `false`: a removed path blocks the accept |
-| `aide_auto_accept_ignore` | `[]` | Regexes of paths that need no owner (initramfs, `modules.dep`, dpkg's own db). Empty means every path needs one. Add one only after the run output showed it |
+| `aide_auto_accept_removed` | `false` | A removed file nobody owns blocks the accept. `true`: an upgraded owner of its dir can explain it |
+| `aide_auto_accept_ignore` | `[]` | Regexes of paths that need no owner, matched against the whole path. Empty means every path needs one. Add one only when you know what writes it and why it is harmless |
+| `aide_auto_accept_wait_retries` / `aide_auto_accept_wait_delay` | `60` / `30` | How long to wait for a running daily AIDE check (tries, seconds) |
 | `aide_auto_accept_reason_lines` | `50` | Reasons printed per host |
 | `aide_auto_accept_hosts` | lxc_containers + pod_vms + podman_hosts + proxmox | Hosts the summary covers |
 | `aide_auto_accept_ntfy_title` | `homelab aide` | ntfy title |
@@ -50,11 +55,11 @@ Where the "upgraded since" comes from:
 
 ## Notes
 
-- Expect many hosts to wait at first: generated files (initramfs, `modules.dep`, ca-certificates links) have no owner, and a package whose conffile we changed never verifies clean. The reasons show which. The first is a candidate for `aide_auto_accept_ignore`, the second stays manual
+- Expect many hosts to wait at first: files a package script generates (initramfs, `modules.dep`, `.pyc`, ca-certificates links) have no owner, and a package whose conffile we changed never verifies clean. The reasons show which. Those hosts get `aide-accept.yml`. Don't ignore a generated path just to make the run green, it is also where something unwanted would hide
 - `update.yml` accepts after its own upgrades without this. This run is for what unattended-upgrades changed
 - No Gatus heartbeat: `gatus_semaphore_templates` needs the template's id, which only exists after the template is made by hand. Add `{ name: aide-auto-accept, id: <id>, heartbeat: "{{ heartbeat_daily }}" }` there and a `gatus_push` play to get one
 - Paths and reasons stay in the run log. ntfy only gets counts (ntfy.sh is a public relay)
-- A package changed on purpose by hand isn't an upgrade: it waits for `aide-accept.yml`
+- A package installed by hand from a local `.deb` has no repo origin: it waits for `aide-accept.yml`
 - Don't schedule it while `update.yml` runs (Saturday 14:00, about two hours): both scan and swap the same database
 
 ## Related

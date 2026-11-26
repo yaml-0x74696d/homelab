@@ -17,7 +17,7 @@
 3. Installs `/usr/local/sbin/aide-check` with `aide-check.service` and `.timer`
 4. Masks Debian's `dailyaidecheck.timer`. Ours runs at midday and pushes to ntfy instead of sending a mail at night
 5. First run only, last: `aide --init` hashes the whole system (async), so the baseline already contains the files above
-6. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 on the controller (`meta: flush_handlers`, right away)
+6. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 and the time on the controller (`meta: flush_handlers`, right away)
 
 ## Daily check
 
@@ -34,7 +34,7 @@
 - Run `ansible-playbook playbooks/aide-accept.yml -l <host>` (one host at a time, `serial: 1`)
 - It checks the hash, runs `aide --update`, shows the first `aide_report_lines` lines of the diff and asks you to type "yes"
 - In Semaphore there's no prompt: the survey var `aide_accept=yes` accepts in the same run, the diff stays in the task log
-- Yes: the new database is swapped in, and its SHA256 is written to `aide_checksum_dir/<host>.sha256` on the controller
+- Yes: the new database is swapped in, and its SHA256 is written to `aide_checksum_dir/<host>.sha256` on the controller, next to it the accept time (epoch seconds, controller clock) in `<host>.accepted`. `roles/aide_auto_accept` counts package upgrades from that time
 - Anything else: the old baseline stays the reference
 - If it's not your change, don't accept. Find out what happened first
 - `playbooks/update.yml` accepts on its own, but only if the check right before the upgrade was clean (`roles/update`)
@@ -48,6 +48,7 @@
 - A mismatch (or a missing `<host>.sha256`) pushes "AIDE db mismatch on <host>" to ntfy, then stops the run. Treat it as an incident and compare with the last PBS snapshot
 - The push comes from `tasks/verify.yml`, so `aide.yml`, `aide-accept.yml` and `update.yml` all send it. In `update.yml` the run-stopped alert follows
 - The check script is mode `0700`, because it holds the ntfy token
+- `<host>.accepted` sits next to the hash and is trusted the same way: a timestamp for the auto-accept, it can't hide a swapped database (the hash check stays)
 - The `<host>.sha256` files are specific to each host, so they're gitignored and live in the offsite-synced private folder
 
 ## Hashes and sync
@@ -56,7 +57,7 @@
 - The controller's `ansible/aide/` and ctl-1's dir are kept the same by Syncthing, both ways. An accept on either side reaches the other within seconds
 - Not synced: Syncthing's GUI (`127.0.0.1:8384` on ctl-0) shows the folder's state. A `.sync-conflict-…` file means both sides changed the same hash, keep the one that matches the host's db
 - On ctl-1 the dir has ACLs for `admin_user` (Syncthing) and Semaphore's container user, a copy by hand needs no `sudo`
-- Renaming a host: rename `<host>.sha256` on both sides, then accept on that host
+- Renaming a host: rename `<host>.sha256` and `<host>.accepted` on both sides, then accept on that host
 - "database hash mismatch": the database changed outside an accept, or a copy is stale. Compare both copies first, then look at the host before accepting
 
 ## Accepting many hosts

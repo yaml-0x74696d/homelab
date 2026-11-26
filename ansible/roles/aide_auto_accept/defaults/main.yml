@@ -2,15 +2,20 @@
 # changes beyond this many paths always wait for a person
 aide_auto_accept_max_paths: 500
 
-# a removed file has no owner left: true = the owner of its dir (upgraded since the baseline) has to
-# explain it, false = any removed path blocks the accept
-aide_auto_accept_removed: true
+# a removed file that no package owns any more: true = the owner of its dir (upgraded since the last accept)
+# has to explain it, false = it blocks the accept. a removed file a package still owns is always checked
+# (dpkg --verify says missing)
+aide_auto_accept_removed: false
 
 # regexes of paths that don't need an owner (generated files: initramfs, modules.dep, dpkg's own db).
 # empty = every path needs one. add only what the run output showed as noise, one by one
 aide_auto_accept_ignore: []
 
 aide_auto_accept_reason_lines: 50   # reasons printed per host
+
+# a daily aide check already running: wait up to retries x delay seconds
+aide_auto_accept_wait_retries: 60
+aide_auto_accept_wait_delay: 30
 
 aide_auto_accept_hosts: "{{ groups['lxc_containers'] + groups['pod_vms'] + groups['podman_hosts'] + groups['proxmox'] }}"
 

@@ -20,3 +20,12 @@
   delegate_to: localhost
   become: false
   listen: Aide baseline built
+
+- name: Write accept time on the controller for {{ inventory_hostname }}
+  ansible.builtin.copy:
+    content: "{{ now(fmt='%s') }}\n"
+    dest: "{{ aide_checksum_dir }}/{{ inventory_hostname }}.accepted"
+    mode: '0644'
+  delegate_to: localhost
+  become: false
+  listen: Aide baseline built

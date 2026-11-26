@@ -19,9 +19,11 @@ Status: Accepted
 
 The setup:
 - `playbooks/aide-auto-accept.yml` with `roles/aide_auto_accept`, a Semaphore template that runs daily at `aide_auto_accept_time`, after the check and clear of the Saturday update. The template is made by hand like the others ([0031](0031-semaphore-on-a-single-board-computer.md)). The NixOS VMs aren't covered
-- Per host, one at a time: hash check, one `aide --update`, then a checker on the host reads the report
-- The host is accepted only if every changed path is owned by a package (`dpkg -S`, `rpm -qf`), that package was installed or upgraded since the last accept (`dpkg.log`, `INSTALLTIME` in rpm), and it verifies clean (`dpkg --verify`, `rpm -V`, a changed conffile is not clean)
-- A removed file is explained by the upgraded owner of its directory. More than 500 paths, or a report that doesn't match its own counts, never passes
+- Per host, one at a time: hash check, the daily check timer paused, one `aide --update`, then a checker on the host reads the report. A host that errors is recorded and the run goes on, then ends red
+- The host is accepted only if every changed path is owned by a package (`dpkg -S`, `rpm -qf`), that package was upgraded since the last accept (`dpkg.log`, `INSTALLTIME` in rpm) or installed since then from a configured repo, and it verifies clean (`dpkg --verify`, `rpm -V`, a changed conffile is not clean)
+- `dpkg --verify` only knows checksums, so the report's detailed section is read as well: only content and times may differ, a changed perm, owner, link, ACL or xattr refuses the host
+- The time zero is the accept time the controller records next to the hash, not a file time on the host
+- A removed file that a package still owns fails its verify. A removed file nobody owns blocks the accept. More than 500 paths, or a report that doesn't match its own counts, never passes
 - One failed rule leaves the host as it is for `aide-accept.yml`. The run lists the reasons, ntfy gets counts
 - The swap is the existing one: `roles/aide`'s `accept.yml`, same hash on the controller ([0009](0009-aide-with-manual-accept.md))
 
@@ -33,12 +35,11 @@ The setup:
 - Easier: unattended-upgrades stays as it is, security fixes still land the same day
 
 - Harder: hosts whose packages have conffiles we template (ssh, chrony, rsyslog) never verify clean, their upgrades stay a manual accept
-- Harder: generated files (initramfs, `modules.dep`) have no owner and block the accept until they are on `aide_auto_accept_ignore`
+- Harder: generated files (initramfs, `modules.dep`) have no owner and block the accept, those hosts stay a manual accept
 
 - Accepted: the proof is the host's own package database and logs. Root on the host can fake `dpkg` and `rpm` output, or write a package into the database and log. That is the same trust as the rest of AIDE: root on the host can also change the files it checks, only the database hash is held outside
-- Accepted: a package installed by hand counts like an upgrade, it only has to be in the log and verify clean
-- Accepted: a removed file is explained by its directory's owner, not by the file itself, which is gone from the database. Someone deleting a file next to an upgrade passes
-- Accepted: a changed directory needs an upgraded owner, but its mode isn't verified by dpkg
+- Accepted: a package installed from a configured repo counts like an upgrade. A repo origin is what `apt-cache policy` says, so a malicious package in a repo we already trust passes as well
+- Accepted: the first run on a host has no accept time and waits for one manual accept
 - Accepted: the daily run scans every host once more, up to 25 minutes on a PVE node
 
 - Related: [0009](0009-aide-with-manual-accept.md) (AIDE), [0024](0024-ansible-run-os-updates.md) (updates), [0031](0031-semaphore-on-a-single-board-computer.md) (schedules)

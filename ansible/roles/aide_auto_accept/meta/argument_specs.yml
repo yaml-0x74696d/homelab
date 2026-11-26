@@ -8,11 +8,17 @@ argument_specs:
         description: More changed paths than this always wait for a person
       aide_auto_accept_removed:
         type: bool
-        description: Let the owner of a removed file's dir explain it, false = a removed path blocks the accept
+        description: Let the owner of a dir explain a removed file no package owns, false = it blocks the accept
       aide_auto_accept_ignore:
         type: list
         elements: str
-        description: Regexes of paths that need no owner (generated files)
+        description: Regexes of paths that need no owner, matched against the whole path
+      aide_auto_accept_wait_retries:
+        type: int
+        description: Tries while a daily aide check is running
+      aide_auto_accept_wait_delay:
+        type: int
+        description: Seconds between them
   summary:
     short_description: Print and push the result of every host, once on the controller (aide-auto-accept.yml)
     options:
@@ -23,6 +29,9 @@ argument_specs:
       aide_auto_accept_reason_lines:
         type: int
         description: Reasons printed per host
+      aide_auto_accept_ntfy_title:
+        type: str
+        description: ntfy title
       aide_auto_accept_ntfy_headers:
         type: dict
         description: Headers for the push
