@@ -30,7 +30,7 @@ argument_specs:
         description: ntfy token
       pbs_heartbeat_url:
         type: str
-        description: Gatus' backend port on pod-2, the heartbeat is pushed there
+        description: Gatus' backend url, its port on pod-2, the heartbeat is pushed there
       pbs_heartbeat_path:
         type: str
         description: Push path with {key} for the endpoint key
@@ -40,7 +40,7 @@ argument_specs:
       pbs_heartbeat_token:
         type: str
         no_log: true
-        description: Gatus push token, empty = no heartbeat
+        description: Gatus push token (vault), empty = no heartbeat
       pbs_heartbeat_timeout:
         type: int
         description: Seconds the heartbeat push may take
@@ -50,7 +50,10 @@ argument_specs:
       pbs_jobs:
         type: list
         elements: dict
-        description: "Databases to dump before the push, set in host_vars: `{name, type: postgres|sqlite, container?, path?, data_dir?, app?}`. sqlite `path` is under `podman_apps_root`, postgres needs `app` and runs `podman exec` as `svc-<app>`"
+        description: >-
+          Databases to dump before the push, set in host_vars: `{name, type: postgres|sqlite, container?,
+          path?, data_dir?, app?}`. sqlite `path` is under `podman_apps_root`, postgres needs `app` and runs
+          `podman exec` as `svc-<app>`
         options:
           name:
             type: str

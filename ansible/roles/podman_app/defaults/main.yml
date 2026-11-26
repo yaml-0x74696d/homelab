@@ -13,7 +13,8 @@ podman_app_config_public: "{{ query('community.general.filetree', podman_app_src
 # private overlay outside the repo, <private_dir>/apps/<name>/config/. plain files only, they win over public ones by path.
 # semaphore sets HOMELAB_PRIVATE_DIR to its mount of ctl-1's copy, its ~ is the container user's home
 podman_app_private_dir: "{{ lookup('ansible.builtin.env', 'HOMELAB_PRIVATE_DIR', default=private_dir | default('')) | expanduser }}"
-podman_app_private_src: "{{ (podman_app_private_dir ~ '/apps/' ~ podman_app_name ~ '/config') if podman_app_private_dir else '' }}"   # built from the name, not meant to be set
+# built from the name, not meant to be set
+podman_app_private_src: "{{ (podman_app_private_dir ~ '/apps/' ~ podman_app_name ~ '/config') if podman_app_private_dir else '' }}"
 # private config items, built from the name, not meant to be set
 podman_app_config_private: "{{ query('community.general.filetree', podman_app_private_src)
                                if podman_app_private_src and podman_app_private_src is directory else [] }}"
@@ -37,7 +38,7 @@ podman_app_restart_steps: 5   # retry forever with backoff: steps
 podman_app_restart_max_delay: 10min   # retry forever with backoff: longest delay
 
 # pool shares (cifs:): fstab mounts under cifs_mount_root, bind-mounted by the unit templates
-podman_app_cifs_vers: "3.1.1"          # smb dialect
+podman_app_cifs_vers: "3.1.1"          # smb dialect of the pool mounts
 podman_app_cifs_creds_dir: /etc/cifs   # <share>.creds, root-only
 
 # more than one container = one pod: apps/<name>/<name>.pod.j2, <name>-pod.service

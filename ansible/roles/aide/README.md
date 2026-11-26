@@ -79,8 +79,8 @@
 | `aide_check_delay` | - | Random delay on top of it, up to `30min` (schedules.yml) |
 | `aide_check_nice` | `19` | Nice of the check |
 | `aide_check_io_class` | `idle` | IOSchedulingClass of the check |
-| `aide_run_timeout` | `3600` | Seconds --init may take |
-| `aide_run_poll` | `30` | Seconds between async polls |
+| `aide_run_timeout` | `3600` | Seconds --init and --update may take |
+| `aide_run_poll` | `30` | Seconds between async polls of --init and --update |
 | `aide_checksum_dir` | see `defaults/main.yml` | Controller dir with the accepted db hashes, one \<host>.sha256 each. Default `$AIDE_CHECKSUM_DIR`, else `ansible/aide`. Semaphore sets the env var to its rw volume on ctl-1, the reference copy. On ctl-0 `ansible/aide` is a gitignored symlink into the offsite-synced private folder, pulled from ctl-1 (roles/ctl_base) |
 | `aide_excludes_common` | see `defaults/main.yml` | Excludes on every host |
 | `aide_excludes_by_group` | see `defaults/main.yml` | Excludes per inventory group, group name -> list of paths, rendered as `!<path>(/\|$)` |
@@ -89,7 +89,7 @@
 | `aide_var_files` | see `defaults/main.yml` | Files rewritten by design: only owner, mode and type watched (VarFile) |
 | `aide_content_files` | see `defaults/main.yml` | Rewritten with the same content: owner, mode and checksum watched, times not (ContentFile) |
 | `aide_var_dirs` | see `defaults/main.yml` | Dirs whose files get replaced: owner and mode watched, times not (VarDir). Added and removed files still show |
-| `aide_report_lines` | `150` | diff lines shown on accept |
+| `aide_report_lines` | `150` | diff lines shown by aide-accept.yml on accept |
 <!-- settings:end -->
 
 Also from group_vars: `ntfy_url`, `ntfy_token`, `ntfy_timeout`, the shared ntfy settings. With an empty URL the check still runs, but nothing is pushed.

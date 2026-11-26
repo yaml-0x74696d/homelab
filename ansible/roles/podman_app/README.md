@@ -131,8 +131,8 @@ Copying data into a rootless app: the files need the owner the container sees, i
 <!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `podman_app_name` | `""` | The app's key in apps.yml, also the name of apps/\<name>/ and svc-\<name> |
-| `podman_app_entry` | `{}` | The app's entry in apps.yml |
+| `podman_app_name` | `""` | The app's key in apps.yml, also the name of apps/\<name>/ and svc-\<name>. Set by deploy-app.yml |
+| `podman_app_entry` | `{}` | The app's entry in apps.yml. Set by deploy-app.yml |
 | `podman_app_private_dir` | see `defaults/main.yml` | Root of the private config overlay. Default `$HOMELAB_PRIVATE_DIR`, else `private_dir`. Semaphore sets the env var to its mount of ctl-1's copy (roles/ctl_base). empty = none |
 | `podman_app_user` | `{{ podman_svc_prefix }}{{ podman_app_name }}` | built from the name, not meant to be set |
 | `podman_app_home` | `/home/{{ podman_app_user }}` | built from the name, not meant to be set |
@@ -151,7 +151,7 @@ Copying data into a rootless app: the files need the owner the container sees, i
 | `podman_app_restart_sec` | `30s` | retry forever with backoff (mount gate, crash loops), silent |
 | `podman_app_restart_steps` | `5` | retry forever with backoff: steps |
 | `podman_app_restart_max_delay` | `10min` | retry forever with backoff: longest delay |
-| `podman_app_cifs_vers` | `3.1.1` | smb dialect |
+| `podman_app_cifs_vers` | `3.1.1` | smb dialect of the pool mounts |
 | `podman_app_cifs_creds_dir` | `/etc/cifs` | \<share>.creds, root-only |
 | `podman_app_pod` | `podman_app_entry.containers \| default([]) \| length > 1` | more than one container = one pod: apps/\<name>/\<name>.pod.j2, \<name>-pod.service |
 <!-- settings:end -->

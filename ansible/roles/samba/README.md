@@ -48,7 +48,7 @@
 |---|---|---|
 | `samba_manage_ufw` | `true` | lan-only ufw (ssh + samba); false = leave the firewall alone |
 | `samba_lan` | `lan_cidr` | the network that may connect |
-| `samba_admin_uid` | `3000` | pinned so a container rebuild keeps the same on-disk ownership |
+| `samba_admin_uid` | `3000` | uid of the admin user, pinned so a container rebuild keeps the same on-disk ownership |
 | `samba_svc_uid_base` | `3101` | first UID for the service users, uid = base + share index |
 | `samba_rotate_passwords` | `false` | true for one run (-e samba_rotate_passwords=true) pushes vault passwords to existing users |
 | `samba_min_protocol` | `SMB3` | oldest SMB version allowed |

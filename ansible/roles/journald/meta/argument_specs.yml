@@ -5,13 +5,16 @@ argument_specs:
     options:
       journald_storage:
         type: str
-        description: "`volatile` (default), `persistent` keeps the journal on disk"
+        description: >-
+          "volatile" or "persistent" (keeps the journal on disk), set in group_vars/all/base.yml, default
+          volatile
       journald_runtime_max_use:
         type: str
-        description: RAM cap for the journal, default 100M
+        description: RAM cap for the journal, set in group_vars/all/base.yml, default 100M
       journald_rate_limit_interval:
         type: str
-        description: Window for the rate limit, default 30s
+        description: Window for the rate limit, set in group_vars/all/base.yml, default 30s
       journald_rate_limit_burst:
         type: int
-        description: Messages per service and window before drops, default 10000
+        description: >-
+          Messages per service and window before drops, set in group_vars/all/base.yml, default 10000

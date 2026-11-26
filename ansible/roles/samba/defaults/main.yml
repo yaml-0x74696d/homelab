@@ -3,7 +3,7 @@
 samba_manage_ufw: true
 samba_lan: "{{ lan_cidr }}"   # the network that may connect
 
-# pinned so a container rebuild keeps the same on-disk ownership
+# uid of the admin user, pinned so a container rebuild keeps the same on-disk ownership
 samba_admin_uid: 3000
 samba_svc_uid_base: 3101   # first UID for the service users, uid = base + share index
 

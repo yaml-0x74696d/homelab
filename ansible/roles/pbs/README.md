@@ -75,10 +75,10 @@
 | `pbs_id` | `inventory_hostname` | Backup group id, one per host (the hostname) |
 | `pbs_ntfy_url` | `ntfy_url \| default('')` | ntfy topic for failures, empty = off |
 | `pbs_ntfy_token` | `ntfy_token \| default('')` | ntfy token |
-| `pbs_heartbeat_url` | `gatus_push_url` | Gatus' backend port on pod-2, the heartbeat is pushed there |
+| `pbs_heartbeat_url` | `gatus_push_url` | Gatus' backend url, its port on pod-2, the heartbeat is pushed there |
 | `pbs_heartbeat_path` | `gatus_push_path` | Push path with {key} for the endpoint key |
 | `pbs_heartbeat_key` | `{{ gatus_push_group }}_backup-{{ inventory_hostname }}` | Key of the host's external endpoint in gatus (group_name) |
-| `pbs_heartbeat_token` | `gatus_push_token \| default('')` | Gatus push token, empty = no heartbeat |
+| `pbs_heartbeat_token` | `gatus_push_token \| default('')` | Gatus push token (vault), empty = no heartbeat |
 | `pbs_heartbeat_timeout` | `gatus_push_timeout` | Seconds the heartbeat push may take |
 | `pbs_timeout` | `1h` | A wedged push is killed after this |
 | `pbs_jobs` | `[]` | Databases to dump before the push, set in host_vars: `{name, type: postgres\|sqlite, container?, path?, data_dir?, app?}`. sqlite `path` is under `podman_apps_root`, postgres needs `app` and runs `podman exec` as `svc-<app>` |
