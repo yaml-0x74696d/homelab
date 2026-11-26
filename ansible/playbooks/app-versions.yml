@@ -1,0 +1,6 @@
+---
+# running and newest version of every app image, as a page on web.<domain>/versions/
+- name: App versions
+  hosts: pod_vms:podman_hosts
+  roles:
+    - app_versions

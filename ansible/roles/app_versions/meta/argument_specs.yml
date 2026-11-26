@@ -1,0 +1,14 @@
+---
+argument_specs:
+  main:
+    short_description: Static page with the running and the newest version of every app image
+    options:
+      app_versions_web_host:
+        type: str
+        description: Host whose nginx serves the page
+      app_versions_web_dir:
+        type: str
+        description: Dir the page is written to, nginx mounts it at /versions/
+      app_versions_lookup_timeout:
+        type: str
+        description: skopeo timeout per registry tag list (Go duration)

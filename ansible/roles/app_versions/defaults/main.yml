@@ -1,0 +1,4 @@
+---
+app_versions_web_host: "{{ apps.nginx.host }}"
+app_versions_web_dir: "{{ podman_apps_root }}/nginx/versions"   # apps.yml nginx dirs, mounted at /versions/
+app_versions_lookup_timeout: 60s   # per registry tag list, postgres' is long

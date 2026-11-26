@@ -50,11 +50,14 @@ apps:
     port: 8087
     allow_from: [edge, netbird, homepage]
     secrets: []
+    dirs:
+      - path: versions   # roles/app_versions writes it
+        mode: "0755"     # nginx workers run on a subuid
     containers:
       - name: nginx
         image: docker.io/library/nginx
         tag: alpine
-    homepage: {group: Tools, icon: sh-nginx, label: Web}
+    homepage: {group: Tools, icon: sh-nginx, label: Versions, path: /versions/}
     routes:
       - host: web
 
@@ -326,11 +329,11 @@ apps:
     containers:
       - name: authentik
         image: ghcr.io/goauthentik/server
-        tag: "2026.8.3"
+        tag: "2026.8.7"
         after: [authentik-db]
       - name: authentik-worker
         image: ghcr.io/goauthentik/server
-        tag: "2026.8.3"
+        tag: "2026.8.7"
         after: [authentik-db]
       - name: authentik-db
         image: docker.io/library/postgres
