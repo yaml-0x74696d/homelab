@@ -48,3 +48,12 @@ argument_specs:
       update_ntfy_headers:
         type: dict
         description: Headers for the push
+  quorum:
+    short_description: Wait until the pve node is quorate (roles/node_reboot)
+    options:
+      update_quorum_retries:
+        type: int
+        description: Tries
+      update_quorum_delay:
+        type: int
+        description: Seconds between them

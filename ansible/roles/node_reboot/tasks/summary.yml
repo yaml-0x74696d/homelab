@@ -1,0 +1,40 @@
+---
+# once on the controller after all hosts. ntfy gets the host names, nothing else
+- name: Collect results
+  ansible.builtin.set_fact:
+    node_reboot_done: >-
+      {{ node_reboot_summary_hosts | map('extract', hostvars) | selectattr('node_reboot_result', 'defined')
+         | map(attribute='node_reboot_result') | list }}
+    # from roles/reach, so -l only lists the limited hosts
+    node_reboot_skipped: "{{ groups['reach_skipped'] | default([]) }}"
+    node_reboot_down: "{{ groups['reach_down'] | default([]) }}"
+
+- name: Summary
+  vars:
+    node_reboot_lines: |-
+      {% for r in node_reboot_done %}
+      {{ r.host }}: {{ 'rebooted' if r.rebooted else 'no reboot due' }}{{ ', %d guests back' % r.guests if r.guests }}
+      {% endfor %}
+      {% for h in node_reboot_down %}
+      {{ h }}: DOWN, not rebooted
+      {% endfor %}
+      {% for h in node_reboot_skipped %}
+      {{ h }}: off, skipped
+      {% endfor %}
+  when: (node_reboot_done + node_reboot_down + node_reboot_skipped) | length > 0
+  block:
+    - name: Print summary
+      ansible.builtin.debug:
+        msg: "{{ node_reboot_lines | trim | split('\n') }}"
+
+    - name: Push summary
+      ansible.builtin.uri:
+        url: "{{ ntfy_url }}"
+        method: POST
+        body: "{{ node_reboot_lines }}"
+        headers: "{{ node_reboot_ntfy_headers }}"
+        timeout: "{{ ntfy_timeout }}"
+      delegate_to: localhost   # also runs from the rescue on a failed host
+      become: false
+      no_log: true   # bearer token in the headers
+      when: ntfy_url | default('') | length > 0

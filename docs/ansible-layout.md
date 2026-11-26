@@ -98,6 +98,7 @@ Run from `ansible/`: `ansible-playbook playbooks/<file>`.
 | `aide-accept.yml` | same | review and accept changes, one host at a time | by hand, Semaphore with `aide_accept=yes` |
 | `aide-auto-accept.yml` | same | accepts the AIDE changes that package upgrades explain and that verify clean, the rest waits | Semaphore (daily) |
 | `update.yml` | same | OS updates one host at a time, no reboot, summary | Semaphore (weekly), by hand |
+| `reboot.yml` | guests, VMs, nodes | reboots the hosts that need one: LXCs and pod VMs, then the PVE nodes, one at a time, stops at the first failure | Semaphore (no schedule), by hand |
 | `repo-pull.yml` | `podman_hosts` | pulls Semaphore's checkout on ctl-1 | Semaphore (daily) |
 | `app-versions.yml` | `pod_vms`, `podman_hosts` | running and newest version of every app image, page on `web.<domain>/versions/` | Semaphore (daily), by hand |
 | `render-podman.yml` | `pod_vms`, `podman_hosts` | renders every app with example values, touches no host | `just render` |

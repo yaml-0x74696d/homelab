@@ -25,7 +25,7 @@
 
 ## Reading the summary
 
-- `REBOOT due`: new kernel or microcode, or `/run/reboot-required`. pve nodes: shut that node's guests down first
+- `REBOOT due`: new kernel or microcode, or `/run/reboot-required`. `playbooks/reboot.yml` does it, one host at a time ([`roles/node_reboot`](../node_reboot/README.md))
 - `stale`: services needrestart doesn't restart on its own (dbus, logind, ...). Reboot or restart by hand
 - `new conffiles`: we kept our config (`force-confold`), the package's version sits next to it. Merge by hand, then delete it
 - `aide review, was dirty before`: something changed before the upgrade. Not accepted, run `aide-accept.yml` and look first
@@ -63,3 +63,4 @@ Also from group_vars: `ntfy_url`, `ntfy_token`, `ntfy_timeout`, the shared ntfy 
 
 - [ADR 0024: OS updates through one Ansible run](../../../docs/adr/0024-ansible-run-os-updates.md)
 - `reach` role (the first play), `aide` role (the baseline step)
+- `tasks/quorum.yml` is an entry point of its own: `roles/node_reboot` waits for quorum with it

@@ -24,9 +24,23 @@ ansible-playbook playbooks/update.yml
 - AIDE is checked before and re-baselined after, so an update needs no accept, unless the host was dirty before
 - The summary at the end (terminal + ntfy) is the to-do list. How to read it: [`roles/update/README.md`](../ansible/roles/update/README.md#reading-the-summary)
 
-Reboots, when the summary says `REBOOT due`:
-- A pod VM: `ssh -t pod-N sudo reboot`. Its apps start again on their own (`WantedBy=default.target`, linger). pod-1 takes SSO down for a minute, pod-2 the VPN routing and DNS for VPN clients
-- A PVE node: shut its guests down first, then reboot the node. pve-1 carries edge (LAN DNS + every route), pod-1 (SSO) and the IoT gateway
+## Reboots: `reboot.yml`
+
+When the summary says `REBOOT due`, run it (Semaphore template without a schedule, or by hand):
+
+```bash
+ansible-playbook playbooks/reboot.yml
+```
+
+- Only hosts that need one: `/var/run/reboot-required`, a newer kernel or microcode (`needs-restarting -r` on EL). `--check` lists them
+- The LXCs and pod VMs first, one at a time, each until ssh, systemd and (pod VMs) every app's health check are back. Then the PVE nodes, one at a time: quorum before, PVE stops its guests and starts the `onboot` ones again, the next node waits for quorum and for its guests to run
+- The first failure stops the run and pushes an alert. How it works: [`roles/node_reboot/README.md`](../ansible/roles/node_reboot/README.md)
+- ctl-1 isn't in it, it runs Semaphore: `ssh -t ctl-1 sudo reboot` from the controller
+- pod-1 takes SSO down for a minute, pod-2 the VPN routing and DNS for VPN clients. pve-1 carries edge (LAN DNS + every route), pod-1 (SSO) and the IoT gateway
+
+By hand, when the playbook can't be used:
+- A pod VM: `ssh -t pod-N sudo reboot`. Its apps start again on their own (`WantedBy=default.target`, linger)
+- A PVE node: shut its guests down first, then reboot the node, then start what didn't come back. Quorum has to be back before the next node
 - Never two nodes at once, the cluster needs quorum
 
 ## Pinned images

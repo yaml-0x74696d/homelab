@@ -1,7 +1,7 @@
 ---
 # every timer in one place, read by the roles (their defaults point here) and by nixos (facts.nix).
 # times are systemd OnCalendar, delays systemd time spans. debian hosts never reboot on their own,
-# reboots there come from update.yml (semaphore's schedule, kept in its ui)
+# reboots there come from reboot.yml (a semaphore template without a schedule, run after update.yml says REBOOT due)
 
 # nixos self-upgrade: build at the time (+ random delay), reboot only inside the window.
 # night, one after the other, so vpn and lan dns are never down together

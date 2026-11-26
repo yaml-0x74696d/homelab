@@ -1,0 +1,47 @@
+---
+# reboots the hosts that need one: lxcs and pod vms first, then the pve nodes, one host at a time.
+# a host without a due reboot is left alone. stops at the first failure. ctl-1 isn't in it: it runs semaphore,
+# reboot it from the controller (ssh -t ctl-1 sudo reboot). the nixos vms reboot in their own window.
+# hosts in reach_optional_hosts may be off
+- name: Reach
+  hosts: lxc_containers:pod_vms:proxmox
+  gather_facts: false
+  roles: [reach]
+
+- name: Reboot lxcs
+  hosts: lxc_containers:&reachable
+  gather_facts: false
+  serial: 1
+  any_errors_fatal: true
+  vars:
+    node_reboot_check_kernel: false
+    node_reboot_boot_time_command: awk '{print $22}' /proc/1/stat   # the boot_id is the node's, init's start time is the container's
+  roles: [node_reboot]
+
+- name: Reboot vms
+  hosts: pod_vms:&reachable
+  gather_facts: false
+  serial: 1
+  any_errors_fatal: true
+  roles: [node_reboot]
+
+- name: Reboot pve nodes
+  hosts: proxmox:&reachable
+  gather_facts: false
+  serial: 1   # never two nodes at once, the cluster needs quorum
+  any_errors_fatal: true
+  vars:
+    node_reboot_pve: true
+    node_reboot_timeout: 1800   # the node stops its guests first
+  roles: [node_reboot]
+
+# on the rebooted hosts, not localhost, so -l <host> keeps it
+- name: Report
+  hosts: lxc_containers:pod_vms:proxmox
+  gather_facts: false
+  run_once: true
+  tasks:
+    - name: Summary
+      ansible.builtin.include_role:
+        name: node_reboot
+        tasks_from: summary

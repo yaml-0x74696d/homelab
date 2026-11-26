@@ -1,0 +1,55 @@
+---
+# what has to be true again afterwards. read-only
+- name: Check quorum before on {{ inventory_hostname }}
+  ansible.builtin.include_role:
+    name: update
+    tasks_from: quorum
+  vars:
+    update_quorum_retries: 1   # a node that isn't quorate now doesn't get a reboot
+    update_quorum_delay: 0
+  when: node_reboot_pve
+
+- name: Units already failed on {{ inventory_hostname }}
+  ansible.builtin.command: systemctl --failed --no-legend --plain --no-pager
+  register: node_reboot_failed_before
+  changed_when: false
+  check_mode: false
+
+# pve stops them while it shuts down and starts the onboot ones again. only those are waited for
+- name: Look at the guests of {{ inventory_hostname }}
+  when: node_reboot_pve
+  block:
+    - name: List running guests on {{ inventory_hostname }}
+      ansible.builtin.command: "pvesh get /nodes/{{ inventory_hostname }}/{{ item }} --output-format json"
+      register: node_reboot_list
+      changed_when: false
+      check_mode: false
+      loop: [qemu, lxc]
+
+    - name: Collect the running guests on {{ inventory_hostname }}
+      vars:
+        qemu: "{{ node_reboot_list.results[0].stdout | from_json | selectattr('status', 'eq', 'running') | list }}"
+        lxc: "{{ node_reboot_list.results[1].stdout | from_json | selectattr('status', 'eq', 'running') | list }}"
+      ansible.builtin.set_fact:
+        node_reboot_running: >-
+          {{ (qemu | map('combine', {'type': 'qemu'}) | list) + (lxc | map('combine', {'type': 'lxc'}) | list) }}
+
+    - name: Read the onboot flag of each running guest on {{ inventory_hostname }}
+      ansible.builtin.command: "pvesh get /nodes/{{ inventory_hostname }}/{{ item.type }}/{{ item.vmid }}/config --output-format json"
+      register: node_reboot_config
+      changed_when: false
+      check_mode: false
+      loop: "{{ node_reboot_running }}"
+      loop_control:
+        label: "{{ item.name | default(item.vmid) }}"
+
+    - name: Note the guests to wait for on {{ inventory_hostname }}
+      ansible.builtin.set_fact:
+        node_reboot_guests: >-
+          {{ node_reboot_running | zip(node_reboot_config.results | map(attribute='stdout') | map('from_json'))
+             | selectattr('1.onboot', 'defined') | selectattr('1.onboot', 'eq', 1) | map('first') | list }}
+
+    - name: Guests that won't come back by themselves
+      ansible.builtin.debug:
+        msg: "no onboot, start by hand: {{ node_reboot_running | map(attribute='vmid') | difference(node_reboot_guests | map(attribute='vmid')) | list }}"
+      when: (node_reboot_running | length) != (node_reboot_guests | length)

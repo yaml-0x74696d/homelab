@@ -1,0 +1,45 @@
+---
+# read-only, so also in --check: shows what a real run would reboot
+- name: Look at the os on {{ inventory_hostname }}
+  ansible.builtin.setup:
+    gather_subset: min
+
+- name: Look for reboot-required on {{ inventory_hostname }}
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: node_reboot_file
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Look for needrestart on {{ inventory_hostname }}
+  ansible.builtin.stat:
+    path: /usr/sbin/needrestart
+  register: node_reboot_nr_bin
+  when: ansible_facts['os_family'] == 'Debian'
+
+# new kernel or microcode, 1 = current. debian doesn't write reboot-required for a kernel
+- name: Ask needrestart on {{ inventory_hostname }}
+  ansible.builtin.command: "needrestart -r l -b {{ '' if node_reboot_check_kernel else '-l' }}"
+  register: node_reboot_nr
+  changed_when: false
+  check_mode: false
+  when: ansible_facts['os_family'] == 'Debian' and node_reboot_nr_bin.stat.exists
+
+# rc 1 = a reboot is needed
+- name: Ask needs-restarting on {{ inventory_hostname }}
+  ansible.builtin.command: needs-restarting -r
+  register: node_reboot_nr_el
+  changed_when: false
+  failed_when: node_reboot_nr_el.rc > 1
+  check_mode: false
+  when: ansible_facts['os_family'] == 'RedHat'
+
+- name: Reboot due on {{ inventory_hostname }}?
+  vars:
+    nr: "{{ node_reboot_nr.stdout | default('') }}"
+    ksta: "{{ nr | regex_findall('NEEDRESTART-KSTA: (\\d)') | first | default(0) }}"
+    ucsta: "{{ nr | regex_findall('NEEDRESTART-UCSTA: (\\d)') | first | default(0) }}"
+  ansible.builtin.set_fact:
+    node_reboot_due: >-
+      {{ node_reboot_file.stat.exists | default(false)
+         or ksta | int > 1 or ucsta | int > 1
+         or node_reboot_nr_el.rc | default(0) == 1 }}
