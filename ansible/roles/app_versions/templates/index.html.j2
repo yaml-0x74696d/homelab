@@ -1,10 +1,5 @@
 #jinja2: lstrip_blocks: True
-{% set rows = [] %}
-{% for h in ansible_play_hosts | sort %}
-{%   for line in hostvars[h].app_versions_list.stdout_lines %}
-{%     set _ = rows.append(line | from_json | combine({'host': h})) %}
-{%   endfor %}
-{% endfor %}
+{% set rows = ansible_play_hosts | map('extract', hostvars, ['app_versions_list', 'stdout_lines']) | flatten | map('from_json') | list %}
 {% set missing = ansible_play_hosts_all | difference(ansible_play_hosts) | sort %}
 <!doctype html>
 <html lang="en">

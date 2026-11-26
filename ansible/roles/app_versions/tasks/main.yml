@@ -1,7 +1,7 @@
 ---
 - name: List the app images and their newest tags
   ansible.builtin.script:
-    cmd: app-versions {{ podman_svc_prefix }} {{ podman_svc_group }} {{ app_versions_lookup_timeout }}
+    cmd: app-versions {{ inventory_hostname }} {{ podman_svc_prefix }} {{ podman_svc_group }} {{ app_versions_lookup_timeout }}
   register: app_versions_list
   changed_when: false
   check_mode: false

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # every app container on this host and the newest tag upstream, one json object per line.
 # run by roles/app_versions through the script module, nothing stays on the host.
-#   app-versions <svc prefix> <svc group> <lookup timeout>
+#   app-versions <host> <svc prefix> <svc group> <lookup timeout>
 set -uo pipefail
 cd /   # the svc users can't enter the caller's dir
 
-PREFIX=$1 GROUP=$2 TIMEOUT=$3
+HOST=$1 PREFIX=$2 GROUP=$3 TIMEOUT=$4
 LABEL=org.opencontainers.image.version
 # floating tags (latest, release, alpine) are compared against plain releases only
 RELEASE_RE='^v?[0-9]+(\.[0-9]+){1,2}$'
@@ -48,7 +48,7 @@ for u in $(users); do
       fi
     fi
 
-    jq -nc --arg app "${u#"$PREFIX"}" --arg container "$name" --arg repo "$repo" --arg tag "$tag" \
+    jq -ncM --arg host "$HOST" --arg app "${u#"$PREFIX"}" --arg container "$name" --arg repo "$repo" --arg tag "$tag" \
       --arg running "$running" --arg built "${created:0:10}" --arg newest "$newest" --arg status "$status" \
       '$ARGS.named'
   done < <(as "$u" podman ps --format '{{.Names}} {{.ImageID}} {{.Image}}')
