@@ -56,7 +56,9 @@ def show(value):
         text = str(value)
     if len(text) > MAX_DEFAULT:
         return "see `defaults/main.yml`"
-    return f"`{text}`"
+    fence = "``" if "`" in text else "`"
+    pad = " " if "`" in text else ""
+    return f"{fence}{pad}{text}{pad}{fence}"
 
 
 def cell(text):

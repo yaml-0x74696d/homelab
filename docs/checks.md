@@ -19,7 +19,7 @@ The hooks only see files git tracks, a new file needs a `git add` first.
 
 ## The hooks
 
-Stage: commit = on every commit, `just lint` and `just check`. manual = only `just check` and CI.
+Stage: commit = on every commit and `just lint`. manual = `just check` and CI. Hooks without a stage here run in both. The fixers (`render-podman`, `gen-role-settings`) run on commit only, `just check` and CI run their `-check` variants.
 
 | Hook | Checks | Script | Stage |
 |---|---|---|---|

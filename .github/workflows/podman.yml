@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # rendered_config/example is kept fresh by ci.yml's render-podman hook
+  # rendered_config/example is kept fresh by ci.yml's render-podman-check hook
   quadlet:
     runs-on: ubuntu-latest
     timeout-minutes: 15
