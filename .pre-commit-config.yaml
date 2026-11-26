@@ -136,7 +136,7 @@ repos:
         stages: [manual]
 
       - id: check-adr
-        name: adr house style
+        name: adr structure and links
         language: python
         entry: python3 scripts/check_adr.py
         files: ^(docs/adr/|scripts/check_adr)

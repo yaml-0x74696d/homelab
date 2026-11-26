@@ -46,7 +46,7 @@ Stage: commit = on every commit, `just lint` and `just check`. manual = only `ju
 | `nix-flake-check` | `nix flake check` in `nixos/` | | manual |
 | `likec4-validate` | the LikeC4 model parses | | manual |
 | `check-c4` | C4 house style: ids, labels, descriptions | `scripts/check_c4.py` | manual |
-| `check-adr` | ADR house style: sections, status, labels, links, numbering, the index | `scripts/check_adr.py` | commit |
+| `check-adr` | ADR structure: file names and numbering, status line, required sections, the index, links | `scripts/check_adr.py` | commit |
 
 ## One hook
 
