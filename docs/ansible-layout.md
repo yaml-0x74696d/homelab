@@ -96,6 +96,7 @@ Run from `ansible/`: `ansible-playbook playbooks/<file>`.
 | `aide-accept.yml` | same | review and accept changes, one host at a time | by hand, Semaphore with `aide_accept=yes` |
 | `update.yml` | same | OS updates one host at a time, no reboot, summary | Semaphore (weekly), by hand |
 | `repo-pull.yml` | `podman_hosts` | pulls Semaphore's checkout on ctl-1 | Semaphore (daily) |
+| `app-versions.yml` | `pod_vms`, `podman_hosts` | running and newest version of every app image, page on `web.<domain>/versions/` | Semaphore (daily), by hand |
 | `render-podman.yml` | `pod_vms`, `podman_hosts` | renders every app with example values, touches no host | `just render` |
 | `ci-validate-apps.yml` | `localhost` | `apps.yml` against the `podman_app` argument spec | pre-commit hook `apps-schema` |
 

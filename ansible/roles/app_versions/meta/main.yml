@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: app_versions
+  author: tim
+  description: static page with the running and the newest version of every app image
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

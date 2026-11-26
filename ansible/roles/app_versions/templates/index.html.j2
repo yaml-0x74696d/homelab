@@ -1,0 +1,41 @@
+#jinja2: lstrip_blocks: True
+{% set rows = [] %}
+{% for h in ansible_play_hosts | sort %}
+{%   for line in hostvars[h].app_versions_list.stdout_lines %}
+{%     set _ = rows.append(line | from_json | combine({'host': h})) %}
+{%   endfor %}
+{% endfor %}
+{% set missing = ansible_play_hosts_all | difference(ansible_play_hosts) | sort %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>versions</title>
+  <style>
+    body { margin: 0; padding: 1.5rem 1rem; background: #141414; color: #cccccc;
+           font-family: system-ui, sans-serif; }
+    h1 { color: #ee0000; font-weight: 600; margin: 0 0 .25rem; }
+    p { margin: 0 0 1rem; color: #888888; }
+    .wrap { overflow-x: auto; }
+    table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; padding: .3rem .9rem .3rem 0; white-space: nowrap; }
+    th { color: #888888; font-weight: 500; border-bottom: 1px solid #333333; }
+    tr.behind td.newest { color: #ee0000; }
+    tr.unknown td.newest { color: #888888; }
+  </style>
+</head>
+<body>
+  <h1>versions</h1>
+  <p>built {{ now(utc=true, fmt='%Y-%m-%d %H:%M') }} UTC, {{ rows | selectattr('status', 'eq', 'behind') | list | length }} behind
+{%- if missing %}, no data from {{ missing | join(', ') }}{% endif %}</p>
+  <div class="wrap">
+  <table>
+    <tr><th>app</th><th>host</th><th>container</th><th>image</th><th>tag</th><th>running</th><th>built</th><th>newest</th></tr>
+{% for r in rows | sort(attribute='app,container') %}
+    <tr class="{{ r.status }}"><td>{{ r.app }}</td><td>{{ r.host }}</td><td>{{ r.container }}</td><td>{{ r.repo }}</td><td>{{ r.tag }}</td><td>{{ r.running or '-' }}</td><td>{{ r.built }}</td><td class="newest">{{ r.newest or '?' }}</td></tr>
+{% endfor %}
+  </table>
+  </div>
+</body>
+</html>

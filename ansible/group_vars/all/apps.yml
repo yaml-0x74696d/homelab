@@ -50,6 +50,9 @@ apps:
     port: 8087
     allow_from: [edge, netbird, homepage]
     secrets: []
+    dirs:
+      - path: versions   # roles/app_versions writes it
+        mode: "0755"     # nginx workers run on a subuid
     containers:
       - name: nginx
         image: docker.io/library/nginx

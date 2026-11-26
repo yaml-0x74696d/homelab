@@ -72,7 +72,7 @@ Domain, MACs and keys are placeholders; the real values live in a gitignored `pr
 | Apps | linkding | pod-3 | Bookmarks, login through Authentik only |
 | Apps | Memos | pod-3 | Notes |
 | Apps | Excalidraw | pod-3 | Whiteboard, behind Authentik, a CSP keeps it off excalidraw.com |
-| Apps | nginx | pod-2 | Website |
+| Apps | nginx | pod-2 | Website, app versions page (`/versions/`) |
 | Operations | Semaphore | ctl-1 | Playbook runs on a schedule + run history, from a git clone of `semaphore_repo_version` |
 
 ## Stack
@@ -121,7 +121,7 @@ ansible/
   group_vars/all/  Variables: network, ports, storage, hosts, apps, base (+ vault.yml.example, private/private.yml.example)
   group_vars/<group>.yml  login per group (user, become)
   inventory.yml    hosts only: pod_vms, podman_hosts (ctl-1), proxmox, lxc_containers, netbird_agent, appliances (haos)
-  roles/           aide, chrony, cronie, ctl_base, gatus_push, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, pve_thinpool, reach, rsyslog, samba, update, vm_base
+  roles/           app_versions, aide, chrony, cronie, ctl_base, gatus_push, iot_ap, iot_node, journald, login_notify, lxc_base, mergerfs, mosquitto, mqtt_exporter, netbird_agent, ota_server, pbs, podman_app, podman_base, pve_firewall, pve_thinpool, reach, rsyslog, samba, update, vm_base
   apps/<name>/     Quadlet units + templates per app
   playbooks/       deploy-<app>.yml, deploy-app.yml (podman), site.yml, vm-preparation, update, aide, push-keys, ...
 nixos/           Flake for the NixOS VMs: netbird, edge (+ update.sh, aide-accept.sh)

@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# every app container on this host and the newest tag upstream, one json object per line.
+# run by roles/app_versions through the script module, nothing stays on the host.
+#   app-versions <svc prefix> <svc group> <lookup timeout>
+set -uo pipefail
+cd /   # the svc users can't enter the caller's dir
+
+PREFIX=$1 GROUP=$2 TIMEOUT=$3
+LABEL=org.opencontainers.image.version
+# floating tags (latest, release, alpine) are compared against plain releases only
+RELEASE_RE='^v?[0-9]+(\.[0-9]+){1,2}$'
+
+users() { getent group "$GROUP" | cut -d: -f4 | tr , '\n' | grep -v '^$' | sort; }
+as() { local u=$1; shift; sudo -u "$u" XDG_RUNTIME_DIR="/run/user/$(id -u "$u")" "$@"; }
+
+declare -A tags
+lookup() {
+  [ -n "${tags[$1]+x}" ] && return
+  tags[$1]=$(skopeo list-tags --command-timeout "$TIMEOUT" "docker://$1" </dev/null 2>/dev/null | jq -r '.Tags[]') || tags[$1]=""
+}
+
+# podman and skopeo get /dev/null, or they eat the loop's input
+for u in $(users); do
+  while read -r name id ref; do
+    repo=${ref%:*} tag=${ref##*:}
+    # | not a space: an empty label would shift the date into running
+    IFS="|" read -r running created < <(as "$u" podman image inspect --format "{{index .Labels \"$LABEL\"}}|{{.Created}}" "$id" </dev/null)
+    [ "$running" = "<no value>" ] && running=""
+
+    # pinned: same shape as the tag, 16-alpine finds 17-alpine, not 17-bookworm
+    if [[ $tag =~ [0-9] ]]; then
+      re="^$(sed -E 's/[].[*^$+?(){}|\\/]/\\&/g; s/[0-9]+/[0-9]+/g' <<<"$tag")\$"
+      have=$tag
+    else
+      re=$RELEASE_RE
+      have=$running
+    fi
+    lookup "$repo"
+    newest=$(grep -E "$re" <<<"${tags[$repo]}" | sort -V | tail -1)
+
+    status=unknown
+    if [ -n "$newest" ] && [ -n "$have" ]; then
+      a=${have#v} b=${newest#v}
+      if [ "$a" != "$b" ] && [ "$(printf '%s\n%s\n' "$a" "$b" | sort -V | tail -1)" = "$b" ]; then
+        status=behind
+      else
+        status=current
+      fi
+    fi
+
+    jq -nc --arg app "${u#"$PREFIX"}" --arg container "$name" --arg repo "$repo" --arg tag "$tag" \
+      --arg running "$running" --arg built "${created:0:10}" --arg newest "$newest" --arg status "$status" \
+      '$ARGS.named'
+  done < <(as "$u" podman ps --format '{{.Names}} {{.ImageID}} {{.Image}}')
+done
+exit 0
