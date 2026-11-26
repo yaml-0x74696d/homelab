@@ -88,8 +88,18 @@ repos:
         files: (\.sh\.j2$|^scripts/shellcheck_templates)
         pass_filenames: false
 
-      # ansible-lint brings ansible-core along
+      # ansible-lint brings ansible-core along. renders on commit and fails when it changed files
       - id: render-podman
+        name: render rendered_config/example
+        language: python
+        additional_dependencies: [ansible-lint==26.10.1]
+        entry: scripts/render_podman.sh fix
+        files: ^(ansible/|scripts/render_podman|rendered_config/)
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # ci: no fixing, fail on a stale render
+      - id: render-podman-check
         name: rendered_config/example up to date
         language: python
         additional_dependencies: [ansible-lint==26.10.1]

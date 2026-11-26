@@ -31,7 +31,7 @@ deploy app:
 deploy-app app:
     cd ansible && ansible-playbook playbooks/deploy-app.yml -e app={{ app }}
 
-# podman apps rendered with the example values: rendered_config/example
+# podman apps rendered with the example values: rendered_config/example (the commit hook does this too)
 render:
     scripts/render_podman.sh example
 

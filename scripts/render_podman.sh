@@ -2,19 +2,28 @@
 # every podman app's files rendered with the example values for review (ansible/playbooks/render-podman.yml).
 #   example  -> rendered_config/example (in git)
 #   check    example, then fail if rendered_config/example differs from git (ci)
+#   fix      example, then fail if that changed any file (commit hook: re-add and commit again)
 set -euo pipefail
 
-mode=${1:?usage: render_podman.sh example|check}
+mode=${1:?usage: render_podman.sh example|check|fix}
 repo=$(git rev-parse --show-toplevel)
 example_dir="$repo/rendered_config/example"
 collections="$repo/ansible/collections:$HOME/.ansible/collections:/usr/share/ansible/collections"
 
 case "$mode" in
-example | check)
+example | check | fix)
     # a copy without ignored files plus the examples: nothing from private.yml or the vault gets in
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     cd "$repo"
+    # names, modes and contents of what is rendered now, to see if the render changes anything
+    snapshot() {
+        [ -d "$example_dir" ] || return 0
+        cd "$example_dir"
+        find . -type f -printf '%p %m\n' | sort
+        find . -type f -print0 | sort -z | xargs -0 -r sha256sum
+    }
+    before=$(snapshot | sha256sum)
     git ls-files -z --cached --others --exclude-standard | while IFS= read -r -d '' f; do [ -e "$f" ] && printf '%s\0' "$f"; done \
         | xargs -0 cp --parents -P -t "$tmp"
     cp "$tmp/ansible/group_vars/all/private/private.yml.example" "$tmp/ansible/group_vars/all/private/private.yml"
@@ -38,6 +47,10 @@ example | check)
     ANSIBLE_COLLECTIONS_PATH="$collections" ansible-playbook playbooks/render-podman.yml \
         -e render_dir="$example_dir" -e private_dir=''
 
+    if [ "$mode" = fix ] && [ "$before" != "$(snapshot | sha256sum)" ]; then
+        echo "rendered_config/example was stale and is updated: git add it and commit again" >&2
+        exit 1
+    fi
     if [ "$mode" = check ] && [ -n "$(git -C "$repo" status --porcelain -- rendered_config/example)" ]; then
         git -C "$repo" status --short -- rendered_config/example
         echo "rendered_config/example is stale: run scripts/render_podman.sh example and commit it" >&2
@@ -45,7 +58,7 @@ example | check)
     fi
     ;;
 *)
-    echo "usage: render_podman.sh example|check" >&2
+    echo "usage: render_podman.sh example|check|fix" >&2
     exit 2
     ;;
 esac
