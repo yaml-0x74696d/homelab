@@ -16,6 +16,10 @@ edge_reboot_window: { lower: "04:00", upper: "04:45" }
 aide_check_time: "*-*-* 12:00:00"
 aide_check_delay: 30min
 
+# semaphore, daily (set in its ui, adr 0031): aide-auto-accept.yml accepts what package upgrades explain.
+# after the check and clear of update.yml (saturday 14:00, about 2 hours), they swap the same db
+aide_auto_accept_time: "17:00"
+
 # ctl-0, a user timer set by hand: ~/homelab-sync into the secure storage
 # (roles/ctl_base/files/ctl-0/homelab-sync-copy.timer holds it, keep both the same)
 # 21:00 daily
@@ -28,7 +32,7 @@ pbs_backup_delay: 20m
 podman_auto_update_time: "Sun *-*-* 13:00:00"   # midday, someone is around to fix it
 
 # heartbeat windows (gatus alerts when a job's push is later than this): the schedule plus a margin.
-# semaphore's schedules are set in its ui (adr 0031): repo-pull and aide daily, update weekly (saturday).
+# semaphore's schedules are set in its ui (adr 0031): repo-pull, aide and aide-auto-accept daily, update weekly (saturday).
 # gatus durations stop at hours
 heartbeat_daily_margin: 2         # hours, covers the timer delays and the run
 heartbeat_weekly_margin: 24

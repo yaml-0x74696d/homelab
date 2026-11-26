@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+"""Can this host's AIDE changes be accepted without a person looking? Stdlib only.
+
+Run by roles/aide_auto_accept, nothing stays on the host. The `aide --update` report comes on stdin,
+the answer is one json object on stdout: {"accept": bool, "reasons": [...], "paths": n, "packages": [...]}.
+Accept only if every changed path is owned by a package, that package was installed or upgraded since
+the baseline was written (mtime of aide.db) and it verifies clean (dpkg --verify / rpm -V).
+  aide-auto-accept-check [--ignore REGEX]... [--max-paths N] [--removed-ok]
+"""
+import argparse
+import glob
+import gzip
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+
+DB = "/var/lib/aide/aide.db"
+SECTION = re.compile(r"^(Added|Removed|Changed) entries:\s*$")
+COUNT = re.compile(r"^\s*(Added|Removed|Changed) entries:\s+(\d+)")
+ENTRY = re.compile(r"^[A-Za-z!=<>+\-. ]+: (/.*)$")
+DPKG_LOG = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d) (?:install|upgrade) (\S+) ")
+
+
+def run(*cmd):
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=900, check=False)
+
+
+def parse(report):
+    """paths per kind, and whether the sections add up to the counts in the summary"""
+    paths = {"Added": [], "Removed": [], "Changed": []}
+    counts, kind = {}, None
+    for line in report.splitlines():
+        m = COUNT.match(line)
+        if m:
+            counts[m.group(1)] = int(m.group(2))
+        m = SECTION.match(line)
+        if m:
+            kind = m.group(1)
+            continue
+        if line.startswith("Detailed information"):
+            kind = None
+        m = ENTRY.match(line)
+        if kind and m:
+            paths[kind].append(m.group(1))
+    return paths, all(counts.get(k, 0) == len(v) for k, v in paths.items())
+
+
+def candidates(path):
+    """the path, then the same one with its dir resolved (merged /usr: /bin/x is /usr/bin/x)"""
+    real = os.path.join(os.path.realpath(os.path.dirname(path)), os.path.basename(path))
+    return [path] if real == path else [path, real]
+
+
+class Debian:
+    name = "dpkg"
+
+    @staticmethod
+    def norm(pkg):
+        return pkg.split(":")[0]
+
+    def owners(self, path):
+        for p in candidates(path):
+            glob_safe = re.sub(r"([*?\[\]\\])", r"\\\1", p)
+            r = run("dpkg-query", "-S", "--", glob_safe)
+            if r.returncode == 0:
+                found = set()
+                for line in r.stdout.splitlines():
+                    if not line.startswith("diversion by"):
+                        found.update(self.norm(x.strip()) for x in line.rpartition(": ")[0].split(","))
+                return found
+        return set()
+
+    def touched(self, since):
+        """packages dpkg unpacked since: dpkg.log (rotated ones too), also catches dpkg -i and unattended-upgrades"""
+        found = set()
+        for f in glob.glob("/var/log/dpkg.log*"):
+            if os.path.getmtime(f) < since:
+                continue
+            opener = gzip.open if f.endswith(".gz") else open
+            with opener(f, "rt", errors="replace") as fh:
+                for line in fh:
+                    m = DPKG_LOG.match(line)
+                    if m and time.mktime(time.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")) > since:
+                        found.add(self.norm(m.group(2)))
+        return found
+
+    def clean(self, pkg):
+        # dpkg --verify says nothing for a package without md5sums, so that counts as unverifiable
+        sums = glob.glob(f"/var/lib/dpkg/info/{pkg}.md5sums") + glob.glob(f"/var/lib/dpkg/info/{pkg}:*.md5sums")
+        if not sums:
+            return "no checksums to verify against"
+        r = run("dpkg", "--verify", pkg)
+        return None if r.returncode == 0 and not r.stdout.strip() else f"{len(r.stdout.splitlines())} file(s) differ from the package"
+
+
+class Redhat:
+    name = "rpm"
+
+    def owners(self, path):
+        for p in candidates(path):
+            r = run("rpm", "-qf", "--qf", "%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\\n", p)
+            if r.returncode == 0:
+                return set(r.stdout.split())
+        return set()
+
+    def touched(self, since):
+        r = run("rpm", "-qa", "--qf", "%{INSTALLTIME} %{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}\\n")
+        return {n for t, n in (l.split() for l in r.stdout.splitlines()) if int(t) > since}
+
+    def clean(self, pkg):
+        r = run("rpm", "-V", pkg)
+        return None if r.returncode == 0 and not r.stdout.strip() else f"{len(r.stdout.splitlines())} file(s) differ from the package"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ignore", action="append", default=[])
+    ap.add_argument("--max-paths", type=int, default=500)
+    ap.add_argument("--removed-ok", action="store_true")
+    args = ap.parse_args()
+
+    reasons, packages = [], set()
+
+    def out(accept, total=0):
+        print(json.dumps({"accept": accept and not reasons, "reasons": reasons, "paths": total, "packages": sorted(packages)}))
+
+    paths, consistent = parse(sys.stdin.read())
+    total = sum(len(v) for v in paths.values())
+    if total == 0 or not consistent:
+        reasons.append("couldn't read the changed paths from the report")
+        return out(False, total)
+    if total > args.max_paths:
+        reasons.append(f"{total} changed paths, more than {args.max_paths}")
+        return out(False, total)
+
+    pm = Debian() if shutil.which("dpkg-query") else Redhat() if shutil.which("rpm") else None
+    if pm is None:
+        reasons.append("no dpkg and no rpm on this host")
+        return out(False, total)
+
+    since = os.path.getmtime(DB)
+    touched = pm.touched(since)
+    ignore = [re.compile(x) for x in args.ignore]
+    cache = {}
+
+    def owners(p):
+        if p not in cache:
+            cache[p] = pm.owners(p)
+        return cache[p]
+
+    for kind, plist in paths.items():
+        for p in plist:
+            if any(rx.search(p) for rx in ignore):
+                continue
+            # a removed file has no owner left, its dir does: the package that dropped it owned that dir
+            who = owners(os.path.dirname(p)) if kind == "Removed" and args.removed_ok else owners(p)
+            if kind == "Removed" and not args.removed_ok:
+                reasons.append(f"removed, no package to check: {p}")
+            elif not who:
+                reasons.append(f"not owned by a package: {p}")
+            elif not who & touched:
+                reasons.append(f"owner not upgraded since the baseline ({', '.join(sorted(who)[:3])}): {p}")
+            elif kind != "Removed" and (not os.path.isdir(p) or os.path.islink(p)):
+                packages.update(who & touched)
+            # a changed dir only needs an owner that was upgraded, its entries are listed on their own
+
+    if not packages and not reasons:
+        reasons.append("every path is ignored or a directory, no package to verify")
+    for pkg in sorted(packages):
+        bad = pm.clean(pkg)
+        if bad:
+            reasons.append(f"{pkg} doesn't verify clean: {bad}")
+    out(True, total)
+
+
+if __name__ == "__main__":
+    main()

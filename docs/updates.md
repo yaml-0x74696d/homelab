@@ -8,6 +8,7 @@ What updates itself, what waits for a run, and how the pinned parts move. Times 
 |---|---|---|---|
 | App images on a floating tag (`latest`, `stable`, ...) and the databases and caches on the tag of their major (`16-alpine`, `8-alpine`) | Sun 13:00 | `podman auto-update` per svc user, rolls back when the new container fails its health check ([ADR 0021](adr/0021-podman-quadlets.md)) | ntfy: updated, rolled back, failed |
 | Security updates, pod VMs, ctl-1 and LXCs | daily | unattended-upgrades, security origins only, no reboot ([ADR 0024](adr/0024-ansible-run-os-updates.md)) | |
+| AIDE changes that packages explain | daily 17:00, Semaphore | `aide-auto-accept.yml` accepts a host only if every changed path belongs to a package upgraded since the last accept and verifies clean ([ADR 0042](adr/0042-aide-auto-accept-after-package-upgrades.md)) | ntfy: counts. A host that waits is listed in the run output |
 | NixOS VMs | netbird 03:00, edge 04:00 | `system.autoUpgrade`, reboots only inside their window, one after the other | |
 | Home Assistant OS | in HA | HA's own updates, Ansible never logs in | HA |
 
@@ -73,5 +74,5 @@ nixos/update.sh <netbird|edge>
 
 ## After any update
 
-- AIDE: `update.yml` accepts by itself. Anything else (a NixOS switch, a manual package) needs `aide-accept.yml -l <host>` or `nixos/aide-accept.sh <host>`
+- AIDE: `update.yml` accepts by itself, `aide-auto-accept.yml` what unattended-upgrades changed. Anything else (a NixOS switch, a manual package) needs `aide-accept.yml -l <host>` or `nixos/aide-accept.sh <host>`
 - Look at Gatus (every route and host) and Homepage once

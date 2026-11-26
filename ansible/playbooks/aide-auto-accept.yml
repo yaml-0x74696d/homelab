@@ -1,0 +1,25 @@
+---
+# accept the aide changes that packages explain, on every host, one at a time (semaphore, daily, after the check).
+# a host with any change nobody explains is left alone: aide-accept.yml -l <host>. never touches the nixos vms.
+# the run output lists why a host waited. hosts in reach_optional_hosts may be off
+- name: Reach
+  hosts: pod_vms:podman_hosts:proxmox:lxc_containers
+  gather_facts: false
+  roles: [reach]
+
+- name: Accept verified package changes
+  hosts: pod_vms:podman_hosts:proxmox:lxc_containers:&reachable
+  gather_facts: false
+  serial: 1   # nodes and their guests share disks, same reason the checks are spread
+  roles: [aide_auto_accept]
+
+# on the aide hosts, not localhost, so -l <host> keeps it
+- name: Report
+  hosts: pod_vms:podman_hosts:proxmox:lxc_containers
+  gather_facts: false
+  run_once: true
+  tasks:
+    - name: Summary
+      ansible.builtin.include_role:
+        name: aide_auto_accept
+        tasks_from: summary

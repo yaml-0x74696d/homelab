@@ -38,7 +38,8 @@
 - Anything else: the old baseline stays the reference
 - If it's not your change, don't accept. Find out what happened first
 - `playbooks/update.yml` accepts on its own, but only if the check right before the upgrade was clean (`roles/update`)
-- Both use `tasks/accept.yml` for the swap
+- `playbooks/aide-auto-accept.yml` (Semaphore, daily) accepts what package upgrades explain, see `roles/aide_auto_accept`. The rest waits for you
+- All three use `tasks/accept.yml` for the swap
 
 ## Security
 

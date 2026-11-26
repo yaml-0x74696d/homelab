@@ -1,0 +1,20 @@
+---
+# changes beyond this many paths always wait for a person
+aide_auto_accept_max_paths: 500
+
+# a removed file has no owner left: true = the owner of its dir (upgraded since the baseline) has to
+# explain it, false = any removed path blocks the accept
+aide_auto_accept_removed: true
+
+# regexes of paths that don't need an owner (generated files: initramfs, modules.dep, dpkg's own db).
+# empty = every path needs one. add only what the run output showed as noise, one by one
+aide_auto_accept_ignore: []
+
+aide_auto_accept_reason_lines: 50   # reasons printed per host
+
+aide_auto_accept_hosts: "{{ groups['lxc_containers'] + groups['pod_vms'] + groups['podman_hosts'] + groups['proxmox'] }}"
+
+aide_auto_accept_ntfy_title: homelab aide
+aide_auto_accept_ntfy_headers: >-
+  {{ {'Title': aide_auto_accept_ntfy_title}
+     | combine({'Authorization': 'Bearer ' ~ ntfy_token} if ntfy_token | default('') | length > 0 else {}) }}

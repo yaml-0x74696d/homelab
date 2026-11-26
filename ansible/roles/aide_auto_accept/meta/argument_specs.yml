@@ -1,0 +1,28 @@
+---
+argument_specs:
+  main:
+    short_description: Accept the AIDE changes of one host if packages explain all of them and verify clean
+    options:
+      aide_auto_accept_max_paths:
+        type: int
+        description: More changed paths than this always wait for a person
+      aide_auto_accept_removed:
+        type: bool
+        description: Let the owner of a removed file's dir explain it, false = a removed path blocks the accept
+      aide_auto_accept_ignore:
+        type: list
+        elements: str
+        description: Regexes of paths that need no owner (generated files)
+  summary:
+    short_description: Print and push the result of every host, once on the controller (aide-auto-accept.yml)
+    options:
+      aide_auto_accept_hosts:
+        type: list
+        elements: str
+        description: Hosts the summary covers
+      aide_auto_accept_reason_lines:
+        type: int
+        description: Reasons printed per host
+      aide_auto_accept_ntfy_headers:
+        type: dict
+        description: Headers for the push
