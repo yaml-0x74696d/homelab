@@ -23,6 +23,7 @@ digest() { skopeo inspect --no-tags --command-timeout "$TIMEOUT" --format '{{.Di
 # podman and skopeo get /dev/null, or they eat the loop's input
 for u in $(users); do
   while read -r name id ref; do
+    [[ $ref == localhost/* ]] && continue   # pod pause containers, built locally
     repo=${ref%:*} tag=${ref##*:}
     # | not a space: an empty label would shift the date into running
     IFS="|" read -r running created digests < <(as "$u" podman image inspect \
