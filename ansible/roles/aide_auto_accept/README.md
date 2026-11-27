@@ -42,19 +42,22 @@ Where "upgraded since" comes from:
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
 | `aide_auto_accept_max_paths` | `500` | More changed paths than this always wait for a person |
-| `aide_auto_accept_removed` | `false` | A removed file nobody owns blocks the accept. `true`: an upgraded owner of its dir can explain it |
-| `aide_auto_accept_db_files` | dpkg `status`, `status-old`, `available` | Exact paths of the package db, see rule 7 |
+| `aide_auto_accept_removed` | `false` | A removed file nobody owns blocks the accept. true: an upgraded owner of its dir can explain it. A removed file a package still owns is always checked |
 | `aide_auto_accept_ignore` | `[]` | Regexes of paths that need no owner, matched against the whole path. Empty means every path needs one. Add one only when you know what writes it and why it is harmless |
-| `aide_auto_accept_wait_retries` / `aide_auto_accept_wait_delay` | `60` / `30` | How long to wait for a running daily AIDE check (tries, seconds) |
+| `aide_auto_accept_db_files` | see `defaults/main.yml` | Exact paths of the package manager's db (dpkg status, status-old, available), explained when a package was upgraded or installed from a repo since the last accept and only content or times changed |
+| `aide_auto_accept_wait_retries` | `60` | Tries while a daily aide check is running |
+| `aide_auto_accept_wait_delay` | `30` | Seconds between them |
+| `aide_auto_accept_hosts` | see `defaults/main.yml` | Hosts the summary covers (lxc_containers, pod_vms, podman_hosts, proxmox) |
 | `aide_auto_accept_reason_lines` | `50` | Reasons printed per host |
-| `aide_auto_accept_hosts` | lxc_containers + pod_vms + podman_hosts + proxmox | Hosts the summary covers |
 | `aide_auto_accept_ntfy_title` | `homelab aide` | ntfy title |
-| `aide_auto_accept_ntfy_headers` | Title + Bearer `ntfy_token` if set | Headers for the push |
-| `aide_run_timeout` / `aide_run_poll`, `aide_checksum_dir` | `roles/aide` | Limits for the scan, where the hashes live |
-| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings, an empty URL sends nothing |
+| `aide_auto_accept_ntfy_headers` | see `defaults/main.yml` | Headers for the push, the title plus a Bearer token when ntfy_token is set |
+<!-- settings:end -->
+
+Also from `roles/aide`: `aide_run_timeout`, `aide_run_poll` (limits for the scan) and `aide_checksum_dir` (where the hashes and accept times live). From group_vars: `ntfy_url`, `ntfy_token`, `ntfy_timeout` (shared ntfy settings, an empty URL sends nothing).
 
 ## Notes
 

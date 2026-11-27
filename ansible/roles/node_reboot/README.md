@@ -21,20 +21,23 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `node_reboot_pve` | `false` | `true` in the pve play: quorum and guest checks |
-| `node_reboot_check_kernel` | `true` | needrestart's kernel and microcode check. `false` on the LXCs, they run the node's kernel |
-| `node_reboot_timeout` | `900` | Seconds for the host to come back, `1800` in the pve play |
-| `node_reboot_boot_time_command` | empty | The reboot module's default (boot_id). The LXC play sets init's start time: the boot_id is the node's and doesn't change |
-| `node_reboot_wait_retries` / `node_reboot_wait_delay` | `60` / `10` | Tries and seconds while waiting for a guest, systemd or an app |
-| `node_reboot_quorum_retries` / `node_reboot_quorum_delay` | `30` / `10` | Same for quorum after the reboot |
-| `node_reboot_summary_hosts` | lxc_containers + pod_vms + proxmox | Hosts the summary covers |
+| `node_reboot_pve` | `false` | A pve node, true in the pve play (quorum and guest checks) |
+| `node_reboot_check_kernel` | `true` | needrestart's kernel and microcode check. false on the lxcs, they run the node's kernel |
+| `node_reboot_timeout` | `900` | Seconds for the host to come back, 1800 in the pve play (the node stops its guests first) |
+| `node_reboot_boot_time_command` | `""` | The reboot module's boot_time_command, empty = its default (boot_id). The lxc play sets init's start time, the boot_id there is the node's and doesn't change |
+| `node_reboot_wait_retries` | `60` | Tries while waiting for a guest, systemd or an app |
+| `node_reboot_wait_delay` | `10` | Seconds between them |
+| `node_reboot_quorum_retries` | `30` | Quorum tries after the reboot (roles/update, tasks/quorum.yml gets it as update_quorum_retries) |
+| `node_reboot_quorum_delay` | `10` | Seconds between quorum tries (update_quorum_delay in the call) |
 | `node_reboot_ntfy_title` | `homelab reboots` | ntfy title |
-| `node_reboot_ntfy_headers` | Title + Bearer `ntfy_token` if set | Headers for every ntfy push |
-| `update_quorum_retries`, `update_quorum_delay` | `roles/update` | Set per call here |
-| `podman_svc_prefix`, `apps` | group_vars | Which user managers to wait for |
-| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings, an empty URL sends nothing |
+| `node_reboot_ntfy_headers` | see `defaults/main.yml` | Headers for every ntfy push |
+| `node_reboot_summary_hosts` | see `defaults/main.yml` | Hosts the summary covers, in play order |
+<!-- settings:end -->
+
+Also from group_vars: `podman_svc_prefix` and `apps` (which user managers to wait for), `guest_nodes`, `ntfy_url`, `ntfy_token`, `ntfy_timeout` (shared ntfy settings, an empty URL sends nothing). `update_quorum_retries` and `update_quorum_delay` are `roles/update`'s, set per call here.
 
 ## Notes
 

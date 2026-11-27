@@ -5,16 +5,18 @@ argument_specs:
     options:
       node_reboot_pve:
         type: bool
-        description: A pve node, true in the pve play
+        description: A pve node, true in the pve play (quorum and guest checks)
       node_reboot_check_kernel:
         type: bool
-        description: needrestart's kernel and microcode check, false on the lxcs
+        description: needrestart's kernel and microcode check. false on the lxcs, they run the node's kernel
       node_reboot_timeout:
         type: int
-        description: Seconds for the host to come back
+        description: Seconds for the host to come back, 1800 in the pve play (the node stops its guests first)
       node_reboot_boot_time_command:
         type: str
-        description: The reboot module's boot_time_command, empty = its default
+        description: >-
+          The reboot module's boot_time_command, empty = its default (boot_id). The lxc play sets init's start time,
+          the boot_id there is the node's and doesn't change
       node_reboot_wait_retries:
         type: int
         description: Tries while waiting for a guest, systemd or an app
@@ -23,10 +25,10 @@ argument_specs:
         description: Seconds between them
       node_reboot_quorum_retries:
         type: int
-        description: Quorum tries after the reboot
+        description: Quorum tries after the reboot (roles/update, tasks/quorum.yml gets it as update_quorum_retries)
       node_reboot_quorum_delay:
         type: int
-        description: Seconds between them
+        description: Seconds between quorum tries (update_quorum_delay in the call)
       node_reboot_ntfy_title:
         type: str
         description: ntfy title

@@ -32,16 +32,23 @@ A failure before step 4 starts the old db and the app again, nothing was moved. 
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `postgres_major_app` | required | The app's key in `apps.yml`, set from `-e app=` |
-| `postgres_major_images` | `[docker.io/library/postgres]` | Images that count as plain Postgres |
-| `postgres_major_pgdata_change` | `18` | First major refused, see Notes |
+| `postgres_major_app` | `""` | The app's key in apps.yml, its db container has the new tag already |
+| `postgres_major_images` | `[docker.io/library/postgres]` | Images that count as plain postgres, others are refused |
+| `postgres_major_pgdata_change` | `18` | First major whose image keeps PGDATA elsewhere, refused until the unit templates follow |
 | `postgres_major_dir` | `pg-major` | Folder in the app's dir for the dump and the import log |
-| `postgres_major_ready_retries` / `postgres_major_ready_delay` | `30` / `5` | Tries and seconds until the new Postgres answers |
-| `postgres_major_route_codes` | 200, 204, 301, 302, 303, 307, 308, 401 | Status codes that count as up |
-| `postgres_major_route_retries` / `postgres_major_route_delay` | `30` / `10` | Tries and seconds on the first route |
-| `podman_apps_root`, `podman_svc_prefix`, `domain`, `apps` | group_vars | Where the apps live, who runs them, the route |
+| `postgres_major_ready_retries` | `30` | Tries until the new postgres answers |
+| `postgres_major_ready_delay` | `5` | Seconds between them |
+| `postgres_major_route_codes` | `[200, 204, 301, 302, 303, 307, 308, 401]` | Status codes that count as the app being up |
+| `postgres_major_route_retries` | `30` | Tries on the app's first route |
+| `postgres_major_route_delay` | `10` | Seconds between them |
+| `postgres_major_user` | `{{ podman_svc_prefix }}{{ postgres_major_app }}` | the svc user the commands run as |
+| `postgres_major_env` | see `defaults/main.yml` | the svc user's runtime dir and bus, so systemd --user and podman find their socket |
+<!-- settings:end -->
+
+Also from group_vars: `podman_apps_root`, `podman_svc_prefix`, `domain` and `apps` (where the apps live, who runs them, the route to check).
 
 ## Notes
 

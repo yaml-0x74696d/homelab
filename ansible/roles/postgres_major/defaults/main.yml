@@ -19,7 +19,8 @@ postgres_major_route_codes: [200, 204, 301, 302, 303, 307, 308, 401]
 postgres_major_route_retries: 30
 postgres_major_route_delay: 10
 
-postgres_major_user: "{{ podman_svc_prefix }}{{ postgres_major_app }}"
+postgres_major_user: "{{ podman_svc_prefix }}{{ postgres_major_app }}"   # the svc user the commands run as
+# the svc user's runtime dir and bus, so systemd --user and podman find their socket
 postgres_major_env:
   XDG_RUNTIME_DIR: "/run/user/{{ apps[postgres_major_app].uid }}"
   DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ apps[postgres_major_app].uid }}/bus"
