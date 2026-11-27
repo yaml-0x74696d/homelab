@@ -10,7 +10,7 @@ argument_specs:
       gatus_push_job:
         type: str
         required: true
-        description: Semaphore template name, the external endpoint is semaphore-<job> (gatus_semaphore_templates)
+        description: Semaphore template name (`repo-pull`, `aide` or `update`), the external endpoint is semaphore-<job> (gatus_semaphore_templates)
       gatus_push_group:
         type: str
         required: true
@@ -23,4 +23,4 @@ argument_specs:
         type: str
         default: ""
         no_log: true
-        description: Gatus push token (vault), empty = no push
+        description: Gatus push token (vault), also in Semaphore's copy of the vault (`ctl-preparation.yml -l ctl-1 -t private-files`). empty = no push

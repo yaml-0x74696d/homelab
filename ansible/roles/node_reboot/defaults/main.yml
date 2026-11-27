@@ -1,0 +1,19 @@
+---
+# the plays set these: pve nodes get node_reboot_pve and a longer timeout, lxcs skip the kernel check
+node_reboot_pve: false
+node_reboot_check_kernel: true   # needrestart's kernel + microcode check, false on the lxcs (they run the node's kernel)
+node_reboot_timeout: 900         # seconds for the host to come back, the pve play raises it (guests shut down first)
+node_reboot_boot_time_command: ""   # empty = the module's default (boot_id). lxcs share the node's boot_id, see the lxc play
+
+# waiting for a service or guest: tries x seconds
+node_reboot_wait_retries: 60
+node_reboot_wait_delay: 10
+node_reboot_quorum_retries: 30
+node_reboot_quorum_delay: 10
+
+node_reboot_summary_hosts: "{{ groups['lxc_containers'] + groups['pod_vms'] + groups['proxmox'] }}"
+
+node_reboot_ntfy_title: homelab reboots
+node_reboot_ntfy_headers: >-
+  {{ {'Title': node_reboot_ntfy_title}
+     | combine({'Authorization': 'Bearer ' ~ ntfy_token} if ntfy_token | default('') | length > 0 else {}) }}

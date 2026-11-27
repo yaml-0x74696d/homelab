@@ -1,0 +1,47 @@
+---
+argument_specs:
+  main:
+    short_description: Accept the AIDE changes of one host if packages explain all of them and verify clean
+    options:
+      aide_auto_accept_max_paths:
+        type: int
+        description: More changed paths than this always wait for a person
+      aide_auto_accept_removed:
+        type: bool
+        description: >-
+          A removed file nobody owns blocks the accept. true: an upgraded owner of its dir can explain it.
+          A removed file a package still owns is always checked
+      aide_auto_accept_ignore:
+        type: list
+        elements: str
+        description: >-
+          Regexes of paths that need no owner, matched against the whole path. Empty means every path needs one.
+          Add one only when you know what writes it and why it is harmless
+      aide_auto_accept_db_files:
+        type: list
+        elements: str
+        description: >-
+          Exact paths of the package manager's db (dpkg status, status-old, available), explained when a package
+          was upgraded or installed from a repo since the last accept and only content or times changed
+      aide_auto_accept_wait_retries:
+        type: int
+        description: Tries while a daily aide check is running
+      aide_auto_accept_wait_delay:
+        type: int
+        description: Seconds between them
+  summary:
+    short_description: Print and push the result of every host, once on the controller (aide-auto-accept.yml)
+    options:
+      aide_auto_accept_hosts:
+        type: list
+        elements: str
+        description: Hosts the summary covers (lxc_containers, pod_vms, podman_hosts, proxmox)
+      aide_auto_accept_reason_lines:
+        type: int
+        description: Reasons printed per host
+      aide_auto_accept_ntfy_title:
+        type: str
+        description: ntfy title
+      aide_auto_accept_ntfy_headers:
+        type: dict
+        description: Headers for the push, the title plus a Bearer token when ntfy_token is set

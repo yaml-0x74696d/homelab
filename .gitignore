@@ -49,3 +49,4 @@ ansible/apps/homepage/config/images/background.jpg
 luks-header-*
 *.tfvars.json
 netbird-inventory/
+__pycache__/

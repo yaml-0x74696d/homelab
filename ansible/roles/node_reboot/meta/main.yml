@@ -1,0 +1,14 @@
+galaxy_info:
+  role_name: node_reboot
+  author: tim
+  description: reboot a host that needs one and wait until it is whole again
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+    - name: EL
+      versions:
+        - "10"
+dependencies: []

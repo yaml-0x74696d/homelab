@@ -1,0 +1,52 @@
+---
+# one host: reboot it if it needs one, wait until it is whole again. a failure stops the run
+- name: Reboot if due on {{ inventory_hostname }}
+  # a host that drops off mid-way counts as failed, so the rescue below still fires
+  ignore_unreachable: true
+  block:
+    - name: Look for a due reboot on {{ inventory_hostname }}
+      ansible.builtin.include_tasks: check.yml
+
+    - name: Reboot {{ inventory_hostname }}
+      when: node_reboot_due
+      block:
+        - name: Note the state before on {{ inventory_hostname }}
+          ansible.builtin.include_tasks: before.yml
+
+        - name: Reboot now on {{ inventory_hostname }}
+          ansible.builtin.reboot:
+            reboot_timeout: "{{ node_reboot_timeout }}"
+            boot_time_command: "{{ node_reboot_boot_time_command | default(omit, true) }}"
+            msg: reboot by ansible (playbooks/reboot.yml)
+
+        - name: Wait until whole again on {{ inventory_hostname }}
+          ansible.builtin.include_tasks: after.yml
+
+    - name: Record result for {{ inventory_hostname }}
+      ansible.builtin.set_fact:
+        node_reboot_result:
+          host: "{{ inventory_hostname }}"
+          rebooted: "{{ node_reboot_due }}"
+          guests: "{{ node_reboot_guests | default([]) | length }}"
+          started: "{{ node_reboot_started | default([]) | map(attribute='vmid') | list }}"
+
+  rescue:
+    - name: Alert on failed reboot of {{ inventory_hostname }}
+      ansible.builtin.uri:
+        url: "{{ ntfy_url }}"
+        method: POST
+        body: "{{ inventory_hostname }}: '{{ ansible_failed_task.name }}' failed, run stopped, the hosts after it keep their reboot"
+        headers: "{{ node_reboot_ntfy_headers | combine({'Priority': 'high', 'Tags': 'rotating_light'}) }}"
+        timeout: "{{ ntfy_timeout }}"
+      delegate_to: localhost
+      become: false
+      failed_when: false
+      no_log: true   # bearer token in the headers
+      when: ntfy_url | default('') | length > 0
+
+    - name: Summary of the hosts done so far
+      ansible.builtin.include_tasks: summary.yml
+
+    - name: Stop the run
+      ansible.builtin.fail:
+        msg: "{{ inventory_hostname }}: '{{ ansible_failed_task.name }}' failed, nothing after it was rebooted"

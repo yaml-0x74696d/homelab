@@ -18,12 +18,14 @@
 
 Set in `group_vars/all/base.yml`, shared with `nixos/base`.
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `journald_storage` | `volatile` | `persistent` keeps the journal on disk |
-| `journald_runtime_max_use` | `100M` | RAM cap for the journal |
-| `journald_rate_limit_interval` | `30s` | Window for the rate limit |
-| `journald_rate_limit_burst` | `10000` | Messages per service and window before drops |
+| `journald_storage` | - | "volatile" or "persistent" (keeps the journal on disk), set in group_vars/all/base.yml, default volatile |
+| `journald_runtime_max_use` | - | RAM cap for the journal, set in group_vars/all/base.yml, default 100M |
+| `journald_rate_limit_interval` | - | Window for the rate limit, set in group_vars/all/base.yml, default 30s |
+| `journald_rate_limit_burst` | - | Messages per service and window before drops, set in group_vars/all/base.yml, default 10000 |
+<!-- settings:end -->
 
 ## Notes
 

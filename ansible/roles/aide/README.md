@@ -17,7 +17,7 @@
 3. Installs `/usr/local/sbin/aide-check` with `aide-check.service` and `.timer`
 4. Masks Debian's `dailyaidecheck.timer`. Ours runs at midday and pushes to ntfy instead of sending a mail at night
 5. First run only, last: `aide --init` hashes the whole system (async), so the baseline already contains the files above
-6. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 on the controller (`meta: flush_handlers`, right away)
+6. Handlers then move `aide.db.new` to `aide.db` and record its SHA256 and the time on the controller (`meta: flush_handlers`, right away)
 
 ## Daily check
 
@@ -34,11 +34,12 @@
 - Run `ansible-playbook playbooks/aide-accept.yml -l <host>` (one host at a time, `serial: 1`)
 - It checks the hash, runs `aide --update`, shows the first `aide_report_lines` lines of the diff and asks you to type "yes"
 - In Semaphore there's no prompt: the survey var `aide_accept=yes` accepts in the same run, the diff stays in the task log
-- Yes: the new database is swapped in, and its SHA256 is written to `aide_checksum_dir/<host>.sha256` on the controller
+- Yes: the new database is swapped in, and its SHA256 is written to `aide_checksum_dir/<host>.sha256` on the controller, next to it the accept time (epoch seconds, controller clock) in `<host>.accepted`. `roles/aide_auto_accept` counts package upgrades from that time
 - Anything else: the old baseline stays the reference
 - If it's not your change, don't accept. Find out what happened first
 - `playbooks/update.yml` accepts on its own, but only if the check right before the upgrade was clean (`roles/update`)
-- Both use `tasks/accept.yml` for the swap
+- `playbooks/aide-auto-accept.yml` (Semaphore, daily) accepts what package upgrades explain, see `roles/aide_auto_accept`. The rest waits for you
+- All three use `tasks/accept.yml` for the swap
 
 ## Security
 
@@ -47,6 +48,7 @@
 - A mismatch (or a missing `<host>.sha256`) pushes "AIDE db mismatch on <host>" to ntfy, then stops the run. Treat it as an incident and compare with the last PBS snapshot
 - The push comes from `tasks/verify.yml`, so `aide.yml`, `aide-accept.yml` and `update.yml` all send it. In `update.yml` the run-stopped alert follows
 - The check script is mode `0700`, because it holds the ntfy token
+- `<host>.accepted` sits next to the hash and is trusted the same way: a timestamp for the auto-accept, it can't hide a swapped database (the hash check stays)
 - The `<host>.sha256` files are specific to each host, so they're gitignored and live in the offsite-synced private folder
 
 ## Hashes and sync
@@ -55,7 +57,7 @@
 - The controller's `ansible/aide/` and ctl-1's dir are kept the same by Syncthing, both ways. An accept on either side reaches the other within seconds
 - Not synced: Syncthing's GUI (`127.0.0.1:8384` on ctl-0) shows the folder's state. A `.sync-conflict-…` file means both sides changed the same hash, keep the one that matches the host's db
 - On ctl-1 the dir has ACLs for `admin_user` (Syncthing) and Semaphore's container user, a copy by hand needs no `sudo`
-- Renaming a host: rename `<host>.sha256` on both sides, then accept on that host
+- Renaming a host: rename `<host>.sha256` and `<host>.accepted` on both sides, then accept on that host
 - "database hash mismatch": the database changed outside an accept, or a copy is stale. Compare both copies first, then look at the host before accepting
 
 ## Accepting many hosts
@@ -72,21 +74,27 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `aide_check_time` / `aide_check_delay` | `*-*-* 12:00:00`, up to `30min` | When the check runs (group_vars `schedules.yml`, shared with NixOS) |
-| `aide_excludes_common` | see below | Excludes on every host |
-| `aide_excludes_by_group` | see below | Excludes per inventory group, rendered as `!<path>(/\|$)` |
-| `aide_login_homes` | admin home, `/root` | Homes with history files on the `VarFile` rule (see Notes) |
-| `aide_history_files` | bash, less, vim, python, wget history | Regex of the history file names in those homes |
-| `aide_content_files` | `/etc/hosts`, netbird's `99-netbird.conf` + `state.json` | Rewritten with the same content: owner, mode and checksum watched, times not (`ContentFile`) |
-| `aide_var_dirs` | `/etc/apt/apt.conf.d`, `/etc/ssh/ssh_config.d`, `/var/lib/netbird` | Dirs whose files get replaced: owner and mode watched, times not (`VarDir`). Added and removed files still show |
-| `aide_var_files` | timer stamps, apt periodic stamps, NetworkManager leases + `seen-bssids`, dnsmasq leases | Files rewritten by design: only owner, mode and type watched (`VarFile`) |
-| `aide_run_timeout` / `aide_run_poll` | `3600` s / `30` s | Limits for `--init` and `--update` |
-| `aide_check_nice` / `aide_check_io_class` | `19` / `idle` | Priority of the check |
-| `aide_report_lines` | `150` | Diff lines shown on accept |
-| `aide_checksum_dir` | `$AIDE_CHECKSUM_DIR`, else `ansible/aide` | Where the hashes are stored on the controller. Semaphore sets the env var to its rw volume on ctl-1, the reference copy. On ctl-0 `ansible/aide` is a gitignored symlink into the offsite-synced private folder, pulled from ctl-1 (`roles/ctl_base`) |
-| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the check still runs, but nothing is pushed |
+| `aide_check_time` | - | systemd OnCalendar of the check, `*-*-* 12:00:00` (group_vars schedules.yml, shared with nixos) |
+| `aide_check_delay` | - | Random delay on top of it, up to `30min` (schedules.yml) |
+| `aide_check_nice` | `19` | Nice of the check |
+| `aide_check_io_class` | `idle` | IOSchedulingClass of the check |
+| `aide_run_timeout` | `3600` | Seconds --init and --update may take |
+| `aide_run_poll` | `30` | Seconds between async polls of --init and --update |
+| `aide_checksum_dir` | see `defaults/main.yml` | Controller dir with the accepted db hashes, one \<host>.sha256 each. Default `$AIDE_CHECKSUM_DIR`, else `ansible/aide`. Semaphore sets the env var to its rw volume on ctl-1, the reference copy. On ctl-0 `ansible/aide` is a gitignored symlink into the offsite-synced private folder, pulled from ctl-1 (roles/ctl_base) |
+| `aide_excludes_common` | see `defaults/main.yml` | Excludes on every host |
+| `aide_excludes_by_group` | see `defaults/main.yml` | Excludes per inventory group, group name -> list of paths, rendered as `!<path>(/\|$)` |
+| `aide_login_homes` | `['/home/{{ admin_user }}', /root]` | Homes with history files on the VarFile rule (see Notes), default the admin home and /root |
+| `aide_history_files` | `\\.(bash_history\|lesshst\|viminfo\|python_history\|wget-hsts)` | Regex of the history file names in those homes |
+| `aide_var_files` | see `defaults/main.yml` | Files rewritten by design: only owner, mode and type watched (VarFile) |
+| `aide_content_files` | see `defaults/main.yml` | Rewritten with the same content: owner, mode and checksum watched, times not (ContentFile) |
+| `aide_var_dirs` | see `defaults/main.yml` | Dirs whose files get replaced: owner and mode watched, times not (VarDir). Added and removed files still show |
+| `aide_report_lines` | `150` | diff lines shown by aide-accept.yml on accept |
+<!-- settings:end -->
+
+Also from group_vars: `ntfy_url`, `ntfy_token`, `ntfy_timeout`, the shared ntfy settings. With an empty URL the check still runs, but nothing is pushed.
 
 ## Notes
 

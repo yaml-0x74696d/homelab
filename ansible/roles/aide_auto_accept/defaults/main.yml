@@ -1,0 +1,33 @@
+---
+# changes beyond this many paths always wait for a person
+aide_auto_accept_max_paths: 500
+
+# a removed file that no package owns any more: true = the owner of its dir (upgraded since the last accept)
+# has to explain it, false = it blocks the accept. a removed file a package still owns is always checked
+# (dpkg --verify says missing)
+aide_auto_accept_removed: false
+
+# regexes of paths that don't need an owner (generated files: initramfs, modules.dep, dpkg's own db).
+# empty = every path needs one. add only what the run output showed as noise, one by one
+aide_auto_accept_ignore: []
+
+# the package manager's own db: no package owns it, it changes with every package. explained when at least one
+# package was upgraded (or installed from a repo) since the last accept and only content or times differ.
+# dpkg only. the aide role is apt-only today and has no EL config, so no rpm db files are listed
+aide_auto_accept_db_files:
+  - /var/lib/dpkg/status
+  - /var/lib/dpkg/status-old
+  - /var/lib/dpkg/available
+
+aide_auto_accept_reason_lines: 50   # reasons printed per host
+
+# a daily aide check already running: wait up to retries x delay seconds
+aide_auto_accept_wait_retries: 60
+aide_auto_accept_wait_delay: 30
+
+aide_auto_accept_hosts: "{{ groups['lxc_containers'] + groups['pod_vms'] + groups['podman_hosts'] + groups['proxmox'] }}"
+
+aide_auto_accept_ntfy_title: homelab aide
+aide_auto_accept_ntfy_headers: >-
+  {{ {'Title': aide_auto_accept_ntfy_title}
+     | combine({'Authorization': 'Bearer ' ~ ntfy_token} if ntfy_token | default('') | length > 0 else {}) }}

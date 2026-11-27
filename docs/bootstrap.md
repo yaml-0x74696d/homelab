@@ -177,8 +177,8 @@ ansible-playbook playbooks/push-keys.yml   # semaphore's key onto every host (AD
 
 Semaphore by hand, in its UI (its own database, no backup, [ADR 0031](adr/0031-semaphore-on-a-single-board-computer.md)):
 - **(hand)** Key store: the vault password and an SSH key for Semaphore. Its public key into `semaphore_ssh_pubkey` in `private.yml` before the `push-keys.yml` run above
-- **(hand)** The project, then the templates: `repo-pull`, `aide`, `update`, `app-versions`, and `aide-accept` with the survey var `aide_accept`
-- **(hand)** Schedules: `repo-pull` daily 11:45, `aide` daily 13:15, `app-versions` daily 06:00, `update` Saturday 14:00 with `--limit 'all:!ctl-1'`. They live in the UI only
+- **(hand)** The project, then the templates: `repo-pull`, `aide`, `aide-auto-accept`, `update`, `reboot` (no schedule), `app-versions`, and `aide-accept` with the survey var `aide_accept`
+- **(hand)** Schedules: `repo-pull` daily 11:45, `aide` daily 13:15, `aide-auto-accept` daily 17:00 (`aide_auto_accept_time`, after the check and clear of the Saturday update), `app-versions` daily 06:00, `update` Saturday 14:00 with `--limit 'all:!ctl-1'`. They live in the UI only
 - **(hand)** A guest-role user and its API token for Gatus (`semaphore_gatus_token` in the vault), the template ids into `gatus_semaphore_templates` in `app_settings.yml`
 
 ## 6. Apps

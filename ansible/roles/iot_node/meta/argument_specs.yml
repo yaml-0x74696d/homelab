@@ -14,13 +14,13 @@ argument_specs:
         description: Regulatory domain
       iot_node_ct_address:
         type: str
-        description: The CT's address on the card, with prefix
+        description: The CT's address on the card, with prefix, set by LXC
       iot_node_ct_start_timeout:
         type: int
         description: Seconds until SSH answers after a restart
       iot_node_ct_stop_timeout:
         type: int
-        description: Seconds pct shutdown waits
+        description: Seconds pct shutdown waits before the restart
       iot_node_hook_wait:
         type: int
         description: Seconds the pre-start hook waits for the card to come back

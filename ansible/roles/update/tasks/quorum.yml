@@ -1,0 +1,10 @@
+---
+# pve node: wait for corosync to say Quorate: Yes. entry point for roles/node_reboot
+- name: Check quorum on {{ inventory_hostname }}
+  ansible.builtin.command: pvecm status
+  register: update_quorum_check
+  changed_when: false
+  check_mode: false
+  until: update_quorum_check.rc == 0 and update_quorum_check.stdout is search('Quorate:\s+Yes')
+  retries: "{{ update_quorum_retries }}"
+  delay: "{{ update_quorum_delay }}"

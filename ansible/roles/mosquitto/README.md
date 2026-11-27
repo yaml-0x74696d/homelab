@@ -18,14 +18,16 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
 | `mosquitto_port` | `mqtt_port` | Listener |
-| `mosquitto_user` | `mqtt_user` (`app_settings.yml`) | The shared user |
-| `mosquitto_password` | `mqtt_password` (vault) | Its password |
+| `mosquitto_user` | `mqtt_user` | The shared user |
+| `mosquitto_password` | `mqtt_password` | Its password (vault) |
 | `mosquitto_passwd_file` | `/etc/mosquitto/passwd` | Hashed password file |
-| `mosquitto_passwd_sum_file` | `/etc/mosquitto/passwd.sum` | Checksum that decides when to rehash |
-| `mosquitto_passwd_salt` | `mqtt_passwd_salt` (vault) | Its salt, secret so the checksum can't be guessed offline. Change it to force a rehash |
+| `mosquitto_passwd_sum_file` | `/etc/mosquitto/passwd.sum` | Salted sha512 of user:password, root only, decides when to rehash |
+| `mosquitto_passwd_salt` | `mqtt_passwd_salt` | Salt for that checksum (vault), change it to force a rehash |
+<!-- settings:end -->
 
 ## Notes
 

@@ -19,19 +19,19 @@ argument_specs:
         description: Seconds between node_exporter restarts, so it outlasts the boot race for its address
       lxc_base_ufw:
         type: bool
-        description: The LXC filters with ufw, so it gets the node-exporter rule
+        description: "`true` on the LXCs that filter with ufw (storage, iot), they get the node-exporter rule"
   ufw_rules:
     short_description: Allow rules tagged with a comment, stale tagged ones dropped (deploy-iot.yml uses it too)
     options:
       lxc_base_ufw_rules_comment:
         type: str
         required: true
-        description: Tag on every rule, the stale check only looks at these
+        description: "Tag on every rule, the stale check only looks at these. Required for `tasks_from: ufw_rules`"
       lxc_base_ufw_rules:
         type: list
         elements: dict
         required: true
-        description: The rules
+        description: "`{port, proto, src, iface}` list, `iface` optional. Required for `tasks_from: ufw_rules`"
         options:
           port:
             type: raw

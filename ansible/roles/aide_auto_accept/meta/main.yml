@@ -1,0 +1,14 @@
+galaxy_info:
+  role_name: aide_auto_accept
+  author: tim
+  description: accept AIDE changes that come from verified package upgrades
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+    - name: EL
+      versions:
+        - "10"
+dependencies: []

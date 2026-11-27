@@ -26,16 +26,20 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `mqtt_exporter_broker` | `tcp://127.0.0.1:<mqtt_port>` | The broker |
+| `mqtt_exporter_broker` | `tcp://127.0.0.1:{{ mqtt_port }}` | The broker |
 | `mqtt_exporter_listen` | `iot_lan_ip` | Listen address, LAN only |
-| `mqtt_exporter_user`, `mqtt_exporter_password` | `mqtt_user`, `mqtt_password` (vault) | The shared MQTT login |
+| `mqtt_exporter_port` | - | Listen port (ports.yml, 9641), Prometheus scrapes it as the iot_sensors job |
+| `mqtt_exporter_user` | `mqtt_user` | MQTT login |
+| `mqtt_exporter_password` | `mqtt_password` | Its password (vault) |
 | `mqtt_exporter_topic_path` | `home/+/+` | Subscription |
-| `mqtt_exporter_device_regex`, `mqtt_exporter_metric_regex` | see defaults | Device and metric name from the topic |
-| `mqtt_exporter_cache_timeout` | `5m` | A sensor silent this long drops out of `/metrics` |
-| `mqtt_exporter_metrics` | temperature, humidity | Topic part → metric name + help |
-| `mqtt_exporter_port` | `9641` (`ports.yml`) | Scraped by Prometheus (`iot_sensors` job) |
+| `mqtt_exporter_device_regex` | `home/(?P<deviceid>[^/]+)/.*` | Device from the topic, named group deviceid |
+| `mqtt_exporter_metric_regex` | `home/[^/]+/(?P<metricname>[^/]+)` | Metric from the topic, named group metricname |
+| `mqtt_exporter_cache_timeout` | `5m` | A sensor silent this long drops out of /metrics |
+| `mqtt_exporter_metrics` | see `defaults/main.yml` | Topic part -> metric name + help, default temperature and humidity |
+<!-- settings:end -->
 
 ## Notes
 

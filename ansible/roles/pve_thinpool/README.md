@@ -17,13 +17,17 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `pve_thinpool_interval` | `thinpool_interval_min` minutes (`5`) | Timer interval |
-| `pve_thinpool_textfile_dir` | `/var/lib/prometheus/node-exporter` | node-exporter's textfile dir, AIDE leaves it out |
-| `pve_thinpool_file` | `thinpool_file` (`thinpool.prom`) | File in that dir, the fresh check matches it |
-| `pve_thinpool_data_metric`, `pve_thinpool_metadata_metric` | `thinpool_*_metric` (group_vars) | Metric names, Gatus queries the same ones |
-| `gatus_thinpool_max_pct`, `gatus_thinpool_stale_max`, `gatus_thinpool_interval` | group_vars | Limit per node, seconds before the file counts as stale (3 × the interval), check interval, in `app_settings.yml` |
+| `pve_thinpool_interval` | `{{ thinpool_interval_min }}min` | How often the timer runs (systemd time span), `thinpool_interval_min` minutes (5) |
+| `pve_thinpool_textfile_dir` | `/var/lib/prometheus/node-exporter` | node-exporter's textfile collector dir, AIDE leaves it out |
+| `pve_thinpool_file` | `thinpool_file` | File name in that dir (`thinpool.prom`), the fresh check matches it |
+| `pve_thinpool_data_metric` | `thinpool_data_metric` | Metric name of a pool's data percent, Gatus queries the same one |
+| `pve_thinpool_metadata_metric` | `thinpool_metadata_metric` | Metric name of a pool's metadata percent, Gatus queries the same one |
+<!-- settings:end -->
+
+Also from group_vars (app_settings.yml): `gatus_thinpool_max_pct` (limit per node), `gatus_thinpool_stale_max` (seconds before the file counts as stale, 3 x the interval), `gatus_thinpool_interval` (check interval).
 
 ## Related
 

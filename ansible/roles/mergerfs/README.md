@@ -26,13 +26,16 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `mergerfs_options` | see Pool options | The full option string for the pool |
-| `mergerfs_disk_opts` | `defaults,noatime` | Mount options for each disk |
-| `mergerfs_require_disks` | `true` | Adds `x-systemd.requires` for each disk |
-| `mergerfs_ct_root_uid` | `100000` | The unprivileged CT's root user, as seen from the host |
-| `storage_disks`, `storage_pool_host`, `samba_shares`, `samba_gid_base` | group_vars | Shared with the other storage roles |
+| `mergerfs_options` | see `defaults/main.yml` | mergerfs union options, see Pool options. mfs = write to the disk with most free space. |
+| `mergerfs_disk_opts` | `defaults,noatime` | member disk mount options |
+| `mergerfs_require_disks` | `true` | order the pool after the disks at boot, adds x-systemd.requires for each disk |
+| `mergerfs_ct_root_uid` | `100000` | CT 300 maps root to host uid 100000 |
+<!-- settings:end -->
+
+Also from group_vars, shared with the other storage roles: `storage_disks`, `storage_pool_host`, `samba_shares`, `samba_gid_base`.
 
 ## Notes
 

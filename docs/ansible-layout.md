@@ -63,10 +63,12 @@ Every `README.md` has the same headings, in this order:
 ## Runs on         hosts, the playbook, what has to be there first
 ## How it works    numbered steps, in task order
 ## <topic>         optional, one section per thing that needs more words
-## Settings        | Variable | Default | What |, defaults in backticks
+## Settings        generated table | Variable | Default | What |, between the settings markers
 ## Notes           gotchas, one line each
 ## Related         ADRs and the code outside the role
 ```
+
+The Settings table is generated, don't edit it. It sits between `<!-- settings:start -->` and `<!-- settings:end -->` and comes from `meta/argument_specs.yml` (name, description) and `defaults/main.yml` (default). A role without argument_specs gets its rows from `defaults/main.yml`, the trailing comment (or the comment right above) is the description. Fix a row in those files, then run `python3 scripts/gen_role_settings.py` (the pre-commit hook does too). Vars that live in group_vars and not in the role go in a line of prose under the table.
 
 Types and required inputs go in `meta/argument_specs.yml`, not in the README.
 
@@ -94,7 +96,10 @@ Run from `ansible/`: `ansible-playbook playbooks/<file>`.
 | `push-keys.yml` | all but `appliances` | admin and Semaphore keys into `authorized_keys` | by hand |
 | `aide.yml` | guests, VMs, nodes, ctl-1 | AIDE install, baseline, daily check, hash verify | by hand, Semaphore (daily) |
 | `aide-accept.yml` | same | review and accept changes, one host at a time | by hand, Semaphore with `aide_accept=yes` |
+| `aide-auto-accept.yml` | same | accepts the AIDE changes that package upgrades explain and that verify clean, the rest waits | Semaphore (daily) |
 | `update.yml` | same | OS updates one host at a time, no reboot, summary | Semaphore (weekly), by hand |
+| `reboot.yml` | guests, VMs, nodes | reboots the hosts that need one: LXCs and pod VMs, then the PVE nodes, one at a time, stops at the first failure | Semaphore (no schedule), by hand |
+| `postgres-major.yml` | the app's host | one app's Postgres to a higher major: dump, swap the data dir, import, `-e app=<name>` | by hand |
 | `repo-pull.yml` | `podman_hosts` | pulls Semaphore's checkout on ctl-1 | Semaphore (daily) |
 | `app-versions.yml` | `pod_vms`, `podman_hosts` | running and newest version of every app image, page on `web.<domain>/versions/` | Semaphore (daily), by hand |
 | `render-podman.yml` | `pod_vms`, `podman_hosts` | renders every app with example values, touches no host | `just render` |

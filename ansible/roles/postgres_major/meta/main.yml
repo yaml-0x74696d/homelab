@@ -1,0 +1,11 @@
+galaxy_info:
+  role_name: postgres_major
+  author: tim
+  description: move an app's postgres container to a new major, dump and import
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+dependencies: []

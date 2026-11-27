@@ -1,0 +1,54 @@
+---
+# once on the controller after all hosts. ntfy gets counts only, paths and reasons stay in the run log
+- name: Collect results
+  ansible.builtin.set_fact:
+    aide_auto_accept_done: >-
+      {{ aide_auto_accept_hosts | map('extract', hostvars) | selectattr('aide_auto_accept_result', 'defined')
+         | map(attribute='aide_auto_accept_result') | list }}
+
+- name: Why a host waits
+  ansible.builtin.debug:
+    msg: "{{ item.reasons[:aide_auto_accept_reason_lines] }}"
+  loop: "{{ aide_auto_accept_done | rejectattr('state', 'in', ['clean', 'accepted']) | list }}"
+  loop_control:
+    label: "{{ item.host }}"
+
+- name: Summary
+  vars:
+    aide_auto_accept_accepted: "{{ aide_auto_accept_done | selectattr('state', 'eq', 'accepted') | list }}"
+    aide_auto_accept_review: "{{ aide_auto_accept_done | selectattr('state', 'eq', 'review') | list }}"
+    aide_auto_accept_errors: "{{ aide_auto_accept_done | selectattr('state', 'eq', 'error') | list }}"
+    aide_auto_accept_lines: |-
+      {% for r in aide_auto_accept_accepted %}
+      {{ r.host }}: accepted, {{ r.paths }} paths, {{ r.packages | length }} packages
+      {% endfor %}
+      {% for r in aide_auto_accept_review %}
+      {{ r.host }}: needs review, {{ r.reasons | length }} reasons, run aide-accept.yml -l {{ r.host }}
+      {% endfor %}
+      {% for r in aide_auto_accept_errors %}
+      {{ r.host }}: ERROR, nothing changed, see the run log
+      {% endfor %}
+  # a day without changes says nothing
+  when: (aide_auto_accept_accepted + aide_auto_accept_review + aide_auto_accept_errors) | length > 0
+  block:
+    - name: Print summary
+      ansible.builtin.debug:
+        msg: "{{ aide_auto_accept_lines | trim | split('\n') }}"
+
+    - name: Push summary
+      ansible.builtin.uri:
+        url: "{{ ntfy_url }}"
+        method: POST
+        body: "{{ aide_auto_accept_lines }}"
+        headers: "{{ aide_auto_accept_ntfy_headers }}"
+        timeout: "{{ ntfy_timeout }}"
+      delegate_to: localhost
+      become: false
+      no_log: true   # bearer token in the headers
+      when: ntfy_url | default('') | length > 0
+
+    # the summary is out, now the run goes red like any failed host
+    - name: Fail on hosts with an error
+      ansible.builtin.fail:
+        msg: "{{ aide_auto_accept_errors | map(attribute='host') | list }}: see Why a host waits above"
+      when: aide_auto_accept_errors | length > 0

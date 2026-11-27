@@ -2,6 +2,14 @@
 
 Format: status, context, decision, consequences.
 
+## Rules
+
+- An ADR is for a real trade-off: a reasonable engineer could have chosen differently, or it is costly to undo
+- Where an app runs and small ops details go into the docs (`apps.md` and the like), not into an ADR
+- An accepted ADR is a frozen record. It isn't rewritten to refresh wording
+- A changed decision gets a new ADR that supersedes the old one, the old one gets `Status: Superseded by` plus a link to the new one
+- The docs carry the current state, the ADRs carry why it was chosen
+
 - [1. OpenTofu and cloud-init for VMs](0001-tofu-and-cloud-init-for-vms.md)
 - [2. One generic role for all apps](0002-generic-docker-app-role.md) (superseded by 21)
 - [3. NetBird instead of port forwards](0003-netbird-instead-of-port-forwards.md)
@@ -43,3 +51,4 @@ Format: status, context, decision, consequences.
 - [39. Syncthing between ctl-0 and ctl-1](0039-syncthing-between-ctl-0-and-ctl-1.md)
 - [40. What a VPN peer may reach is NetBird policy, in code](0040-netbird-policy-as-code.md)
 - [41. Grafana dashboards as code, provisioned by Ansible](0041-grafana-dashboards-as-code.md)
+- [42. AIDE accepts package upgrades by itself, after checking them](0042-aide-auto-accept-after-package-upgrades.md)

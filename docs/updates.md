@@ -7,8 +7,8 @@ What updates itself, what waits for a run, and how the pinned parts move. Times 
 | What | When | How | Reports |
 |---|---|---|---|
 | App images on a floating tag (`latest`, `stable`, ...) and the databases and caches on the tag of their major (`16-alpine`, `8-alpine`) | Sun 13:00 | `podman auto-update` per svc user, rolls back when the new container fails its health check ([ADR 0021](adr/0021-podman-quadlets.md)) | ntfy: updated, rolled back, failed |
-| Newer tags of pinned images | Sun 12:00 | `podman-new-tags` lists newer tags of the same shape (`16-alpine` → `17-alpine`) | ntfy, nothing is changed |
 | Security updates, pod VMs, ctl-1 and LXCs | daily | unattended-upgrades, security origins only, no reboot ([ADR 0024](adr/0024-ansible-run-os-updates.md)) | |
+| AIDE changes that packages explain | daily 17:00, Semaphore | `aide-auto-accept.yml` accepts a host only if every changed path belongs to a package upgraded since the last accept and verifies clean ([ADR 0042](adr/0042-aide-auto-accept-after-package-upgrades.md)) | ntfy: counts. A host that waits is listed in the run output |
 | NixOS VMs | netbird 03:00, edge 04:00 | `system.autoUpgrade`, reboots only inside their window, one after the other | |
 | Home Assistant OS | in HA | HA's own updates, Ansible never logs in | HA |
 
@@ -24,25 +24,41 @@ ansible-playbook playbooks/update.yml
 - AIDE is checked before and re-baselined after, so an update needs no accept, unless the host was dirty before
 - The summary at the end (terminal + ntfy) is the to-do list. How to read it: [`roles/update/README.md`](../ansible/roles/update/README.md#reading-the-summary)
 
-Reboots, when the summary says `REBOOT due`:
-- A pod VM: `ssh -t pod-N sudo reboot`. Its apps start again on their own (`WantedBy=default.target`, linger). pod-1 takes SSO down for a minute, pod-2 the VPN routing and DNS for VPN clients
-- A PVE node: shut its guests down first, then reboot the node. pve-1 carries edge (LAN DNS + every route), pod-1 (SSO) and the IoT gateway
+## Reboots: `reboot.yml`
+
+When the summary says `REBOOT due`, run it (Semaphore template without a schedule, or by hand):
+
+```bash
+ansible-playbook playbooks/reboot.yml
+```
+
+- Only hosts that need one: `/var/run/reboot-required`, a newer kernel or microcode (`needs-restarting -r` on EL). `--check` lists them
+- The LXCs and pod VMs first, one at a time, each until ssh, systemd and (pod VMs) every app's health check are back. Then the PVE nodes, one at a time: quorum before, PVE stops its guests and starts the `onboot` ones again, the next node waits for quorum and for its guests to run
+- The first failure stops the run and pushes an alert. How it works: [`roles/node_reboot/README.md`](../ansible/roles/node_reboot/README.md)
+- ctl-1 isn't in it, it runs Semaphore: `ssh -t ctl-1 sudo reboot` from the controller
+- pod-1 takes SSO down for a minute, pod-2 the VPN routing and DNS for VPN clients. pve-1 carries edge (LAN DNS + every route), pod-1 (SSO) and the IoT gateway
+
+By hand, when the playbook can't be used:
+- A pod VM: `ssh -t pod-N sudo reboot`. Its apps start again on their own (`WantedBy=default.target`, linger)
+- A PVE node: shut its guests down first, then reboot the node, then start what didn't come back. Quorum has to be back before the next node
 - Never two nodes at once, the cluster needs quorum
 
 ## Pinned images
 
-Auto-update only refreshes the tag an app pins. Databases and caches update inside their major, and the app restarts with them. Immich's Postgres is the exception (`auto_update: false`). `podman-new-tags` says when a newer one exists, the bump is a change in `group_vars/all/apps.yml` plus a deploy:
+Auto-update only refreshes the tag an app pins. Databases and caches update inside their major, and the app restarts with them. Immich's Postgres is the exception (`auto_update: false`). The versions page (`web.<domain>/versions/`, `roles/app_versions`) says when a newer one exists, the bump is a change in `group_vars/all/apps.yml` plus a deploy:
 
 ```bash
 just deploy-app <app>
 ```
 
 Images that need more than a tag change:
-- **Postgres major** (`16-alpine` → `17-alpine`): the data dir doesn't open on a new major. Dump, start empty on the new tag, import:
-  1. `ssh -t pod-N sudo systemctl start pbs-backup.service` (fresh dump on PBS)
-  2. Stop the app, move `/srv/apps/<app>/database` aside
-  3. Bump the db tag, deploy: the db starts empty
-  4. Import the dump as in [bootstrap step 7](bootstrap.md#7-restore-the-data), start the app, then delete the old dir
+- **Postgres major** (`16-alpine` → `17-alpine`): the data dir doesn't open on a new major, so the data goes through a dump. Authentik, Nextcloud and Paperless:
+  1. Raise the db tag in `group_vars/all/apps.yml`, commit it, don't deploy
+  2. `ansible-playbook playbooks/postgres-major.yml -e app=<app>` (`--check` first shows the plan)
+  - It dumps the running old db with the app stopped, moves the data dir aside, deploys the new tag, imports, starts the app and asks its route. Downtime is the dump plus the import
+  - The old data dir and the dump are kept. The run prints the `rm -rf` for them, do it after a few days
+  - A fresh PBS dump first is still a good idea: `ssh -t pod-N sudo systemctl start pbs-backup.service`
+  - Majors from 18 on are refused until the db template follows the new PGDATA path. [`roles/postgres_major`](../ansible/roles/postgres_major/README.md)
 - **Nextcloud** (`35-apache`): one major at a time, it refuses to skip. `start_timeout: 15min` covers `occ upgrade` on the first start
 - **Authentik**: one release series at a time, never down. Raise the tag on `authentik` and `authentik-worker` in `apps.yml`, add the new series to `authentik_series` in `app_settings.yml`, then `just deploy authentik`. The wrapper refuses skipped series, downgrades and a nearly full thin pool, and waits for ready through edge ([ADR 0014](adr/0014-authentik-as-idp.md))
 - **Immich's Postgres** (vectorchord build): follow the Immich release notes, never plain Postgres
@@ -74,5 +90,5 @@ nixos/update.sh <netbird|edge>
 
 ## After any update
 
-- AIDE: `update.yml` accepts by itself. Anything else (a NixOS switch, a manual package) needs `aide-accept.yml -l <host>` or `nixos/aide-accept.sh <host>`
+- AIDE: `update.yml` accepts by itself, `aide-auto-accept.yml` what unattended-upgrades changed. Anything else (a NixOS switch, a manual package) needs `aide-accept.yml -l <host>` or `nixos/aide-accept.sh <host>`
 - Look at Gatus (every route and host) and Homepage once

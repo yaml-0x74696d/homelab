@@ -1,0 +1,26 @@
+---
+# the app's key in apps.yml, set by playbooks/postgres-major.yml
+postgres_major_app: ""
+
+# plain postgres only. anything else (immich's vectorchord build) has its own upgrade path
+postgres_major_images: [docker.io/library/postgres]
+
+# the official image keeps PGDATA below /var/lib/postgresql/<major>/ from this major on, our units
+# mount /var/lib/postgresql/data. the data would land in an anonymous volume
+postgres_major_pgdata_change: 18
+
+# dump, import log and the readiness probe, in the app's dir (not in git, root and the svc user only)
+postgres_major_dir: pg-major
+postgres_major_ready_retries: 30
+postgres_major_ready_delay: 5   # seconds
+
+# a route that answers is enough: sso apps redirect to the login
+postgres_major_route_codes: [200, 204, 301, 302, 303, 307, 308, 401]
+postgres_major_route_retries: 30
+postgres_major_route_delay: 10
+
+postgres_major_user: "{{ podman_svc_prefix }}{{ postgres_major_app }}"   # the svc user the commands run as
+# the svc user's runtime dir and bus, so systemd --user and podman find their socket
+postgres_major_env:
+  XDG_RUNTIME_DIR: "/run/user/{{ apps[postgres_major_app].uid }}"
+  DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ apps[postgres_major_app].uid }}/bus"

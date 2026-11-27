@@ -7,11 +7,12 @@ argument_specs:
       podman_app_name:
         type: str
         required: true
-        description: The app's key in apps.yml, also the name of apps/<name>/ and svc-<name>
+        description: >-
+          The app's key in apps.yml, also the name of apps/<name>/ and svc-<name>. Set by deploy-app.yml
       podman_app_entry:
         type: dict
         required: true
-        description: The app's entry in apps.yml
+        description: The app's entry in apps.yml. Set by deploy-app.yml
         mutually_exclusive: [[host, hosts]]
         required_one_of: [[host, hosts]]
         options:
@@ -133,4 +134,6 @@ argument_specs:
               port: {type: int, description: "Backend port, default the app's port"}
       podman_app_private_dir:
         type: str
-        description: Root of the private overlay, $HOMELAB_PRIVATE_DIR (semaphore) else private_dir. empty = none
+        description: >-
+          Root of the private config overlay. Default `$HOMELAB_PRIVATE_DIR`, else `private_dir`. Semaphore
+          sets the env var to its mount of ctl-1's copy (roles/ctl_base). empty = none

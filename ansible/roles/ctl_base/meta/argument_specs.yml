@@ -15,10 +15,10 @@ argument_specs:
       ctl_base_dns:
         type: list
         elements: str
-        description: Resolvers, in the profile
+        description: Resolvers in the profile, internet names only
       ctl_base_repo_dir:
         type: path
-        description: Git clone Semaphore runs from
+        description: Git clone Semaphore runs from (`/home/<admin_user>/homelab`)
       ctl_base_repo_url:
         type: str
         description: Repo to clone
@@ -34,14 +34,14 @@ argument_specs:
         description: Gitignored files copied from the controller's checkout, relative to the repo root
       ctl_base_private_dir:
         type: path
-        description: ctl-1's copy of private_dir, readable by svc-semaphore, mounted into semaphore at the same path
+        description: ctl-1's copy of private_dir (`/home/<admin_user>/homelab-private`), readable by svc-semaphore, mounted into semaphore at the same path
       ctl_base_private_excludes:
         type: list
         elements: str
         description: Patterns syncthing ignores in the overlays (.stignore)
       ctl_base_syncthing_peer_id:
         type: str
-        description: ctl-0's syncthing device id. empty = syncthing runs without a device or folders
+        description: ctl-0's syncthing device id from private.yml. empty = syncthing runs without a device or folders
       ctl_base_syncthing_home:
         type: path
         description: Syncthing's state dir for the admin user, holds config.xml with the api key

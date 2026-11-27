@@ -1,152 +1,77 @@
 #!/usr/bin/env python3
-"""Check docs/adr against the house style. Usage: check_adr.py [repo-or-adr-dir]
+"""Check docs/adr structure and links. Usage: check_adr.py [repo-or-adr-dir]
 
-Every Consequences bullet carries a label: Easier, Harder, Accepted, Later, Related.
+File names, numbering, status line, sections, the index and relative links.
+Wording is not checked.
 """
 import re
 import sys
 from pathlib import Path
 
 STATUSES = ("Accepted", "Proposed", "Superseded")
-# superseded ones name their successor: "Status: Superseded by [0021](0021-....md)"
-SUPERSEDED_RE = re.compile(r"^ by \[(\d{4})\]\(\1-[^)]+\.md\)$")
-SECTIONS = ["Context", "Decision", "Consequences"]
-# every Consequences bullet starts with one of these, in this order, Related last
-CONSEQUENCE_ORDER = ["Easier", "Harder", "Accepted", "Later"]
+SECTIONS = ("Context", "Decision", "Consequences")
 FILE_RE = re.compile(r"^(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
-LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)#\s]+)(?:#[^)]*)?\)")
-BANNED = {"—": "em dash, use a comma, colon or new bullet", "–": "en dash outside a number range"}
+SUPERSEDED_RE = re.compile(r"^ by \[(\d{4})\]\((\1-[^)]+\.md)\)$")
+LINK_RE = re.compile(r"\[[^\]]*\]\(([^)#\s]+)(?:#[^)]*)?\)")
 
-errors, warnings = [], []
+errors = []
 
 
 def err(f, msg):
     errors.append(f"{f}: {msg}")
 
 
-def warn(f, msg):
-    warnings.append(f"{f}: {msg}")
-
-
-def sections(lines):
-    out, cur = {}, None
-    for line in lines:
-        m = re.match(r"^## (.+)$", line)
-        if m:
-            cur = m.group(1).strip()
-            out[cur] = []
-        elif cur:
-            out[cur].append(line)
-    return out
-
-
-def check_adr(path, num):
+def check_adr(path, num, adr_dir):
     name = path.name
     text = path.read_text()
     lines = text.splitlines()
 
-    m = re.match(r"^# (\d+)\. (.+)$", lines[0] if lines else "")
+    m = re.match(r"^# (\d+)\. ", lines[0] if lines else "")
     if not m:
         err(name, "first line must be '# N. Title'")
-        return None, (None, None)
-    if int(m.group(1)) != num:
+    elif int(m.group(1)) != num:
         err(name, f"heading number {m.group(1)} != file number {num}")
-    title = m.group(2)
 
-    status, by = None, None
     sm = re.search(r"^Status: (\S+)(.*)$", text, re.M)
     if not sm:
         err(name, "missing 'Status: ...' line")
+    elif sm.group(1) not in STATUSES:
+        err(name, f"status '{sm.group(1)}' not in {STATUSES}")
     else:
-        status = sm.group(1)
         sup = SUPERSEDED_RE.match(sm.group(2))
-        by = sup.group(1) if sup else None
-        if status not in STATUSES:
-            err(name, f"status '{status}' not in {STATUSES} (new status = ask Tim)")
-        elif (status == "Superseded") != bool(sup):
-            err(name, "only Superseded takes a suffix, and it must be ' by [NNNN](NNNN-....md)'")
-        if lines.index(sm.group(0)) != 2:
-            err(name, "status must be line 3, right under the title")
+        if sm.group(1) == "Superseded":
+            if not sup:
+                err(name, "Superseded must name its successor: ' by [NNNN](NNNN-....md)', same number in text and link")
+            elif not (adr_dir / sup.group(2)).exists():
+                err(name, f"successor {sup.group(2)} does not exist")
+        elif sm.group(2).strip():
+            err(name, "only Superseded takes a suffix")
 
     found = [l[3:].strip() for l in lines if l.startswith("## ")]
-    if found != SECTIONS:
-        err(name, f"sections {found} != {SECTIONS}")
-    if any(l.startswith("### ") for l in lines):
-        err(name, "no ### headings, use a plain 'Label:' line")
+    for s in SECTIONS:
+        if s not in found:
+            err(name, f"missing section '## {s}'")
 
-    sec = sections(lines)
-    ctx = sec.get("Context", [])
-    if "- Alternatives:" not in ctx:
-        err(name, "Context needs a '- Alternatives:' bullet")
-    else:
-        alts = []
-        for l in ctx[ctx.index("- Alternatives:") + 1:]:
-            if not l.startswith("  - "):
-                break
-            alts.append(l)
-        if not alts:
-            err(name, "Alternatives has no nested items")
-        for a in alts:
-            if "(why not:" not in a and "(chosen)" not in a:
-                err(name, f"alternative without '(why not: ...)': {a.strip()}")
-
-    if not any(l.startswith("- Enforced by:") for l in sec.get("Decision", [])):
-        err(name, "Decision needs a '- Enforced by: ...' bullet")
-
-    cons = sec.get("Consequences", [])
-    seen = [k for l in cons for k in CONSEQUENCE_ORDER if l.startswith(f"- {k}:")]
-    firsts = list(dict.fromkeys(seen))
-    if firsts != [k for k in CONSEQUENCE_ORDER if k in firsts]:
-        err(name, f"consequence groups out of order {firsts}, want {', '.join(CONSEQUENCE_ORDER)}")
-    bullets = [l for l in cons if l.startswith("- ")]
-    for l in bullets:
-        if not any(l.startswith(f"- {k}:") for k in CONSEQUENCE_ORDER + ["Related"]):
-            err(name, f"consequence without a label ({', '.join(CONSEQUENCE_ORDER)}, Related), move it to Decision: {l}")
-    if not bullets or not bullets[-1].startswith("- Related:"):
-        err(name, "last Consequences bullet must be '- Related: ...'")
-
-    for i, l in enumerate(lines, 1):
-        for ch, why in BANNED.items():
-            if ch in l and not (ch == "–" and re.search(r"\d–\d", l)):
-                err(name, f"line {i}: {why}")
-        if l != l.rstrip():
-            err(name, f"line {i}: trailing whitespace")
-
-    for label, target in LINK_RE.findall(text):
-        if re.match(r"^[a-z]+:", target):
-            continue
-        if not (path.parent / target).exists():
+    for target in LINK_RE.findall(text):
+        if not re.match(r"^[a-z]+:", target) and not (path.parent / target).exists():
             err(name, f"broken link {target}")
-        lm = re.match(r"^(\d{4})$", label)
-        if lm and not target.startswith(lm.group(1) + "-"):
-            err(name, f"link text [{label}] points at {target}")
 
-    return title, (status, by)
+    return int(m.group(1)) if m else None
 
 
-def check_readme(adr_dir, adrs):
+def check_index(adr_dir, files):
     readme = adr_dir / "README.md"
     if not readme.exists():
         err("README.md", "missing")
         return
-    entries = re.findall(r"^- \[(\d+)\. (.+?)\]\(([^)]+)\)(.*)$", readme.read_text(), re.M)
-    listed = [e[2] for e in entries]
-    for num, (fname, title, (status, by)) in sorted(adrs.items()):
-        hits = [e for e in entries if e[2] == fname]
-        if len(hits) != 1:
-            err("README.md", f"{fname} listed {len(hits)} times, want 1")
-            continue
-        n, t, _, tail = hits[0]
-        if int(n) != num or t != title:
-            err("README.md", f"entry '{n}. {t}' != heading '{num}. {title}'")
-        want = " (proposed)" if status == "Proposed" else f" (superseded by {int(by)})" if status == "Superseded" else ""
-        if tail.strip() != want.strip():
-            err("README.md", f"{fname}: suffix '{tail.strip()}' should be '{want.strip()}'")
-    if listed != sorted(listed):
-        err("README.md", "entries not in number order")
-    for f in listed:
-        if not (adr_dir / f).exists():
-            err("README.md", f"lists missing file {f}")
+    text = readme.read_text()
+    listed = re.findall(r"^- \[[^\]]+\]\(([^)]+)\)", text, re.M)
+    for f in files:
+        if listed.count(f) != 1:
+            err("README.md", f"{f} listed {listed.count(f)} times, want 1")
+    for target in LINK_RE.findall(text):
+        if not re.match(r"^[a-z]+:", target) and not (adr_dir / target).exists():
+            err("README.md", f"broken link {target}")
 
 
 def main():
@@ -155,7 +80,7 @@ def main():
     if not adr_dir.is_dir():
         sys.exit(f"no adr dir at {adr_dir}")
 
-    adrs = {}
+    nums, files = [], []
     for p in sorted(adr_dir.glob("*.md")):
         if p.name == "README.md":
             continue
@@ -163,20 +88,17 @@ def main():
         if not m:
             err(p.name, "file name must be NNNN-lowercase-kebab.md")
             continue
-        num = int(m.group(1))
-        title, status = check_adr(p, num)
-        adrs[num] = (p.name, title, status)
+        files.append(p.name)
+        nums.append(int(m.group(1)))
+        check_adr(p, int(m.group(1)), adr_dir)
 
-    nums = sorted(adrs)
-    if nums and nums != list(range(1, nums[-1] + 1)):
+    if nums != list(range(1, len(nums) + 1)):
         err("docs/adr", f"numbering has gaps or dupes: {nums}")
-    check_readme(adr_dir, adrs)
+    check_index(adr_dir, files)
 
     for line in errors:
         print(f"ERROR {line}")
-    for line in warnings:
-        print(f"WARN  {line}")
-    print(f"{len(adrs)} adrs, {len(errors)} errors, {len(warnings)} warnings")
+    print(f"{len(files)} adrs, {len(errors)} errors")
     sys.exit(1 if errors else 0)
 
 

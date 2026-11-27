@@ -1,5 +1,5 @@
 ---
-netbird_agent_mgmt_url: "https://nb.{{ domain }}"
+netbird_agent_mgmt_url: "https://nb.{{ domain }}"   # the management server
 # one-off setup key, from `tofu output -json netbird_setup_keys`; empty = install only, enroll by hand
 netbird_agent_setup_key: "{{ vault_netbird_setup_key | default('') }}"
 # routing peer forwards lan traffic; netbird sets this too, we persist it

@@ -64,25 +64,28 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `pbs_on_calendar` | `pbs_backup_time` (`*-*-* 20:00:00`) | When the backup runs (systemd OnCalendar), set in `schedules.yml` |
-| `pbs_randomized_delay` | `pbs_backup_delay` (`20m`) | Random delay, so the three hosts don't start at once |
-| `pbs_jobs` | `[]` | Databases to dump: `{name, type: postgres\|sqlite, container?, path?, data_dir?, app?}`, set in `host_vars`. sqlite `path` is under `podman_apps_root`, postgres needs `app` and runs `podman exec` as `svc-<app>` |
-| `pbs_exclude` | `[]` | Extra excludes for `podman-apps.pxar`, set in `host_vars` |
-| `pbs_datastore` | `homelab` | Datastore on the PBS server |
-| `pbs_token_id` | `backup@pbs!client` | API token |
-| `pbs_repository` | token@pve-3:port:datastore | Built from the values above |
-| `pbs_id` | the hostname | Backup group, one per host |
-| `pbs_timeout` | `1h` | Max run time |
-| `pbs_token_secret`, `pbs_fingerprint` | vault | Token secret and server fingerprint |
-| `pbs_ntfy_url`, `pbs_ntfy_token` | `ntfy_url`, `ntfy_token` | Where failure alerts go, empty = off |
-| `pbs_heartbeat_url`, `pbs_heartbeat_timeout` | `gatus_push_url`, `gatus_push_timeout` | Gatus' backend port on pod-2, seconds per push |
-| `pbs_heartbeat_path` | `gatus_push_path` | Push path, `{key}` is replaced by `pbs_heartbeat_key` |
-| `pbs_heartbeat_key` | `<gatus_push_group>_backup-<host>` | Key of the host's external endpoint in Gatus |
-| `pbs_heartbeat_token` | `gatus_push_token` (vault) | Push token, empty = no heartbeat in the script |
-| `pbs_staging_dir`, `ntfy_timeout` | group_vars | Shared with other roles |
-| `podman_apps_root`, `podman_svc_prefix` | group_vars | Shared with `roles/podman_app` |
+| `pbs_on_calendar` | `pbs_backup_time` | systemd OnCalendar of the backup timer, `*-*-* 20:00:00` (schedules.yml) |
+| `pbs_randomized_delay` | `pbs_backup_delay` | Random delay, `20m`, so the three hosts don't start at once |
+| `pbs_datastore` | `homelab` | Datastore on the PBS |
+| `pbs_token_id` | `backup@pbs!client` | API token, backup-only |
+| `pbs_repository` | see `defaults/main.yml` | Repository string, token@pve-3:port:datastore, built from the values above |
+| `pbs_id` | `inventory_hostname` | Backup group id, one per host (the hostname) |
+| `pbs_ntfy_url` | `ntfy_url \| default('')` | ntfy topic for failures, empty = off |
+| `pbs_ntfy_token` | `ntfy_token \| default('')` | ntfy token |
+| `pbs_heartbeat_url` | `gatus_push_url` | Gatus' backend url, its port on pod-2, the heartbeat is pushed there |
+| `pbs_heartbeat_path` | `gatus_push_path` | Push path with {key} for the endpoint key |
+| `pbs_heartbeat_key` | `{{ gatus_push_group }}_backup-{{ inventory_hostname }}` | Key of the host's external endpoint in gatus (group_name) |
+| `pbs_heartbeat_token` | `gatus_push_token \| default('')` | Gatus push token (vault), empty = no heartbeat |
+| `pbs_heartbeat_timeout` | `gatus_push_timeout` | Seconds the heartbeat push may take |
+| `pbs_timeout` | `1h` | A wedged push is killed after this |
+| `pbs_jobs` | `[]` | Databases to dump before the push, set in host_vars: `{name, type: postgres\|sqlite, container?, path?, data_dir?, app?}`. sqlite `path` is under `podman_apps_root`, postgres needs `app` and runs `podman exec` as `svc-<app>` |
+| `pbs_exclude` | `[]` | Extra excludes for `podman-apps.pxar`, set in host_vars |
+<!-- settings:end -->
+
+Also from the vault: `pbs_token_secret`, `pbs_fingerprint`, the token secret and the server fingerprint. From group_vars, shared with other roles: `pbs_staging_dir`, `ntfy_timeout`, `podman_apps_root`, `podman_svc_prefix` (also used by `roles/podman_app`).
 
 ## Notes
 

@@ -1,5 +1,8 @@
 ---
-# commit runs the fast hooks; `--hook-stage manual` runs all of them (ci, just check)
+# commit runs the fast hooks, push the render; `--hook-stage manual` runs all of them (ci, just check)
+default_install_hook_types: [pre-commit, pre-push]
+# hooks without their own stages run on commit and in just check, not again on push
+default_stages: [pre-commit, manual]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
@@ -88,13 +91,43 @@ repos:
         files: (\.sh\.j2$|^scripts/shellcheck_templates)
         pass_filenames: false
 
-      # ansible-lint brings ansible-core along
+      # ansible-lint brings ansible-core along. renders on commit and fails when it changed files
       - id: render-podman
+        name: render rendered_config/example
+        language: python
+        additional_dependencies: [ansible-lint==26.10.1]
+        entry: scripts/render_podman.sh fix
+        # only what feeds the render. ~3 min, so on push, not on every commit
+        files: ^(ansible/(apps/|roles/podman_app/|group_vars/|inventory\.yml|playbooks/render-podman\.yml)|scripts/render_podman|rendered_config/)
+        pass_filenames: false
+        stages: [pre-push]
+
+      # ci: no fixing, fail on a stale render
+      - id: render-podman-check
         name: rendered_config/example up to date
         language: python
         additional_dependencies: [ansible-lint==26.10.1]
         entry: scripts/render_podman.sh check
         files: ^(ansible/|scripts/render_podman|rendered_config/)
+        pass_filenames: false
+        stages: [manual]
+
+      # the Settings table of every role README, from argument_specs and defaults
+      - id: gen-role-settings
+        name: role README Settings tables
+        language: python
+        additional_dependencies: [pyyaml==6.0.2]
+        entry: python3 scripts/gen_role_settings.py
+        files: ^(ansible/roles/|scripts/gen_role_settings)
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: gen-role-settings-check
+        name: role README Settings tables up to date
+        language: python
+        additional_dependencies: [pyyaml==6.0.2]
+        entry: python3 scripts/gen_role_settings.py --check
+        files: ^(ansible/roles/|scripts/gen_role_settings)
         pass_filenames: false
         stages: [manual]
 
@@ -136,7 +169,7 @@ repos:
         stages: [manual]
 
       - id: check-adr
-        name: adr house style
+        name: adr structure and links
         language: python
         entry: python3 scripts/check_adr.py
         files: ^(docs/adr/|scripts/check_adr)

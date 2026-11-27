@@ -1,0 +1,65 @@
+# postgres_major
+
+- Moves an app's Postgres container to a higher major: dump, swap the data dir, deploy the new tag, import, start the app
+- Keeps the old data dir and the dump, deleting them is a separate, later step
+- Plain `postgres` images only. Immich's vectorchord build is refused, it follows its release notes
+
+## Runs on
+
+- The app's host (`playbooks/postgres-major.yml -e app=<name>`), by hand from the controller. The apps with a plain Postgres: authentik, nextcloud, paperless
+- `--check` runs the checks and prints the plan, nothing is touched
+
+## The order
+
+1. Raise the db tag in `group_vars/all/apps.yml` (`16-alpine` → `17-alpine`), commit and pull it where you run the playbook. Don't deploy it: the new image can't open the old data dir
+2. `ansible-playbook playbooks/postgres-major.yml -e app=<name>`
+
+The tag goes first, because `apps.yml` is the declared state: the playbook reads the new major from it and the old one from the running container, and never edits the repo. The other way round (`-e tag=…`) would leave `apps.yml` on the old major, and the next `deploy-app.yml` would try to start the old image on the new data.
+
+## How it works
+
+1. Checks, all read-only: one container on `docker.io/library/postgres`, its tag starts with a major, the running container is the old major and the new one is higher, the data dir is a `dirs:` entry of the app, the folder for the old dir doesn't exist yet. Counts the tables of the old db
+2. Stops the app's other containers, so nothing is written from here. The old db keeps running
+3. `pg_dump --clean --if-exists` from the running old container into `<app dir>/pg-major/<app>-pg<old>.sql` (mode `0700` folder), and `pg_dumpall --roles-only` next to it as `…-roles.sql` (roles are cluster wide, pg_dump leaves them out). Both have to show their completion line in the last ten lines (pg_dump now ends with `\unrestrict` after it)
+4. Stops the old db, moves its data dir to `<dir>.pg<old>-<date>`
+5. Deploys through `roles/podman_app`: the empty data dir, the unit with the new tag, a start. The app comes up on the empty db, as in the restore after a rebuild ([bootstrap, step 7](../../../docs/bootstrap.md#7-restore-the-data)), then it is stopped again
+6. `pg_isready`, then the roles are imported first, without the ones the new cluster already has (the `POSTGRES_USER`, whose password comes from the secret), then the dump. Both through `psql --single-transaction` with `ON_ERROR_STOP`, so a failed import leaves the new db empty
+7. Checks the new db: the major, and the same number of tables as before
+8. Starts the app and asks its first route (a redirect to the login counts)
+9. Prints how to delete the old dir and the dump
+
+A failure before step 4 starts the old db and the app again, nothing was moved. After step 4 the app units are stopped, so nothing runs on an empty or half imported db, and it prints how to go back or forward. The deploy pruned the images the app didn't run, so going back pulls the old tag again. Not resumable: the old db has to be running at the start.
+
+## Settings
+
+<!-- settings:start -->
+| Variable | Default | What |
+|---|---|---|
+| `postgres_major_app` | `""` | The app's key in apps.yml, its db container has the new tag already |
+| `postgres_major_images` | `[docker.io/library/postgres]` | Images that count as plain postgres, others are refused |
+| `postgres_major_pgdata_change` | `18` | First major whose image keeps PGDATA elsewhere, refused until the unit templates follow |
+| `postgres_major_dir` | `pg-major` | Folder in the app's dir for the dump and the import log |
+| `postgres_major_ready_retries` | `30` | Tries until the new postgres answers |
+| `postgres_major_ready_delay` | `5` | Seconds between them |
+| `postgres_major_route_codes` | `[200, 204, 301, 302, 303, 307, 308, 401]` | Status codes that count as the app being up |
+| `postgres_major_route_retries` | `30` | Tries on the app's first route |
+| `postgres_major_route_delay` | `10` | Seconds between them |
+| `postgres_major_user` | `{{ podman_svc_prefix }}{{ postgres_major_app }}` | the svc user the commands run as |
+| `postgres_major_env` | see `defaults/main.yml` | the svc user's runtime dir and bus, so systemd --user and podman find their socket |
+<!-- settings:end -->
+
+Also from group_vars: `podman_apps_root`, `podman_svc_prefix`, `domain` and `apps` (where the apps live, who runs them, the route to check).
+
+## Notes
+
+- Downtime is the dump, the new image's first start and the import. The app is stopped for all of it
+- Majors from 18 on are refused: the official image keeps PGDATA below `/var/lib/postgresql/<major>/`, our units mount `/var/lib/postgresql/data`, so the data would land in an anonymous volume. Change the db template and the data dir first
+- The old dir and the dump sit in the app's dir, so PBS backs them up until you delete them (only the live `data_dir` of `pbs_jobs` is excluded). AIDE doesn't look at `/srv/apps`
+- No passwords are passed or printed: the commands run inside the container with its own environment. The dump and the import log hold data, so they are kept in files (stderr too) and never in the run output
+- A pod is stopped per container, not as a whole, so the db stays up for the dump
+- Authentik migrates the empty db on that first start, which can take minutes (`start_timeout`). `deploy-authentik.yml`'s guards aren't involved, the authentik tag doesn't change
+
+## Related
+
+- `roles/podman_app` (the deploy), `roles/pbs` (the nightly dump the restore steps use)
+- [docs/updates.md](../../../docs/updates.md#pinned-images)

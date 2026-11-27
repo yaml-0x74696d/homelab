@@ -32,10 +32,13 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `login_notify_restart_sec` | `10` | Seconds before systemd restarts the watcher |
-| `ntfy_url`, `ntfy_token`, `ntfy_timeout` | group_vars | Shared ntfy settings. With an empty URL the daemon runs but stays quiet |
+| `login_notify_restart_sec` | `10` | seconds before systemd restarts the watcher |
+<!-- settings:end -->
+
+Also from group_vars: `ntfy_url`, `ntfy_token`, `ntfy_timeout`, the shared ntfy settings. With an empty URL the daemon runs but stays quiet.
 
 - The match patterns are in `templates/login-notify.sh.j2`
 

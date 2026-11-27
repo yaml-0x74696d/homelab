@@ -1,0 +1,112 @@
+---
+# read-only, also runs in --check
+- name: Find the db container of {{ postgres_major_app }}
+  vars:
+    postgres_major_pg: "{{ apps[postgres_major_app].containers | selectattr('image', 'match', '.*/postgres$') | list }}"
+  ansible.builtin.set_fact:
+    postgres_major_db: "{{ (postgres_major_pg | first).name | default('') }}"
+    postgres_major_image: "{{ (postgres_major_pg | first).image | default('') }}"
+    postgres_major_new_tag: "{{ (postgres_major_pg | first).tag | default('') | string }}"
+    postgres_major_found: "{{ postgres_major_pg | length }}"
+
+- name: Only plain postgres, one container
+  ansible.builtin.assert:
+    that:
+      - postgres_major_found | int == 1
+      - postgres_major_image in postgres_major_images
+      - postgres_major_new_tag is match('^\d+')
+    fail_msg: >-
+      {{ postgres_major_app }}: needs exactly one container on a plain postgres image with a tag that starts with its major
+      (found {{ postgres_major_found }}, image '{{ postgres_major_image }}', tag '{{ postgres_major_new_tag }}').
+      other builds, immich's vectorchord included, follow their own release notes (docs/updates.md)
+    quiet: true
+
+- name: Read the running db of {{ postgres_major_app }}
+  ansible.builtin.command:
+    argv:
+      - podman
+      - container
+      - inspect
+      - --format
+      - "{% raw %}{{.State.Running}}|{{.ImageName}}|{{range .Mounts}}{{if eq .Destination \"/var/lib/postgresql/data\"}}{{.Source}}{{end}}{{end}}{% endraw %}"
+      - "{{ postgres_major_db }}"
+  become: true
+  become_user: "{{ postgres_major_user }}"
+  environment: "{{ postgres_major_env }}"
+  register: postgres_major_inspect
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: The old postgres has to be running
+  ansible.builtin.assert:
+    that:
+      - postgres_major_inspect.rc == 0
+      - postgres_major_inspect.stdout | trim is match('^true\|')
+    fail_msg: >-
+      {{ postgres_major_db }} isn't running on {{ inventory_hostname }}. the dump comes from the old container:
+      start it on the old tag, or restore from PBS (docs/bootstrap.md, step 7). don't deploy the new tag first
+    quiet: true
+
+- name: Read the versions
+  vars:
+    postgres_major_parts: "{{ postgres_major_inspect.stdout | trim | split('|') }}"
+  ansible.builtin.set_fact:
+    postgres_major_old_tag: "{{ postgres_major_parts[1].split(':')[-1] }}"
+    postgres_major_data_dir: "{{ postgres_major_parts[2] }}"
+    postgres_major_old: "{{ postgres_major_parts[1].split(':')[-1] | regex_search('^\\d+') }}"
+    postgres_major_new: "{{ postgres_major_new_tag | regex_search('^\\d+') }}"
+
+- name: Only forward, only where the unit templates fit
+  ansible.builtin.assert:
+    that:
+      - postgres_major_new | int > postgres_major_old | int
+      - postgres_major_new | int < postgres_major_pgdata_change | int
+      - postgres_major_data_dir | length > 0
+      - postgres_major_data_dir.startswith(podman_apps_root ~ '/' ~ postgres_major_app ~ '/')
+      - postgres_major_data_dir | basename in apps[postgres_major_app].dirs | map(attribute='path') | list
+    fail_msg: >-
+      running {{ postgres_major_old_tag }}, apps.yml says {{ postgres_major_new_tag }}, data dir '{{ postgres_major_data_dir }}'.
+      it has to be a higher major than the running one (bump the tag in apps.yml first), below {{ postgres_major_pgdata_change }}
+      (the image changes PGDATA there, the db templates mount /var/lib/postgresql/data), and the data dir has to be a
+      dirs: entry of the app under {{ podman_apps_root }}/{{ postgres_major_app }}
+    quiet: true
+
+- name: Name the folder for the old data dir
+  ansible.builtin.set_fact:
+    postgres_major_aside: "{{ postgres_major_data_dir }}.pg{{ postgres_major_old }}-{{ now(fmt='%Y%m%d') }}"
+    postgres_major_work: "{{ podman_apps_root }}/{{ postgres_major_app }}/{{ postgres_major_dir }}"
+
+- name: Old data dir must not be there yet
+  ansible.builtin.stat:
+    path: "{{ postgres_major_aside }}"
+  register: postgres_major_aside_stat
+
+- name: Fail if it is
+  ansible.builtin.assert:
+    that: not postgres_major_aside_stat.stat.exists
+    fail_msg: "{{ postgres_major_aside }} exists from an earlier run today, remove or rename it"
+    quiet: true
+
+# the same number is read again after the import
+- name: Count the tables of the old db
+  ansible.builtin.command:
+    argv:
+      - podman
+      - exec
+      - "{{ postgres_major_db }}"
+      - sh
+      - -c
+      - >-
+        psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c
+        "select count(*) from information_schema.tables where table_schema not in ('pg_catalog','information_schema')"
+  become: true
+  become_user: "{{ postgres_major_user }}"
+  environment: "{{ postgres_major_env }}"
+  register: postgres_major_count
+  changed_when: false
+  check_mode: false
+
+- name: Keep the count
+  ansible.builtin.set_fact:
+    postgres_major_tables_before: "{{ postgres_major_count.stdout | trim }}"

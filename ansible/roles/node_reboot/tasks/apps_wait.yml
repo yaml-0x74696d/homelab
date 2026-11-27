@@ -1,0 +1,25 @@
+---
+# every container has Notify=healthy: the user manager is only "running" once they all are.
+# node_reboot_vm = the pod vm to look at, it may be another host than the one the play is on (a node's guests)
+- name: Wait for ssh on {{ node_reboot_vm }}
+  ansible.builtin.wait_for_connection:
+    timeout: "{{ node_reboot_timeout }}"
+  delegate_to: "{{ node_reboot_vm }}"
+
+# no module reaches another user's manager, hence the command
+- name: Wait for the apps on {{ node_reboot_vm }}
+  ansible.builtin.command: "systemctl --user -M {{ podman_svc_prefix }}{{ item.key }}@ is-system-running"   # noqa: command-instead-of-module
+  register: node_reboot_app
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  until: node_reboot_app.stdout == 'running'
+  retries: "{{ node_reboot_wait_retries }}"
+  delay: "{{ node_reboot_wait_delay }}"
+  delegate_to: "{{ node_reboot_vm }}"
+  loop: "{{ apps | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  when:
+    - item.value.state | default('present') == 'present'
+    - item.value.host | default('') == node_reboot_vm or node_reboot_vm in item.value.hosts | default([])

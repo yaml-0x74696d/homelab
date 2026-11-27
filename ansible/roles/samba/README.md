@@ -43,18 +43,20 @@
 
 ## Settings
 
+<!-- settings:start -->
 | Variable | Default | What |
 |---|---|---|
-| `samba_rotate_passwords` | `false` | Set to `true` for one run to push the vault passwords to existing users |
-| `samba_shares`, `samba_gid_base` | group_vars | Shared with `mergerfs`, which creates the share folders |
-| `samba_admin_uid` | `3000` | UID of the admin user |
-| `samba_svc_uid_base` | `3101` | First UID for the service users |
-| `samba_min_protocol` | `SMB3` | Oldest SMB version allowed |
+| `samba_manage_ufw` | `true` | lan-only ufw (ssh + samba); false = leave the firewall alone |
+| `samba_lan` | `lan_cidr` | the network that may connect |
+| `samba_admin_uid` | `3000` | uid of the admin user, pinned so a container rebuild keeps the same on-disk ownership |
+| `samba_svc_uid_base` | `3101` | first UID for the service users, uid = base + share index |
+| `samba_rotate_passwords` | `false` | true for one run (-e samba_rotate_passwords=true) pushes vault passwords to existing users |
+| `samba_min_protocol` | `SMB3` | oldest SMB version allowed |
 | `samba_max_log_size` | `1000` | KB per log file |
-| `samba_tm_size_default` | `1T` | Time Machine cap when a share sets no `tm_size` |
-| `samba_manage_ufw` | `true` | `false` leaves the firewall alone |
-| `samba_lan` | `lan_cidr` | The network that may connect |
-| `storage_root`, `admin_user`, `smb_passwords` | group_vars, vault | Pool mount in the CT, the admin user, SMB password per user |
+| `samba_tm_size_default` | `1T` | time machine cap when a share sets no tm_size |
+<!-- settings:end -->
+
+Also from group_vars and the vault: `samba_shares`, `samba_gid_base` (shared with `mergerfs`, which creates the share folders), `storage_root` (pool mount in the CT), `admin_user`, `smb_passwords` (SMB password per user).
 
 ## Notes
 
