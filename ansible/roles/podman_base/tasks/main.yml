@@ -88,9 +88,8 @@
     - /etc/systemd/system/podman-new-tags.timer
     - /etc/systemd/system/podman-new-tags.service
     - /usr/local/bin/podman-new-tags
-  register: podman_base_old_files
 
 - name: Reload systemd after the removal
   ansible.builtin.systemd_service:
     daemon_reload: true
-  when: podman_base_old_files is changed
+  when: podman_base_old_timer.stat.exists

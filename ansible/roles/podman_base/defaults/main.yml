@@ -19,4 +19,3 @@ podman_base_apps_helper: /usr/local/bin/apps   # `apps ps` = every svc user's co
 
 # one time for every svc user's podman-auto-update.timer, upstream adds RandomizedDelaySec=900
 podman_base_auto_update_time: "{{ podman_auto_update_time }}"
-
