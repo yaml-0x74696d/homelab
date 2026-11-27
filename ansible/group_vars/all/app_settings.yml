@@ -57,6 +57,7 @@ gatus_db_file: data.db
 gatus_semaphore_templates:
   - { name: repo-pull, id: 30, heartbeat: "{{ heartbeat_daily }}" }
   - { name: aide, id: 3, heartbeat: "{{ heartbeat_daily }}" }
+  - { name: aide-auto-accept, id: 35, heartbeat: "{{ heartbeat_daily }}" }
   - { name: update, id: 32, heartbeat: "{{ heartbeat_weekly }}" }   # heartbeat: see the schedules in schedules.yml
 gatus_semaphore_interval: 10m
 
