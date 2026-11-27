@@ -31,7 +31,9 @@ The checker takes the paths from the Added, Removed and Changed sections of the 
 5. A removed file a package still owns is checked like any other path: the package is verified and the missing file fails it. A removed file nobody owns blocks the accept, unless `aide_auto_accept_removed` lets its dir's upgraded owner explain it
 6. A changed directory needs an upgraded owner (and rule 1), its entries are in the report on their own. dpkg's own dirs under `/var/lib/dpkg` only need a package upgraded since the last accept
 
-At least one package has to be verified, else there is nothing the accept rests on. Without a recorded accept time (`<host>.accepted`, written by every accept) the host is refused: accept it once by hand.
+7. The package db files in `aide_auto_accept_db_files` (dpkg's `status`, `status-old`, `available`) have no owner. They count as explained when at least one package was upgraded or installed from a repo since the last accept, and rule 1 holds (only content or times changed). With no such package the host is refused. They are exact paths. The aide role has no EL config today, so no rpm db files are listed
+
+At least one package has to be verified (or a db file explained), else there is nothing the accept rests on. Without a recorded accept time (`<host>.accepted`, written by every accept) the host is refused: accept it once by hand.
 
 Where "upgraded since" comes from:
 - Debian: `/var/log/dpkg.log*`, rotated files included. dpkg writes it for every unpack, so it also catches `dpkg -i` and unattended-upgrades, which apt's `history.log` misses or splits over files. dpkg has no install time of its own, file mtimes under `/var/lib/dpkg/info` are touched too easily
@@ -44,6 +46,7 @@ Where "upgraded since" comes from:
 |---|---|---|
 | `aide_auto_accept_max_paths` | `500` | More changed paths than this always wait for a person |
 | `aide_auto_accept_removed` | `false` | A removed file nobody owns blocks the accept. `true`: an upgraded owner of its dir can explain it |
+| `aide_auto_accept_db_files` | dpkg `status`, `status-old`, `available` | Exact paths of the package db, see rule 7 |
 | `aide_auto_accept_ignore` | `[]` | Regexes of paths that need no owner, matched against the whole path. Empty means every path needs one. Add one only when you know what writes it and why it is harmless |
 | `aide_auto_accept_wait_retries` / `aide_auto_accept_wait_delay` | `60` / `30` | How long to wait for a running daily AIDE check (tries, seconds) |
 | `aide_auto_accept_reason_lines` | `50` | Reasons printed per host |

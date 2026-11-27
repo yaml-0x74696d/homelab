@@ -6,8 +6,9 @@ the answer is one json object on stdout: {"accept": bool, "reasons": [...], "pat
 Accept only if every changed path is owned by a package, that package was upgraded (or installed from a
 configured repo) since the last accept, it verifies clean (dpkg --verify / rpm -V) and the changed
 entries only differ in content or times: a perm, owner, link, acl or xattr change always refuses.
-  aide-auto-accept-check --since EPOCH [--ignore REGEX]... [--max-paths N] [--removed-ok]
+  aide-auto-accept-check --since EPOCH [--db-file PATH]... [--ignore REGEX]... [--max-paths N] [--removed-ok]
 --since is the accept time the controller recorded, empty refuses. --ignore is a regex, matched in full.
+--db-file is the package manager's own db: no owner, explained when any package qualified since the accept.
 """
 import argparse
 import glob
@@ -161,12 +162,13 @@ class Redhat:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--since", default="")
+    ap.add_argument("--db-file", action="append", default=[])
     ap.add_argument("--ignore", action="append", default=[])
     ap.add_argument("--max-paths", type=int, default=500)
     ap.add_argument("--removed-ok", action="store_true")
     args = ap.parse_args()
 
-    reasons, packages = [], set()
+    reasons, packages, db_seen = [], set(), False
 
     def out(accept, total=0):
         print(json.dumps({"accept": accept and not reasons, "reasons": reasons, "paths": total, "packages": sorted(packages)}))
@@ -221,6 +223,13 @@ def main():
                 if bad:
                     reasons.append(f"{', '.join(bad)} changed, not just content or times: {p}")
                     continue
+            if p in args.db_file:
+                # the db changes with every package change: explained if a package qualified, the attribute rule was applied above
+                if any(counts(pkg) for pkg in upgraded | installed):
+                    db_seen = True
+                else:
+                    reasons.append(f"package db changed but no package was upgraded or installed from a repo since the last accept: {p}")
+                continue
             isdir = os.path.isdir(p) and not os.path.islink(p)
             who = owners(p)
             if kind == "Removed" and not who:
@@ -244,7 +253,7 @@ def main():
                 packages.update(ok)   # a removed file that is still owned shows up as missing in the verify
             # a changed dir needs an upgraded owner, its entries are in the report on their own
 
-    if not packages and not reasons:
+    if not packages and not db_seen and not reasons:
         reasons.append("every path is ignored or a directory, no package to verify")
     for pkg in sorted(packages):
         bad = pm.clean(pkg)

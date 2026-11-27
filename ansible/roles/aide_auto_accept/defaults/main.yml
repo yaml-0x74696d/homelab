@@ -11,6 +11,14 @@ aide_auto_accept_removed: false
 # empty = every path needs one. add only what the run output showed as noise, one by one
 aide_auto_accept_ignore: []
 
+# the package manager's own db: no package owns it, it changes with every package. explained when at least one
+# package was upgraded (or installed from a repo) since the last accept and only content or times differ.
+# dpkg only. the aide role is apt-only today and has no EL config, so no rpm db files are listed
+aide_auto_accept_db_files:
+  - /var/lib/dpkg/status
+  - /var/lib/dpkg/status-old
+  - /var/lib/dpkg/available
+
 aide_auto_accept_reason_lines: 50   # reasons printed per host
 
 # a daily aide check already running: wait up to retries x delay seconds

@@ -13,6 +13,10 @@ argument_specs:
         type: list
         elements: str
         description: Regexes of paths that need no owner, matched against the whole path
+      aide_auto_accept_db_files:
+        type: list
+        elements: str
+        description: The package manager's db files, explained when a package qualified since the last accept
       aide_auto_accept_wait_retries:
         type: int
         description: Tries while a daily aide check is running

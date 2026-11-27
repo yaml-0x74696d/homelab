@@ -53,6 +53,7 @@
           {{ [ansible_python_interpreter, '-c', lookup('ansible.builtin.file', 'aide-auto-accept-check'),
               '--since=' ~ aide_auto_accept_since, '--max-paths', aide_auto_accept_max_paths | string]
              + (['--removed-ok'] if aide_auto_accept_removed else [])
+             + aide_auto_accept_db_files | map('regex_replace', '^', '--db-file=') | list
              + aide_auto_accept_ignore | map('regex_replace', '^', '--ignore=') | list }}
       args:
         stdin: "{{ aide_auto_accept_update.stdout }}"

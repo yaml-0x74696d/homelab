@@ -23,6 +23,7 @@ The setup:
 - The host is accepted only if every changed path is owned by a package (`dpkg -S`, `rpm -qf`), that package was upgraded since the last accept (`dpkg.log`, `INSTALLTIME` in rpm) or installed since then from a configured repo, and it verifies clean (`dpkg --verify`, `rpm -V`, a changed conffile is not clean)
 - `dpkg --verify` only knows checksums, so the report's detailed section is read as well: only content and times may differ, a changed perm, owner, link, ACL or xattr refuses the host
 - The time zero is the accept time the controller records next to the hash, not a file time on the host
+- dpkg's own db files (`status`, `status-old`, `available`) have no owner: they count as explained when a package was upgraded or installed from a repo since the last accept and only content or times changed
 - A removed file that a package still owns fails its verify. A removed file nobody owns blocks the accept. More than 500 paths, or a report that doesn't match its own counts, never passes
 - One failed rule leaves the host as it is for `aide-accept.yml`. The run lists the reasons, ntfy gets counts
 - The swap is the existing one: `roles/aide`'s `accept.yml`, same hash on the controller ([0009](0009-aide-with-manual-accept.md))
@@ -39,6 +40,7 @@ The setup:
 
 - Accepted: the proof is the host's own package database and logs. Root on the host can fake `dpkg` and `rpm` output, or write a package into the database and log. That is the same trust as the rest of AIDE: root on the host can also change the files it checks, only the database hash is held outside
 - Accepted: a package installed from a configured repo counts like an upgrade. A repo origin is what `apt-cache policy` says, so a malicious package in a repo we already trust passes as well
+- Accepted: on an upgrade day a manipulation of dpkg's `status` slips through, it only has to show content and time changes next to a real upgrade
 - Accepted: the first run on a host has no accept time and waits for one manual accept
 - Accepted: the daily run scans every host once more, up to 25 minutes on a PVE node
 
