@@ -173,12 +173,14 @@ def main():
     def out(accept, total=0):
         print(json.dumps({"accept": accept and not reasons, "reasons": reasons, "paths": total, "packages": sorted(packages)}))
 
+    # read the whole report first: exiting early with stdin unread breaks ansible's pipe on a big report
+    report = sys.stdin.read()
     if not args.since.strip().isdigit():
         reasons.append("no accept time recorded for this host, accept once by hand (aide-accept.yml) first")
         return out(False)
     since = int(args.since)
 
-    paths, consistent, details = parse(sys.stdin.read())
+    paths, consistent, details = parse(report)
     total = sum(len(v) for v in paths.values())
     if total == 0 or not consistent:
         reasons.append("couldn't read the changed paths from the report")

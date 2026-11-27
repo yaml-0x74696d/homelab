@@ -47,7 +47,7 @@
     # --since: the accept time on the controller, next to the hash. missing = the checker refuses
     - name: Check the changes on {{ inventory_hostname }}
       vars:
-        aide_auto_accept_since: "{{ lookup('ansible.builtin.file', aide_checksum_dir ~ '/' ~ inventory_hostname ~ '.accepted', errors='ignore') | trim }}"
+        aide_auto_accept_since: "{{ lookup('ansible.builtin.file', aide_checksum_dir ~ '/' ~ inventory_hostname ~ '.accepted', errors='ignore') | default('', true) | trim }}"
       ansible.builtin.command:
         argv: >-
           {{ [ansible_python_interpreter, '-c', lookup('ansible.builtin.file', 'aide-auto-accept-check'),
