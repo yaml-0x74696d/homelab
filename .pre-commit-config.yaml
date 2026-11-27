@@ -1,5 +1,6 @@
 ---
-# commit runs the fast hooks; `--hook-stage manual` runs all of them (ci, just check)
+# commit runs the fast hooks, push the render; `--hook-stage manual` runs all of them (ci, just check)
+default_install_hook_types: [pre-commit, pre-push]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
@@ -94,9 +95,10 @@ repos:
         language: python
         additional_dependencies: [ansible-lint==26.10.1]
         entry: scripts/render_podman.sh fix
-        files: ^(ansible/|scripts/render_podman|rendered_config/)
+        # only what feeds the render. ~3 min, so on push, not on every commit
+        files: ^(ansible/(apps/|roles/podman_app/|group_vars/|inventory\.yml|playbooks/render-podman\.yml)|scripts/render_podman|rendered_config/)
         pass_filenames: false
-        stages: [pre-commit]
+        stages: [pre-push]
 
       # ci: no fixing, fail on a stale render
       - id: render-podman-check

@@ -15,11 +15,11 @@ From the repo root:
 
 The hooks only see files git tracks, a new file needs a `git add` first.
 
-`render-podman` needs `ansible-playbook` (pre-commit installs ansible-core for it) and renders about 20 apps on the controller, so a commit that touches `ansible/` takes a bit longer. `just render` runs the same by hand.
+`render-podman` needs `ansible-playbook` (pre-commit installs ansible-core for it) and renders about 20 apps on the controller, which takes about 3 minutes, so it runs on `git push` and only when an input of the render changed (`ansible/apps`, `roles/podman_app`, `group_vars`, the inventory). `just render` runs the same by hand.
 
 ## The hooks
 
-Stage: commit = on every commit and `just lint`. manual = `just check` and CI. Hooks without a stage here run in both. The fixers (`render-podman`, `gen-role-settings`) run on commit only, `just check` and CI run their `-check` variants.
+Stage: commit = on every commit and `just lint`. push = on `git push`. manual = `just check` and CI. Hooks without a stage here run in both. The fixers (`render-podman` on push, `gen-role-settings` on commit) don't run in `just check` and CI, those run their `-check` variants.
 
 | Hook | Checks | Script | Stage |
 |---|---|---|---|
@@ -43,7 +43,7 @@ Stage: commit = on every commit and `just lint`. manual = `just check` and CI. H
 | `ansible-lint` | Ansible, production profile (`ansible/.ansible-lint`) | ansible-lint | commit |
 | `check-wiring` | `apps.yml` against what's wired to it: hosts, ports, UIDs, routes, unit templates, PBS jobs, Homepage tiles | `scripts/check_wiring.py` | commit |
 | `shellcheck-templates` | `*.sh.j2` rendered with dummy vars, then shellcheck | `scripts/shellcheck_templates.py` | commit |
-| `render-podman` | renders `rendered_config/example`. If a file changed, the hook fails: `git add` it and commit again | `scripts/render_podman.sh fix` | commit |
+| `render-podman` | renders `rendered_config/example`. If a file changed, the push stops: commit the render and push again | `scripts/render_podman.sh fix` | push |
 | `render-podman-check` | `rendered_config/example` matches what the templates render, nothing is written to git | `scripts/render_podman.sh check` | manual |
 | `gen-role-settings` | writes the Settings table of every role README from `meta/argument_specs.yml` and `defaults/main.yml`. If a README changed, the hook fails: `git add` it and commit again | `scripts/gen_role_settings.py` | commit |
 | `gen-role-settings-check` | the Settings tables are up to date, nothing is written | `scripts/gen_role_settings.py --check` | manual |
