@@ -1,6 +1,8 @@
 ---
 # commit runs the fast hooks, push the render; `--hook-stage manual` runs all of them (ci, just check)
 default_install_hook_types: [pre-commit, pre-push]
+# hooks without their own stages run on commit and in just check, not again on push
+default_stages: [pre-commit, manual]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
